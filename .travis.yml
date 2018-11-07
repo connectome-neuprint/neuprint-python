@@ -19,7 +19,7 @@ install:
   - conda install conda-build anaconda-client pytest pytest-cov
   - conda config --set auto_update_conda no
   - conda build conda.recipe --no-test
-  - conda install --use-local neuprint
+  - conda install --use-local neuprint-python
   - conda info -a
 script:
   - pytest -v --color=yes --cov=neuprint tests

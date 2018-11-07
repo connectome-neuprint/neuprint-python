@@ -25,7 +25,7 @@ jobs:
             conda config --set auto_update_conda no
             conda info -a
             conda build conda.recipe --no-test
-            conda install --use-local neuprint
+            conda install --use-local neuprint-python
 
       
       # - save_cache:
