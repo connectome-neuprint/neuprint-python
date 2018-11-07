@@ -14,11 +14,7 @@ setup(
     author_email='bergs@janelia.hhmi.org',
     url='https://github.com/stuarteberg/neuprint-python',
     packages=['neuprint'],
-    entry_points={
-        'console_scripts': [
-            'neuprint=neuprint.cli:cli'
-        ]
-    },
+    entry_points={},
     install_requires=requirements,
     keywords='neuprint-python',
     classifiers=[
