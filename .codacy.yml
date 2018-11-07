@@ -1,0 +1,8 @@
+---
+exclude_paths:
+  - 'neuprint/_version.py'
+  - 'tests/**/*'
+  - 'tests/*'
+  - 'benchmarks/**/*'
+  - 'setup.py'
+  - 'versioneer.py'
