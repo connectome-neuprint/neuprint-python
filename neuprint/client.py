@@ -1,4 +1,5 @@
 import os
+import json
 import requests
 import pandas as pd
 
@@ -10,6 +11,14 @@ class Client:
         
         if token is None:
             raise RuntimeError("No token provided.  Please provide one or set NEUPRINT_APPLICATION_CREDENTIALS")
+
+        if ':' in token:
+            try:
+                token = json.loads(token)['token']
+            except Exception:
+                raise RuntimeError("Did not understand token.  Please provide the entire JSON document or (only) the complete token string")
+            
+        token = token.replace('"', '')
 
         if '://' not in server:
             server = 'https://' + server
