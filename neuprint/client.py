@@ -1,5 +1,6 @@
 import os
 import requests
+import pandas as pd
 
 
 class Client:
@@ -26,27 +27,40 @@ class Client:
         r = self.session.get(url, json=json)
         r.raise_for_status()
         return r.content
+
     
     def _fetch_json(self, url, json=None):
         r = self.session.get(url, json=json)
         r.raise_for_status()
         return r.json()
 
+
     def fetch_help(self):
         return self._fetch_json(f"{self.server}/api/help")
+
 
     def fetch_version(self):
         return self._fetch_json(f"{self.server}/api/version")
 
+
     def fetch_available(self):
         return self._fetch_json(f"{self.server}/api/available")
     
+
     def fetch_database(self):
         return self._fetch_json(f"{self.server}/api/dbmeta/database")
+
 
     def fetch_datasets(self):
         return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
 
-    def fetch_custom(self, cypher):
-        return self._fetch_json(f"{self.server}/api/custom/custom", json={"cypher": cypher})
+
+    def fetch_custom(self, cypher, format='pandas'):
+        assert format in ('json', 'pandas')
+        result = self._fetch_json(f"{self.server}/api/custom/custom", json={"cypher": cypher})
+        if format == 'json':
+            return result
+        
+        df = pd.DataFrame(result['data'], columns=result['columns'])
+        return df
 
