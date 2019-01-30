@@ -45,7 +45,7 @@ class Client:
 
 
     def fetch_help(self):
-        return self._fetch_json(f"{self.server}/api/help")
+        return self._fetch_raw(f"{self.server}/api/help")
 
 
     def fetch_version(self):
