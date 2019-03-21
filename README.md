@@ -7,6 +7,9 @@ This repository was forked from [connectome-neuprint/neuprint-python](https://gi
 and simply adds some convenience functions to query data from a neuPrint
 server.
 
+If you want to query a DVID server, check out [dvidtools](https://github.com/flyconnectome/dvid_tools)
+instead.
+
 ## Install
 
 Make sure you have [Python 3](https://www.python.org),
