@@ -1,7 +1,0 @@
-[report]
-omit =
-    setup.py
-    neuprint/__main__.py
-    neuprint/_version.py
-    versioneer.py
-    tests/*
