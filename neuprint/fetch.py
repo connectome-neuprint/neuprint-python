@@ -303,25 +303,25 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
 
     where ='(exists(s.`{}`)) AND (s.type="post")'.format(roi)
 
-    if source:
+    if not isinstance(source, type(None)):
         if isinstance(source, str):
             if source.isnumeric():
                 where += ' AND a.bodyId={}'.format(source)
             else:
                 where += ' AND a.name=~"{}"'.format(source)
         elif isinstance(source, (np.ndarray, list, tuple)):
-            where += ' AND a.bodyId IN {}'.format(source)
+            where += ' AND a.bodyId IN {}'.format(list(np.array(source).astype(int)))
         else:
             where += ' AND a.bodyId={}'.format(source)
 
-    if target:
+    if not isinstance(target, type(None)):
         if isinstance(target, str):
             if target.isnumeric():
                 where += ' AND b.bodyId={}'.format(target)
             else:
                 where += ' AND b.name=~"{}"'.format(target)
         elif isinstance(target, (np.ndarray, list, tuple)):
-            where += ' AND b.bodyId IN {}'.format(target)
+            where += ' AND b.bodyId IN {}'.format(list(np.array(target).astype(int)))
         else:
             where += ' AND b.bodyId={}'.format(target)
 
