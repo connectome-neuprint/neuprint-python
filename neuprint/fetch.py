@@ -340,10 +340,11 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
              """.format(dataset=dataset, datatype=datatype, where=where,
                         ret=', '.join(ret))
 
-    return cypher
-
     # Fetch data
     data = client.fetch_custom(cypher)
+
+    # Turn into connectivity table
+    cn = data.pivot(index='source', columns='target', values='synapses')
 
     return data.sort_values('synapses', ascending=False)
 
