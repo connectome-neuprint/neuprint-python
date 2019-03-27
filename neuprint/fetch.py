@@ -126,9 +126,10 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None,
 
     Parameters
     ----------
-    x :         str
-                Search string. Can be body ID, neuron name or wildcard names
-                (e.g. "MBON.*"). Accepts regex.
+    x :         str | int | list-like | pandas.DataFrame
+                Search string. Can be body IDs, neuron name or wildcard/regex
+                names (e.g. "MBON.*"). Body IDs can also be provided as
+                list-like or DataFrame with "bodyId" column.
     dataset :   str, optional
                 Which dataset to query. See ``neuprint.Client.fetch_datasets``
                 for available datasets.
@@ -147,13 +148,31 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None,
     pandas.DataFrame
     """
 
+    if isinstance(x, pd.DataFrame):
+        if 'bodyId' in x.columns:
+            x = x['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
     if isinstance(x, str):
         if x.isnumeric():
             where = 'bodyId={}'.format(x)
         else:
             where = 'name=~"{}"'.format(x)
-    else:
+    elif isinstance(x, (list, tuple, np.ndarray)):
+        if all([isinstance(s, str) for s in x]):
+            if all([s.isnumeric() for s in x]):
+                where = 'bodyId IN {}'.format(list(np.array(x).astype(int)))
+            else:
+                raise ValueError('List can only be numeric body IDs')
+        elif all([isinstance(s, (int, np.int64, np.int32)) for s in x]):
+            where = 'bodyId IN {}'.format(list(x))
+        else:
+            raise ValueError('List can only be numeric body IDs')
+    elif isinstance(x, (int, np.int64, np.int32)):
         where = 'bodyId={}'.format(x)
+    else:
+        raise ValueError('Unable to process data of type "{}"'.format(type(x)))
 
     props = ['bodyId', 'name', 'size', 'status', 'pre', 'post']
 
