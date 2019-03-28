@@ -212,13 +212,16 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None
     pandas.DataFrame
     """
 
+    pre = ''
+
     if isinstance(x, str):
         if x.isnumeric():
             where = 'bodyId={}'.format(x)
         else:
             where = 'name=~"{}"'.format(x)
     elif isinstance(x, (np.ndarray, list, tuple)):
-        where = 'bodyId IN {}'.format(x)
+        where = 'bodyId=bid'
+        pre = 'WITH {} AS bodyIds UNWIND bodyIds AS bid'.format(list(x))
     else:
         where = 'bodyId={}'.format(x)
 
@@ -233,11 +236,12 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None
     client = eval_client(client)
 
     cypher = """
+             {pre}
              MATCH (m:`{dataset}-{datatype}`)-[e:ConnectsTo]-(n)
              WHERE m.{where}
              RETURN {ret}
              """.format(dataset=dataset, datatype=datatype, where=where,
-                        ret=', '.join(ret))
+                        ret=', '.join(ret), pre=pre)
 
     # Fetch data
     data = client.fetch_custom(cypher)
@@ -315,12 +319,34 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
     Returns
     -------
     pandas.DataFrame
+
+    Examples
+    --------
+    Produce CATMAID style connectivity table
+
+    # Turn into connectivity table
+    >>> data = neuprint.fetch_connectivity_in_roi('ROI', source=123456)
+    >>> cn = data.pivot(index='source', columns='target', values='synapses').T
+    >>> cn.fillna(0, inplace=True)
+    >>> cn['total'] = cn.sum(axis=1)
+    >>> cn.sort_values('total', inplace=True, ascending=False)
+    >>> names = neuprint.find_neurons(cn.index.values)
+    >>> names = names.set_index('bodyId').to_dict()
+    >>> cn['name'] = cn.index.map(lambda x: names['name'].get(x, None))
+    >>> cn['size'] = cn.index.map(lambda x: names['size'].get(x, None))
+    >>> cn['status'] = cn.index.map(lambda x: names['status'].get(x, None))
+
+
     """
+    if not isinstance(roi, str):
+        raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
 
     if isinstance(source, type(None)) and isinstance(target, type(None)):
         raise ValueError('source and target must not both be "None"')
 
     where ='(exists(s.`{}`)) AND (s.type="post")'.format(roi)
+    pre_with = ''
+    pre_unwind = ''
 
     if not isinstance(source, type(None)):
         if isinstance(source, str):
@@ -329,7 +355,10 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
             else:
                 where += ' AND a.name=~"{}"'.format(source)
         elif isinstance(source, (np.ndarray, list, tuple)):
-            where += ' AND a.bodyId IN {}'.format(list(np.array(source).astype(int)))
+            #where += ' AND a.bodyId IN {}'.format(list(np.array(source).astype(int)))
+            where += ' AND a.bodyId=sid'
+            pre_with = 'WITH {} AS sourceIds'.format(list(np.array(source).astype(int)))
+            pre_unwind = 'UNWIND sourceIds AS sid'
         else:
             where += ' AND a.bodyId={}'.format(source)
 
@@ -340,7 +369,14 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
             else:
                 where += ' AND b.name=~"{}"'.format(target)
         elif isinstance(target, (np.ndarray, list, tuple)):
-            where += ' AND b.bodyId IN {}'.format(list(np.array(target).astype(int)))
+            #where += ' AND b.bodyId IN {}'.format(list(np.array(target).astype(int)))
+            where += ' AND b.bodyId=tid'
+            if not pre_with:
+                pre_with = 'WITH {} AS targetIds'.format(list(np.array(target).astype(int)))
+                pre_unwind += 'UNWIND targetIds AS tid'
+            else:
+                pre_with += ', {} AS targetIds'.format(list(np.array(target).astype(int)))
+                pre_unwind += '\nUNWIND targetIds AS tid'
         else:
             where += ' AND b.bodyId={}'.format(target)
 
@@ -353,17 +389,16 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
     client = eval_client(client)
 
     cypher = """
+             {pre_with} {pre_unwind}
              MATCH (a:`{dataset}-{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}-{datatype}`), (c)-[:Contains]->(s:Synapse)
              WHERE {where}
              RETURN {ret}
              """.format(dataset=dataset, datatype=datatype, where=where,
+                        pre_with=pre_with, pre_unwind=pre_unwind,
                         ret=', '.join(ret))
 
     # Fetch data
     data = client.fetch_custom(cypher)
 
-    # Turn into connectivity table
-    cn = data.pivot(index='source', columns='target', values='synapses')
-
-    return data.sort_values('synapses', ascending=False)
+    return data.sort_values('synapses', ascending=False).reset_index(drop=True)
 
