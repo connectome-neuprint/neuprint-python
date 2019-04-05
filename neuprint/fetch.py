@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from .utils import eval_client, make_iterable
+from .utils import eval_client, make_iterable, parse_properties
 
 
 def fetch_custom(cypher, client=None):
@@ -58,7 +58,7 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
     x = make_iterable(x)
 
     where = logic.join(['n.{}'.format(s) for s in x])
-    ret = ','.join(['n.{0} AS {0}'.format(p) for p in props])
+    ret = parse_properties(props, 'n')
 
     cypher = """
              MATCH (n :`{dataset}-{datatype}`)
@@ -114,6 +114,7 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
                         where=logic.join(['(n.`{}`=true)'.format(r) for r in roi]))
 
     if add_props:
+        add_props = add_props if isinstance(add_props, list) else list(add_props)
         cypher += ','
         cypher += ','.join(['n.{0} AS {0}'.format(p) for p in add_props])
 
@@ -127,7 +128,7 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None,
     Parameters
     ----------
     x :         str | int | list-like | pandas.DataFrame
-                Search string. Can be body IDs, neuron name or wildcard/regex
+                Search string. Can be body ID(s), neuron name or wildcard/regex
                 names (e.g. "MBON.*"). Body IDs can also be provided as
                 list-like or DataFrame with "bodyId" column.
     dataset :   str, optional
@@ -177,15 +178,15 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None,
     props = ['bodyId', 'name', 'size', 'status', 'pre', 'post']
 
     if add_props:
-        props += list(add_props)
+        props += add_props if isinstance(add_props, list) else list(add_props)
         props = list(set(props))
 
     return custom_search(where, props=props, dataset=dataset,
                          datatype=datatype, client=client)
 
 
-def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None,
-                 client=None):
+def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
+                       add_props=None, client=None):
     """ Fetch connectivity table for given neuron
 
     Parameters

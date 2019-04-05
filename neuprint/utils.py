@@ -21,3 +21,16 @@ def make_iterable(x):
         return x
     else:
         return [x]
+
+def parse_properties(props, placeholder):
+    """ Parses list of properties and returns a RETURN string."""
+    props = props if isinstance(props, list) else list(props)
+
+    cypher = []
+    for p in props:
+        if p == 'hasSkeleton':
+            cypher.append('exists(({})-[:Contains]->(:Skeleton)) AS hasSkeleton'.format(placeholder))
+        else:
+            cypher.append('{0}.{1} AS {1}'.format(placeholder, p))
+
+    return ','.join(cypher)
