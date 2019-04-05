@@ -337,7 +337,6 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
     >>> cn['size'] = cn.index.map(lambda x: names['size'].get(x, None))
     >>> cn['status'] = cn.index.map(lambda x: names['status'].get(x, None))
 
-
     """
     if not isinstance(roi, str):
         raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
@@ -403,3 +402,106 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
 
     return data.sort_values('synapses', ascending=False).reset_index(drop=True)
 
+
+def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
+                datatype='Neuron', add_props=None, client=None):
+    """ Fetch edges between given neuron(s).
+
+    Parameters
+    ----------
+    source :    str | int | iterable | None, optional
+                Source neurons. Can be body ID, neuron name or wildcard names
+                (e.g. "MBON.*"). Accepts regex. Body IDs can be given as
+                list. If ``None`` will get all inputs to ``target``.
+    target :    str | int | iterable | None
+                Target neurons. If ``None`` will return edges between
+                ``source``.
+    roi :       str
+                ROI(s) to restrict connectivity to.
+    dataset :   str, optional
+                Which dataset to query. See ``neuprint.Client.fetch_datasets``
+                for available datasets.
+    datatype :  str, optional
+                Data type to search for. Depends on dataset. For
+                ``dataset='hemibrain'`` options are "Neuron" and "Segment".
+                The former is limited to bodies with either >=2 pre-, >= 10
+                postsynapses, name, soma or status.
+    add_props : iterable, optional
+                Additional neuron properties to be returned.
+    client :    neuprint.Client, optional
+                If ``None`` will try using global client.
+
+    Returns
+    -------
+    pandas.DataFrame
+
+
+    """
+    if isinstance(source, type(None)) and isinstance(target, type(None)):
+        raise ValueError('source and target must not both be "None"')
+
+    if isinstance(target, type(None)):
+        target = source
+
+    where = '(s.type="post")'.format(roi)
+    if not isinstance(roi, type(None)):
+        if not isinstance(roi, str):
+            raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
+        where += ' AND (exists(s.`{}`))'.format(roi)
+
+    pre_with = ''
+    pre_unwind = ''
+
+    if not isinstance(source, type(None)):
+        if isinstance(source, str):
+            if source.isnumeric():
+                where += ' AND a.bodyId={}'.format(source)
+            else:
+                where += ' AND a.name=~"{}"'.format(source)
+        elif isinstance(source, (np.ndarray, list, tuple)):
+            #where += ' AND a.bodyId IN {}'.format(list(np.array(source).astype(int)))
+            where += ' AND a.bodyId=sid'
+            pre_with = 'WITH {} AS sourceIds'.format(list(np.array(source).astype(int)))
+            pre_unwind = 'UNWIND sourceIds AS sid'
+        else:
+            where += ' AND a.bodyId={}'.format(source)
+
+    if not isinstance(target, type(None)):
+        if isinstance(target, str):
+            if target.isnumeric():
+                where += ' AND b.bodyId={}'.format(target)
+            else:
+                where += ' AND b.name=~"{}"'.format(target)
+        elif isinstance(target, (np.ndarray, list, tuple)):
+            #where += ' AND b.bodyId IN {}'.format(list(np.array(target).astype(int)))
+            where += ' AND b.bodyId=tid'
+            if not pre_with:
+                pre_with = 'WITH {} AS targetIds'.format(list(np.array(target).astype(int)))
+                pre_unwind += 'UNWIND targetIds AS tid'
+            else:
+                pre_with += ', {} AS targetIds'.format(list(np.array(target).astype(int)))
+                pre_unwind += '\nUNWIND targetIds AS tid'
+        else:
+            where += ' AND b.bodyId={}'.format(target)
+
+    ret = ['a.bodyId AS source', 'b.bodyId AS target', 'count(*) AS synapses']
+
+    if add_props:
+        ret += ['a.{} AS source_{}'.format(p, p) for p in add_props]
+        ret += ['b.{} AS target_{}'.format(p, p) for p in add_props]
+
+    client = eval_client(client)
+
+    cypher = """
+             {pre_with} {pre_unwind}
+             MATCH (a:`{dataset}-{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}-{datatype}`), (c)-[:Contains]->(s:Synapse)
+             WHERE {where}
+             RETURN {ret}
+             """.format(dataset=dataset, datatype=datatype, where=where,
+                        pre_with=pre_with, pre_unwind=pre_unwind,
+                        ret=', '.join(ret))
+
+    # Fetch data
+    data = client.fetch_custom(cypher)
+
+    return data.sort_values('synapses', ascending=False).reset_index(drop=True)
