@@ -43,7 +43,7 @@ class Client:
         elif server.startswith('http://'):
             raise RuntimeError("Server must be https, not http")
         elif not server.startswith('https://'):
-            raise RuntimeError(f"Unknown protocol: {server.split('://')[0]}")
+            raise RuntimeError("Unknown protocol: {}".format(server.split('://')[0]))
 
         self.server = server
         self.session = requests.Session()
@@ -68,29 +68,30 @@ class Client:
         return r.json()
 
     def fetch_help(self):
-        return self._fetch_raw(f"{self.server}/api/help")
+        return self._fetch_raw("{}/api/help".format(self.server))
 
     def fetch_version(self):
-        return self._fetch_json(f"{self.server}/api/version")
+        return self._fetch_json("{}/api/version".format(self.server))
 
     def fetch_available(self):
-        return self._fetch_json(f"{self.server}/api/available")
+        return self._fetch_json("{}/api/available".format(self.server))
 
     def fetch_database(self):
         """ Fetch available datasets.
         """
-        return self._fetch_json(f"{self.server}/api/dbmeta/database")
+        return self._fetch_json("{}/api/dbmeta/database".format(self.server))
 
     def fetch_datasets(self):
         """ Fetch available datasets.
         """
-        return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
+        return self._fetch_json("{}/api/dbmeta/datasets".format(self.server))
 
     def fetch_custom(self, cypher, format='pandas'):
         """ Fetch custom cypher.
         """
         assert format in ('json', 'pandas')
-        result = self._fetch_json(f"{self.server}/api/custom/custom", json={"cypher": cypher})
+        result = self._fetch_json("{}/api/custom/custom".format(self.server),
+                                  json={"cypher": cypher})
         if format == 'json':
             return result
 
