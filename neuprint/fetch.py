@@ -213,6 +213,12 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
     pandas.DataFrame
     """
 
+    if isinstance(x, pd.DataFrame):
+        if 'bodyId' in x.columns:
+            x = x['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
     pre = ''
 
     if isinstance(x, str):
@@ -344,6 +350,18 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
     if isinstance(source, type(None)) and isinstance(target, type(None)):
         raise ValueError('source and target must not both be "None"')
 
+    if isinstance(source, pd.DataFrame):
+        if 'bodyId' in source.columns:
+            source = source['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
+    if isinstance(target, pd.DataFrame):
+        if 'bodyId' in target.columns:
+            target = target['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
     where ='(exists(s.`{}`)) AND (s.type="post")'.format(roi)
     pre_with = ''
     pre_unwind = ''
@@ -435,8 +453,20 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     -------
     pandas.DataFrame
 
-
     """
+
+    if isinstance(source, pd.DataFrame):
+        if 'bodyId' in source.columns:
+            source = source['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
+    if isinstance(target, pd.DataFrame):
+        if 'bodyId' in target.columns:
+            target = target['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
     if isinstance(source, type(None)) and isinstance(target, type(None)):
         raise ValueError('source and target must not both be "None"')
 
