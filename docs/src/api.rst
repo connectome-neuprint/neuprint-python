@@ -19,4 +19,5 @@ Fetching Data
     fetch_edges
     fetch_neurons_in_roi
     find_neurons
+    fetch_synapses
 

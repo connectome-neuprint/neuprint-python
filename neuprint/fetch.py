@@ -4,7 +4,7 @@ import numpy as np
 from .utils import eval_client, make_iterable, parse_properties
 
 
-def fetch_custom(cypher, client=None):
+def fetch_custom(cypher, client=None, format='pandas'):
     """ Fetch custom cypher.
 
     Parameters
@@ -21,7 +21,7 @@ def fetch_custom(cypher, client=None):
 
     client = eval_client(client)
 
-    return client.fetch_custom(cypher)
+    return client.fetch_custom(cypher, format=format)
 
 
 def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
@@ -505,3 +505,73 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     data = client.fetch_custom(cypher)
 
     return data.sort_values('synapses', ascending=False).reset_index(drop=True)
+
+
+def fetch_synapses(x, dataset='hemibrain', datatype='Neuron', client=None):
+    """ Fetch synapses for given body ID(s)
+
+    Parameters
+    ----------
+    x :             str | int | list-like | pandas.DataFrame
+                    Search string. Can be body ID(s), neuron name or
+                    wildcard/regex names (e.g. "MBON.*"). Body IDs can also be
+                    provided as list-like or DataFrame with "bodyId" column.
+    dataset :       str, optional
+                    Which dataset to query. See ``neuprint.Client.fetch_datasets``
+                    for available datasets.
+    datatype :      str, optional
+                    Data type to search for. Depends on dataset. For
+                    ``dataset='hemibrain'`` options are "Neuron" and "Segment".
+                    The former is limited to bodies with either >=2 pre-, >= 10
+                    postsynapses, name, soma or status.
+    client :        neuprint.Client, optional
+                    If ``None`` will try using global client.
+
+    Returns
+    -------
+    pandas.DataFrame
+    """
+
+    if isinstance(x, pd.DataFrame):
+        if 'bodyId' in x.columns:
+            x = x['bodyId'].values
+        else:
+            raise ValueError('DataFrame must have "bodyId" column.')
+
+    pre = ''
+
+    if isinstance(x, str):
+        if x.isnumeric():
+            where = 'bodyId={}'.format(x)
+        else:
+            where = 'name=~"{}"'.format(x)
+    elif isinstance(x, (np.ndarray, list, tuple)):
+        where = 'bodyId=bid'
+        pre = 'WITH {} AS bodyIds UNWIND bodyIds AS bid'.format(list(x))
+    else:
+        where = 'bodyId={}'.format(x)
+
+    ret = ['n.bodyId as bodyId', 's']
+
+    client = eval_client(client)
+
+    cypher = """
+             {pre}
+             MATCH (n:`{dataset}-{datatype}`)-[:Contains]->(ss:SynapseSet),
+                   (ss)-[:Contains]->(s:Synapse)
+             WHERE n.{where}
+             RETURN {ret}
+             """.format(dataset=dataset, datatype=datatype, where=where,
+                        ret=', '.join(ret), pre=pre)
+
+    # Get data
+    r = fetch_custom(cypher, client=client, format='json')
+
+    # Flatten Synapse data
+    s = pd.io.json.json_normalize([s[1] for s in r['data']])
+    s['bodyId'] = [s[0] for s in r['data']]
+
+    return s.fillna(False)
+
+
+
