@@ -90,8 +90,14 @@ class Client:
         """ Fetch custom cypher.
         """
         assert format in ('json', 'pandas')
-        result = self._fetch_json("{}/api/custom/custom".format(self.server),
-                                  json={"cypher": cypher})
+        try:
+            result = self._fetch_json("{}/api/custom/custom".format(self.server),
+                                      json={"cypher": cypher})
+        except Exception:
+            print('Error fetching cypher:')
+            print(cypher)
+            raise
+
         if format == 'json':
             return result
 
