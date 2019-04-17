@@ -4,6 +4,8 @@ Python client utilties for interacting with the neuPrint connectome analysis ser
 
 See below to get started, or have a look at the [Introduction notebook](examples/Introduction.ipynb).
 
+Find the documentation [here](https://neuprint-python.readthedocs.io)!
+
 ## Install
 
 If you're using conda, use this command:
