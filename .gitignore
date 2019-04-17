@@ -64,3 +64,6 @@ target/
 .project
 .pydevproject
 .ipynb_checkpoints
+
+.DS_store
+_autosummary/

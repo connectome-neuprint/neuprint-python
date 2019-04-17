@@ -1,0 +1,5 @@
+###### Requirements without Version Specifiers ######
+nbsphinx
+numpydoc
+sphinx_bootstrap_theme
+sphinx==1.8.4
