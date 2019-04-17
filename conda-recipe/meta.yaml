@@ -30,13 +30,17 @@ requirements:
     {# raw is for ignoring templating with cookiecutter, leaving it for use with conda-build #}
 
 test:
-  source_files:
-    - tests
-  requires:
-    - pytest
-    - pytest-cov
-  commands:
-    - pytest tests
+  imports:
+    - neuprint
+
+# There are no real tests yet.
+#  source_files:
+#    - tests
+#  requires:
+#    - pytest
+#    - pytest-cov
+#  commands:
+#    - pytest tests
 
 about:
   home: https://github.com/stuarteberg/neuprint-python
