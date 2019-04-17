@@ -1,9 +1,40 @@
 neuprint-python
 ===============================
-
-[![Travis CI Status](https://img.shields.io/travis/connectome-neuprint/neuprint-python.svg?branch=master)](https://travis-ci.org/connectome-neuprint/neuprint-python)
-[![Waffle.io - Columns and their card count](https://badge.waffle.io/connectome-neuprint/neuprint-python.svg?columns=all)](https://waffle.io/connectome-neuprint/neuprint-python)
-
 Python client utilties for interacting with the neuPrint connectome analysis service
 
-See the [Introduction notebook](examples/Introduction.ipynb) to get started.
+See below to get started, or have a look at the [Introduction notebook](examples/Introduction.ipynb).
+
+## Install
+
+If you're using conda, use this command:
+
+```shell
+conda install -c flyem-forge neuprint-python
+```
+
+Otherwise, make sure you have [Python 3](https://www.python.org),
+[pip](https://pip.pypa.io/en/stable/installing/) and
+[git](https://git-scm.com) installed. Then run this in terminal:
+
+```shell
+pip install git+git://github.com/schlegelp/neuprint-python@master
+```
+
+## Getting started
+
+First, grab your token from the neuPrint web interface.
+
+![token](examples/img/token-screenshot.png)
+
+Next:
+
+```Python
+import neuprint as neu
+
+# Set up credentials
+client = neu.Client('https://your.neuprintserver.com:8800', 'yourtoken')
+
+# Grab some neurons by ROI
+lh = neu.fetch_neurons_in_roi('LH')
+```
+
