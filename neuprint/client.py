@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import json
 import os
 import sys
@@ -89,6 +90,14 @@ class Client:
     def fetch_custom(self, cypher, format='pandas'):
         """ Fetch custom cypher.
         """
+        if set("‘’“”").intersection(cypher):
+            msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
+                   " which are not valid characters in cypher."
+                   " Please replace them with ordinary quotes (e.g. 'foo' or \"foo\").\n"
+                   "Your query was:\n"
+                   + cypher)
+            raise RuntimeError(msg)
+        
         assert format in ('json', 'pandas')
         try:
             result = self._fetch_json("{}/api/custom/custom".format(self.server),
