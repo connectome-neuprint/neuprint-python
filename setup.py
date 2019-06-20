@@ -1,16 +1,6 @@
 from setuptools import setup
 
-import re
-
-
-VERSIONFILE = "neuprint/__init__.py"
-verstrline = open(VERSIONFILE, "rt").read()
-VSRE = r"^__verstr__ = ['\"]([^'\"]*)['\"]"
-mo = re.search(VSRE, verstrline, re.M)
-if mo:
-    verstr = mo.group(1)
-else:
-    raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+import versioneer
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
@@ -18,7 +8,8 @@ with open('requirements.txt') as f:
 
 setup(
     name='neuprint-python',
-    version=verstr,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description="Python client utilties for interacting with the neuPrint connectome analysis service",
     author="Philipp Schlegel",
     author_email='pms70@cam.ac.uk',

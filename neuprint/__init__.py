@@ -1,5 +1,5 @@
-__version__ = (0, 1, 2)
-__verstr__ = "0.1.2"
-
 from .client import Client
 from .fetch import *
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
