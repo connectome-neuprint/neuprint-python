@@ -65,7 +65,7 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
              WHERE {where}
              RETURN {ret}
              """.format(dataset=dataset, datatype=datatype, where=where,
-                ret=ret)
+                        ret=ret)
 
     return client.fetch_custom(cypher)
 
@@ -78,7 +78,8 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
     ----------
     roi :       str | iterable
                 ROI(s) (e.g. "LH") to query. See ``neuprint.Client.fetch_datasets``
-                for available ROIs.
+                for available ROIs. Use a tilde (~) prefix to exclude neurons that
+                have arbors in a given ROI.
     dataset :   str, optional
                 Which dataset to query. See ``neuprint.Client.fetch_datasets``
                 for available datasets.
@@ -103,6 +104,10 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
 
     roi = make_iterable(roi)
 
+    # Parse ROI
+    condition = ['false' if r.startswith('~') else 'true' for r in roi]
+    roi = [r[1:] if r.startswith('~') else r for r in roi]
+
     cypher = """
              MATCH (n :`{dataset}-{datatype}`)
              WHERE {where} WITH n AS n, apoc.convert.fromJsonMap(n.roiInfo) AS roiInfo
@@ -111,7 +116,7 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
              """.format(dataset=dataset, datatype=datatype,
                         roiPre=','.join(['roiInfo.{0}.pre as pre_{0}'.format(r) for r in roi]),
                         roiPost=','.join(['roiInfo.{0}.post as post_{0}'.format(r) for r in roi]),
-                        where=logic.join(['(n.`{}`=true)'.format(r) for r in roi]))
+                        where=logic.join(['(n.`{}`={})'.format(r, c) for r, c in zip(roi, condition)]))
 
     if add_props:
         add_props = add_props if isinstance(add_props, list) else list(add_props)
@@ -298,12 +303,13 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
 
 def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain',
                               datatype='Neuron', add_props=None, client=None):
-    """ Fetch connectivity within ROI between given neuron(s).
+    """Fetch connectivity within ROI between given neuron(s).
 
     Parameters
     ----------
     roi :       str
-                ROI(s) to filter for.
+                ROI(s) to filter for. Prefix the ROI with a tilde (~) to return
+                everything OUTSIDE the ROI.
     source :    str | int | iterable | None, optional
                 Source neurons. Can be body ID, neuron name or wildcard names
                 (e.g. "MBON.*"). Accepts regex. Body IDs can be given as
@@ -331,7 +337,6 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
     --------
     Produce CATMAID style connectivity table
 
-    # Turn into connectivity table
     >>> data = neuprint.fetch_connectivity_in_roi('ROI', source=123456)
     >>> cn = data.pivot(index='source', columns='target', values='synapses').T
     >>> cn.fillna(0, inplace=True)
@@ -362,7 +367,13 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
         else:
             raise ValueError('DataFrame must have "bodyId" column.')
 
-    where ='(exists(s.`{}`)) AND (s.type="post")'.format(roi)
+    if roi.startswith('~'):
+        where = 'NOT '
+        roi = roi[1:]
+    else:
+        where = ''
+
+    where += '(exists(s.`{}`)) AND (s.type="post")'.format(roi)
     pre_with = ''
     pre_unwind = ''
 
@@ -423,7 +434,7 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
 
 def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
                 datatype='Neuron', add_props=None, client=None):
-    """ Fetch edges between given neuron(s).
+    """Fetch edges between given neuron(s).
 
     Parameters
     ----------
@@ -432,10 +443,11 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
                 (e.g. "MBON.*"). Accepts regex. Body IDs can be given as
                 list. If ``None`` will get all inputs to ``target``.
     target :    str | int | iterable | None
-                Target neurons. If ``None`` will return edges between
+                Target neurons. If ``None`` will include all targets of
                 ``source``.
     roi :       str
-                ROI(s) to restrict connectivity to.
+                ROI(s) to restrict connectivity to. Use tilde (~) to exclude
+                connections within this ROI.
     dataset :   str, optional
                 Which dataset to query. See ``neuprint.Client.fetch_datasets``
                 for available datasets.
@@ -454,7 +466,6 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     pandas.DataFrame
 
     """
-
     if isinstance(source, pd.DataFrame):
         if 'bodyId' in source.columns:
             source = source['bodyId'].values
@@ -470,49 +481,49 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     if isinstance(source, type(None)) and isinstance(target, type(None)):
         raise ValueError('source and target must not both be "None"')
 
-    if isinstance(target, type(None)):
-        target = source
-
-    where = '(s.type="post")'.format(roi)
+    where = ['(s.type="post")'.format(roi)]
     if not isinstance(roi, type(None)):
         if not isinstance(roi, str):
             raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
-        where += ' AND (exists(s.`{}`))'.format(roi)
+        if roi.startswith('~'):
+            where += ' AND NOT '
+            roi = roi[1:]
+        else:
+            where += ' AND '
+        where += '(exists(s.`{}`))'.format(roi)
 
-    pre_with = ''
-    pre_unwind = ''
+    pre_with = []
+    pre_unwind = []
 
     if not isinstance(source, type(None)):
         if isinstance(source, str):
             if source.isnumeric():
-                where += ' AND a.bodyId={}'.format(source)
+                where.append('a.bodyId={}'.format(source))
             else:
-                where += ' AND a.name=~"{}"'.format(source)
+                where.append('a.name=~"{}"'.format(source))
         elif isinstance(source, (np.ndarray, list, tuple)):
-            #where += ' AND a.bodyId IN {}'.format(list(np.array(source).astype(int)))
-            where += ' AND a.bodyId=sid'
-            pre_with = 'WITH {} AS sourceIds'.format(list(np.array(source).astype(int)))
-            pre_unwind = 'UNWIND sourceIds AS sid'
+            where.append('a.bodyId=sid')
+            pre_with.append('{} AS sourceIds'.format(list(np.array(source).astype(int))))
+            pre_unwind.append('sourceIds AS sid')
         else:
-            where += ' AND a.bodyId={}'.format(source)
+            where.append('a.bodyId={}'.format(source))
 
     if not isinstance(target, type(None)):
         if isinstance(target, str):
             if target.isnumeric():
-                where += ' AND b.bodyId={}'.format(target)
+                where.append('b.bodyId={}'.format(target))
             else:
-                where += ' AND b.name=~"{}"'.format(target)
+                where.append('b.name=~"{}"'.format(target))
         elif isinstance(target, (np.ndarray, list, tuple)):
-            #where += ' AND b.bodyId IN {}'.format(list(np.array(target).astype(int)))
-            where += ' AND b.bodyId=tid'
+            pre_with.append('{} AS targetIds'.format(list(np.array(target).astype(int))))
             if not pre_with:
-                pre_with = 'WITH {} AS targetIds'.format(list(np.array(target).astype(int)))
-                pre_unwind += 'UNWIND targetIds AS tid'
+                # Only unwind targets if we aren't already unwinding sources
+                pre_unwind.append('targetIds AS tid')
+                where.append('b.bodyId=tid')
             else:
-                pre_with += ', {} AS targetIds'.format(list(np.array(target).astype(int)))
-                pre_unwind += '\nUNWIND targetIds AS tid'
+                where.append('b.bodyId IN targetIds')
         else:
-            where += ' AND b.bodyId={}'.format(target)
+            where.append('b.bodyId={}'.format(target))
 
     ret = ['a.bodyId AS source', 'b.bodyId AS target', 'count(*) AS synapses']
 
@@ -523,12 +534,15 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     client = eval_client(client)
 
     cypher = """
-             {pre_with} {pre_unwind}
+             WITH {pre_with}
+             UNWIND {pre_unwind}
              MATCH (a:`{dataset}-{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}-{datatype}`), (c)-[:Contains]->(s:Synapse)
              WHERE {where}
              RETURN {ret}
-             """.format(dataset=dataset, datatype=datatype, where=where,
-                        pre_with=pre_with, pre_unwind=pre_unwind,
+             """.format(dataset=dataset, datatype=datatype,
+                        pre_with=', '.join(pre_with),
+                        pre_unwind=', '.join(pre_unwind),
+                        where='AND '.join(where),
                         ret=', '.join(ret))
 
     # Fetch data
@@ -602,6 +616,3 @@ def fetch_synapses(x, dataset='hemibrain', datatype='Neuron', client=None):
     s['bodyId'] = [s[0] for s in r['data']]
 
     return s.fillna(False)
-
-
-
