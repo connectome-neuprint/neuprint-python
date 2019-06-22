@@ -47,8 +47,9 @@ class Client:
 
         self.server = server
         self.session = requests.Session()
-        self.session.headers.update({ "Authorization": "Bearer " + token,
-                                      "Content-type": "application/json"} )
+        self.session.headers.update({"Authorization": "Bearer " + token,
+                                     "Content-type": "application/json"})
+        self.verbose = False
 
         if set_global:
             self.make_global()
@@ -57,15 +58,19 @@ class Client:
         """Sets this variable as global by attaching it as sys.module"""
         sys.modules['NEUPRINT_CLIENT'] = self
 
-    def _fetch_raw(self, url, json=None):
+    def _fetch(self, url, json=None):
+        if self.verbose:
+            print('url:', url)
+            print('cypher:', json.get('cypher'))
         r = self.session.get(url, json=json)
         r.raise_for_status()
-        return r.content
+        return r
+
+    def _fetch_raw(self, url, json=None):
+        return self._fetch(url, json=json).content
 
     def _fetch_json(self, url, json=None):
-        r = self.session.get(url, json=json)
-        r.raise_for_status()
-        return r.json()
+        return self._fetch(url, json=json).json()
 
     def fetch_help(self):
         return self._fetch_raw("{}/api/help".format(self.server))
@@ -103,4 +108,3 @@ class Client:
 
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
-
