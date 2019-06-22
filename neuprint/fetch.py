@@ -57,7 +57,7 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
 
     x = make_iterable(x)
 
-    where = logic.join(['n.{}'.format(s) for s in x])
+    where = ' {} '.format(logic).join(['n.{}'.format(s) for s in x])
     ret = parse_properties(props, 'n')
 
     cypher = """
@@ -105,8 +105,15 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
     roi = make_iterable(roi)
 
     # Parse ROI
-    condition = ['false' if r.startswith('~') else 'true' for r in roi]
-    roi = [r[1:] if r.startswith('~') else r for r in roi]
+    conditions = []
+    for r in roi:
+        if r.startswith('~'):
+            conditions.append('NOT exists(n.`{}`)'.format(r[1:]))
+        else:
+            conditions.append('n.`{}`=true'.format(r))
+
+    # Now remove tildes
+    roi = [r.replace('~', '') for r in roi]
 
     cypher = """
              MATCH (n :`{dataset}-{datatype}`)
@@ -114,9 +121,9 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
              RETURN n.bodyId AS bodyId, n.size AS size, n.status AS status,
                     n.pre AS pre, n.post AS post, {roiPre}, {roiPost}
              """.format(dataset=dataset, datatype=datatype,
-                        roiPre=','.join(['roiInfo.{0}.pre as pre_{0}'.format(r) for r in roi]),
-                        roiPost=','.join(['roiInfo.{0}.post as post_{0}'.format(r) for r in roi]),
-                        where=logic.join(['(n.`{}`={})'.format(r, c) for r, c in zip(roi, condition)]))
+                        roiPre=', '.join(['roiInfo.{0}.pre as pre_{0}'.format(r) for r in roi]),
+                        roiPost=', '.join(['roiInfo.{0}.post as post_{0}'.format(r) for r in roi]),
+                        where=' {} '.format(logic).join(conditions))
 
     if add_props:
         add_props = add_props if isinstance(add_props, list) else list(add_props)
@@ -301,13 +308,14 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
     return df.groupby(['bodyId', 'relation']).first().reset_index(drop=False).fillna(0)
 
 
-def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain',
-                              datatype='Neuron', add_props=None, client=None):
+def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
+                              dataset='hemibrain', datatype='Neuron',
+                              add_props=None, client=None):
     """Fetch connectivity within ROI between given neuron(s).
 
     Parameters
     ----------
-    roi :       str
+    roi :       str | list
                 ROI(s) to filter for. Prefix the ROI with a tilde (~) to return
                 everything OUTSIDE the ROI.
     source :    str | int | iterable | None, optional
@@ -316,6 +324,8 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
                 list. If ``None`` will get all inputs to ``target``.
     target :    str | int | iterable | None
                 Target neurons. If ``None`` will get all outputs of ``sources``.
+    logic :     "AND" | "OR", optional
+                Logic to apply when multiple ROIs are queried.
     dataset :   str, optional
                 Which dataset to query. See ``neuprint.Client.fetch_datasets``
                 for available datasets.
@@ -335,6 +345,10 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
 
     Examples
     --------
+    Find all downstream targets outside of calyx
+
+    >>> ds = neuprint.fetch_connectivity('~CA', source=123456)
+
     Produce CATMAID style connectivity table
 
     >>> data = neuprint.fetch_connectivity_in_roi('ROI', source=123456)
@@ -349,8 +363,6 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
     >>> cn['status'] = cn.index.map(lambda x: names['status'].get(x, None))
 
     """
-    if not isinstance(roi, str):
-        raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
 
     if isinstance(source, type(None)) and isinstance(target, type(None)):
         raise ValueError('source and target must not both be "None"')
@@ -367,13 +379,19 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
         else:
             raise ValueError('DataFrame must have "bodyId" column.')
 
-    if roi.startswith('~'):
-        where = 'NOT '
-        roi = roi[1:]
-    else:
-        where = ''
+    roi = make_iterable(roi)
 
-    where += '(exists(s.`{}`)) AND (s.type="post")'.format(roi)
+    # Parse ROI restrictions
+    conditions = []
+    for r in roi:
+        if r.startswith('~'):
+            conditions.append('NOT exists(s.`{}`)'.format(r[1:]))
+        else:
+            conditions.append('exists(s.`{}`)'.format(r))
+
+    where = '({})'.format(' {} '.format(logic).join(conditions))
+    where += ' AND (s.type="post")'
+
     pre_with = ''
     pre_unwind = ''
 
@@ -384,7 +402,6 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
             else:
                 where += ' AND a.name=~"{}"'.format(source)
         elif isinstance(source, (np.ndarray, list, tuple)):
-            #where += ' AND a.bodyId IN {}'.format(list(np.array(source).astype(int)))
             where += ' AND a.bodyId=sid'
             pre_with = 'WITH {} AS sourceIds'.format(list(np.array(source).astype(int)))
             pre_unwind = 'UNWIND sourceIds AS sid'
@@ -398,7 +415,6 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, dataset='hemibrain'
             else:
                 where += ' AND b.name=~"{}"'.format(target)
         elif isinstance(target, (np.ndarray, list, tuple)):
-            #where += ' AND b.bodyId IN {}'.format(list(np.array(target).astype(int)))
             where += ' AND b.bodyId=tid'
             if not pre_with:
                 pre_with = 'WITH {} AS targetIds'.format(list(np.array(target).astype(int)))
