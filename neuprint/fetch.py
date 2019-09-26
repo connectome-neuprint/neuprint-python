@@ -558,7 +558,7 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
              """.format(dataset=dataset, datatype=datatype,
                         pre_with=', '.join(pre_with),
                         pre_unwind=', '.join(pre_unwind),
-                        where='AND '.join(where),
+                        where=' AND '.join(where),
                         ret=', '.join(ret))
 
     # Fetch data
