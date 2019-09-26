@@ -502,11 +502,9 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
         if not isinstance(roi, str):
             raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
         if roi.startswith('~'):
-            where += ' AND NOT '
-            roi = roi[1:]
+            where.append('NOT (exists(s.`{}`))'.format(roi[1:]))
         else:
-            where += ' AND '
-        where += '(exists(s.`{}`))'.format(roi)
+            where.append('(exists(s.`{}`))'.format(roi))
 
     pre_with = []
     pre_unwind = []
