@@ -17,20 +17,23 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 
+import versioneer
 import numpydoc
 import sphinx_bootstrap_theme
 
 # -- Project information -----------------------------------------------------
 
 project = 'neuprint-python'
-copyright = '2019, Philipp Schlegel'
-author = 'Philipp Schlegel'
+copyright = '2019, FlyEM, Philipp Schlegel'
+author = 'FlyEM, Philipp Schlegel'
 
 # The short X.Y version
-version = '0.1.2'
-# The full version, including alpha/beta/rc tags
-release = '0.1.2'
+os.chdir(os.path.dirname(__file__) + '/..')
+version = versioneer.get_version()
+os.chdir(os.path.dirname(__file__))
 
+# The full version, including alpha/beta/rc tags
+release = version
 
 # -- General configuration ---------------------------------------------------
 
