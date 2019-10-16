@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import copy
 import json
 import os
 import sys
@@ -63,9 +64,31 @@ class Client:
         if self.verbose:
             print('url:', url)
             print('cypher:', json.get('cypher'))
-        r = self.session.get(url, json=json)
-        r.raise_for_status()
-        return r
+
+        try:
+            r = self.session.get(url, json=json)
+            r.raise_for_status()
+            return r
+        except requests.RequestException as ex:
+            # If the error response had content (and it's not super-long),
+            # show that in the traceback, too.  neuprint might provide a useful
+            # error message in the response body.
+            if (ex.response is not None or ex.request is not None):
+                msg = ""
+                if (ex.request is not None):
+                    msg += "Error accessing {} {}\n".format(ex.request.method, ex.request.url)
+                    cypher = json.get('cypher')
+                    if cypher:
+                        msg += "Cypher was:\n{}\n".format(cypher)
+                
+                if (ex.response is not None and ex.response.content and len(ex.response.content) <= 200):
+                    msg += str(ex.args[0]) + "\n" + ex.response.content.decode('utf-8') + "\n"
+
+                new_ex = copy.copy(ex)
+                new_ex.args = (msg, *ex.args[1:])
+                raise new_ex from ex
+            else:
+                raise
 
     def _fetch_raw(self, url, json=None):
         return self._fetch(url, json=json).content
@@ -104,14 +127,8 @@ class Client:
             raise RuntimeError(msg)
         
         assert format in ('json', 'pandas')
-        try:
-            result = self._fetch_json("{}/api/custom/custom".format(self.server),
-                                      json={"cypher": cypher})
-        except Exception:
-            print('Error fetching cypher:')
-            print(cypher)
-            raise
-
+        result = self._fetch_json("{}/api/custom/custom".format(self.server),
+                                  json={"cypher": cypher})
         if format == 'json':
             return result
 
