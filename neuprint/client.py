@@ -77,12 +77,20 @@ class Client:
                 msg = ""
                 if (ex.request is not None):
                     msg += "Error accessing {} {}\n".format(ex.request.method, ex.request.url)
-                    cypher = json.get('cypher')
-                    if cypher:
-                        msg += "Cypher was:\n{}\n".format(cypher)
-                
-                if (ex.response is not None and ex.response.content and len(ex.response.content) <= 200):
-                    msg += str(ex.args[0]) + "\n" + ex.response.content.decode('utf-8') + "\n"
+
+                if (ex.response is not None and ex.response.content and len(ex.response.content) <= 1000):
+                        msg += str(ex.args[0]) + "\n" + ex.response.content.decode('utf-8') + "\n"
+                    
+                cypher = json.get('cypher')
+                if cypher:
+                    msg += "\nCypher was:\n\n{}\n".format(cypher)
+            
+                if (ex.response is not None and ex.response.content):
+                    try:
+                        err = ex.response.json()['error']
+                        msg += "\nReturned Error:\n\n{}".format(err)
+                    except Exception:
+                        pass
 
                 new_ex = copy.copy(ex)
                 new_ex.args = (msg, *ex.args[1:])
