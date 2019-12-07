@@ -23,9 +23,10 @@ class Client:
     set_global :    bool, optional
                     If True (default), will make this client global so that
                     you don't have to explicitly pass it to each function.
+    verify :        If True (default), enforce signed credentials.
     """
 
-    def __init__(self, server, token=None, set_global=True):
+    def __init__(self, server, token=None, set_global=True, verify=True):
         if token is None:
             token = os.environ.get('NEUPRINT_APPLICATION_CREDENTIALS')
 
@@ -52,6 +53,7 @@ class Client:
         self.session.headers.update({"Authorization": "Bearer " + token,
                                      "Content-type": "application/json"})
         self.verbose = False
+        self.verify = verify
 
         if set_global:
             self.make_global()
@@ -66,7 +68,7 @@ class Client:
             print('cypher:', json.get('cypher'))
 
         try:
-            r = self.session.get(url, json=json)
+            r = self.session.get(url, json=json, verify=self.verify)
             r.raise_for_status()
             return r
         except requests.RequestException as ex:
@@ -123,8 +125,11 @@ class Client:
         """
         return self._fetch_json("{}/api/dbmeta/datasets".format(self.server))
 
-    def fetch_custom(self, cypher, format='pandas'):
+    def fetch_custom(self, cypher, dataset="", format='pandas'):
         """ Fetch custom cypher.
+
+        Note: if a dataset is not specified, the default database will be used
+        and the caller must specify the dataset explicitly in the queries as needed.
         """
         if set("‘’“”").intersection(cypher):
             msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
@@ -136,7 +141,7 @@ class Client:
         
         assert format in ('json', 'pandas')
         result = self._fetch_json("{}/api/custom/custom".format(self.server),
-                                  json={"cypher": cypher})
+                json={"cypher": cypher, "dataset": dataset})
         if format == 'json':
             return result
 
