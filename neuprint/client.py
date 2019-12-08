@@ -57,6 +57,10 @@ class Client:
         self.current_transaction = None
         self.dataset = ""
 
+        if not verify:
+            from requests.packages.urllib3.exceptions import InsecureRequestWarning
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
         if set_global:
             self.make_global()
 
@@ -159,7 +163,8 @@ class Client:
     def start_transaction(self, dataset):
         """Starts a transaction of several cypher queries.
 
-        Note: admin permission only.
+        Note: admin permission only.  Setting the dataset is needed to choose
+        the proper database.
         """
 
         # remove previous transaction
@@ -206,10 +211,7 @@ class Client:
     def query_transaction(self, cypher, format='pandas'):
         """ Make a custom cypher query (allows writes).
 
-        Note: if a dataset is not specified, the default database will be used
-        and the caller must specify the dataset explicitly in the queries as needed.
-        Admin permission only.  The default dataset is used for the entire transaction.
-        Power users can still avoid a default dataset by setting the value to "".
+        Note: Admin permission only.  For this raw query, the dataset must be provided.
         """
         if self.current_transaction is None:
             raise RuntimeError("no transaction was created")
@@ -224,7 +226,7 @@ class Client:
         
         assert format in ('json', 'pandas')
         result = self._fetch_json("{}/api/raw/cypher/transaction/{}/cypher".format(self.server, self.current_transaction),
-                json={"cypher": cypher, "dataset": self.dataset}, ispost=True)
+                json={"cypher": cypher}, ispost=True)
         if format == 'json':
             return result
 
