@@ -226,7 +226,7 @@ class Client:
         
         assert format in ('json', 'pandas')
         result = self._fetch_json("{}/api/raw/cypher/transaction/{}/cypher".format(self.server, self.current_transaction),
-                json={"cypher": cypher}, ispost=True)
+                json={"cypher": cypher, "dataset": self.dataset}, ispost=True)
         if format == 'json':
             return result
 
