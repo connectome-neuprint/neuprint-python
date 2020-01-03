@@ -8,6 +8,14 @@ import pandas as pd
 import requests
 
 
+try:
+    # ujson is faster than Python's builtin json module;
+    # use it if the user happens to have it installed.
+    import ujson
+    _use_ujson = True
+except ImportError:
+    _use_ujson = False
+
 class Client:
     """ Holds your NeuPrint credentials and does the data fetching.
 
@@ -116,7 +124,10 @@ class Client:
         return self._fetch(url, json=json, ispost=ispost).content
 
     def _fetch_json(self, url, json=None, ispost=False):
-        return self._fetch(url, json=json, ispost=ispost).json()
+        if _use_ujson:
+            return ujson.loads(self._fetch(url, json=json, ispost=ispost).content)
+        else:
+            return self._fetch(url, json=json, ispost=ispost).json()
 
     def fetch_help(self):
         return self._fetch_raw("{}/api/help".format(self.server))
