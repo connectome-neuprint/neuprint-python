@@ -5,8 +5,13 @@ import os
 import sys
 
 import pandas as pd
-import requests
 
+import urllib3
+from urllib3.util.retry import Retry
+from urllib3.exceptions import InsecureRequestWarning
+
+from requests import Session, RequestException
+from requests.adapters import HTTPAdapter
 
 try:
     # ujson is faster than Python's builtin json module;
@@ -57,17 +62,22 @@ class Client:
             raise RuntimeError("Unknown protocol: {}".format(server.split('://')[0]))
 
         self.server = server
-        self.session = requests.Session()
+
+        self.session = Session()
         self.session.headers.update({"Authorization": "Bearer " + token,
                                      "Content-type": "application/json"})
+
+        # If the connection fails, retry a couple times.
+        retries = Retry(connect=2, backoff_factor=0.1)
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
+
         self.verbose = False
         self.verify = verify
         self.current_transaction = None
         self.dataset = ""
 
         if not verify:
-            from requests.packages.urllib3.exceptions import InsecureRequestWarning
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+            urllib3.disable_warnings(InsecureRequestWarning)
 
         if set_global:
             self.make_global()
@@ -89,7 +99,7 @@ class Client:
                 r = self.session.get(url, json=json, verify=self.verify)
             r.raise_for_status()
             return r
-        except requests.RequestException as ex:
+        except RequestException as ex:
             # If the error response had content (and it's not super-long),
             # show that in the traceback, too.  neuprint might provide a useful
             # error message in the response body.
