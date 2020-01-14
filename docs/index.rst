@@ -14,7 +14,7 @@ Make sure you have `Python 3 <https://www.python.org>`_,
 
 ::
 
-    pip install git+git://github.com/schlegelp/neuprint-python@master
+    pip install git+git://github.com/connectome-neuprint/neuprint-python@master
 
 
 What can ``neuprint-python`` do for you?

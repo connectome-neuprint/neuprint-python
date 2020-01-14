@@ -13,7 +13,7 @@ setup(
     description="Python client utilties for interacting with the neuPrint connectome analysis service",
     author="Philipp Schlegel",
     author_email='pms70@cam.ac.uk',
-    url='https://github.com/schlegelp/neuprint-python',
+    url='https://github.com/connectome-neuprint/neuprint-python',
     packages=['neuprint'],
     entry_points={},
     install_requires=requirements,

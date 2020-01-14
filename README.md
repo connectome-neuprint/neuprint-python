@@ -19,7 +19,7 @@ Otherwise, make sure you have [Python 3](https://www.python.org),
 [git](https://git-scm.com) installed. Then run this in terminal:
 
 ```shell
-pip install git+git://github.com/schlegelp/neuprint-python@master
+pip install git+git://github.com/connectome-neuprint/neuprint-python@master
 ```
 
 ## Getting started
