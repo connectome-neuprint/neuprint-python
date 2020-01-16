@@ -45,3 +45,5 @@ test:
 about:
   home: https://github.com/stuarteberg/neuprint-python
   summary: Python client utilties for interacting with the neuPrint connectome analysis service
+  license: BSD-3-Clause
+  license_file: LICENSE
