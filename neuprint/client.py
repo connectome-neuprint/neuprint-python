@@ -96,7 +96,8 @@ class Client:
             if ispost:
                 r = self.session.post(url, json=json, verify=self.verify)
             else:
-                r = self.session.get(url, json=json, verify=self.verify)
+                assert json is None, "Can't provide a body via GET method"
+                r = self.session.get(url, verify=self.verify)
             r.raise_for_status()
             return r
         except RequestException as ex:
@@ -174,7 +175,9 @@ class Client:
         
         assert format in ('json', 'pandas')
         result = self._fetch_json("{}/api/custom/custom".format(self.server),
-                json={"cypher": cypher, "dataset": dataset})
+                json={"cypher": cypher, "dataset": dataset},
+                ispost=True)
+
         if format == 'json':
             return result
 
