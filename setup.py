@@ -4,7 +4,7 @@ import versioneer
 
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
-    requirements = [l for l in requirements if not l.startswith('#')]
+    requirements = [l for l in requirements if not l.strip().startswith('#')]
 
 setup(
     name='neuprint-python',
@@ -19,8 +19,9 @@ setup(
     install_requires=requirements,
     keywords='neuprint-python',
     classifiers=[
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ]
 )
