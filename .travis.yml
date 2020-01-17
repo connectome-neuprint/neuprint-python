@@ -1,0 +1,54 @@
+language: minimal
+
+env:
+  global:
+    # Doctr deploy key for connectome-neuprint/neuprint-python
+    - secure: "QqeH+hSDoiyLg21OjUGv7XUp9EqkaHHCC6ywyzCpTHZxmhXVYge3t7IxzhZ+fBXWZNicYeLn8ZceyJV/A6wm7a3Q3MksvHSQGCEeiX6HvnZ/gNTBUevIjnTlZ/vXNsThMl0VdgqQSpHWbpxJnvtStohPiHZc5ICDG9l8lFxUKTJi8pzphJVzo9ty8VK06VL8voQ9baV94SeqcBrLhnd413hhkpAfHJyoMO/GyDx3kj3i9PxJrwHFQ/XgFMGaeqnYFJxJYRrjdcvuoZWhKMQaRBMwFfUlAsfrHMUawZZhjUiSfR6RoE0TsnKGExQJM5y4zhVokyTq0T3tqqvdPzdwtncXjm1eQx2uzwn9lQJcqK0wqasDj1u8dG4PlFc5HvNSPceYxo8yeQQhditHhwfjRtnwdYadjqLotHuttPRZSdedHLnj6SMvuLpWQR6mfPi0a6GUXEUL0dfR7wa9nSIt3FMXQrsHfDMi0HldjLjRzlTIltTWXxeEOpooHqvn9szA+VNB5SBz0k8g+1lVEjeTM/okLtGlBioelOPtDeC7I6kPLTFHMd1Ty8ppgTj9+gsNNAcVxmdu3Uq+hMY8TgWRwf8R8q5pCR5gRm0x5ZyXms0zhlYeQCnmsu4UzGpLL0JLMXGZNfSY35uSyaOdv4aZc7Kme10aQnPkuks+y3r1eg8="
+
+cache:
+  directories: /home/travis/miniconda
+
+before_cache:
+  # Don't cache build artifacts, or any metadata files that changed in the conda prefix
+  - rm -rf /home/travis/miniconda/conda-bld
+  - conda clean --lock --index-cache
+  - rm -rf /home/travis/miniconda/pkgs/neuprint-python*
+  - rm -rf /home/travis/miniconda/pkgs/urls.txt
+  - rm -rf /home/travis/miniconda/locks
+
+git:
+  # By default, travis uses git clone --depth=50,
+  # which may not be deep enough to capture the most recent tag,
+  # and the tags are necessary for our conda build.
+  # Force a full clone.
+  depth: false
+  
+install:
+  - if [ ! -e $HOME/miniconda/bin/conda ]; then
+      rm -rf $HOME/miniconda;
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      bash miniconda.sh -b -p $HOME/miniconda;
+    fi
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda config --add channels conda-forge
+  - conda config --add channels flyem-forge
+  - conda update -q conda
+  - conda install -y conda-build
+  - conda install -c conda-forge codecov
+  - conda info -a
+
+script:
+  conda build conda-recipe
+
+after_success:
+  - set -e
+  - conda install -y --use-local --only-deps neuprint-python
+  - conda install -y doctr nbsphinx numpydoc sphinx_bootstrap_theme sphinx=1.8.4 sphinxcontrib-napoleon
+  - cd docs && make html && cd -
+  - if [[ "${TRAVIS_BRANCH}" == "master" ]]; then
+      doctr deploy --no-require-master --built-docs docs/_build/html docs;
+    else
+      doctr deploy --no-require-master --built-docs docs/_build/html "docs-$TRAVIS_BRANCH";
+    fi
