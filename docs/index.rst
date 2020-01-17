@@ -1,76 +1,38 @@
 neuprint-python
 ===============
 
-``neuprint-python`` allows you to programmatically interact with the
-`neuPrint <https://github.com/connectome-neuprint>`_ connectome analysis
-service.
+Introduction to neuPrint and ``neuprint-python``
+------------------------------------------------
 
-Install
--------
+The `neuPrint project <https://github.com/connectome-neuprint>`_ defines
+a graph database structure and suite of tools for storing and analyzing
+connectomic data.
 
-Make sure you have `Python 3 <https://www.python.org>`_,
-`pip <https://pip.pypa.io/en/stable/installing/>`_ and
-`git <https://git-scm.com>`_ installed. Then run this in terminal:
-
-::
-
-    pip install git+git://github.com/connectome-neuprint/neuprint-python@master
+The best way to become acquainted with neuPrint's capabilities and data
+model is to experiment with a public neuprint database via the neuprint
+web UI.  Try exploring the `Janelia FlyEM Hemibrain neuprint database <https://neuprint-test.janelia.org/>`_.
 
 
-What can ``neuprint-python`` do for you?
-----------------------------------------
-This library mirrors some but not all of the widgets in the neuprint
-weblclient. Currently you can for example:
-
-- :func:`find <neuprint.fetch.find_neurons>` neurons based on name/body IDs
-- get neurons within a given :func:`roi <neuprint.fetch.fetch_neurons_in_roi>`
-- fetch custom :func:`cyphers <neuprint.fetch.fetch_custom>`
-- fetch :func:`connectivity <neuprint.fetch.fetch_connectivity>` table
-
-Check out the full :doc:`API </src/api>` and the examples below.
-
-Quickstart
-----------
-First, you will need your API token. You can get it through the neuPrint
-website.
-
-.. image:: ../examples/img/token-screenshot.png
-   :width: 50%
-   :alt: token screenshot
-   :align: left
+Once you're familiar with the basics, you're ready to start writing
+Python scripts to query the database programmatically.
+That's where this project comes in.  ``neuprint-python`` contains utilities
+for querying a neuprint database.
 
 
-Once you have your token, fire up Python and import neuprint.
-::
+Install neuprint-python
+-----------------------
 
-    import neuprint as neu
-
-    client = neu.Client('https://your.neuprintserver.com:8800', 'yourtoken')
+If you're using conda, use this command:
 
 
-**Important**: your client's authentication can go stale which will result
-in a ``ConnectionError``. In that case simply reinitalise the client
-(``client -  neu.Client(....``).
+.. code-block:: bash
 
-You should be all set now, so try this::
-
-    # Find all neurons with "MBON" in their name
-    mbons = neu.find_neurons('.*MBON.*')
-    mbons.head()
+    conda install -c flyem-forge neuprint-python
 
 
-Examples
---------
-
-Above quickstart example illustrated the use of
-:func:`~neuprint.fetch.find_neurons`. The result will be a DataFrame
-containing body Ids, status, names, etc. Most neuprint functions allow you
-to ask for additional properties::
+Otherwise, use ``pip``:
 
 
-    # Find MBONs and retrieve their soma location
-    mbons = neu.find_neurons('.*MBON.*', add_props=['somaLocation'])
-    mbons.head()
+.. code-block:: bash
 
-
-More examples to come soon!
+    pip install neuprint-python

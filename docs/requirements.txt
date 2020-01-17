@@ -3,3 +3,4 @@ nbsphinx
 numpydoc
 sphinx_bootstrap_theme
 sphinx==1.8.4
+sphinxcontrib-napoleon
