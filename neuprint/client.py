@@ -195,7 +195,7 @@ class Client:
         self.verbose = False
         self.verify = verify
         self.current_transaction = None
-        self.dataset = ""
+        self.dataset = dataset or ""
 
         if not verify:
             urllib3.disable_warnings(InsecureRequestWarning)
