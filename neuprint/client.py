@@ -123,7 +123,7 @@ def verbose_errors(f):
     return wrapper
 
 
-def neuprint_api_wrapper(f):
+def inject_client(f):
     """
     Decorator.
     Injects the default 'client' as a keyword argument
@@ -148,7 +148,7 @@ def neuprint_api_wrapper(f):
     return wrapper
 
 
-@neuprint_api_wrapper
+@inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
     Alternative form of Client.fetch_custom(), as a free function.
