@@ -31,6 +31,11 @@ NEUPRINT_CLIENTS = {}
 
 
 def default_client():
+    """
+    Obtain the default Client object to use.
+    This function returns a separate copy of the
+    default client for each thread (and process).
+    """
     global DEFAULT_NEUPRINT_CLIENT
 
     thread_id = threading.current_thread().ident
@@ -39,6 +44,11 @@ def default_client():
     try:
         c = NEUPRINT_CLIENTS[(thread_id, pid)]
     except KeyError:
+        if DEFAULT_NEUPRINT_CLIENT is None:
+            raise RuntimeError(
+                    "No default Client has been set yet. "
+                    "Please create a Client object to serve as the default")
+
         c = copy.deepcopy(DEFAULT_NEUPRINT_CLIENT)
         NEUPRINT_CLIENTS[(thread_id, pid)] = c
 
@@ -46,6 +56,9 @@ def default_client():
 
 
 def set_default_client(client):
+    """
+    Set (or overwrite) the default Client.
+    """
     global NEUPRINT_CLIENTS
     global DEFAULT_NEUPRINT_CLIENT
 
@@ -140,26 +153,75 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
     Alternative form of Client.fetch_custom(), as a free function.
     That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
+    
+    Args:
+        cypher:
+            A cypher query string
+        dataset:
+            Which neuprint dataset to query against.
+            If None provided, the client's default dataset is used.
+            If the client has no default dataset configured,
+            the server will use its own default.
+        format:
+            Either 'pandas' or 'json'.
+            Whether to load the results into a pandas DataFrame,
+            or return the server's raw JSON response as a Python dict.
+        client:
+            If not provided, the global default ``Client`` will be used.
+    
+    Returns:
+        Either json or DataFrame, depending on ``format``.
     """
     return client.fetch_custom(cypher, dataset, format)
 
 
 class Client:
-    """ Holds your NeuPrint credentials and does the data fetching.
+    '''
+    Used for all queries against neuprint.
+    Holds your authorization credentials, the dataset name to use,
+    and other connection settings.
+    
+    Most ``neuprint-python`` functions do not require you to explicitly
+    provide a Client object to use. Instead, the first ``Client`` you
+    create will be stored as the default ``Client`` to be used with all
+    ``neuprint-python`` functions if you don't explicitly specify one.
+    
+    Example:
+    
+        .. code-block:: python
+        
+            # Create a Client to be used globally.
+            c = Client('neuprint.janelia.org')
+            
+            # Subsequent calls use the global client implicitly.
+            fetch_custom("""\
+                MATCH (n: Neuron)
+                WHERE n.status = "Traced"
+                RETURN n.bodyId
+            """)
+    '''
+    def __init__(self, server, token=None, verify=True, dataset=None):
+        """
+        Client constructor.
+        
+        Args:
+            server:
+                URL of neuprintHttp server
 
-    Parameters
-    ----------
-    server :        str
-                    URL of server.
-    token :         str, optional
-                    NeuPrint token. Either pass explitily as an argument or set
-                    as NEUPRINT_APPLICATION_CREDENTIALS environment variable.
-                    Your token can be retrieved by clicking on your account in
-                    the NeuPrint web interface.
-    verify :        If True (default), enforce signed credentials.
-    """
+            token:
+                neuPrint token. Either pass explitily as an argument or set
+                as NEUPRINT_APPLICATION_CREDENTIALS environment variable.
+                Your token can be retrieved by clicking on your account in
+                the NeuPrint web interface.
 
-    def __init__(self, server, token=None, verify=True):
+            verify:
+                If True (default), enforce signed credentials.
+
+            dataset:
+                The dataset to run all queries against, e.g. 'hemibrain'.
+                If not provided, the server will use a default dataset for
+                all queries.
+        """
         if token is None:
             token = os.environ.get('NEUPRINT_APPLICATION_CREDENTIALS')
 
@@ -253,10 +315,26 @@ class Client:
 
 
     def fetch_custom(self, cypher, dataset="", format='pandas'):
-        """ Fetch custom cypher.
+        """
+        Query the neuprint server with a custom Cypher query.
+        
+        Args:
+            cypher:
+                A cypher query string
 
-        Note: if a dataset is not specified, the default database will be used
-        and the caller must specify the dataset explicitly in the queries as needed.
+            dataset:
+                Which neuprint dataset to query against.
+                If None provided, the client's default dataset is used.
+                If the client has no default dataset configured,
+                the server will use its own default.
+
+            format:
+                Either 'pandas' or 'json'.
+                Whether to load the results into a pandas DataFrame,
+                or return the server's raw JSON response as a Python dict.
+        
+        Returns:
+            Either json or DataFrame, depending on ``format``.
         """
         if set("‘’“”").intersection(cypher):
             msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
