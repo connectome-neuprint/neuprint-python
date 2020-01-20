@@ -70,6 +70,31 @@ def set_default_client(client):
     NEUPRINT_CLIENTS[(thread_id, pid)] = client
 
 
+def inject_client(f):
+    """
+    Decorator.
+    Injects the default 'client' as a keyword argument
+    onto the decorated function, if the user hasn't supplied
+    one herself.
+
+    In typical usage the user will create one Client object,
+    and use it with every neuprint function.
+    Rather than requiring the user to pass the the client
+    to every neuprint call, this decorator automatically
+    passes the default (global) Client.
+    """
+    argspec = inspect.getfullargspec(f)
+    assert 'client' in argspec.kwonlyargs, \
+        f"Cannot wrap {f.__name__}: neuprint API wrappers must accept 'client' as a keyword-only argument."
+    
+    @functools.wraps(f)
+    def wrapper(*args, client=None, **kwargs):
+        if client is None:
+            client = default_client()
+        return f(*args, **kwargs, client=client)
+    return wrapper
+
+
 def verbose_errors(f):
     """
     Decorator to be used with functions that directly fetch from neuprint.
@@ -120,31 +145,6 @@ def verbose_errors(f):
             # mark it as already modified it doesn't get modified twice.
             new_ex.response_content_appended = True
             raise new_ex from ex
-    return wrapper
-
-
-def inject_client(f):
-    """
-    Decorator.
-    Injects the default 'client' as a keyword argument
-    onto the decorated function, if the user hasn't supplied
-    one herself.
-
-    In typical usage the user will create one Client object,
-    and use it with every neuprint function.
-    Rather than requiring the user to pass the the client
-    to every neuprint call, this decorator automatically
-    passes the default (global) Client.
-    """
-    argspec = inspect.getfullargspec(f)
-    assert 'client' in argspec.kwonlyargs, \
-        f"Cannot wrap {f.__name__}: neuprint API wrappers must accept 'client' as a keyword-only argument."
-    
-    @functools.wraps(f)
-    def wrapper(*args, client=None, **kwargs):
-        if client is None:
-            client = default_client()
-        return f(*args, **kwargs, client=client)
     return wrapper
 
 
