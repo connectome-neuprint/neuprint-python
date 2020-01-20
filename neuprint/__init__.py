@@ -1,7 +1,9 @@
 import os
 import platform
-from .client import Client
+
+from .client import Client, default_client, set_default_client
 from .fetch import *
+
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions

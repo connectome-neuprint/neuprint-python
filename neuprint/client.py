@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import os
 import copy
 import json
-import os
-import sys
+import inspect
+import functools
+import threading
+import collections
 
 import pandas as pd
 
@@ -10,8 +13,9 @@ import urllib3
 from urllib3.util.retry import Retry
 from urllib3.exceptions import InsecureRequestWarning
 
-from requests import Session, RequestException
+from requests import Session, RequestException, HTTPError
 from requests.adapters import HTTPAdapter
+
 
 try:
     # ujson is faster than Python's builtin json module;
@@ -20,6 +24,124 @@ try:
     _use_ujson = True
 except ImportError:
     _use_ujson = False
+
+
+DEFAULT_NEUPRINT_CLIENT = None
+NEUPRINT_CLIENTS = {}
+
+
+def default_client():
+    global DEFAULT_NEUPRINT_CLIENT
+
+    thread_id = threading.current_thread().ident
+    pid = os.getpid()
+
+    try:
+        c = NEUPRINT_CLIENTS[(thread_id, pid)]
+    except KeyError:
+        c = copy.deepcopy(DEFAULT_NEUPRINT_CLIENT)
+        NEUPRINT_CLIENTS[(thread_id, pid)] = c
+
+    return c
+
+
+def set_default_client(client):
+    global NEUPRINT_CLIENTS
+    global DEFAULT_NEUPRINT_CLIENT
+
+    thread_id = threading.current_thread().ident
+    pid = os.getpid()
+
+    DEFAULT_NEUPRINT_CLIENT = client
+    NEUPRINT_CLIENTS.clear()
+    NEUPRINT_CLIENTS[(thread_id, pid)] = client
+
+
+def verbose_errors(f):
+    """
+    Decorator to be used with functions that directly fetch from neuprint.
+    If the decorated function fails due to a RequestException,
+    extra information is added to the exception text.
+    """
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except RequestException as ex:
+            # If the error response body is non-empty, show that in the traceback, too.
+            # neuprint-http error messages are often helpful -- show them!
+            if hasattr(ex, 'response_content_appended') or (ex.response is None and ex.request is None):
+                raise # Nothing to add to the exception.
+
+            msg = ""
+
+            # Show the endpoint
+            if (ex.request is not None):
+                msg += f"Error accessing {ex.request.method} {ex.request.url}\n"
+
+            if isinstance(ex, HTTPError):
+                # If the user's arguments included a 'json' argument
+                # containing a 'cypher' key query, show it.
+                callargs = inspect.getcallargs(f, *args, **kwargs)
+                if 'json' in callargs and isinstance(callargs['json'], collections.abc.Mapping):
+                    cypher = callargs['json'].get('cypher')
+                    if cypher:
+                        msg += f"\nCypher was:\n\n{cypher}\n"
+
+            # Show the server's error message
+            if ex.response is not None:
+                msg += f"\nReturned Error"
+                if hasattr(ex.response, 'status_code'):
+                    msg += f" ({ex.response.status_code})"
+                if ex.response.content:
+                    try:
+                        err = ex.response.json()['error']
+                        msg += f":\n\n{err}"
+                    except Exception:
+                        pass
+            
+            new_ex = copy.copy(ex)
+            new_ex.args = (msg, *ex.args[1:])
+            
+            # In case this decorator is used twice in a nested call,
+            # mark it as already modified it doesn't get modified twice.
+            new_ex.response_content_appended = True
+            raise new_ex from ex
+    return wrapper
+
+
+def neuprint_api_wrapper(f):
+    """
+    Decorator.
+    Injects the default 'client' as a keyword argument
+    onto the decorated function, if the user hasn't supplied
+    one herself.
+
+    In typical usage the user will create one Client object,
+    and use it with every neuprint function.
+    Rather than requiring the user to pass the the client
+    to every neuprint call, this decorator automatically
+    passes the default (global) Client.
+    """
+    argspec = inspect.getfullargspec(f)
+    assert 'client' in argspec.kwonlyargs, \
+        f"Cannot wrap {f.__name__}: neuprint API wrappers must accept 'client' as a keyword-only argument."
+    
+    @functools.wraps(f)
+    def wrapper(*args, client=None, **kwargs):
+        if client is None:
+            client = default_client()
+        return f(*args, **kwargs, client=client)
+    return wrapper
+
+
+@neuprint_api_wrapper
+def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
+    """
+    Alternative form of Client.fetch_custom(), as a free function.
+    That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
+    """
+    return client.fetch_custom(cypher, dataset, format)
 
 
 class Client:
@@ -34,13 +156,10 @@ class Client:
                     as NEUPRINT_APPLICATION_CREDENTIALS environment variable.
                     Your token can be retrieved by clicking on your account in
                     the NeuPrint web interface.
-    set_global :    bool, optional
-                    If True (default), will make this client global so that
-                    you don't have to explicitly pass it to each function.
     verify :        If True (default), enforce signed credentials.
     """
 
-    def __init__(self, server, token=None, set_global=True, verify=True):
+    def __init__(self, server, token=None, verify=True):
         if token is None:
             token = os.environ.get('NEUPRINT_APPLICATION_CREDENTIALS')
 
@@ -60,7 +179,8 @@ class Client:
         elif server.startswith('http://'):
             raise RuntimeError("Server must be https, not http")
         elif not server.startswith('https://'):
-            raise RuntimeError("Unknown protocol: {}".format(server.split('://')[0]))
+            protocol = server.split('://')[0]
+            raise RuntimeError(f"Unknown protocol: {protocol}")
 
         self.server = server
 
@@ -80,60 +200,26 @@ class Client:
         if not verify:
             urllib3.disable_warnings(InsecureRequestWarning)
 
-        if set_global:
-            self.make_global()
+        # Set this as the default client if there isn't one already
+        global DEFAULT_NEUPRINT_CLIENT
+        if DEFAULT_NEUPRINT_CLIENT is None:
+            set_default_client(self)
 
-    def make_global(self):
-        """Sets this variable as global by attaching it as sys.module"""
-        sys.modules['NEUPRINT_CLIENT'] = self
 
+    @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
-        if self.verbose:
-            print('url:', url)
-            if json is not None:
-                print('cypher:', json.get('cypher'))
+        if ispost:
+            r = self.session.post(url, json=json, verify=self.verify)
+        else:
+            assert json is None, "Can't provide a body via GET method"
+            r = self.session.get(url, verify=self.verify)
+        r.raise_for_status()
+        return r
 
-        try:
-            if ispost:
-                r = self.session.post(url, json=json, verify=self.verify)
-            else:
-                assert json is None, "Can't provide a body via GET method"
-                r = self.session.get(url, verify=self.verify)
-            r.raise_for_status()
-            return r
-        except RequestException as ex:
-            # If the error response had content (and it's not super-long),
-            # show that in the traceback, too.  neuprint might provide a useful
-            # error message in the response body.
-            if (ex.response is not None or ex.request is not None):
-                msg = ""
-                if (ex.request is not None):
-                    msg += "Error accessing {} {}\n".format(ex.request.method, ex.request.url)
-
-                if (ex.response is not None and ex.response.content and len(ex.response.content) <= 1000):
-                        msg += str(ex.args[0]) + "\n" + ex.response.content.decode('utf-8') + "\n"
-                    
-
-                if json is not None:
-                    cypher = json.get('cypher')
-                    if cypher:
-                        msg += "\nCypher was:\n\n{}\n".format(cypher)
-                
-                if (ex.response is not None and ex.response.content):
-                    try:
-                        err = ex.response.json()['error']
-                        msg += "\nReturned Error:\n\n{}".format(err)
-                    except Exception:
-                        pass
-
-                new_ex = copy.copy(ex)
-                new_ex.args = (msg, *ex.args[1:])
-                raise new_ex from ex
-            else:
-                raise
 
     def _fetch_raw(self, url, json=None, ispost=False):
         return self._fetch(url, json=json, ispost=ispost).content
+
 
     def _fetch_json(self, url, json=None, ispost=False):
         if _use_ujson:
@@ -141,24 +227,30 @@ class Client:
         else:
             return self._fetch(url, json=json, ispost=ispost).json()
 
+
     def fetch_help(self):
-        return self._fetch_raw("{}/api/help".format(self.server))
+        return self._fetch_raw(f"{self.server}/api/help")
+
 
     def fetch_version(self):
-        return self._fetch_json("{}/api/version".format(self.server))
+        return self._fetch_json(f"{self.server}/api/version")
+
 
     def fetch_available(self):
-        return self._fetch_json("{}/api/available".format(self.server))
+        return self._fetch_json(f"{self.server}/api/available")
+
 
     def fetch_database(self):
         """ Fetch available datasets.
         """
-        return self._fetch_json("{}/api/dbmeta/database".format(self.server))
+        return self._fetch_json(f"{self.server}/api/dbmeta/database")
+
 
     def fetch_datasets(self):
         """ Fetch available datasets.
         """
-        return self._fetch_json("{}/api/dbmeta/datasets".format(self.server))
+        return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
+
 
     def fetch_custom(self, cypher, dataset="", format='pandas'):
         """ Fetch custom cypher.
@@ -175,15 +267,19 @@ class Client:
             raise RuntimeError(msg)
         
         assert format in ('json', 'pandas')
-        result = self._fetch_json("{}/api/custom/custom".format(self.server),
-                json={"cypher": cypher, "dataset": dataset},
-                ispost=True)
+        
+        dataset = dataset or self.dataset
+        
+        result = self._fetch_json(f"{self.server}/api/custom/custom",
+                                  json={"cypher": cypher, "dataset": dataset},
+                                  ispost=True)
 
         if format == 'json':
             return result
 
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
+
 
     def start_transaction(self, dataset):
         """Starts a transaction of several cypher queries.
@@ -200,10 +296,11 @@ class Client:
             pass
 
         self.dataset = dataset
-        result = self._fetch_json("{}/api/raw/cypher/transaction".format(self.server), 
+        result = self._fetch_json(f"{self.server}/api/raw/cypher/transaction", 
                 json={"dataset": dataset}, ispost=True)
         self.current_transaction = result["transaction_id"]
         return
+
 
     def kill_transaction(self):
         """Kills (rolls back) transaction.
@@ -215,9 +312,10 @@ class Client:
 
         oldtrans = self.current_transaction
         self.current_transaction = None
-        self._fetch_json("{}/api/raw/cypher/transaction/{}/kill".format(self.server, oldtrans), ispost=True)
+        self._fetch_json(f"{self.server}/api/raw/cypher/transaction/{oldtrans}/kill", ispost=True)
         
         return
+
 
     def commit_transaction(self):
         """Commits transaction.
@@ -229,10 +327,11 @@ class Client:
         oldtrans = self.current_transaction
         self.current_transaction = None
 
-        self._fetch_json("{}/api/raw/cypher/transaction/{}/commit".format(self.server, oldtrans), ispost=True)
+        self._fetch_json(f"{self.server}/api/raw/cypher/transaction/{oldtrans}/commit", ispost=True)
 
         return
 
+    
     def query_transaction(self, cypher, format='pandas'):
         """ Make a custom cypher query (allows writes).
 
@@ -250,8 +349,9 @@ class Client:
             raise RuntimeError(msg)
         
         assert format in ('json', 'pandas')
-        result = self._fetch_json("{}/api/raw/cypher/transaction/{}/cypher".format(self.server, self.current_transaction),
-                json={"cypher": cypher, "dataset": self.dataset}, ispost=True)
+        result = self._fetch_json(f"{self.server}/api/raw/cypher/transaction/{self.current_transaction}/cypher",
+                                  json={"cypher": cypher, "dataset": self.dataset},
+                                  ispost=True)
         if format == 'json':
             return result
 
