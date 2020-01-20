@@ -2,26 +2,34 @@ import pandas as pd
 import numpy as np
 
 from .utils import eval_client, make_iterable, parse_properties
+from .client import inject_client
 
 
-def fetch_custom(cypher, client=None, format='pandas'):
-    """ Fetch custom cypher.
-
-    Parameters
-    ----------
-    cypher :    str
-                Cypher to fetch.
-    client :    neuprint.Client, optional
-                If ``None`` will try using global client.
-
-    Returns
-    -------
-    pandas.DataFrame
+@inject_client
+def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
-
-    client = eval_client(client)
-
-    return client.fetch_custom(cypher, format=format)
+    Alternative form of Client.fetch_custom(), as a free function.
+    That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
+    
+    Args:
+        cypher:
+            A cypher query string
+        dataset:
+            Which neuprint dataset to query against.
+            If None provided, the client's default dataset is used.
+            If the client has no default dataset configured,
+            the server will use its own default.
+        format:
+            Either 'pandas' or 'json'.
+            Whether to load the results into a pandas DataFrame,
+            or return the server's raw JSON response as a Python dict.
+        client:
+            If not provided, the global default ``Client`` will be used.
+    
+    Returns:
+        Either json or DataFrame, depending on ``format``.
+    """
+    return client.fetch_custom(cypher, dataset, format)
 
 
 def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
