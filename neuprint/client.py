@@ -309,6 +309,13 @@ class Client:
         Returns:
             Either json or DataFrame, depending on ``format``.
         """
+        url = f"{self.server}/api/custom/custom"
+        return self._fetch_cypher(url, cypher, dataset, format)
+    
+
+    def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
+        assert format in ('json', 'pandas')
+        
         if set("‘’“”").intersection(cypher):
             msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
                    " which are not valid characters in cypher."
@@ -317,11 +324,9 @@ class Client:
                    + cypher)
             raise RuntimeError(msg)
         
-        assert format in ('json', 'pandas')
-        
         dataset = dataset or self.dataset
         
-        result = self._fetch_json(f"{self.server}/api/custom/custom",
+        result = self._fetch_json(url,
                                   json={"cypher": cypher, "dataset": dataset},
                                   ispost=True)
 
@@ -330,83 +335,4 @@ class Client:
 
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
-
-
-    def start_transaction(self, dataset):
-        """Starts a transaction of several cypher queries.
-
-        Note: admin permission only.  Setting the dataset is needed to choose
-        the proper database.
-        """
-
-        # remove previous transaction
-        try:
-            if self.current_transaction is not None:
-                self.kill_transaction()
-        except:
-            pass
-
-        self.dataset = dataset
-        result = self._fetch_json(f"{self.server}/api/raw/cypher/transaction", 
-                json={"dataset": dataset}, ispost=True)
-        self.current_transaction = result["transaction_id"]
-        return
-
-
-    def kill_transaction(self):
-        """Kills (rolls back) transaction.
-
-        Note: admin permission only.
-        """
-        if self.current_transaction is None:
-            raise RuntimeError("no transaction was created")
-
-        oldtrans = self.current_transaction
-        self.current_transaction = None
-        self._fetch_json(f"{self.server}/api/raw/cypher/transaction/{oldtrans}/kill", ispost=True)
-        
-        return
-
-
-    def commit_transaction(self):
-        """Commits transaction.
-
-        Note: admin permission only.
-        """
-        if self.current_transaction is None:
-            raise RuntimeError("no transaction was created")
-        oldtrans = self.current_transaction
-        self.current_transaction = None
-
-        self._fetch_json(f"{self.server}/api/raw/cypher/transaction/{oldtrans}/commit", ispost=True)
-
-        return
-
-    
-    def query_transaction(self, cypher, format='pandas'):
-        """ Make a custom cypher query (allows writes).
-
-        Note: Admin permission only.  For this raw query, the dataset must be provided.
-        """
-        if self.current_transaction is None:
-            raise RuntimeError("no transaction was created")
-        
-        if set("‘’“”").intersection(cypher):
-            msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
-                   " which are not valid characters in cypher."
-                   " Please replace them with ordinary quotes (e.g. 'foo' or \"foo\").\n"
-                   "Your query was:\n"
-                   + cypher)
-            raise RuntimeError(msg)
-        
-        assert format in ('json', 'pandas')
-        result = self._fetch_json(f"{self.server}/api/raw/cypher/transaction/{self.current_transaction}/cypher",
-                                  json={"cypher": cypher, "dataset": self.dataset},
-                                  ispost=True)
-        if format == 'json':
-            return result
-
-        df = pd.DataFrame(result['data'], columns=result['columns'])
-        return df
-
 
