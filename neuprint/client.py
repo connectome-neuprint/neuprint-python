@@ -257,35 +257,187 @@ class Client:
 
 
     def _fetch_json(self, url, json=None, ispost=False):
+        r = self._fetch(url, json=json, ispost=ispost)
+        
         if _use_ujson:
-            return ujson.loads(self._fetch(url, json=json, ispost=ispost).content)
+            return ujson.loads(r.content)
         else:
-            return self._fetch(url, json=json, ispost=ispost).json()
+            return r.json()
 
-
-    def fetch_help(self):
-        return self._fetch_raw(f"{self.server}/api/help")
-
-
-    def fetch_version(self):
-        return self._fetch_json(f"{self.server}/api/version")
-
+    ##
+    ## API-META
+    ##
 
     def fetch_available(self):
+        """
+        Fetch the list of REST API endpoints supported by the server.
+        """
         return self._fetch_json(f"{self.server}/api/available")
 
 
+    def fetch_help(self):
+        """
+        Fetch auto-generated REST API documentation, as YAML text.
+        """
+        return self._fetch_raw(f"{self.server}/api/help/swagger.yaml").decode('utf-8')
+
+
+    def fetch_server_info(self):
+        """
+        Returns whether or not the server is public.
+        """
+        return self._fetch_json(f"{self.server}/api/serverinfo")['IsPublic']
+
+
+    def fetch_version(self):
+        return self._fetch_json(f"{self.server}/api/version")['Version']
+
+    ##
+    ## DB-META
+    ##
+
     def fetch_database(self):
-        """ Fetch available datasets.
+        """
+        Fetch the address of the neo4j database that the neuprint server is using.
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/database")
 
 
     def fetch_datasets(self):
-        """ Fetch available datasets.
+        """
+        Fetch basic information about the available datasets on the server.
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
 
+
+    def fetch_instances(self):
+        """
+        Fetch secondary data instances avaiable through neupint http
+        """
+        return self._fetch_json(f"{self.server}/api/dbmeta/instances")
+
+    
+    def fetch_db_version(self):
+        """
+        Fetch the database version
+        """
+        return self._fetch_json(f"{self.server}/api/dbmeta/version")['Version']
+
+    ##
+    ## USER
+    ##
+
+    def fetch_profile(self):
+        """
+        Fetch basic information about your user profile,
+        including your access level.
+        """
+        return self._fetch_json(f"{self.server}/profile")
+
+
+    def fetch_token(self):
+        """
+        Fetch your user authentication token.
+        
+        Note:
+            This method just echoes the token back to you for debug purposes
+            To obtain your token for the first time, use the neuprint explorer
+            web UI to login and obtain your token as explained elsewhere in
+            this documentation.
+        """
+        return self._fetch_json(f"{self.server}/token")['token']
+
+    
+    ##
+    ## Cached
+    ##
+    
+    def fetch_daily_type(self, format='pandas'):
+        """
+        Return information about today's cell type of the day.
+        
+        The server updates the completeness numbers each day. A different
+        cell type is randomly picked and an exemplar is chosen
+        from this type.
+
+        Returns:
+            If ``format='json'``, a dictionary is returned with keys
+            ``['info', 'connectivity', 'skeleton']``.
+            If ``format='pandas'``, three values are returned:
+            ``(info, connectivity, skeleton)``, where ``connectivity``
+            and ``skeleton`` are DataFrames.
+        """
+        assert format in ('json', 'pandas')
+        url = f"{self.server}/api/cached/dailytype?dataset={self.dataset}"
+        result = self._fetch_json(url, ispost=False)
+        if format == 'json':
+            return result
+        
+        conn_df = pd.DataFrame(result['connectivity']['data'],
+                               columns=result['connectivity']['columns']) 
+        skel_df = pd.DataFrame(result['skeleton']['data'],
+                               columns=result['skeleton']['columns'])
+
+        return result['info'], conn_df, skel_df
+
+    
+    def fetch_roi_completeness(self, format='pandas'):
+        """
+        Fetch the pre-computed traced "completeness" statistics
+        for each primary ROI in the dataset.
+        
+        The completeness statistics indicate how many synapses
+        belong to Traced neurons.
+        
+        Note:
+            These results are not computed on-the-fly.
+            They are computed periodically and cached.
+        """
+        assert format in ('json', 'pandas')
+        url = f"{self.server}/api/cached/roicompleteness?dataset={self.dataset}"
+        result = self._fetch_json(url, ispost=False)
+        if format == 'json':
+            return result
+        
+        df = pd.DataFrame(result['data'], columns=result['columns'])
+        return df
+
+
+    def fetch_roi_connectivity(self, format='pandas'):
+        """
+        Fetch the pre-computed connectivity statistics
+        between primary ROIs in the dataset.
+        
+        Note:
+            These results are not computed on-the-fly.
+            They are computed periodically and cached.
+        """
+        assert format in ('json', 'pandas')
+        url = f"{self.server}/api/cached/roiconnectivity?dataset={self.dataset}"
+        result = self._fetch_json(url, ispost=False)
+        if format == 'json':
+            return result
+        
+        # Example result:
+        # {
+        #    "roi_names": [['ME(R)', "a'L(L)", 'aL(L)', ...]],
+        #    "weights": {
+        #       'EPA(R)=>gL(L)': {'count': 7, 'weight': 1.253483174941712},
+        #       'EPA(R)=>gL(R)': {'count': 29, 'weight': 2.112117795621343},
+        #       'FB=>AB(L)': {'count': 62, 'weight': 230.11732347331355},
+        #       'FB=>AB(R)': {'count': 110, 'weight': 496.733276906109},
+        #       ...
+        #    }
+        # }
+        
+        weights = [(*k.split('=>'), v['count'], v['weight']) for k,v in result["weights"].items()]
+        df = pd.DataFrame(weights, columns=['from_roi', 'to_roi', 'count', 'weight'])
+        return df
+
+    ##
+    ## CUSTOM QUERIES
+    ##
+    ## Note: Transaction queries are not implemented here.  See admin.py
 
     def fetch_custom(self, cypher, dataset="", format='pandas'):
         """
@@ -296,6 +448,9 @@ class Client:
                 A cypher query string
 
             dataset:
+                Deprecated.
+                Please provide your dataset as a Client constructor argument.
+                
                 Which neuprint dataset to query against.
                 If None provided, the client's default dataset is used.
                 If the client has no default dataset configured,
@@ -314,6 +469,10 @@ class Client:
     
 
     def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
+        """
+        Fetch cypher from an endpoint.
+        Called by fetch_custom and by Transaction queries.
+        """
         assert format in ('json', 'pandas')
         
         if set("‘’“”").intersection(cypher):
@@ -336,3 +495,39 @@ class Client:
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
 
+    ##
+    ## SKELETONS
+    ##
+    def fetch_skeleton(self, body, format='swc'):
+        """
+        Fetch the skeleton for a neuron or segment.
+        
+        Args:
+            body:
+                int. A neuron or segment ID
+            
+            format:
+                Either 'swc' (a text format), 'json', or 'pandas'.
+        
+        Returns:
+            Either a string (swc), dict (json), or a DataFrame (pandas). 
+        """
+        assert format in ('swc', 'json', 'pandas'), \
+            f'Invalid format: {format}'
+        
+        try:
+            body = int(body)
+        except ValueError:
+            raise RuntimeError(f"Please pass an integer body ID, not '{body}'")
+
+        url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}"
+        if format == 'swc':
+            url += '?format=swc'
+            return self._fetch_raw(url, ispost=False).decode('utf-8')
+
+        result = self._fetch_json(url, ispost=False)
+        if format == 'json':
+            return result
+
+        df = pd.DataFrame(result['data'], columns=result['columns'])
+        return df
