@@ -3,6 +3,7 @@ import os
 import copy
 import json
 import inspect
+import logging
 import functools
 import threading
 import collections
@@ -16,7 +17,6 @@ from urllib3.exceptions import InsecureRequestWarning
 from requests import Session, RequestException, HTTPError
 from requests.adapters import HTTPAdapter
 
-
 try:
     # ujson is faster than Python's builtin json module;
     # use it if the user happens to have it installed.
@@ -26,6 +26,7 @@ except ImportError:
     _use_ujson = False
 
 
+logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
 NEUPRINT_CLIENTS = {}
 
@@ -227,19 +228,28 @@ class Client:
         retries = Retry(connect=2, backoff_factor=0.1)
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
-        self.verbose = False
         self.verify = verify
-        self.current_transaction = None
-        self.dataset = dataset or ""
-
         if not verify:
             urllib3.disable_warnings(InsecureRequestWarning)
 
+        all_datasets = [*self.fetch_datasets().keys()]
+        if len(all_datasets) == 0:
+            raise RuntimeError(f"The neuprint server {self.server} has no datasets!")
+
+        if len(all_datasets) == 1 and not dataset:
+            self.dataset = all_datasets[0]
+            logger.info(f"Initializing neuprint.Client with dataset: {self.dataset}")
+        elif dataset in all_datasets:
+            self.dataset = dataset
+        else:
+            raise RuntimeError(f"Dataset '{dataset}' does not exist on"
+                               f" the neuprint server ({self.server}).\n"
+                               f"Available datasets: {all_datasets}")
+            
         # Set this as the default client if there isn't one already
         global DEFAULT_NEUPRINT_CLIENT
         if DEFAULT_NEUPRINT_CLIENT is None:
             set_default_client(self)
-
 
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
