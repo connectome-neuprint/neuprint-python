@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.fetch &mdash; neuprint-python 0.1.12+17.gb1baa8d documentation</title>
+  <title>neuprint.fetch &mdash; neuprint-python 0.1.12+19.ga9f487c documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.1.12+17.gb1baa8d
+                0.1.12+19.ga9f487c
               </div>
             
           
@@ -148,11 +148,20 @@
            <div itemprop="articleBody">
             
   <h1>Source code for neuprint.fetch</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_iterable</span><span class="p">,</span> <span class="n">parse_properties</span>
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># ujson is faster than Python&#39;s builtin json module;</span>
+    <span class="c1"># use it if the user happens to have it installed.</span>
+    <span class="kn">import</span> <span class="nn">ujson</span> <span class="k">as</span> <span class="nn">json</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">json</span>
 
 
 <div class="viewcode-block" id="fetch_custom"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_custom">[docs]</a><span class="nd">@inject_client</span>
@@ -276,8 +285,8 @@
     <span class="c1"># Now remove tildes</span>
     <span class="n">roi</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">]</span>
 
-    <span class="n">roiPre</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;roiInfo.</span><span class="si">{r}</span><span class="s1">.pre as pre_</span><span class="si">{r}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">])</span>
-    <span class="n">roiPost</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;roiInfo.</span><span class="si">{r}</span><span class="s1">.post as post_</span><span class="si">{r}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">])</span>
+    <span class="n">roiPre</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;roiInfo.`</span><span class="si">{r}</span><span class="s1">`.pre as `pre_</span><span class="si">{r}</span><span class="s1">`&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">])</span>
+    <span class="n">roiPost</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;roiInfo.`</span><span class="si">{r}</span><span class="s1">`.post as `post_</span><span class="si">{r}</span><span class="s1">`&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">])</span>
     <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39; </span><span class="si">{logic}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
 
     <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
@@ -475,6 +484,88 @@
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;relation&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
 
+<span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_traced_adjacencies</span><span class="p">(</span><span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        export_dir:</span>
+<span class="sd">            Optional. Export CSV files for the neuron table,</span>
+<span class="sd">            connection table (total weight), and connection table (per ROI).</span>
+<span class="sd">            </span>
+<span class="sd">        batch_size:</span>
+<span class="sd">            For optimal performance, connections will be fetched in batches.</span>
+<span class="sd">            This parameter specifies the batch size.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Two DataFrames: (traced_neurons_df, roi_conn_df)</span>
+<span class="sd">        </span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        </span>
+<span class="sd">        .. code-block: python</span>
+<span class="sd">        </span>
+<span class="sd">            neurons_df, roi_conn_df = fetch_traced_adjacencies(&#39;exported-connections&#39;)</span>
+
+<span class="sd">            # Obtain total weights (instead of per-connection-per-ROI weights)</span>
+<span class="sd">            conn_df = roi_conn_df.groupby([&#39;bodyId_a&#39;, &#39;bodyId_b&#39;]).sum()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Fetch the list of traced, non-cropped Neurons</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">        MATCH (n:Neuron)</span>
+<span class="s2">        WHERE n.status = &quot;Traced&quot; AND (not n.cropped)</span>
+<span class="s2">        RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">traced_neurons_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    
+    <span class="c1"># Fetch connections in batches</span>
+    <span class="n">conn_tables</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">traced_neurons_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">batch_size</span>
+        <span class="n">batch_neurons</span> <span class="o">=</span> <span class="n">traced_neurons_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">            MATCH (n:Neuron) - [e:ConnectsTo] -&gt; (m:Neuron)</span>
+<span class="s2">            WHERE n.bodyId in </span><span class="si">{batch_neurons}</span><span class="s2"> AND m.status = &quot;Traced&quot; AND (not m.cropped)</span>
+<span class="s2">            RETURN n.bodyId as bodyId_a, m.bodyId as bodyId_b, e.weight as weight, e.roiInfo as roiInfo</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="p">)</span>
+    
+    <span class="c1"># Combine batches</span>
+    <span class="n">connections_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">conn_tables</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="c1"># Parse roiInfo json</span>
+    <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+
+    <span class="c1"># Extract per-ROI counts from the roiInfo column</span>
+    <span class="c1"># to construct one big table of per-ROI counts</span>
+    <span class="n">roi_connections</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">connections_df</span><span class="o">.</span><span class="n">itertuples</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">roi_connections</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">row</span><span class="o">.</span><span class="n">bodyId_a</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">bodyId_b</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                            <span class="k">for</span> <span class="n">roi</span><span class="p">,</span> <span class="n">weights</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">roiInfo</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+    
+    <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">roi_connections</span><span class="p">,</span>
+                               <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_a&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_b&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;roi_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;roi_post&#39;</span><span class="p">])</span>
+    
+    <span class="k">if</span> <span class="n">export_dir</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">export_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Export Nodes</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/traced-neurons.csv&quot;</span>
+        <span class="n">traced_neurons_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1"># Export Edges (per ROI)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/traced-roi-connections.csv&quot;</span>
+        <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Export Edges (total weight)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/traced-connections.csv&quot;</span>
+        <span class="n">total_conn_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;body_a&#39;</span><span class="p">,</span> <span class="s1">&#39;body_b&#39;</span><span class="p">])[[</span><span class="s1">&#39;roi_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;roi_post&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="nb">sum</span><span class="p">)</span>
+        <span class="n">total_conn_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">traced_neurons_df</span><span class="p">,</span> <span class="n">roi_conn_df</span>
+    
+        
 <div class="viewcode-block" id="fetch_connectivity_in_roi"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_connectivity_in_roi">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_connectivity_in_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logic</span><span class="o">=</span><span class="s1">&#39;AND&#39;</span><span class="p">,</span>
                               <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span>
