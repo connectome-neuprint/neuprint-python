@@ -1,4 +1,4 @@
-![build-badge](https://api.travis-ci.com/connectome-neuprint/neuprint-python.svg?branch=master)
+[![Build Status](https://travis-ci.com/connectome-neuprint/neuprint-python.svg?branch=master)](https://travis-ci.com/connectome-neuprint/neuprint-python)
 ![docs-badge](docs/source/_static/docs-badge.svg)
 
 neuprint-python
