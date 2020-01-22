@@ -575,7 +575,17 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
         ret += [f'b.{p} AS target_{p}' for p in add_props]
 
     ret = ', '.join(ret)
-    
+        
+    # MATCH (n:`hemibrain_Neuron`)-[:ConnectsTo]-(m:`hemibrain_Neuron`),
+    #       (n)-[:Contains]->(nss:SynapseSet),
+    #       (m)-[:Contains]->(mss:SynapseSet),
+    #       (nss)-[:ConnectsTo]-(mss),
+    #       (mss)-[:Contains]->(ms:Synapse),
+    #       (nss)-[:Contains]->(ns:Synapse),
+    #       (ns)-[:SynapsesTo]-(ms)
+    # WHERE n.`SNP(R)` AND m.`SNP(R)` AND ns.`SNP(R)` AND n.bodyId=294424196
+    # RETURN n.bodyId AS source, m.bodyId AS target, count(*) AS synapses
+
     cypher = f"""\
              {pre_with} {pre_unwind}
              MATCH (a:`{dataset}_{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}_{datatype}`), (c)-[:Contains]->(s:Synapse)
