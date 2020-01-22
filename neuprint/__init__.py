@@ -4,8 +4,6 @@ import platform
 from .client import Client, default_client, set_default_client
 from .queries import *
 
-from . import deprecated
-
 from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
