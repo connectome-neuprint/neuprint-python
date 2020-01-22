@@ -67,7 +67,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
         table of neuron IDs and the per-ROI connection table, respectively.
 
     Note:
-        On the hemibrain dataset, this function takes ~7 minutes to run,
+        On the hemibrain dataset, this function takes a few minutes to run,
         and the results results are somewhat large (~300 MB).
     
     Example:
@@ -100,6 +100,13 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     ##
     ## TODO: Options to specify non-cropped, etc.
     ##
+    
+    # Fetch the list of primary ROIs
+    q = """
+        MATCH (m:Meta)
+        RETURN m.primaryRois as rois
+    """
+    primary_rois = client.fetch_custom(q)['rois'].iloc[0]
     
     # Fetch the list of traced, non-cropped Neurons
     q = """\
@@ -137,6 +144,9 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     
     roi_conn_df = pd.DataFrame(roi_connections,
                                columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
+    
+    # Filter out non-primary ROIs
+    roi_conn_df = roi_conn_df.query('roi in @primary_rois or roi == "None"')
     
     # Export to CSV
     if export_dir:
