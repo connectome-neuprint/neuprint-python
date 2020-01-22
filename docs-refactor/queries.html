@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Queries &mdash; neuprint-python 0.1.12+14.gf7ee2ff documentation</title>
+  <title>Queries &mdash; neuprint-python 0.1.12+17.gb1baa8d documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.1.12+14.gf7ee2ff
+                0.1.12+17.gb1baa8d
               </div>
             
           
@@ -173,9 +173,7 @@ That is, <code class="docutils literal notranslate"><span class="pre">fetch_cust
 <li><strong>cypher</strong> – A cypher query string</li>
 <li><strong>dataset</strong> – <p><em>Deprecated. Please provide your dataset as a Client constructor argument.</em></p>
 <p>Which neuprint dataset to query against.
-If None provided, the client’s default dataset is used.
-If the client has no default dataset configured,
-the server will use its own default.</p>
+If None provided, the client’s default dataset is used.</p>
 </li>
 <li><strong>format</strong> – Either ‘pandas’ or ‘json’.
 Whether to load the results into a pandas DataFrame,
@@ -226,7 +224,7 @@ postsynapses, name, soma or status.</li>
 
 <dl class="function">
 <dt id="neuprint.fetch_neurons_in_roi">
-<code class="descclassname">neuprint.</code><code class="descname">fetch_neurons_in_roi</code><span class="sig-paren">(</span><em>roi</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>logic='AND'</em>, <em>add_props=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_neurons_in_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_neurons_in_roi" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">fetch_neurons_in_roi</code><span class="sig-paren">(</span><em>roi</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>logic='AND'</em>, <em>add_props=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_neurons_in_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_neurons_in_roi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch all neurons within given ROI.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -260,7 +258,7 @@ postsynapses, name, soma or status.</li>
 
 <dl class="function">
 <dt id="neuprint.find_neurons">
-<code class="descclassname">neuprint.</code><code class="descname">find_neurons</code><span class="sig-paren">(</span><em>x</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#find_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.find_neurons" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">find_neurons</code><span class="sig-paren">(</span><em>x</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#find_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.find_neurons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find neurons by name or body ID.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -293,7 +291,7 @@ postsynapses, name, soma or status.</li>
 
 <dl class="function">
 <dt id="neuprint.fetch_connectivity">
-<code class="descclassname">neuprint.</code><code class="descname">fetch_connectivity</code><span class="sig-paren">(</span><em>x</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_connectivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_connectivity" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">fetch_connectivity</code><span class="sig-paren">(</span><em>x</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_connectivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_connectivity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch connectivity table for given neuron</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -326,7 +324,7 @@ postsynapses, name, soma or status.</li>
 
 <dl class="function">
 <dt id="neuprint.fetch_connectivity_in_roi">
-<code class="descclassname">neuprint.</code><code class="descname">fetch_connectivity_in_roi</code><span class="sig-paren">(</span><em>roi</em>, <em>source=None</em>, <em>target=None</em>, <em>logic='AND'</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_connectivity_in_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_connectivity_in_roi" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">fetch_connectivity_in_roi</code><span class="sig-paren">(</span><em>roi</em>, <em>source=None</em>, <em>target=None</em>, <em>logic='AND'</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_connectivity_in_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_connectivity_in_roi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch connectivity within ROI between given neuron(s).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -381,7 +379,7 @@ postsynapses, name, soma or status.</li>
 
 <dl class="function">
 <dt id="neuprint.fetch_edges">
-<code class="descclassname">neuprint.</code><code class="descname">fetch_edges</code><span class="sig-paren">(</span><em>source</em>, <em>target=None</em>, <em>roi=None</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_edges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_edges" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">fetch_edges</code><span class="sig-paren">(</span><em>source</em>, <em>target=None</em>, <em>roi=None</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>add_props=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_edges"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_edges" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch edges between given neuron(s).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -418,7 +416,7 @@ postsynapses, name, soma or status.</li>
 
 <dl class="function">
 <dt id="neuprint.fetch_synapses">
-<code class="descclassname">neuprint.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>x</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_synapses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_synapses" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>x</em>, <em>dataset='hemibrain'</em>, <em>datatype='Neuron'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_synapses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_synapses" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch synapses for given body ID(s)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />

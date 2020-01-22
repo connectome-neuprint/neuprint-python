@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.fetch &mdash; neuprint-python 0.1.12+14.gf7ee2ff documentation</title>
+  <title>neuprint.fetch &mdash; neuprint-python 0.1.12+17.gb1baa8d documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.1.12+14.gf7ee2ff
+                0.1.12+17.gb1baa8d
               </div>
             
           
@@ -151,7 +151,7 @@
 <span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">eval_client</span><span class="p">,</span> <span class="n">make_iterable</span><span class="p">,</span> <span class="n">parse_properties</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_iterable</span><span class="p">,</span> <span class="n">parse_properties</span>
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 
 
@@ -173,8 +173,6 @@
 <span class="sd">            </span>
 <span class="sd">            Which neuprint dataset to query against.</span>
 <span class="sd">            If None provided, the client&#39;s default dataset is used.</span>
-<span class="sd">            If the client has no default dataset configured,</span>
-<span class="sd">            the server will use its own default.</span>
 
 <span class="sd">        format:</span>
 <span class="sd">            Either &#39;pandas&#39; or &#39;json&#39;.</span>
@@ -188,6 +186,7 @@
 <span class="sd">        Either json or DataFrame, depending on ``format``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="custom_search"><a class="viewcode-back" href="../../queries.html#neuprint.custom_search">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">custom_search</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">props</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">],</span> <span class="n">logic</span><span class="o">=</span><span class="s1">&#39;AND&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span>
@@ -219,25 +218,23 @@
 <span class="sd">    pandas.DataFrame</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">eval_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
     <span class="n">x</span> <span class="o">=</span> <span class="n">make_iterable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
-    <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39; </span><span class="si">{}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logic</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;n.</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39; </span><span class="si">{logic}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;n.</span><span class="si">{s}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
     <span class="n">ret</span> <span class="o">=</span> <span class="n">parse_properties</span><span class="p">(</span><span class="n">props</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">)</span>
 
-    <span class="n">cypher</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">             MATCH (n :`</span><span class="si">{datatype}</span><span class="s2">`)</span>
+    <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">             MATCH (n :`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`)</span>
 <span class="s2">             WHERE </span><span class="si">{where}</span><span class="s2"></span>
 <span class="s2">             RETURN </span><span class="si">{ret}</span><span class="s2"></span>
-<span class="s2">             &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span>
-                        <span class="n">ret</span><span class="o">=</span><span class="n">ret</span><span class="p">)</span>
+<span class="s2">             &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_neurons_in_roi"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_neurons_in_roi">[docs]</a><span class="k">def</span> <span class="nf">fetch_neurons_in_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span>
-                         <span class="n">logic</span><span class="o">=</span><span class="s1">&#39;AND&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="fetch_neurons_in_roi"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_neurons_in_roi">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_neurons_in_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span>
+                         <span class="n">logic</span><span class="o">=</span><span class="s1">&#39;AND&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Fetch all neurons within given ROI.</span>
 
 <span class="sd">    Parameters</span>
@@ -266,41 +263,40 @@
 <span class="sd">    pandas.DataFrame</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">eval_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
     <span class="n">roi</span> <span class="o">=</span> <span class="n">make_iterable</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span>
 
     <span class="c1"># Parse ROI</span>
     <span class="n">conditions</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">):</span>
-            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;NOT exists(n.`</span><span class="si">{}</span><span class="s1">`)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NOT exists(n.`</span><span class="si">{r[1:]}</span><span class="s1">`)&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;n.`</span><span class="si">{}</span><span class="s1">`=true&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;n.`</span><span class="si">{r}</span><span class="s1">`=true&#39;</span><span class="p">)</span>
 
     <span class="c1"># Now remove tildes</span>
     <span class="n">roi</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">]</span>
 
-    <span class="n">cypher</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<span class="s2">             MATCH (n :`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`)</span>
+    <span class="n">roiPre</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;roiInfo.</span><span class="si">{r}</span><span class="s1">.pre as pre_</span><span class="si">{r}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">])</span>
+    <span class="n">roiPost</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;roiInfo.</span><span class="si">{r}</span><span class="s1">.post as post_</span><span class="si">{r}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">])</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39; </span><span class="si">{logic}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+
+    <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">             MATCH (n :`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`)</span>
 <span class="s2">             WHERE </span><span class="si">{where}</span><span class="s2"> WITH n AS n, apoc.convert.fromJsonMap(n.roiInfo) AS roiInfo</span>
 <span class="s2">             RETURN n.bodyId AS bodyId, n.size AS size, n.status AS status,</span>
 <span class="s2">                    n.pre AS pre, n.post AS post, </span><span class="si">{roiPre}</span><span class="s2">, </span><span class="si">{roiPost}</span><span class="s2"></span>
-<span class="s2">             &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span>
-                        <span class="n">roiPre</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;roiInfo.</span><span class="si">{0}</span><span class="s1">.pre as pre_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">]),</span>
-                        <span class="n">roiPost</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;roiInfo.</span><span class="si">{0}</span><span class="s1">.post as post_</span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">]),</span>
-                        <span class="n">where</span><span class="o">=</span><span class="s1">&#39; </span><span class="si">{}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logic</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conditions</span><span class="p">))</span>
+<span class="s2">             &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">add_props</span><span class="p">:</span>
         <span class="n">add_props</span> <span class="o">=</span> <span class="n">add_props</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">add_props</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">add_props</span><span class="p">)</span>
         <span class="n">cypher</span> <span class="o">+=</span> <span class="s1">&#39;,&#39;</span>
-        <span class="n">cypher</span> <span class="o">+=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;n.</span><span class="si">{0}</span><span class="s1"> AS </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">])</span>
+        <span class="n">cypher</span> <span class="o">+=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;n.</span><span class="si">{p}</span><span class="s1"> AS </span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">])</span>
 
     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="find_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.find_neurons">[docs]</a><span class="k">def</span> <span class="nf">find_neurons</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="find_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.find_neurons">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">find_neurons</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Find neurons by name or body ID.</span>
 
 <span class="sd">    Parameters</span>
@@ -309,14 +305,17 @@
 <span class="sd">                Search string. Can be body ID(s), neuron name or wildcard/regex</span>
 <span class="sd">                names (e.g. &quot;MBON.*&quot;). Body IDs can also be provided as</span>
 <span class="sd">                list-like or DataFrame with &quot;bodyId&quot; column.</span>
+
 <span class="sd">    dataset :   str, optional</span>
 <span class="sd">                Which dataset to query. See ``neuprint.Client.fetch_datasets``</span>
 <span class="sd">                for available datasets.</span>
+
 <span class="sd">    datatype :  str, optional</span>
 <span class="sd">                Data type to search for. Depends on dataset. For</span>
 <span class="sd">                ``dataset=&#39;hemibrain&#39;`` options are &quot;Neuron&quot; and &quot;Segment&quot;.</span>
 <span class="sd">                The former is limited to bodies with either &gt;=2 pre-, &gt;= 10</span>
 <span class="sd">                postsynapses, name, soma or status.</span>
+
 <span class="sd">    add_props : iterable, optional</span>
 <span class="sd">                Additional neuron properties to be returned.</span>
 <span class="sd">    client :    neuprint.Client, optional</span>
@@ -335,23 +334,24 @@
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId=</span><span class="si">{x}</span><span class="s1">&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;name=~&quot;</span><span class="si">{x}</span><span class="s1">&quot;&#39;</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]):</span>
             <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]):</span>
-                <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId IN </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)))</span>
+                <span class="n">body_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId IN </span><span class="si">{body_list}</span><span class="s1">&#39;</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;List can only be numeric body IDs&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]):</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId IN </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId IN {list(x)}&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;List can only be numeric body IDs&#39;</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)):</span>
-        <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId=</span><span class="si">{x}</span><span class="s1">&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unable to process data of type &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unable to process data of type &quot;{type(x)}&quot;&#39;</span><span class="p">)</span>
 
     <span class="n">props</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">]</span>
 
@@ -363,8 +363,8 @@
                          <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_connectivity"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_connectivity">[docs]</a><span class="k">def</span> <span class="nf">fetch_connectivity</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span>
-                       <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="fetch_connectivity"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_connectivity">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_connectivity</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Fetch connectivity table for given neuron</span>
 
 <span class="sd">    Parameters</span>
@@ -373,9 +373,11 @@
 <span class="sd">                Neuron filter. Can be body ID, neuron name or wildcard names</span>
 <span class="sd">                (e.g. &quot;MBON.*&quot;). Accepts regex. Body IDs can be given as</span>
 <span class="sd">                list.</span>
+
 <span class="sd">    dataset :   str, optional</span>
 <span class="sd">                Which dataset to query. See ``neuprint.Client.fetch_datasets``</span>
 <span class="sd">                for available datasets.</span>
+
 <span class="sd">    datatype :  str, optional</span>
 <span class="sd">                Data type to search for. Depends on dataset. For</span>
 <span class="sd">                ``dataset=&#39;hemibrain&#39;`` options are &quot;Neuron&quot; and &quot;Segment&quot;.</span>
@@ -401,14 +403,14 @@
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId=</span><span class="si">{x}</span><span class="s1">&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;name=~&quot;</span><span class="si">{x}</span><span class="s1">&quot;&#39;</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
         <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=bid&#39;</span>
-        <span class="n">pre</span> <span class="o">=</span> <span class="s1">&#39;WITH </span><span class="si">{}</span><span class="s1"> AS bodyIds UNWIND bodyIds AS bid&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;WITH {list(x)} AS bodyIds UNWIND bodyIds AS bid&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId=</span><span class="si">{x}</span><span class="s1">&#39;</span>
 
     <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;m.name AS name1&#39;</span><span class="p">,</span> <span class="s1">&#39;n.name AS name2&#39;</span><span class="p">,</span> <span class="s1">&#39;e.weight AS weight&#39;</span><span class="p">,</span>
            <span class="s1">&#39;n.bodyId AS body2&#39;</span><span class="p">,</span> <span class="s1">&#39;id(m) AS id1&#39;</span><span class="p">,</span> <span class="s1">&#39;id(n) AS id2&#39;</span><span class="p">,</span>
@@ -416,17 +418,16 @@
            <span class="s1">&#39;e.weightHP AS WeightHP&#39;</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">add_props</span><span class="p">:</span>
-        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;n.</span><span class="si">{}</span><span class="s1"> as </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;n.</span><span class="si">{p}</span><span class="s1"> as </span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">eval_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
-    <span class="n">cypher</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    
+    <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">             </span><span class="si">{pre}</span><span class="s2"></span>
-<span class="s2">             MATCH (m:`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`)-[e:ConnectsTo]-(n)</span>
+<span class="s2">             MATCH (m:`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`)-[e:ConnectsTo]-(n)</span>
 <span class="s2">             WHERE m.</span><span class="si">{where}</span><span class="s2"></span>
 <span class="s2">             RETURN </span><span class="si">{ret}</span><span class="s2"></span>
-<span class="s2">             &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span>
-                        <span class="n">ret</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">),</span> <span class="n">pre</span><span class="o">=</span><span class="n">pre</span><span class="p">)</span>
+<span class="s2">             &quot;&quot;&quot;</span>
 
     <span class="c1"># Fetch data</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">)</span>
@@ -443,7 +444,7 @@
     <span class="c1"># Pivot such that each row is a connected neuron</span>
     <span class="n">to_keep</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name2&#39;</span><span class="p">,</span> <span class="s1">&#39;body2&#39;</span><span class="p">,</span> <span class="s1">&#39;relation&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">add_props</span><span class="p">:</span>
-        <span class="n">to_keep</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
+        <span class="n">to_keep</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
 
     <span class="n">p</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;body1&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">to_keep</span><span class="p">)</span>
 
@@ -474,9 +475,10 @@
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;relation&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_connectivity_in_roi"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_connectivity_in_roi">[docs]</a><span class="k">def</span> <span class="nf">fetch_connectivity_in_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logic</span><span class="o">=</span><span class="s1">&#39;AND&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="fetch_connectivity_in_roi"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_connectivity_in_roi">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_connectivity_in_roi</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">logic</span><span class="o">=</span><span class="s1">&#39;AND&#39;</span><span class="p">,</span>
                               <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span>
-                              <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                              <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Fetch connectivity within ROI between given neuron(s).</span>
 
 <span class="sd">    Parameters</span>
@@ -551,11 +553,12 @@
     <span class="n">conditions</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">roi</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">):</span>
-            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;NOT exists(s.`</span><span class="si">{}</span><span class="s1">`)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NOT exists(s.`</span><span class="si">{r[1:]}</span><span class="s1">`)&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;exists(s.`</span><span class="si">{}</span><span class="s1">`)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+            <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;exists(s.`</span><span class="si">{r}</span><span class="s1">`)&#39;</span><span class="p">)</span>
 
-    <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; </span><span class="si">{}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">logic</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conditions</span><span class="p">))</span>
+    <span class="n">conditions</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39; </span><span class="si">{logic}</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">conditions</span><span class="p">)</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{conditions}</span><span class="s1">)&#39;</span>
     <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND (s.type=&quot;post&quot;)&#39;</span>
 
     <span class="n">pre_with</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
@@ -564,49 +567,49 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-                <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND a.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="n">where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; AND a.bodyId=</span><span class="si">{source}</span><span class="s1">&#39;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND a.name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="n">where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; AND a.name=~&quot;</span><span class="si">{source}</span><span class="s1">&quot;&#39;</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND a.bodyId=sid&#39;</span>
-            <span class="n">pre_with</span> <span class="o">=</span> <span class="s1">&#39;WITH </span><span class="si">{}</span><span class="s1"> AS sourceIds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)))</span>
+            <span class="n">pre_with</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;WITH </span><span class="si">{source}</span><span class="s1"> AS sourceIds&#39;</span>
             <span class="n">pre_unwind</span> <span class="o">=</span> <span class="s1">&#39;UNWIND sourceIds AS sid&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND a.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; AND a.bodyId=</span><span class="si">{source}</span><span class="s1">&#39;</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-                <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND b.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="n">where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; AND b.bodyId=</span><span class="si">{target}</span><span class="s1">&#39;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND b.name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="n">where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; AND b.name=~&quot;</span><span class="si">{target}</span><span class="s1">&quot;&#39;</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND b.bodyId=tid&#39;</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">pre_with</span><span class="p">:</span>
-                <span class="n">pre_with</span> <span class="o">=</span> <span class="s1">&#39;WITH </span><span class="si">{}</span><span class="s1"> AS targetIds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)))</span>
+                <span class="n">pre_with</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;WITH </span><span class="si">{target}</span><span class="s1"> AS targetIds&#39;</span>
                 <span class="n">pre_unwind</span> <span class="o">+=</span> <span class="s1">&#39;UNWIND targetIds AS tid&#39;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">pre_with</span> <span class="o">+=</span> <span class="s1">&#39;, </span><span class="si">{}</span><span class="s1"> AS targetIds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)))</span>
+                <span class="n">pre_with</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, </span><span class="si">{target}</span><span class="s1"> AS targetIds&#39;</span>
                 <span class="n">pre_unwind</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">UNWIND targetIds AS tid&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span> <span class="o">+=</span> <span class="s1">&#39; AND b.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; AND b.bodyId=</span><span class="si">{target}</span><span class="s1">&#39;</span>
 
     <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a.bodyId AS source&#39;</span><span class="p">,</span> <span class="s1">&#39;b.bodyId AS target&#39;</span><span class="p">,</span> <span class="s1">&#39;count(*) AS synapses&#39;</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">add_props</span><span class="p">:</span>
-        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;a.</span><span class="si">{}</span><span class="s1"> AS source_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
-        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;b.</span><span class="si">{}</span><span class="s1"> AS target_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;a.</span><span class="si">{p}</span><span class="s1"> AS source_</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;b.</span><span class="si">{p}</span><span class="s1"> AS target_</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">eval_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
-    <span class="n">cypher</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    
+    <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">             </span><span class="si">{pre_with}</span><span class="s2"> </span><span class="si">{pre_unwind}</span><span class="s2"></span>
-<span class="s2">             MATCH (a:`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`)&lt;-[:From]-(c:ConnectionSet)-[:To]-&gt;(b:`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`), (c)-[:Contains]-&gt;(s:Synapse)</span>
+<span class="s2">             MATCH (a:`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`)&lt;-[:From]-(c:ConnectionSet)-[:To]-&gt;(b:`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`), (c)-[:Contains]-&gt;(s:Synapse)</span>
 <span class="s2">             WHERE </span><span class="si">{where}</span><span class="s2"></span>
 <span class="s2">             RETURN </span><span class="si">{ret}</span><span class="s2"></span>
-<span class="s2">             &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span>
-                        <span class="n">pre_with</span><span class="o">=</span><span class="n">pre_with</span><span class="p">,</span> <span class="n">pre_unwind</span><span class="o">=</span><span class="n">pre_unwind</span><span class="p">,</span>
-                        <span class="n">ret</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
+<span class="s2">             &quot;&quot;&quot;</span>
 
     <span class="c1"># Fetch data</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">)</span>
@@ -614,8 +617,9 @@
     <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;synapses&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_edges"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_edges">[docs]</a><span class="k">def</span> <span class="nf">fetch_edges</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span>
-                <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="fetch_edges"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_edges">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_edges</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span>
+                <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">add_props</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Fetch edges between given neuron(s).</span>
 
 <span class="sd">    Parameters</span>
@@ -663,14 +667,14 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;source and target must not both be &quot;None&quot;&#39;</span><span class="p">)</span>
 
-    <span class="n">where</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;(s.type=&quot;post&quot;)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">roi</span><span class="p">)]</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;(s.type=&quot;post&quot;)&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected ROI as str, got &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">roi</span><span class="p">)))</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Expected ROI as str, got &quot;{type(roi)}&quot;&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">roi</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">):</span>
-            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;NOT (exists(s.`</span><span class="si">{}</span><span class="s1">`))&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">roi</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NOT (exists(s.`</span><span class="si">{roi[1:]}</span><span class="s1">`))&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;(exists(s.`</span><span class="si">{}</span><span class="s1">`))&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">roi</span><span class="p">))</span>
+            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;(exists(s.`</span><span class="si">{roi}</span><span class="s1">`))&#39;</span><span class="p">)</span>
 
     <span class="n">pre_with</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">pre_unwind</span> <span class="o">=</span> <span class="p">[]</span>
@@ -678,24 +682,26 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;a.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;a.bodyId=</span><span class="si">{source}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;a.name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;a.name=~&quot;</span><span class="si">{source}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;a.bodyId=sid&#39;</span><span class="p">)</span>
-            <span class="n">pre_with</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> AS sourceIds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">source</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))))</span>
+            <span class="n">pre_with</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{source}</span><span class="s1"> AS sourceIds&#39;</span><span class="p">)</span>
             <span class="n">pre_unwind</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;sourceIds AS sid&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;a.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;a.bodyId=</span><span class="si">{source}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;b.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
+                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;b.bodyId=</span><span class="si">{target}</span><span class="s1">&#39;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;b.name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
+                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;b.name=~&quot;</span><span class="si">{target}</span><span class="s1">&quot;&#39;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-            <span class="n">pre_with</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> AS targetIds&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))))</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">pre_with</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{target}</span><span class="s1"> AS targetIds&#39;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">pre_with</span><span class="p">:</span>
                 <span class="c1"># Only unwind targets if we aren&#39;t already unwinding sources</span>
                 <span class="n">pre_unwind</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;targetIds AS tid&#39;</span><span class="p">)</span>
@@ -703,27 +709,26 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;b.bodyId IN targetIds&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;b.bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
+            <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;b.bodyId=</span><span class="si">{target}</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;a.bodyId AS source&#39;</span><span class="p">,</span> <span class="s1">&#39;b.bodyId AS target&#39;</span><span class="p">,</span> <span class="s1">&#39;count(*) AS synapses&#39;</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">add_props</span><span class="p">:</span>
-        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;a.</span><span class="si">{}</span><span class="s1"> AS source_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
-        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;b.</span><span class="si">{}</span><span class="s1"> AS target_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;a.</span><span class="si">{p}</span><span class="s1"> AS source_</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
+        <span class="n">ret</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;b.</span><span class="si">{p}</span><span class="s1"> AS target_</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">add_props</span><span class="p">]</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">eval_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
-    <span class="n">cypher</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">pre_with</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pre_with</span><span class="p">),</span>
+    <span class="n">pre_unwind</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pre_unwind</span><span class="p">),</span>
+    <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">where</span><span class="p">),</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+    
+    <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">             WITH </span><span class="si">{pre_with}</span><span class="s2"></span>
 <span class="s2">             UNWIND </span><span class="si">{pre_unwind}</span><span class="s2"></span>
-<span class="s2">             MATCH (a:`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`)&lt;-[:From]-(c:ConnectionSet)-[:To]-&gt;(b:`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`), (c)-[:Contains]-&gt;(s:Synapse)</span>
+<span class="s2">             MATCH (a:`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`)&lt;-[:From]-(c:ConnectionSet)-[:To]-&gt;(b:`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`), (c)-[:Contains]-&gt;(s:Synapse)</span>
 <span class="s2">             WHERE </span><span class="si">{where}</span><span class="s2"></span>
 <span class="s2">             RETURN </span><span class="si">{ret}</span><span class="s2"></span>
-<span class="s2">             &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span>
-                        <span class="n">pre_with</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pre_with</span><span class="p">),</span>
-                        <span class="n">pre_unwind</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pre_unwind</span><span class="p">),</span>
-                        <span class="n">where</span><span class="o">=</span><span class="s1">&#39; AND &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">where</span><span class="p">),</span>
-                        <span class="n">ret</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
+<span class="s2">             &quot;&quot;&quot;</span>
 
     <span class="c1"># Fetch data</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">)</span>
@@ -731,7 +736,8 @@
     <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;synapses&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_synapses"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_synapses">[docs]</a><span class="k">def</span> <span class="nf">fetch_synapses</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="fetch_synapses"><a class="viewcode-back" href="../../queries.html#neuprint.fetch_synapses">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_synapses</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Fetch synapses for given body ID(s)</span>
 
 <span class="sd">    Parameters</span>
@@ -766,27 +772,22 @@
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId=</span><span class="si">{x}</span><span class="s1">&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;name=~&quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;name=~&quot;</span><span class="si">{x}</span><span class="s1">&quot;&#39;</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
         <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=bid&#39;</span>
-        <span class="n">pre</span> <span class="o">=</span> <span class="s1">&#39;WITH </span><span class="si">{}</span><span class="s1"> AS bodyIds UNWIND bodyIds AS bid&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">pre</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;WITH {list(x)} AS bodyIds UNWIND bodyIds AS bid&#39;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">where</span> <span class="o">=</span> <span class="s1">&#39;bodyId=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bodyId=</span><span class="si">{x}</span><span class="s1">&#39;</span>
 
-    <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;n.bodyId as bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;s&#39;</span><span class="p">]</span>
-
-    <span class="n">client</span> <span class="o">=</span> <span class="n">eval_client</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
-
-    <span class="n">cypher</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+    <span class="n">cypher</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">             </span><span class="si">{pre}</span><span class="s2"></span>
-<span class="s2">             MATCH (n:`</span><span class="si">{dataset}</span><span class="s2">-</span><span class="si">{datatype}</span><span class="s2">`)-[:Contains]-&gt;(ss:SynapseSet),</span>
+<span class="s2">             MATCH (n:`</span><span class="si">{dataset}</span><span class="s2">_</span><span class="si">{datatype}</span><span class="s2">`)-[:Contains]-&gt;(ss:SynapseSet),</span>
 <span class="s2">                   (ss)-[:Contains]-&gt;(s:Synapse)</span>
 <span class="s2">             WHERE n.</span><span class="si">{where}</span><span class="s2"></span>
-<span class="s2">             RETURN </span><span class="si">{ret}</span><span class="s2"></span>
-<span class="s2">             &quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span> <span class="n">datatype</span><span class="o">=</span><span class="n">datatype</span><span class="p">,</span> <span class="n">where</span><span class="o">=</span><span class="n">where</span><span class="p">,</span>
-                        <span class="n">ret</span><span class="o">=</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">),</span> <span class="n">pre</span><span class="o">=</span><span class="n">pre</span><span class="p">)</span>
+<span class="s2">             RETURN &#39;n.bodyId as bodyId, s&#39;</span>
+<span class="s2">             &quot;&quot;&quot;</span>
 
     <span class="c1"># Get data</span>
     <span class="n">r</span> <span class="o">=</span> <span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)</span>
