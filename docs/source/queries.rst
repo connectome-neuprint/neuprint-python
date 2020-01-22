@@ -28,6 +28,7 @@ But the functions in this file offer a convenient API for common queries.
 
 .. autofunction:: fetch_neurons_in_roi
 .. autofunction:: find_neurons
+.. autofunction:: fetch_traced_adjacencies
 .. autofunction:: fetch_connectivity
 .. autofunction:: fetch_connectivity_in_roi
 .. autofunction:: fetch_edges
