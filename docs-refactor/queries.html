@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Queries &mdash; neuprint-python 0.1.12+19.ga9f487c documentation</title>
+  <title>Queries &mdash; neuprint-python 0.1.12+19.gc1811aa documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.1.12+19.ga9f487c
+                0.1.12+19.gc1811aa
               </div>
             
           
@@ -287,6 +287,61 @@ postsynapses, name, soma or status.</li>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.fetch_traced_adjacencies">
+<code class="descclassname">neuprint.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/fetch.html#fetch_traced_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.
+Synapses which do not fall on any ROI will be listed as having ROI ‘None’.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>export_dir</strong> – Optional. Export CSV files for the neuron table,
+connection table (total weight), and connection table (per ROI).</li>
+<li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
+This parameter specifies the batch size.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df)</span></code>, containing the
+table of neuron IDs and the per-ROI connection table, respectively.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On the hemibrain dataset, this function takes ~7 minutes to run,
+and the results results are somewhat large (~300 MB).</p>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">fetch_traced_adjacencies</span><span class="p">(</span><span class="s1">&#39;exported-connections&#39;</span><span class="p">)</span>
+
+<span class="gp">In [2]: </span><span class="n">roi_conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[2]:</span>
+<span class="go">       bodyId_pre  bodyId_post        roi  weight</span>
+<span class="go">0      5813009352    516098538     SNP(R)       2</span>
+<span class="go">1      5813009352    516098538     SLP(R)       2</span>
+<span class="go">2       326119769    516098538     SNP(R)       1</span>
+<span class="go">3       326119769    516098538     SLP(R)       1</span>
+<span class="go">4       915960391    202916528         FB       1</span>
+
+<span class="gp">In [3]: </span><span class="c1"># Obtain total weights (instead of per-connection-per-ROI weights)</span>
+<span class="gp">   ...: </span><span class="n">conn_groups</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">total_conn_df</span> <span class="o">=</span> <span class="n">conn_groups</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gp">   ...: </span><span class="n">total_conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[3]:</span>
+<span class="go">   bodyId_pre  bodyId_post  weight</span>
+<span class="go">0   202916528    203253253       2</span>
+<span class="go">1   202916528    203257652       2</span>
+<span class="go">2   202916528    203598557       2</span>
+<span class="go">3   202916528    234292899       4</span>
+<span class="go">4   202916528    264986706       2</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
