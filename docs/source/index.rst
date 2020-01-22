@@ -48,6 +48,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   quickstart
    client
    queries
    deprecated
