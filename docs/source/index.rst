@@ -13,7 +13,7 @@ connectomic data.
 
 The best way to become acquainted with neuPrint's capabilities and data
 model is to experiment with a public neuprint database via the neuprint
-web UI.  Try exploring the `Janelia FlyEM Hemibrain neuprint database <https://neuprint-test.janelia.org/>`_.
+web UI.  Try exploring the `Janelia FlyEM Hemibrain neuprint database <https://neuprint.janelia.org/>`_.
 
 
 Once you're familiar with the basics, you're ready to start writing
