@@ -174,7 +174,7 @@ class Client:
                 RETURN n.bodyId
             """)
     '''
-    def __init__(self, server, token=None, verify=True, dataset=None):
+    def __init__(self, server, dataset=None, token=None, verify=True):
         """
         Args:
             server:
