@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from .utils import eval_client, make_iterable, parse_properties
+from .utils import make_iterable, parse_properties
 from .client import inject_client
 
 
@@ -69,8 +69,6 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
     pandas.DataFrame
     """
 
-    client = eval_client(client)
-
     x = make_iterable(x)
 
     where = ' {} '.format(logic).join(['n.{}'.format(s) for s in x])
@@ -86,8 +84,9 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
     return client.fetch_custom(cypher, dataset=dataset)
 
 
+@inject_client
 def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
-                         logic='AND', add_props=None, client=None):
+                         logic='AND', add_props=None, *, client=None):
     """ Fetch all neurons within given ROI.
 
     Parameters
@@ -115,8 +114,6 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
     -------
     pandas.DataFrame
     """
-
-    client = eval_client(client)
 
     roi = make_iterable(roi)
 
@@ -149,8 +146,8 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
     return client.fetch_custom(cypher)
 
 
-def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None,
-                 client=None):
+@inject_client
+def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None, *, client=None):
     """ Find neurons by name or body ID.
 
     Parameters
@@ -213,8 +210,8 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None,
                          datatype=datatype, client=client)
 
 
-def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
-                       add_props=None, client=None):
+@inject_client
+def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None, *, client=None):
     """ Fetch connectivity table for given neuron
 
     Parameters
@@ -267,8 +264,6 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
 
     if add_props:
         ret += ['n.{} as {}'.format(p, p) for p in add_props]
-
-    client = eval_client(client)
 
     cypher = """
              {pre}
@@ -324,9 +319,10 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron',
     return df.groupby(['bodyId', 'relation']).first().reset_index(drop=False).fillna(0)
 
 
+@inject_client
 def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
                               dataset='hemibrain', datatype='Neuron',
-                              add_props=None, client=None):
+                              add_props=None, *, client=None):
     """Fetch connectivity within ROI between given neuron(s).
 
     Parameters
@@ -447,8 +443,6 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
         ret += ['a.{} AS source_{}'.format(p, p) for p in add_props]
         ret += ['b.{} AS target_{}'.format(p, p) for p in add_props]
 
-    client = eval_client(client)
-
     cypher = """
              {pre_with} {pre_unwind}
              MATCH (a:`{dataset}-{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}-{datatype}`), (c)-[:Contains]->(s:Synapse)
@@ -464,8 +458,9 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
     return data.sort_values('synapses', ascending=False).reset_index(drop=True)
 
 
+@inject_client
 def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
-                datatype='Neuron', add_props=None, client=None):
+                datatype='Neuron', add_props=None, *, client=None):
     """Fetch edges between given neuron(s).
 
     Parameters
@@ -561,8 +556,6 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
         ret += ['a.{} AS source_{}'.format(p, p) for p in add_props]
         ret += ['b.{} AS target_{}'.format(p, p) for p in add_props]
 
-    client = eval_client(client)
-
     cypher = """
              WITH {pre_with}
              UNWIND {pre_unwind}
@@ -581,7 +574,8 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     return data.sort_values('synapses', ascending=False).reset_index(drop=True)
 
 
-def fetch_synapses(x, dataset='hemibrain', datatype='Neuron', client=None):
+@inject_client
+def fetch_synapses(x, dataset='hemibrain', datatype='Neuron', *, client=None):
     """ Fetch synapses for given body ID(s)
 
     Parameters
@@ -626,8 +620,6 @@ def fetch_synapses(x, dataset='hemibrain', datatype='Neuron', client=None):
         where = 'bodyId={}'.format(x)
 
     ret = ['n.bodyId as bodyId', 's']
-
-    client = eval_client(client)
 
     cypher = """
              {pre}
