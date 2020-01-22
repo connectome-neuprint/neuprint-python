@@ -2,7 +2,9 @@ import os
 import platform
 
 from .client import Client, default_client, set_default_client
-from .fetch import *
+from .queries import *
+
+from . import deprecated
 
 from ._version import get_versions
 __version__ = get_versions()['version']

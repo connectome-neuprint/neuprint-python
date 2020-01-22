@@ -50,4 +50,4 @@ Contents
 
    client
    queries
-
+   deprecated
