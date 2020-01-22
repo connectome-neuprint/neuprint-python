@@ -1,6 +1,9 @@
 neuprint-python
 ===============
 
+.. _intro:
+
+
 Introduction to neuPrint and ``neuprint-python``
 ------------------------------------------------
 
@@ -19,10 +22,12 @@ That's where this project comes in.  ``neuprint-python`` contains utilities
 for querying a neuprint database.
 
 
+.. _install:
+
 Install neuprint-python
 -----------------------
 
-If you're using conda, use this command:
+If you're using `conda <https://docs.conda.io/en/latest/>`_, use this command:
 
 
 .. code-block:: bash
@@ -36,3 +41,14 @@ Otherwise, use ``pip``:
 .. code-block:: bash
 
     pip install neuprint-python
+
+Contents
+--------
+
+.. toctree::
+   :maxdepth: 2
+
+   quickstart
+   client
+   queries
+   deprecated
