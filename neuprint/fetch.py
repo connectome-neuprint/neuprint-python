@@ -37,6 +37,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
     return client.fetch_custom(cypher, dataset, format)
 
+
 @inject_client
 def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
                   datatype='Neuron', *, client=None):
@@ -69,15 +70,14 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
 
     x = make_iterable(x)
 
-    where = ' {} '.format(logic).join(['n.{}'.format(s) for s in x])
+    where = f' {logic} '.join([f'n.{s}' for s in x])
     ret = parse_properties(props, 'n')
 
-    cypher = """
-             MATCH (n :`{datatype}`)
+    cypher = f"""\
+             MATCH (n :`{dataset}_{datatype}`)
              WHERE {where}
              RETURN {ret}
-             """.format(dataset=dataset, datatype=datatype, where=where,
-                        ret=ret)
+             """
 
     return client.fetch_custom(cypher, dataset=dataset)
 
@@ -119,27 +119,28 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
     conditions = []
     for r in roi:
         if r.startswith('~'):
-            conditions.append('NOT exists(n.`{}`)'.format(r[1:]))
+            conditions.append(f'NOT exists(n.`{r[1:]}`)')
         else:
-            conditions.append('n.`{}`=true'.format(r))
+            conditions.append(f'n.`{r}`=true')
 
     # Now remove tildes
     roi = [r.replace('~', '') for r in roi]
 
-    cypher = """
-             MATCH (n :`{dataset}-{datatype}`)
+    roiPre = ', '.join([f'roiInfo.{r}.pre as pre_{r}' for r in roi])
+    roiPost = ', '.join([f'roiInfo.{r}.post as post_{r}' for r in roi])
+    where = ' {logic} '.join(conditions)
+
+    cypher = f"""\
+             MATCH (n :`{dataset}_{datatype}`)
              WHERE {where} WITH n AS n, apoc.convert.fromJsonMap(n.roiInfo) AS roiInfo
              RETURN n.bodyId AS bodyId, n.size AS size, n.status AS status,
                     n.pre AS pre, n.post AS post, {roiPre}, {roiPost}
-             """.format(dataset=dataset, datatype=datatype,
-                        roiPre=', '.join(['roiInfo.{0}.pre as pre_{0}'.format(r) for r in roi]),
-                        roiPost=', '.join(['roiInfo.{0}.post as post_{0}'.format(r) for r in roi]),
-                        where=' {} '.format(logic).join(conditions))
+             """
 
     if add_props:
         add_props = add_props if isinstance(add_props, list) else list(add_props)
         cypher += ','
-        cypher += ','.join(['n.{0} AS {0}'.format(p) for p in add_props])
+        cypher += ','.join([f'n.{p} AS {p}' for p in add_props])
 
     return client.fetch_custom(cypher)
 
@@ -154,14 +155,17 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None, *, c
                 Search string. Can be body ID(s), neuron name or wildcard/regex
                 names (e.g. "MBON.*"). Body IDs can also be provided as
                 list-like or DataFrame with "bodyId" column.
+
     dataset :   str, optional
                 Which dataset to query. See ``neuprint.Client.fetch_datasets``
                 for available datasets.
+
     datatype :  str, optional
                 Data type to search for. Depends on dataset. For
                 ``dataset='hemibrain'`` options are "Neuron" and "Segment".
                 The former is limited to bodies with either >=2 pre-, >= 10
                 postsynapses, name, soma or status.
+
     add_props : iterable, optional
                 Additional neuron properties to be returned.
     client :    neuprint.Client, optional
@@ -180,23 +184,24 @@ def find_neurons(x, dataset='hemibrain', datatype='Neuron', add_props=None, *, c
 
     if isinstance(x, str):
         if x.isnumeric():
-            where = 'bodyId={}'.format(x)
+            where = f'bodyId={x}'
         else:
-            where = 'name=~"{}"'.format(x)
+            where = f'name=~"{x}"'
     elif isinstance(x, (list, tuple, np.ndarray)):
         if all([isinstance(s, str) for s in x]):
             if all([s.isnumeric() for s in x]):
-                where = 'bodyId IN {}'.format(list(np.array(x).astype(int)))
+                body_list = np.array(x).tolist()
+                where = f'bodyId IN {body_list}'
             else:
                 raise ValueError('List can only be numeric body IDs')
         elif all([isinstance(s, (int, np.int64, np.int32)) for s in x]):
-            where = 'bodyId IN {}'.format(list(x))
+            where = f'bodyId IN {list(x)}'
         else:
             raise ValueError('List can only be numeric body IDs')
     elif isinstance(x, (int, np.int64, np.int32)):
-        where = 'bodyId={}'.format(x)
+        where = f'bodyId={x}'
     else:
-        raise ValueError('Unable to process data of type "{}"'.format(type(x)))
+        raise ValueError(f'Unable to process data of type "{type(x)}"')
 
     props = ['bodyId', 'name', 'size', 'status', 'pre', 'post']
 
@@ -218,9 +223,11 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None
                 Neuron filter. Can be body ID, neuron name or wildcard names
                 (e.g. "MBON.*"). Accepts regex. Body IDs can be given as
                 list.
+
     dataset :   str, optional
                 Which dataset to query. See ``neuprint.Client.fetch_datasets``
                 for available datasets.
+
     datatype :  str, optional
                 Data type to search for. Depends on dataset. For
                 ``dataset='hemibrain'`` options are "Neuron" and "Segment".
@@ -246,14 +253,14 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None
 
     if isinstance(x, str):
         if x.isnumeric():
-            where = 'bodyId={}'.format(x)
+            where = f'bodyId={x}'
         else:
-            where = 'name=~"{}"'.format(x)
+            where = f'name=~"{x}"'
     elif isinstance(x, (np.ndarray, list, tuple)):
         where = 'bodyId=bid'
-        pre = 'WITH {} AS bodyIds UNWIND bodyIds AS bid'.format(list(x))
+        pre = f'WITH {list(x)} AS bodyIds UNWIND bodyIds AS bid'
     else:
-        where = 'bodyId={}'.format(x)
+        where = f'bodyId={x}'
 
     ret = ['m.name AS name1', 'n.name AS name2', 'e.weight AS weight',
            'n.bodyId AS body2', 'id(m) AS id1', 'id(n) AS id2',
@@ -261,15 +268,16 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None
            'e.weightHP AS WeightHP']
 
     if add_props:
-        ret += ['n.{} as {}'.format(p, p) for p in add_props]
+        ret += [f'n.{p} as {p}' for p in add_props]
 
-    cypher = """
+    ret = ', '.join(ret)
+    
+    cypher = f"""\
              {pre}
-             MATCH (m:`{dataset}-{datatype}`)-[e:ConnectsTo]-(n)
+             MATCH (m:`{dataset}_{datatype}`)-[e:ConnectsTo]-(n)
              WHERE m.{where}
              RETURN {ret}
-             """.format(dataset=dataset, datatype=datatype, where=where,
-                        ret=', '.join(ret), pre=pre)
+             """
 
     # Fetch data
     data = client.fetch_custom(cypher)
@@ -286,7 +294,7 @@ def fetch_connectivity(x, dataset='hemibrain', datatype='Neuron', add_props=None
     # Pivot such that each row is a connected neuron
     to_keep = ['name2', 'body2', 'relation', 'weight']
     if add_props:
-        to_keep += ['{}'.format(p) for p in add_props]
+        to_keep += [f'{p}' for p in add_props]
 
     p = data.pivot(columns='body1', values=to_keep)
 
@@ -395,11 +403,12 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
     conditions = []
     for r in roi:
         if r.startswith('~'):
-            conditions.append('NOT exists(s.`{}`)'.format(r[1:]))
+            conditions.append(f'NOT exists(s.`{r[1:]}`)')
         else:
-            conditions.append('exists(s.`{}`)'.format(r))
+            conditions.append(f'exists(s.`{r}`)')
 
-    where = '({})'.format(' {} '.format(logic).join(conditions))
+    conditions = f' {logic} '.join(conditions)
+    where = f'({conditions})'
     where += ' AND (s.type="post")'
 
     pre_with = ''
@@ -408,47 +417,49 @@ def fetch_connectivity_in_roi(roi, source=None, target=None, logic='AND',
     if not isinstance(source, type(None)):
         if isinstance(source, str):
             if source.isnumeric():
-                where += ' AND a.bodyId={}'.format(source)
+                where += f' AND a.bodyId={source}'
             else:
-                where += ' AND a.name=~"{}"'.format(source)
+                where += f' AND a.name=~"{source}"'
         elif isinstance(source, (np.ndarray, list, tuple)):
+            source = np.array(source).tolist()
             where += ' AND a.bodyId=sid'
-            pre_with = 'WITH {} AS sourceIds'.format(list(np.array(source).astype(int)))
+            pre_with = f'WITH {source} AS sourceIds'
             pre_unwind = 'UNWIND sourceIds AS sid'
         else:
-            where += ' AND a.bodyId={}'.format(source)
+            where += f' AND a.bodyId={source}'
 
     if not isinstance(target, type(None)):
         if isinstance(target, str):
             if target.isnumeric():
-                where += ' AND b.bodyId={}'.format(target)
+                where += f' AND b.bodyId={target}'
             else:
-                where += ' AND b.name=~"{}"'.format(target)
+                where += f' AND b.name=~"{target}"'
         elif isinstance(target, (np.ndarray, list, tuple)):
+            target = np.array(target).tolist()
             where += ' AND b.bodyId=tid'
             if not pre_with:
-                pre_with = 'WITH {} AS targetIds'.format(list(np.array(target).astype(int)))
+                pre_with = f'WITH {target} AS targetIds'
                 pre_unwind += 'UNWIND targetIds AS tid'
             else:
-                pre_with += ', {} AS targetIds'.format(list(np.array(target).astype(int)))
+                pre_with += f', {target} AS targetIds'
                 pre_unwind += '\nUNWIND targetIds AS tid'
         else:
-            where += ' AND b.bodyId={}'.format(target)
+            where += f' AND b.bodyId={target}'
 
     ret = ['a.bodyId AS source', 'b.bodyId AS target', 'count(*) AS synapses']
 
     if add_props:
-        ret += ['a.{} AS source_{}'.format(p, p) for p in add_props]
-        ret += ['b.{} AS target_{}'.format(p, p) for p in add_props]
+        ret += [f'a.{p} AS source_{p}' for p in add_props]
+        ret += [f'b.{p} AS target_{p}' for p in add_props]
 
-    cypher = """
+    ret = ', '.join(ret)
+    
+    cypher = f"""\
              {pre_with} {pre_unwind}
-             MATCH (a:`{dataset}-{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}-{datatype}`), (c)-[:Contains]->(s:Synapse)
+             MATCH (a:`{dataset}_{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}_{datatype}`), (c)-[:Contains]->(s:Synapse)
              WHERE {where}
              RETURN {ret}
-             """.format(dataset=dataset, datatype=datatype, where=where,
-                        pre_with=pre_with, pre_unwind=pre_unwind,
-                        ret=', '.join(ret))
+             """
 
     # Fetch data
     data = client.fetch_custom(cypher)
@@ -506,14 +517,14 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     if isinstance(source, type(None)) and isinstance(target, type(None)):
         raise ValueError('source and target must not both be "None"')
 
-    where = ['(s.type="post")'.format(roi)]
+    where = ['(s.type="post")']
     if not isinstance(roi, type(None)):
         if not isinstance(roi, str):
-            raise TypeError('Expected ROI as str, got "{}"'.format(type(roi)))
+            raise TypeError(f'Expected ROI as str, got "{type(roi)}"')
         if roi.startswith('~'):
-            where.append('NOT (exists(s.`{}`))'.format(roi[1:]))
+            where.append(f'NOT (exists(s.`{roi[1:]}`))')
         else:
-            where.append('(exists(s.`{}`))'.format(roi))
+            where.append(f'(exists(s.`{roi}`))')
 
     pre_with = []
     pre_unwind = []
@@ -521,24 +532,26 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
     if not isinstance(source, type(None)):
         if isinstance(source, str):
             if source.isnumeric():
-                where.append('a.bodyId={}'.format(source))
+                where.append(f'a.bodyId={source}')
             else:
-                where.append('a.name=~"{}"'.format(source))
+                where.append(f'a.name=~"{source}"')
         elif isinstance(source, (np.ndarray, list, tuple)):
+            source = np.array(source).tolist()
             where.append('a.bodyId=sid')
-            pre_with.append('{} AS sourceIds'.format(list(np.array(source).astype(int))))
+            pre_with.append(f'{source} AS sourceIds')
             pre_unwind.append('sourceIds AS sid')
         else:
-            where.append('a.bodyId={}'.format(source))
+            where.append(f'a.bodyId={source}')
 
     if not isinstance(target, type(None)):
         if isinstance(target, str):
             if target.isnumeric():
-                where.append('b.bodyId={}'.format(target))
+                where.append(f'b.bodyId={target}')
             else:
-                where.append('b.name=~"{}"'.format(target))
+                where.append(f'b.name=~"{target}"')
         elif isinstance(target, (np.ndarray, list, tuple)):
-            pre_with.append('{} AS targetIds'.format(list(np.array(target).astype(int))))
+            target = np.array(target).tolist()
+            pre_with.append(f'{target} AS targetIds')
             if not pre_with:
                 # Only unwind targets if we aren't already unwinding sources
                 pre_unwind.append('targetIds AS tid')
@@ -546,25 +559,26 @@ def fetch_edges(source, target=None, roi=None, dataset='hemibrain',
             else:
                 where.append('b.bodyId IN targetIds')
         else:
-            where.append('b.bodyId={}'.format(target))
+            where.append(f'b.bodyId={target}')
 
     ret = ['a.bodyId AS source', 'b.bodyId AS target', 'count(*) AS synapses']
 
     if add_props:
-        ret += ['a.{} AS source_{}'.format(p, p) for p in add_props]
-        ret += ['b.{} AS target_{}'.format(p, p) for p in add_props]
+        ret += [f'a.{p} AS source_{p}' for p in add_props]
+        ret += [f'b.{p} AS target_{p}' for p in add_props]
 
-    cypher = """
+    pre_with = ', '.join(pre_with),
+    pre_unwind = ', '.join(pre_unwind),
+    where = ' AND '.join(where),
+    ret = ', '.join(ret)
+    
+    cypher = f"""
              WITH {pre_with}
              UNWIND {pre_unwind}
-             MATCH (a:`{dataset}-{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}-{datatype}`), (c)-[:Contains]->(s:Synapse)
+             MATCH (a:`{dataset}_{datatype}`)<-[:From]-(c:ConnectionSet)-[:To]->(b:`{dataset}_{datatype}`), (c)-[:Contains]->(s:Synapse)
              WHERE {where}
              RETURN {ret}
-             """.format(dataset=dataset, datatype=datatype,
-                        pre_with=', '.join(pre_with),
-                        pre_unwind=', '.join(pre_unwind),
-                        where=' AND '.join(where),
-                        ret=', '.join(ret))
+             """
 
     # Fetch data
     data = client.fetch_custom(cypher)
@@ -608,25 +622,22 @@ def fetch_synapses(x, dataset='hemibrain', datatype='Neuron', *, client=None):
 
     if isinstance(x, str):
         if x.isnumeric():
-            where = 'bodyId={}'.format(x)
+            where = f'bodyId={x}'
         else:
-            where = 'name=~"{}"'.format(x)
+            where = f'name=~"{x}"'
     elif isinstance(x, (np.ndarray, list, tuple)):
         where = 'bodyId=bid'
-        pre = 'WITH {} AS bodyIds UNWIND bodyIds AS bid'.format(list(x))
+        pre = f'WITH {list(x)} AS bodyIds UNWIND bodyIds AS bid'
     else:
-        where = 'bodyId={}'.format(x)
+        where = f'bodyId={x}'
 
-    ret = ['n.bodyId as bodyId', 's']
-
-    cypher = """
+    cypher = f"""
              {pre}
-             MATCH (n:`{dataset}-{datatype}`)-[:Contains]->(ss:SynapseSet),
+             MATCH (n:`{dataset}_{datatype}`)-[:Contains]->(ss:SynapseSet),
                    (ss)-[:Contains]->(s:Synapse)
              WHERE n.{where}
-             RETURN {ret}
-             """.format(dataset=dataset, datatype=datatype, where=where,
-                        ret=', '.join(ret), pre=pre)
+             RETURN 'n.bodyId as bodyId, s'
+             """
 
     # Get data
     r = fetch_custom(cypher, client=client, format='json')

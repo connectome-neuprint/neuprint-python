@@ -14,8 +14,8 @@ def parse_properties(props, placeholder):
     cypher = []
     for p in props:
         if p == 'hasSkeleton':
-            cypher.append('exists(({})-[:Contains]->(:Skeleton)) AS hasSkeleton'.format(placeholder))
+            cypher.append(f'exists(({placeholder})-[:Contains]->(:Skeleton)) AS hasSkeleton')
         else:
-            cypher.append('{0}.{1} AS {1}'.format(placeholder, p))
+            cypher.append(f'{placeholder}.{p} AS {p}')
 
     return ','.join(cypher)
