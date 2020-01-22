@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.1.12+19.gc1811aa documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.1.12+26.g021c9ed documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.1.12+19.gc1811aa
+                0.1.12+26.g021c9ed
               </div>
             
           
@@ -83,8 +83,10 @@
             
             
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../queries.html">Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
 </ul>
 
             
@@ -206,7 +208,7 @@
     <span class="k">return</span> <span class="n">c</span>
 
 
-<span class="k">def</span> <span class="nf">set_default_client</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+<div class="viewcode-block" id="set_default_client"><a class="viewcode-back" href="../../client.html#neuprint.set_default_client">[docs]</a><span class="k">def</span> <span class="nf">set_default_client</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set (or overwrite) the default Client.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -218,7 +220,7 @@
 
     <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="o">=</span> <span class="n">client</span>
     <span class="n">NEUPRINT_CLIENTS</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-    <span class="n">NEUPRINT_CLIENTS</span><span class="p">[(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">pid</span><span class="p">)]</span> <span class="o">=</span> <span class="n">client</span>
+    <span class="n">NEUPRINT_CLIENTS</span><span class="p">[(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">pid</span><span class="p">)]</span> <span class="o">=</span> <span class="n">client</span></div>
 
 
 <span class="k">def</span> <span class="nf">inject_client</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
@@ -324,7 +326,7 @@
 <span class="sd">                RETURN n.bodyId</span>
 <span class="sd">            &quot;&quot;&quot;)</span>
 <span class="sd">    &#39;&#39;&#39;</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Args:</span>
 <span class="sd">            server:</span>

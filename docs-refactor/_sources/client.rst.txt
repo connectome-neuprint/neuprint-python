@@ -9,3 +9,4 @@ Client
 .. autoclass:: Client
    :members:
 
+.. autofunction:: set_default_client
