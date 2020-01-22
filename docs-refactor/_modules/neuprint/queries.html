@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.1.12+26.g0c2d9c5 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.1.12+26.gdcd09f6 documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.1.12+26.g0c2d9c5
+                0.1.12+26.gdcd09f6
               </div>
             
           
@@ -256,9 +256,9 @@
     <span class="c1"># Fetch the list of primary ROIs</span>
     <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">        MATCH (m:Meta)</span>
-<span class="s2">        RETURN m.primaryRois</span>
+<span class="s2">        RETURN m.primaryRois as &#39;rois&#39;</span>
 <span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">primary_rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;roi&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">primary_rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;rois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     
     <span class="c1"># Fetch the list of traced, non-cropped Neurons</span>
     <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
