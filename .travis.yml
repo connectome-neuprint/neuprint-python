@@ -45,10 +45,10 @@ script:
 after_success:
   - set -e
   - conda install -y --use-local --only-deps neuprint-python
-  - conda install -y doctr nbsphinx numpydoc sphinx_bootstrap_theme sphinx=1.8.4 sphinxcontrib-napoleon
+  - conda install -y doctr nbsphinx numpydoc sphinx_bootstrap_theme sphinx=1.8.4 sphinxcontrib-napoleon sphinx_rtd_theme
   - cd docs && make html && cd -
   - if [[ "${TRAVIS_BRANCH}" == "master" ]]; then
-      doctr deploy --no-require-master --built-docs docs/_build/html docs;
+      doctr deploy --no-require-master --built-docs docs/build/html docs;
     else
-      doctr deploy --no-require-master --built-docs docs/_build/html "docs-$TRAVIS_BRANCH";
+      doctr deploy --no-require-master --built-docs docs/build/html "docs-$TRAVIS_BRANCH";
     fi

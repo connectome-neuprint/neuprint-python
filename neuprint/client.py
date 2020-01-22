@@ -168,7 +168,7 @@ class Client:
             c = Client('neuprint.janelia.org')
             
             # Subsequent calls use the global client implicitly.
-            fetch_custom("""\
+            fetch_custom("""\\
                 MATCH (n: Neuron)
                 WHERE n.status = "Traced"
                 RETURN n.bodyId
@@ -176,20 +176,18 @@ class Client:
     '''
     def __init__(self, server, token=None, verify=True, dataset=None):
         """
-        Client constructor.
-        
         Args:
             server:
                 URL of neuprintHttp server
 
             token:
                 neuPrint token. Either pass explitily as an argument or set
-                as NEUPRINT_APPLICATION_CREDENTIALS environment variable.
+                as ``NEUPRINT_APPLICATION_CREDENTIALS`` environment variable.
                 Your token can be retrieved by clicking on your account in
                 the NeuPrint web interface.
 
             verify:
-                If True (default), enforce signed credentials.
+                If ``True`` (default), enforce signed credentials.
 
             dataset:
                 The dataset to run all queries against, e.g. 'hemibrain'.
@@ -350,7 +348,7 @@ class Client:
         Fetch your user authentication token.
         
         Note:
-            This method just echoes the token back to you for debug purposes
+            This method just echoes the token back to you for debug purposes.
             To obtain your token for the first time, use the neuprint explorer
             web UI to login and obtain your token as explained elsewhere in
             this documentation.
@@ -458,8 +456,7 @@ class Client:
                 A cypher query string
 
             dataset:
-                Deprecated.
-                Please provide your dataset as a Client constructor argument.
+                *Deprecated. Please provide your dataset as a Client constructor argument.*
                 
                 Which neuprint dataset to query against.
                 If None provided, the client's default dataset is used.
@@ -467,9 +464,9 @@ class Client:
                 the server will use its own default.
 
             format:
-                Either 'pandas' or 'json'.
-                Whether to load the results into a pandas DataFrame,
-                or return the server's raw JSON response as a Python dict.
+                Either ``'pandas'`` or ``'json'``.
+                Whether to load the results into a ``pandas.DataFrame``,
+                or return the server's raw JSON response as a Python ``dict``.
         
         Returns:
             Either json or DataFrame, depending on ``format``.

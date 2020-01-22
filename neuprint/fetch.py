@@ -10,19 +10,27 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
     Alternative form of Client.fetch_custom(), as a free function.
     That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
+
+    If ``client=None``, the default ``Client`` is used
+    (assuming you have created at least one ``Client``.)
     
     Args:
         cypher:
             A cypher query string
+
         dataset:
+            *Deprecated. Please provide your dataset as a Client constructor argument.*
+            
             Which neuprint dataset to query against.
             If None provided, the client's default dataset is used.
             If the client has no default dataset configured,
             the server will use its own default.
+
         format:
             Either 'pandas' or 'json'.
             Whether to load the results into a pandas DataFrame,
             or return the server's raw JSON response as a Python dict.
+
         client:
             If not provided, the global default ``Client`` will be used.
     
@@ -31,9 +39,9 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
     return client.fetch_custom(cypher, dataset, format)
 
-
+@inject_client
 def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
-                  datatype='Neuron', client=None):
+                  datatype='Neuron', *, client=None):
     """ Find neurons by neo4j WHERE query.
 
     Parameters
@@ -69,13 +77,13 @@ def custom_search(x, props=['bodyId', 'name'], logic='AND', dataset='hemibrain',
     ret = parse_properties(props, 'n')
 
     cypher = """
-             MATCH (n :`{dataset}-{datatype}`)
+             MATCH (n :`{datatype}`)
              WHERE {where}
              RETURN {ret}
              """.format(dataset=dataset, datatype=datatype, where=where,
                         ret=ret)
 
-    return client.fetch_custom(cypher)
+    return client.fetch_custom(cypher, dataset=dataset)
 
 
 def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
