@@ -460,8 +460,6 @@ class Client:
                 
                 Which neuprint dataset to query against.
                 If None provided, the client's default dataset is used.
-                If the client has no default dataset configured,
-                the server will use its own default.
 
             format:
                 Either ``'pandas'`` or ``'json'``.
