@@ -126,8 +126,8 @@ def fetch_neurons_in_roi(roi, dataset='hemibrain', datatype='Neuron',
     # Now remove tildes
     roi = [r.replace('~', '') for r in roi]
 
-    roiPre = ', '.join([f'roiInfo.{r}.pre as pre_{r}' for r in roi])
-    roiPost = ', '.join([f'roiInfo.{r}.post as post_{r}' for r in roi])
+    roiPre = ', '.join([f'roiInfo.`{r}`.pre as `pre_{r}`' for r in roi])
+    roiPost = ', '.join([f'roiInfo.`{r}`.post as `post_{r}`' for r in roi])
     where = ' {logic} '.join(conditions)
 
     cypher = f"""\
