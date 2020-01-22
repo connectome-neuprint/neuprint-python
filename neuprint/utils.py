@@ -1,19 +1,4 @@
-import sys
 from collections.abc import Iterable
-
-from .client import Client
-
-def eval_client(x=None):
-    """ If x is not a client, will try returning global client.
-    """
-
-    if isinstance(x, Client):
-        return x
-    elif 'NEUPRINT_CLIENT' in sys.modules:
-        return sys.modules['NEUPRINT_CLIENT']
-    else:
-        raise ValueError('No client found')
-
 
 def make_iterable(x):
     """ Forces x into iterable """
@@ -29,8 +14,8 @@ def parse_properties(props, placeholder):
     cypher = []
     for p in props:
         if p == 'hasSkeleton':
-            cypher.append('exists(({})-[:Contains]->(:Skeleton)) AS hasSkeleton'.format(placeholder))
+            cypher.append(f'exists(({placeholder})-[:Contains]->(:Skeleton)) AS hasSkeleton')
         else:
-            cypher.append('{0}.{1} AS {1}'.format(placeholder, p))
+            cypher.append(f'{placeholder}.{p} AS {p}')
 
     return ','.join(cypher)

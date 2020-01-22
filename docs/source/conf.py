@@ -15,20 +15,19 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 import versioneer
 import numpydoc
-import sphinx_bootstrap_theme
 
 # -- Project information -----------------------------------------------------
 
 project = 'neuprint-python'
-copyright = '2019, FlyEM, Philipp Schlegel'
-author = 'FlyEM, Philipp Schlegel'
+copyright = '2019, FlyEM'
+author = 'FlyEM'
 
 # The short X.Y version
-os.chdir(os.path.dirname(__file__) + '/..')
+os.chdir(os.path.dirname(__file__) + '/../..')
 version = versioneer.get_version()
 os.chdir(os.path.dirname(__file__))
 
@@ -51,6 +50,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
+    'IPython.sphinxext.ipython_console_highlighting',
+    'IPython.sphinxext.ipython_directive'
 ]
 
 # generate autosummary pages
@@ -79,7 +80,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -90,18 +91,25 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'bootstrap'
+#html_theme = 'nature'
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if not on_rtd:
+    import sphinx_rtd_theme
+    html_theme = 'sphinx_rtd_theme'
+    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'source_link_position': "footer",
-    'navbar_sidebarrel': False,
-    'navbar_links': [
-                     ("API", "src/api"),
-                     ],
+    #'source_link_position': "footer",
+    #'navbar_sidebarrel': False,
+    #'navbar_links': [
+    #                 ("API", "src/api"),
+    #                 ],
 
     }
 
@@ -151,7 +159,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'neurprint-python.tex', 'neurprint-python Documentation',
+    (master_doc, 'neuprint-python.tex', 'neuprint-python Documentation',
      'Philipp Schlegel', 'manual'),
 ]
 
@@ -161,7 +169,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'neurprint-python', 'neurprint-python Documentation',
+    (master_doc, 'neuprint-python', 'neuprint-python Documentation',
      [author], 1)
 ]
 
@@ -172,8 +180,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'neurprint-python', 'neurprint-python Documentation',
-     author, 'neurprint-python', 'One line description of project.',
+    (master_doc, 'neuprint-python', 'neuprint-python Documentation',
+     author, 'neuprint-python', 'One line description of project.',
      'Miscellaneous'),
 ]
 
