@@ -14,10 +14,10 @@ class Transaction:
     
     Example:
     
-        .. code-block: python
+        .. code-block:: python
         
             with Transaction('hemibrain') as t:
-                t.query(f"MATCH (n :Neuron {{bodyId: {bodyid}}}) SET m.type={currtype})")
+                t.query("MATCH (n :Neuron {bodyId: 1047426385}) SET m.type=TuBu4)")
     """    
     @inject_client
     def __init__(self, dataset, *, client=None):
