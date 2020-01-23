@@ -1,8 +1,10 @@
 docs/_images/token-screenshot.png
 docs/_modules/index.html
+docs/_modules/neuprint/admin.html
 docs/_modules/neuprint/client.html
 docs/_modules/neuprint/deprecated/fetch.html
 docs/_modules/neuprint/queries.html
+docs/_sources/admin.rst.txt
 docs/_sources/client.rst.txt
 docs/_sources/deprecated.rst.txt
 docs/_sources/index.rst.txt
@@ -65,6 +67,7 @@ docs/_static/underscore.js
 docs/_static/up-pressed.png
 docs/_static/up.png
 docs/_static/websupport.js
+docs/admin.html
 docs/client.html
 docs/deprecated.html
 docs/genindex.html

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.2+3.gfa533e0 documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.2+6.g709cf7c documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.2+3.gfa533e0
+                0.2+6.g709cf7c
               </div>
             
           
@@ -86,6 +86,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../queries.html">Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
 </ul>
 
@@ -311,20 +312,34 @@
 <span class="sd">    provide a Client object to use. Instead, the first ``Client`` you</span>
 <span class="sd">    create will be stored as the default ``Client`` to be used with all</span>
 <span class="sd">    ``neuprint-python`` functions if you don&#39;t explicitly specify one.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Example:</span>
 <span class="sd">    </span>
-<span class="sd">        .. code-block:: python</span>
+<span class="sd">        .. code-block:: ipython</span>
 <span class="sd">        </span>
-<span class="sd">            # Create a Client to be used globally.</span>
-<span class="sd">            c = Client(&#39;neuprint.janelia.org&#39;)</span>
+<span class="sd">            In [1]: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0&#39;)</span>
+
+<span class="sd">            In [2]: fetch_custom(&quot;&quot;&quot;\\</span>
+<span class="sd">               ...:     MATCH (n: Neuron)</span>
+<span class="sd">               ...:     WHERE n.status = &quot;Traced&quot; AND NOT n.cropped</span>
+<span class="sd">               ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance</span>
+<span class="sd">               ...:     ORDER BY n.type, n.instance</span>
+<span class="sd">               ...: &quot;&quot;&quot;)</span>
+<span class="sd">            Out[2]:</span>
+<span class="sd">                       bodyId        type             instance</span>
+<span class="sd">            0       511051477   5th s-LNv            5th s-LNv</span>
+<span class="sd">            1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R</span>
+<span class="sd">            2      1100952886  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
+<span class="sd">            3      1228484534  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
+<span class="sd">            4      1290563000  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
+<span class="sd">            ...           ...         ...                  ...</span>
+<span class="sd">            21658  2346523421        None                 None</span>
+<span class="sd">            21659  2397377415        None                 None</span>
+<span class="sd">            21660  2429314661        None                 None</span>
+<span class="sd">            21661  2464541644        None                 None</span>
+<span class="sd">            21662  2404203061        None                 None</span>
 <span class="sd">            </span>
-<span class="sd">            # Subsequent calls use the global client implicitly.</span>
-<span class="sd">            fetch_custom(&quot;&quot;&quot;\\</span>
-<span class="sd">                MATCH (n: Neuron)</span>
-<span class="sd">                WHERE n.status = &quot;Traced&quot;</span>
-<span class="sd">                RETURN n.bodyId</span>
-<span class="sd">            &quot;&quot;&quot;)</span>
+<span class="sd">            [21663 rows x 3 columns]</span>
 <span class="sd">    &#39;&#39;&#39;</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

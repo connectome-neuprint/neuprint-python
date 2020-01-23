@@ -51,4 +51,5 @@ Contents
    quickstart
    client
    queries
+   admin
    deprecated
