@@ -159,20 +159,34 @@ class Client:
     provide a Client object to use. Instead, the first ``Client`` you
     create will be stored as the default ``Client`` to be used with all
     ``neuprint-python`` functions if you don't explicitly specify one.
-    
+
     Example:
     
-        .. code-block:: python
+        .. code-block:: ipython
         
-            # Create a Client to be used globally.
-            c = Client('neuprint.janelia.org')
+            In [1]: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
+
+            In [2]: fetch_custom("""\\
+               ...:     MATCH (n: Neuron)
+               ...:     WHERE n.status = "Traced" AND NOT n.cropped
+               ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance
+               ...:     ORDER BY n.type, n.instance
+               ...: """)
+            Out[2]:
+                       bodyId        type             instance
+            0       511051477   5th s-LNv            5th s-LNv
+            1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R
+            2      1100952886  ADL01b_pct  ADL01b_pct(ADL01)_R
+            3      1228484534  ADL01b_pct  ADL01b_pct(ADL01)_R
+            4      1290563000  ADL01b_pct  ADL01b_pct(ADL01)_R
+            ...           ...         ...                  ...
+            21658  2346523421        None                 None
+            21659  2397377415        None                 None
+            21660  2429314661        None                 None
+            21661  2464541644        None                 None
+            21662  2404203061        None                 None
             
-            # Subsequent calls use the global client implicitly.
-            fetch_custom("""\\
-                MATCH (n: Neuron)
-                WHERE n.status = "Traced"
-                RETURN n.bodyId
-            """)
+            [21663 rows x 3 columns]
     '''
     def __init__(self, server, dataset=None, token=None, verify=True):
         """
