@@ -58,6 +58,9 @@ extensions = [
 autosummary_generate = True
 autoclass_content = 'both'
 
+# Don't alphabetically sort functions
+autodoc_member_order = 'bysource'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
