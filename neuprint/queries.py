@@ -18,7 +18,7 @@ except ImportError:
 @inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
-    Alternative form of Client.fetch_custom(), as a free function.
+    Alternative form of ``Client.fetch_custom()``, as a free function.
     That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
 
     If ``client=None``, the default ``Client`` is used
@@ -37,7 +37,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
         format:
             Either 'pandas' or 'json'.
             Whether to load the results into a pandas DataFrame,
-            or return the server's raw JSON response as a Python dict.
+            or return the server's raw json response as a Python dict.
 
         client:
             If not provided, the global default ``Client`` will be used.
@@ -97,7 +97,7 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
         In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:
         
             - ROI boolean columns are removed
-            - ``roiInfo`` is parsed as JSON data
+            - ``roiInfo`` is parsed as json data
             - ``somaLocation`` is provided as a list ``[x, y, z]``
             - New columns ``input_rois`` and ``output_rois`` contain lists of each neuron's ROIs.
         
@@ -279,7 +279,7 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
         In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:
         
             - ROI boolean columns are removed
-            - ``roiInfo`` is parsed as JSON data
+            - ``roiInfo`` is parsed as json data
             - ``somaLocation`` is provided as a list ``[x, y, z]``
             - New columns ``inputRois`` and ``outputRois`` contain lists of each neuron's ROIs.
         
@@ -553,7 +553,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 @inject_client
 def fetch_meta(*, client=None):
     """
-    Fetch the dataset metadata, parsing JSON fields where necessary.
+    Fetch the dataset metadata, parsing json fields where necessary.
     
     Returns:
         dict
@@ -606,7 +606,8 @@ def fetch_meta(*, client=None):
 @inject_client
 def fetch_all_rois(*, client):
     """
-    Fetch the list of all ROIs in the dataset.
+    Fetch the list of all ROIs in the dataset,
+    from the dataset metadata.
     """
     meta = fetch_meta(client=client)
     official_rois = {*meta['roiInfo'].keys()}
@@ -621,7 +622,8 @@ def fetch_all_rois(*, client):
 @inject_client
 def fetch_primary_rois(*, client):
     """
-    Fetch the list of 'primary' ROIs in the dataset.
+    Fetch the list of 'primary' ROIs in the dataset,
+    from the dataset metadata.
     Primary ROIs do not overlap with each other.
     """
     q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
