@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Client &mdash; neuprint-python 0.2.1+1.gc101cfa documentation</title>
+  <title>Client &mdash; neuprint-python 0.2.1+2.g4f7c4c1 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.1+1.gc101cfa
+                0.2.1+2.g4f7c4c1
               </div>
             
           
@@ -157,42 +157,69 @@
             
   <div class="section" id="client">
 <span id="id1"></span><h1>Client<a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.__init__</span></code>(server[,&nbsp;dataset,&nbsp;token,&nbsp;verify])</td>
+<td>Client constructor.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_custom" title="neuprint.client.Client.fetch_custom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_custom</span></code></a>(cypher[,&nbsp;dataset,&nbsp;format])</td>
+<td>Query the neuprint server with a custom Cypher query.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_available" title="neuprint.client.Client.fetch_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_available</span></code></a>()</td>
+<td>Fetch the list of REST API endpoints supported by the server.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_help" title="neuprint.client.Client.fetch_help"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_help</span></code></a>()</td>
+<td>Fetch auto-generated REST API documentation, as YAML text.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_server_info" title="neuprint.client.Client.fetch_server_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_server_info</span></code></a>()</td>
+<td>Returns whether or not the server is public.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_version" title="neuprint.client.Client.fetch_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_version</span></code></a>()</td>
+<td>Returns the version of the <code class="docutils literal notranslate"><span class="pre">neuPrintHTTP</span></code> server.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_database" title="neuprint.client.Client.fetch_database"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_database</span></code></a>()</td>
+<td>Fetch the address of the neo4j database that the neuprint server is using.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_datasets" title="neuprint.client.Client.fetch_datasets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_datasets</span></code></a>()</td>
+<td>Fetch basic information about the available datasets on the server.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_instances" title="neuprint.client.Client.fetch_instances"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_instances</span></code></a>()</td>
+<td>Fetch secondary data instances avaiable through neupint http</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_db_version" title="neuprint.client.Client.fetch_db_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_db_version</span></code></a>()</td>
+<td>Fetch the database version</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_profile" title="neuprint.client.Client.fetch_profile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_profile</span></code></a>()</td>
+<td>Fetch basic information about your user profile, including your access level.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_token" title="neuprint.client.Client.fetch_token"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_token</span></code></a>()</td>
+<td>Fetch your user authentication token.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_daily_type" title="neuprint.client.Client.fetch_daily_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_daily_type</span></code></a>([format])</td>
+<td>Return information about today’s cell type of the day.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_roi_completeness" title="neuprint.client.Client.fetch_roi_completeness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_roi_completeness</span></code></a>([format])</td>
+<td>Fetch the pre-computed traced “completeness” statistics for each primary ROI in the dataset.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_roi_connectivity" title="neuprint.client.Client.fetch_roi_connectivity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_roi_connectivity</span></code></a>([format])</td>
+<td>Fetch the pre-computed connectivity statistics between primary ROIs in the dataset.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_skeleton</span></code></a>(body[,&nbsp;format])</td>
+<td>Fetch the skeleton for a neuron or segment.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.set_default_client" title="neuprint.client.set_default_client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_client</span></code></a>(client)</td>
+<td>Set (or overwrite) the default Client.</td>
+</tr>
+</tbody>
+</table>
 <dl class="class">
-<dt id="neuprint.Client">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">Client</code><span class="sig-paren">(</span><em>server</em>, <em>dataset=None</em>, <em>token=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Used for all queries against neuprint.
-Holds your authorization credentials, the dataset name to use,
-and other connection settings.</p>
-<p>Most <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> functions do not require you to explicitly
-provide a Client object to use. Instead, the first <code class="docutils literal notranslate"><span class="pre">Client</span></code> you
-create will be stored as the default <code class="docutils literal notranslate"><span class="pre">Client</span></code> to be used with all
-<code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> functions if you don’t explicitly specify one.</p>
-<p class="rubric">Example</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain:v1.0&#39;</span><span class="p">)</span>
-
-<span class="gp">In [2]: </span><span class="n">fetch_custom</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="gp">   ...: </span><span class="s2">    MATCH (n: Neuron)</span>
-<span class="gp">   ...: </span><span class="s2">    WHERE n.status = &quot;Traced&quot; AND NOT n.cropped</span>
-<span class="gp">   ...: </span><span class="s2">    RETURN n.bodyId as bodyId, n.type as type, n.instance as instance</span>
-<span class="gp">   ...: </span><span class="s2">    ORDER BY n.type, n.instance</span>
-<span class="gp">   ...: </span><span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
-<span class="gh">Out[2]:</span>
-<span class="go">           bodyId        type             instance</span>
-<span class="go">0       511051477   5th s-LNv            5th s-LNv</span>
-<span class="go">1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R</span>
-<span class="go">2      1100952886  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
-<span class="go">3      1228484534  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
-<span class="go">4      1290563000  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
-<span class="go">...           ...         ...                  ...</span>
-<span class="go">21658  2346523421        None                 None</span>
-<span class="go">21659  2397377415        None                 None</span>
-<span class="go">21660  2429314661        None                 None</span>
-<span class="go">21661  2464541644        None                 None</span>
-<span class="go">21662  2404203061        None                 None</span>
-
-<span class="go">[21663 rows x 3 columns]</span>
-</pre></div>
-</div>
+<dt id="neuprint.client.Client">
+<em class="property">class </em><code class="descclassname">neuprint.client.</code><code class="descname">Client</code><span class="sig-paren">(</span><em>server</em>, <em>dataset=None</em>, <em>token=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Client constructor.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -213,117 +240,8 @@ all queries.</li>
 </tbody>
 </table>
 <dl class="method">
-<dt id="neuprint.Client.fetch_available">
-<code class="descname">fetch_available</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_available" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the list of REST API endpoints supported by the server.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_help">
-<code class="descname">fetch_help</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_help" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch auto-generated REST API documentation, as YAML text.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_server_info">
-<code class="descname">fetch_server_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_server_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_server_info" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns whether or not the server is public.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_database">
-<code class="descname">fetch_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_database" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the address of the neo4j database that the neuprint server is using.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_datasets">
-<code class="descname">fetch_datasets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_datasets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_datasets" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch basic information about the available datasets on the server.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_instances">
-<code class="descname">fetch_instances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_instances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_instances" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch secondary data instances avaiable through neupint http</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_db_version">
-<code class="descname">fetch_db_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_db_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_db_version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the database version</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_profile">
-<code class="descname">fetch_profile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_profile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch basic information about your user profile,
-including your access level.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_token">
-<code class="descname">fetch_token</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_token" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch your user authentication token.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This method just echoes the token back to you for debug purposes.
-To obtain your token for the first time, use the neuprint explorer
-web UI to login and obtain your token as explained elsewhere in
-this documentation.</p>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_daily_type">
-<code class="descname">fetch_daily_type</code><span class="sig-paren">(</span><em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_daily_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_daily_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return information about today’s cell type of the day.</p>
-<p>The server updates the completeness numbers each day. A different
-cell type is randomly picked and an exemplar is chosen
-from this type.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">If <code class="docutils literal notranslate"><span class="pre">format='json'</span></code>, a dictionary is returned with keys
-<code class="docutils literal notranslate"><span class="pre">['info',</span> <span class="pre">'connectivity',</span> <span class="pre">'skeleton']</span></code>.
-If <code class="docutils literal notranslate"><span class="pre">format='pandas'</span></code>, three values are returned:
-<code class="docutils literal notranslate"><span class="pre">(info,</span> <span class="pre">connectivity,</span> <span class="pre">skeleton)</span></code>, where <code class="docutils literal notranslate"><span class="pre">connectivity</span></code>
-and <code class="docutils literal notranslate"><span class="pre">skeleton</span></code> are DataFrames.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_roi_completeness">
-<code class="descname">fetch_roi_completeness</code><span class="sig-paren">(</span><em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_roi_completeness"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_roi_completeness" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the pre-computed traced “completeness” statistics
-for each primary ROI in the dataset.</p>
-<p>The completeness statistics indicate how many synapses
-belong to Traced neurons.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">These results are not computed on-the-fly.
-They are computed periodically and cached.</p>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_roi_connectivity">
-<code class="descname">fetch_roi_connectivity</code><span class="sig-paren">(</span><em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_roi_connectivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_roi_connectivity" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the pre-computed connectivity statistics
-between primary ROIs in the dataset.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">These results are not computed on-the-fly.
-They are computed periodically and cached.</p>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.Client.fetch_custom">
-<code class="descname">fetch_custom</code><span class="sig-paren">(</span><em>cypher</em>, <em>dataset=''</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_custom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_custom" title="Permalink to this definition">¶</a></dt>
+<dt id="neuprint.client.Client.fetch_custom">
+<code class="descname">fetch_custom</code><span class="sig-paren">(</span><em>cypher</em>, <em>dataset=''</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_custom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_custom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Query the neuprint server with a custom Cypher query.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -349,8 +267,123 @@ or return the server’s raw JSON response as a Python <code class="docutils lit
 </dd></dl>
 
 <dl class="method">
-<dt id="neuprint.Client.fetch_skeleton">
-<code class="descname">fetch_skeleton</code><span class="sig-paren">(</span><em>body</em>, <em>format='swc'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_skeleton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.Client.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
+<dt id="neuprint.client.Client.fetch_available">
+<code class="descname">fetch_available</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_available" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the list of REST API endpoints supported by the server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_help">
+<code class="descname">fetch_help</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_help"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_help" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch auto-generated REST API documentation, as YAML text.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_server_info">
+<code class="descname">fetch_server_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_server_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_server_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns whether or not the server is public.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_version">
+<code class="descname">fetch_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the version of the <code class="docutils literal notranslate"><span class="pre">neuPrintHTTP</span></code> server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_database">
+<code class="descname">fetch_database</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_database"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_database" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the address of the neo4j database that the neuprint server is using.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_datasets">
+<code class="descname">fetch_datasets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_datasets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_datasets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch basic information about the available datasets on the server.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_instances">
+<code class="descname">fetch_instances</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_instances"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_instances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch secondary data instances avaiable through neupint http</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_db_version">
+<code class="descname">fetch_db_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_db_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_db_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the database version</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_profile">
+<code class="descname">fetch_profile</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch basic information about your user profile,
+including your access level.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_token">
+<code class="descname">fetch_token</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_token"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_token" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch your user authentication token.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method just echoes the token back to you for debug purposes.
+To obtain your token for the first time, use the neuprint explorer
+web UI to login and obtain your token as explained elsewhere in
+this documentation.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_daily_type">
+<code class="descname">fetch_daily_type</code><span class="sig-paren">(</span><em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_daily_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_daily_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return information about today’s cell type of the day.</p>
+<p>The server updates the completeness numbers each day. A different
+cell type is randomly picked and an exemplar is chosen
+from this type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">If <code class="docutils literal notranslate"><span class="pre">format='json'</span></code>, a dictionary is returned with keys
+<code class="docutils literal notranslate"><span class="pre">['info',</span> <span class="pre">'connectivity',</span> <span class="pre">'skeleton']</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">format='pandas'</span></code>, three values are returned:
+<code class="docutils literal notranslate"><span class="pre">(info,</span> <span class="pre">connectivity,</span> <span class="pre">skeleton)</span></code>, where <code class="docutils literal notranslate"><span class="pre">connectivity</span></code>
+and <code class="docutils literal notranslate"><span class="pre">skeleton</span></code> are DataFrames.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_roi_completeness">
+<code class="descname">fetch_roi_completeness</code><span class="sig-paren">(</span><em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_roi_completeness"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_completeness" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the pre-computed traced “completeness” statistics
+for each primary ROI in the dataset.</p>
+<p>The completeness statistics indicate how many synapses
+belong to Traced neurons.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">These results are not computed on-the-fly.
+They are computed periodically and cached.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_roi_connectivity">
+<code class="descname">fetch_roi_connectivity</code><span class="sig-paren">(</span><em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_roi_connectivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_connectivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the pre-computed connectivity statistics
+between primary ROIs in the dataset.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">These results are not computed on-the-fly.
+They are computed periodically and cached.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_skeleton">
+<code class="descname">fetch_skeleton</code><span class="sig-paren">(</span><em>body</em>, <em>format='swc'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_skeleton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the skeleton for a neuron or segment.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -372,9 +405,12 @@ or return the server’s raw JSON response as a Python <code class="docutils lit
 </dd></dl>
 
 <dl class="function">
-<dt id="neuprint.set_default_client">
-<code class="descclassname">neuprint.</code><code class="descname">set_default_client</code><span class="sig-paren">(</span><em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#set_default_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.set_default_client" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set (or overwrite) the default Client.</p>
+<dt id="neuprint.client.set_default_client">
+<code class="descclassname">neuprint.client.</code><code class="descname">set_default_client</code><span class="sig-paren">(</span><em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#set_default_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.set_default_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set (or overwrite) the default Client.
+This function is automatically called with
+the first <code class="docutils literal notranslate"><span class="pre">Client</span></code> you create,
+but you can call it again to replace the default.</p>
 </dd></dl>
 
 </div>
