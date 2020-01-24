@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.2+11.gcb2647a documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.2+12.g6dd7942 documentation</title>
   
 
   
@@ -33,6 +33,7 @@
   
   <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
 </head>
@@ -58,7 +59,7 @@
             
             
               <div class="version">
-                0.2+11.gcb2647a
+                0.2+12.g6dd7942
               </div>
             
           
@@ -85,7 +86,7 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../client.html">Client</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../queries.html">Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../queries.html">Common Queries</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
 </ul>
@@ -171,7 +172,7 @@
 <div class="viewcode-block" id="fetch_custom"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Alternative form of Client.fetch_custom(), as a free function.</span>
+<span class="sd">    Alternative form of ``Client.fetch_custom()``, as a free function.</span>
 <span class="sd">    That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.</span>
 
 <span class="sd">    If ``client=None``, the default ``Client`` is used</span>
@@ -190,7 +191,7 @@
 <span class="sd">        format:</span>
 <span class="sd">            Either &#39;pandas&#39; or &#39;json&#39;.</span>
 <span class="sd">            Whether to load the results into a pandas DataFrame,</span>
-<span class="sd">            or return the server&#39;s raw JSON response as a Python dict.</span>
+<span class="sd">            or return the server&#39;s raw json response as a Python dict.</span>
 
 <span class="sd">        client:</span>
 <span class="sd">            If not provided, the global default ``Client`` will be used.</span>
@@ -250,7 +251,7 @@
 <span class="sd">        In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:</span>
 <span class="sd">        </span>
 <span class="sd">            - ROI boolean columns are removed</span>
-<span class="sd">            - ``roiInfo`` is parsed as JSON data</span>
+<span class="sd">            - ``roiInfo`` is parsed as json data</span>
 <span class="sd">            - ``somaLocation`` is provided as a list ``[x, y, z]``</span>
 <span class="sd">            - New columns ``input_rois`` and ``output_rois`` contain lists of each neuron&#39;s ROIs.</span>
 <span class="sd">        </span>
@@ -432,7 +433,7 @@
 <span class="sd">        In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:</span>
 <span class="sd">        </span>
 <span class="sd">            - ROI boolean columns are removed</span>
-<span class="sd">            - ``roiInfo`` is parsed as JSON data</span>
+<span class="sd">            - ``roiInfo`` is parsed as json data</span>
 <span class="sd">            - ``somaLocation`` is provided as a list ``[x, y, z]``</span>
 <span class="sd">            - New columns ``inputRois`` and ``outputRois`` contain lists of each neuron&#39;s ROIs.</span>
 <span class="sd">        </span>
@@ -706,7 +707,7 @@
 <div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_meta</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the dataset metadata, parsing JSON fields where necessary.</span>
+<span class="sd">    Fetch the dataset metadata, parsing json fields where necessary.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        dict</span>
@@ -759,7 +760,8 @@
 <div class="viewcode-block" id="fetch_all_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_all_rois">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the list of all ROIs in the dataset.</span>
+<span class="sd">    Fetch the list of all ROIs in the dataset,</span>
+<span class="sd">    from the dataset metadata.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
     <span class="n">official_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
@@ -774,7 +776,8 @@
 <div class="viewcode-block" id="fetch_primary_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_primary_rois">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_primary_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the list of &#39;primary&#39; ROIs in the dataset.</span>
+<span class="sd">    Fetch the list of &#39;primary&#39; ROIs in the dataset,</span>
+<span class="sd">    from the dataset metadata.</span>
 <span class="sd">    Primary ROIs do not overlap with each other.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;MATCH (m:Meta) RETURN m.primaryRois as rois&quot;</span>

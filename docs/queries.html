@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Queries &mdash; neuprint-python 0.2+11.gcb2647a documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.2+12.g6dd7942 documentation</title>
   
 
   
@@ -33,6 +33,7 @@
   
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Admin Tools" href="admin.html" />
@@ -60,7 +61,7 @@
             
             
               <div class="version">
-                0.2+11.gcb2647a
+                0.2+12.g6dd7942
               </div>
             
           
@@ -87,7 +88,7 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Queries</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Common Queries</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
@@ -135,7 +136,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Queries</li>
+      <li>Common Queries</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -154,18 +155,50 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="queries">
-<span id="id1"></span><h1>Queries<a class="headerlink" href="#queries" title="Permalink to this headline">¶</a></h1>
+  <span class="target" id="queries"></span><div class="section" id="common-queries">
+<h1>Common Queries<a class="headerlink" href="#common-queries" title="Permalink to this headline">¶</a></h1>
 <p>Convenience functions for common queries.</p>
 <p>If you are familiar with the neuPrint data model and the
 <a class="reference external" href="https://neo4j.com/developer/cypher-query-language/">cypher</a>
 query language, you can write your own queries using
-<code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom</span></code>.
+<a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom</span></code></a>.
 But the functions in this file offer a convenient API for common queries.</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_custom</span></code></a>(cypher[,&nbsp;dataset,&nbsp;format,&nbsp;client])</td>
+<td>Alternative form of <code class="docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code>, as a free function.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.find_neurons" title="neuprint.queries.find_neurons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_neurons</span></code></a>([bodyId,&nbsp;status,&nbsp;instance,&nbsp;…])</td>
+<td>Python version of the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1">Find Neurons</a> page.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_custom_neurons</span></code></a>(q[,&nbsp;neuprint_rois,&nbsp;client])</td>
+<td>Use a custom query to fetch a neuron table, with nicer output than you would get from a call to <a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom()</span></code></a>.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.simple_connections" title="neuprint.queries.simple_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simple_connections</span></code></a>([from_bodyId,&nbsp;…])</td>
+<td>Find all connections to/from a set of neurons, or all connections from one set of neurons and another.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_traced_adjacencies" title="neuprint.queries.fetch_traced_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_traced_adjacencies</span></code></a>([export_dir,&nbsp;…])</td>
+<td>Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_meta" title="neuprint.queries.fetch_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_meta</span></code></a>(*[,&nbsp;client])</td>
+<td>Fetch the dataset metadata, parsing json fields where necessary.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_all_rois" title="neuprint.queries.fetch_all_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_all_rois</span></code></a>(*,&nbsp;client)</td>
+<td>Fetch the list of all ROIs in the dataset, from the dataset metadata.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*,&nbsp;client)</td>
+<td>Fetch the list of ‘primary’ ROIs in the dataset, from the dataset metadata.</td>
+</tr>
+</tbody>
+</table>
 <span class="target" id="module-neuprint.queries"></span><dl class="function">
 <dt id="neuprint.queries.fetch_custom">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom</code><span class="sig-paren">(</span><em>cypher</em>, <em>dataset=''</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_custom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alternative form of Client.fetch_custom(), as a free function.
+<dd><p>Alternative form of <code class="docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code>, as a free function.
 That is, <code class="docutils literal notranslate"><span class="pre">fetch_custom(...,</span> <span class="pre">client=c)</span></code> is equivalent to <code class="docutils literal notranslate"><span class="pre">c.fetch_custom(...)</span></code>.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">client=None</span></code>, the default <code class="docutils literal notranslate"><span class="pre">Client</span></code> is used
 (assuming you have created at least one <code class="docutils literal notranslate"><span class="pre">Client</span></code>.)</p>
@@ -181,7 +214,7 @@ If None provided, the client’s default dataset is used.</p>
 </li>
 <li><strong>format</strong> – Either ‘pandas’ or ‘json’.
 Whether to load the results into a pandas DataFrame,
-or return the server’s raw JSON response as a Python dict.</li>
+or return the server’s raw json response as a Python dict.</li>
 <li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
 </ul>
 </td>
@@ -232,7 +265,7 @@ regular expressions, rather than exact match strings.</li>
 <blockquote>
 <div><ul class="simple">
 <li>ROI boolean columns are removed</li>
-<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as JSON data</li>
+<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as json data</li>
 <li><code class="docutils literal notranslate"><span class="pre">somaLocation</span></code> is provided as a list <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]</span></code></li>
 <li>New columns <code class="docutils literal notranslate"><span class="pre">input_rois</span></code> and <code class="docutils literal notranslate"><span class="pre">output_rois</span></code> contain lists of each neuron’s ROIs.</li>
 </ul>
@@ -321,7 +354,7 @@ If not provided, they will be fetched
 <blockquote>
 <div><ul class="simple">
 <li>ROI boolean columns are removed</li>
-<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as JSON data</li>
+<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as json data</li>
 <li><code class="docutils literal notranslate"><span class="pre">somaLocation</span></code> is provided as a list <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]</span></code></li>
 <li>New columns <code class="docutils literal notranslate"><span class="pre">inputRois</span></code> and <code class="docutils literal notranslate"><span class="pre">outputRois</span></code> contain lists of each neuron’s ROIs.</li>
 </ul>
@@ -429,7 +462,7 @@ and the results are somewhat large (~300 MB).</p>
 <dl class="function">
 <dt id="neuprint.queries.fetch_meta">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_meta</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_meta" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the dataset metadata, parsing JSON fields where necessary.</p>
+<dd><p>Fetch the dataset metadata, parsing json fields where necessary.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -470,13 +503,15 @@ and the results are somewhat large (~300 MB).</p>
 <dl class="function">
 <dt id="neuprint.queries.fetch_all_rois">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_all_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_all_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_all_rois" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the list of all ROIs in the dataset.</p>
+<dd><p>Fetch the list of all ROIs in the dataset,
+from the dataset metadata.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_primary_rois">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_primary_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the list of ‘primary’ ROIs in the dataset.
+<dd><p>Fetch the list of ‘primary’ ROIs in the dataset,
+from the dataset metadata.
 Primary ROIs do not overlap with each other.</p>
 </dd></dl>
 
