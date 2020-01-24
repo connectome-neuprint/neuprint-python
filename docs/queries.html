@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Queries &mdash; neuprint-python 0.2+9.g60fc670 documentation</title>
+  <title>Queries &mdash; neuprint-python 0.2+11.gcb2647a documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.2+9.g60fc670
+                0.2+11.gcb2647a
               </div>
             
           
@@ -194,6 +194,239 @@ or return the server’s raw JSON response as a Python dict.</li>
 </dd></dl>
 
 <dl class="function">
+<dt id="neuprint.queries.find_neurons">
+<code class="descclassname">neuprint.queries.</code><code class="descname">find_neurons</code><span class="sig-paren">(</span><em>bodyId=None</em>, <em>status=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>input_roi=None</em>, <em>output_roi=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>regex=False</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#find_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.find_neurons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python version of the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1">Find Neurons</a> page.</p>
+<p>Returns data in the the same format as <code class="xref py py-func docutils literal notranslate"><span class="pre">find_custom_neurons()</span></code>,
+but doesn’t require you to write cypher.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bodyId</strong> – Integer or list of ints.</li>
+<li><strong>status</strong> – str or list of strings</li>
+<li><strong>instance</strong> – str or list of strings
+If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
+<li><strong>type</strong> – str or list of strings
+If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
+<li><strong>input_roi</strong> – str or list of strings
+Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
+<code class="docutils literal notranslate"><span class="pre">regex</span></code> does not apply to this parameter.</li>
+<li><strong>output_roi</strong> – str or list of strings
+Only Neurons which have outputs in EVERY one of the given ROIs will be matched.
+<code class="docutils literal notranslate"><span class="pre">regex</span></code> does not apply to this parameter.</li>
+<li><strong>min_pre</strong> – int
+Exclude neurons that don’t have at least this many t-bars (outputs).</li>
+<li><strong>min_post</strong> – int
+Exclude neurons that don’t have at least this many PSDs (inputs).</li>
+<li><strong>regex</strong> – Boolean.
+If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the <code class="docutils literal notranslate"><span class="pre">instance</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> arguments will be interpreted as
+regular expressions, rather than exact match strings.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>Two DataFrames.
+<code class="docutils literal notranslate"><span class="pre">(neurons_df,</span> <span class="pre">roi_counts_df)</span></code></p>
+<p>In <code class="docutils literal notranslate"><span class="pre">neurons_df</span></code>, all available columns <code class="docutils literal notranslate"><span class="pre">:Neuron</span></code> columns are returned, with the following changes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>ROI boolean columns are removed</li>
+<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as JSON data</li>
+<li><code class="docutils literal notranslate"><span class="pre">somaLocation</span></code> is provided as a list <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]</span></code></li>
+<li>New columns <code class="docutils literal notranslate"><span class="pre">input_rois</span></code> and <code class="docutils literal notranslate"><span class="pre">output_rois</span></code> contain lists of each neuron’s ROIs.</li>
+</ul>
+</div></blockquote>
+<p>In <code class="docutils literal notranslate"><span class="pre">roi_counts_df</span></code>, the <code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> has been loadded into a table
+of per-neuron-per-ROI synapse counts, with separate columns
+for <code class="docutils literal notranslate"><span class="pre">pre</span></code> (outputs) and <code class="docutils literal notranslate"><span class="pre">post</span></code> (inputs).</p>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">If you like the output format of this function but you want
+to provide your own cypher query, see <a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom_neurons()</span></code></a>.</p>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">find_neurons</span><span class="p">(</span>
+<span class="gp">   ...: </span>    <span class="n">input_roi</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SIP(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;aL(R)&#39;</span><span class="p">],</span> <span class="n">status</span><span class="o">=</span><span class="s1">&#39;Traced&#39;</span><span class="p">,</span>
+<span class="gp">   ...: </span>    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="s1">&#39;.*&#39;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="gp">In [2]: </span><span class="n">neurons_df</span><span class="o">.</span><span class="n">columns</span>
+<span class="gh">Out[2]:</span>
+<span class="go">Index([&#39;bodyId&#39;, &#39;status&#39;, &#39;cropped&#39;, &#39;type&#39;, &#39;instance&#39;, &#39;cellBodyFiber&#39;,</span>
+<span class="go">       &#39;somaRadius&#39;, &#39;somaLocation&#39;, &#39;size&#39;, &#39;pre&#39;, &#39;post&#39;, &#39;statusLabel&#39;,</span>
+<span class="go">       &#39;inputRois&#39;, &#39;outputRois&#39;, &#39;roiInfo&#39;],</span>
+<span class="go">      dtype=&#39;object&#39;)</span>
+
+<span class="gp">In [3]: </span><span class="n">neurons_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">,</span> <span class="p">:</span><span class="mi">11</span><span class="p">]</span>
+<span class="gh">Out[3]:</span>
+<span class="go">      bodyId  status  cropped    type                     instance cellBodyFiber  somaRadius           somaLocation        size   pre   post</span>
+<span class="go">0  300972942  Traced    False  MBON14                 MBON14(a3)_R           NaN         NaN                   None  1563154937   543  13634</span>
+<span class="go">1  422725634  Traced    False  MBON06        MBON06(B1&gt;a)(AVM07)_L           NaN         NaN                   None  3118269136  1356  20978</span>
+<span class="go">2  423382015  Traced    False  MBON23        MBON23(a2sp)(PDL05)_R          SFS1       291.0   [7509, 13310, 14016]   857093893   733   4466</span>
+<span class="go">3  423774471  Traced    False  MBON19       MBON19(a2p3p)(PDL05)_R          SFS1       286.0   [5459, 15006, 10552]   628019179   299   1484</span>
+<span class="go">4  424767514  Traced    False  MBON11  MBON11(y1pedc&gt;a/B)(ADM05)_R        mAOTU2       694.5  [18614, 35832, 19448]  5249327644  1643  27641</span>
+
+<span class="gp">In [4]: </span><span class="n">neurons_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[4]:</span>
+<span class="go">0    [MB(+ACA)(R), MB(R), None, SIP(R), SLP(R), SMP...</span>
+<span class="go">1    [CRE(-ROB,-RUB)(R), CRE(R), INP, MB(+ACA)(R), ...</span>
+<span class="go">2    [MB(+ACA)(R), MB(R), None, SIP(R), SLP(R), SMP...</span>
+<span class="go">3    [MB(+ACA)(R), MB(R), SIP(R), SMP(R), SNP(R), a...</span>
+<span class="go">4    [CRE(-ROB,-RUB)(R), CRE(L), CRE(R), INP, MB(+A...</span>
+<span class="go">Name: inputRois, dtype: object</span>
+
+<span class="gp">In [5]: </span><span class="n">roi_counts_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[5]:</span>
+<span class="go">      bodyId          roi  pre   post</span>
+<span class="go">0  300972942        MB(R)   17  13295</span>
+<span class="go">1  300972942        aL(R)   17  13271</span>
+<span class="go">2  300972942        a3(R)   17  13224</span>
+<span class="go">3  300972942  MB(+ACA)(R)   17  13295</span>
+<span class="go">4  300972942       SNP(R)  526    336</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_custom_neurons">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom_neurons</code><span class="sig-paren">(</span><em>q</em>, <em>neuprint_rois=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_custom_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom_neurons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use a custom query to fetch a neuron table, with nicer output
+than you would get from a call to <a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom()</span></code></a>.</p>
+<p>Returns data in the the same format as <a class="reference internal" href="#neuprint.queries.find_neurons" title="neuprint.queries.find_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">find_neurons()</span></code></a>.
+but allows you to provide your own cypher query logic
+(subject to certain requirements; see below).</p>
+<p>This function includes all Neuron fields in the results,
+and also sends back ROI counts as a separate table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>q</strong> – Custom query. Must match a neuron named <code class="docutils literal notranslate"><span class="pre">n</span></code>,
+and must <code class="docutils literal notranslate"><span class="pre">RETURN</span> <span class="pre">n</span></code>.</li>
+<li><strong>neuprint_rois</strong> – Optional.  The list of ROI names from neuprint.
+If not provided, they will be fetched
+(so that ROI boolean columns can be dropped from the results).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>Two DataFrames.
+<code class="docutils literal notranslate"><span class="pre">(neurons_df,</span> <span class="pre">roi_counts_df)</span></code></p>
+<p>In <code class="docutils literal notranslate"><span class="pre">neurons_df</span></code>, all available columns <code class="docutils literal notranslate"><span class="pre">:Neuron</span></code> columns are returned, with the following changes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>ROI boolean columns are removed</li>
+<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as JSON data</li>
+<li><code class="docutils literal notranslate"><span class="pre">somaLocation</span></code> is provided as a list <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]</span></code></li>
+<li>New columns <code class="docutils literal notranslate"><span class="pre">inputRois</span></code> and <code class="docutils literal notranslate"><span class="pre">outputRois</span></code> contain lists of each neuron’s ROIs.</li>
+</ul>
+</div></blockquote>
+<p>In <code class="docutils literal notranslate"><span class="pre">roi_counts_df</span></code>, the <code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> has been loadded into a table
+of per-neuron-per-ROI synapse counts, with separate columns
+for <code class="docutils literal notranslate"><span class="pre">pre</span></code> (outputs) and <code class="docutils literal notranslate"><span class="pre">post</span></code> (inputs).</p>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.simple_connections">
+<code class="descclassname">neuprint.queries.</code><code class="descname">simple_connections</code><span class="sig-paren">(</span><em>from_bodyId=None, from_instance=None, from_type=None, to_bodyId=None, to_instance=None, to_type=None, min_weight=1, node_type='Neuron', regex=False, properties=['status', 'cropped', 'type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#simple_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.simple_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all connections to/from a set of neurons,
+or all connections from one set of neurons and another.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>from_bodyId</strong> – Integer or list of ints.</li>
+<li><strong>from_instance</strong> – str or list of strings
+If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
+<li><strong>from_type</strong> – str or list of strings
+If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
+<li><strong>to_bodyId</strong> – Integer or list of ints.</li>
+<li><strong>to_instance</strong> – str or list of strings
+If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
+<li><strong>to_type</strong> – str or list of strings
+If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
+<li><strong>min_weight</strong> – Exclude connections below this weight.</li>
+<li><strong>node_type</strong> – Return results for Neurons (default) or all Segments.</li>
+<li><strong>properties</strong> – Additional columns to include in the results, for both the upstream and downstream body.</li>
+<li><strong>regex</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, instance and type arguments will be interpreted as regular expressions.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame
+One row per connection, with columns for upstream and downstream properties.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_traced_adjacencies">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_traced_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.
+Synapses which do not fall on any ROI will be listed as having ROI ‘None’.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>export_dir</strong> – Optional. Export CSV files for the neuron table,
+connection table (total weight), and connection table (per ROI).</li>
+<li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
+This parameter specifies the batch size.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df)</span></code>, containing the
+table of neuron IDs and the per-ROI connection table, respectively.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On the hemibrain dataset, this function takes a few minutes to run,
+and the results are somewhat large (~300 MB).</p>
+</div>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">fetch_traced_adjacencies</span><span class="p">(</span><span class="s1">&#39;exported-connections&#39;</span><span class="p">)</span>
+
+<span class="gp">In [2]: </span><span class="n">roi_conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[2]:</span>
+<span class="go">       bodyId_pre  bodyId_post        roi  weight</span>
+<span class="go">0      5813009352    516098538     SNP(R)       2</span>
+<span class="go">1      5813009352    516098538     SLP(R)       2</span>
+<span class="go">2       326119769    516098538     SNP(R)       1</span>
+<span class="go">3       326119769    516098538     SLP(R)       1</span>
+<span class="go">4       915960391    202916528         FB       1</span>
+
+<span class="gp">In [3]: </span><span class="c1"># Obtain total weights (instead of per-connection-per-ROI weights)</span>
+<span class="gp">   ...: </span><span class="n">conn_groups</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">total_conn_df</span> <span class="o">=</span> <span class="n">conn_groups</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gp">   ...: </span><span class="n">total_conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[3]:</span>
+<span class="go">   bodyId_pre  bodyId_post  weight</span>
+<span class="go">0   202916528    203253253       2</span>
+<span class="go">1   202916528    203257652       2</span>
+<span class="go">2   202916528    203598557       2</span>
+<span class="go">3   202916528    234292899       4</span>
+<span class="go">4   202916528    264986706       2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
 <dt id="neuprint.queries.fetch_meta">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_meta</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_meta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the dataset metadata, parsing JSON fields where necessary.</p>
@@ -241,145 +474,10 @@ or return the server’s raw JSON response as a Python dict.</li>
 </dd></dl>
 
 <dl class="function">
-<dt id="neuprint.queries.fetch_custom_neurons">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom_neurons</code><span class="sig-paren">(</span><em>q</em>, <em>neuprint_rois=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_custom_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom_neurons" title="Permalink to this definition">¶</a></dt>
-<dd><p>Use a custom query to fetch a neuron list.
-This function includes all Neuron fields in the results,
-and also sends back ROI counts as a separate table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>q</strong> – Custom query.  Must match a neuron named <code class="docutils literal notranslate"><span class="pre">n</span></code>, and must `` RETURN n``.</li>
-<li><strong>neuprint_rois</strong> – Optional.  The list of ROI names from neuprint.
-If not provided, they will be fetched
-(so that ROI boolean columns can be dropped from the results).</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>Two DataFrames.
-<code class="docutils literal notranslate"><span class="pre">(neurons_df,</span> <span class="pre">roi_counts_df)</span></code></p>
-<p>In <code class="docutils literal notranslate"><span class="pre">neurons_df</span></code>, all available columns <code class="docutils literal notranslate"><span class="pre">:Neuron</span></code> columns are returned, with the following changes:</p>
-<blockquote>
-<div><ul class="simple">
-<li>ROI boolean columns are removed</li>
-<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as JSON data</li>
-<li><code class="docutils literal notranslate"><span class="pre">somaLocation</span></code> is provided as a list <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]</span></code></li>
-<li>New columns <code class="docutils literal notranslate"><span class="pre">input_rois</span></code> and <code class="docutils literal notranslate"><span class="pre">output_rois</span></code> contain lists of each neuron’s ROIs.</li>
-</ul>
-</div></blockquote>
-<p>In <code class="docutils literal notranslate"><span class="pre">roi_counts_df</span></code>, the <code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> has been loadded into a table
-of per-neuron-per-ROI synapse counts, with separate columns
-for <code class="docutils literal notranslate"><span class="pre">pre</span></code> (outputs) and <code class="docutils literal notranslate"><span class="pre">post</span></code> (inputs).</p>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="neuprint.queries.find_neurons">
-<code class="descclassname">neuprint.queries.</code><code class="descname">find_neurons</code><span class="sig-paren">(</span><em>bodyId=None</em>, <em>status=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>input_roi=None</em>, <em>output_roi=None</em>, <em>regex=False</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#find_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.find_neurons" title="Permalink to this definition">¶</a></dt>
-<dd><p>Python version of the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1">Find Neurons</a> page.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>bodyId</strong> – Integer or list of ints.</li>
-<li><strong>status</strong> – str or list of strings</li>
-<li><strong>instance</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
-<li><strong>type</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
-<li><strong>input_roi</strong> – str or list of strings
-Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
-<code class="docutils literal notranslate"><span class="pre">regex</span></code> does not apply to this parameter.</li>
-<li><strong>output_roi</strong> – str or list of strings
-Only Neurons which have outputs in EVERY one of the given ROIs will be matched.
-<code class="docutils literal notranslate"><span class="pre">regex</span></code> does not apply to this parameter.</li>
-<li><strong>regex</strong> – Boolean.
-If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the <code class="docutils literal notranslate"><span class="pre">instance</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> arguments will be interpreted as
-regular expressions, rather than exact match strings.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>Two DataFrames.
-<code class="docutils literal notranslate"><span class="pre">(neurons_df,</span> <span class="pre">roi_counts_df)</span></code></p>
-<p>In <code class="docutils literal notranslate"><span class="pre">neurons_df</span></code>, all available columns <code class="docutils literal notranslate"><span class="pre">:Neuron</span></code> columns are returned, with the following changes:</p>
-<blockquote>
-<div><ul class="simple">
-<li>ROI boolean columns are removed</li>
-<li><code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> is parsed as JSON data</li>
-<li><code class="docutils literal notranslate"><span class="pre">somaLocation</span></code> is provided as a list <code class="docutils literal notranslate"><span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]</span></code></li>
-<li>New columns <code class="docutils literal notranslate"><span class="pre">input_rois</span></code> and <code class="docutils literal notranslate"><span class="pre">output_rois</span></code> contain lists of each neuron’s ROIs.</li>
-</ul>
-</div></blockquote>
-<p>In <code class="docutils literal notranslate"><span class="pre">roi_counts_df</span></code>, the <code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> has been loadded into a table
-of per-neuron-per-ROI synapse counts, with separate columns
-for <code class="docutils literal notranslate"><span class="pre">pre</span></code> (outputs) and <code class="docutils literal notranslate"><span class="pre">post</span></code> (inputs).</p>
-</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="neuprint.queries.fetch_traced_adjacencies">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_traced_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.
-Synapses which do not fall on any ROI will be listed as having ROI ‘None’.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>export_dir</strong> – Optional. Export CSV files for the neuron table,
-connection table (total weight), and connection table (per ROI).</li>
-<li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
-This parameter specifies the batch size.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df)</span></code>, containing the
-table of neuron IDs and the per-ROI connection table, respectively.</p>
-</td>
-</tr>
-</tbody>
-</table>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">On the hemibrain dataset, this function takes a few minutes to run,
-and the results results are somewhat large (~300 MB).</p>
-</div>
-<p class="rubric">Example</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">fetch_traced_adjacencies</span><span class="p">(</span><span class="s1">&#39;exported-connections&#39;</span><span class="p">)</span>
-
-<span class="gp">In [2]: </span><span class="n">roi_conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-<span class="gh">Out[2]:</span>
-<span class="go">       bodyId_pre  bodyId_post        roi  weight</span>
-<span class="go">0      5813009352    516098538     SNP(R)       2</span>
-<span class="go">1      5813009352    516098538     SLP(R)       2</span>
-<span class="go">2       326119769    516098538     SNP(R)       1</span>
-<span class="go">3       326119769    516098538     SLP(R)       1</span>
-<span class="go">4       915960391    202916528         FB       1</span>
-
-<span class="gp">In [3]: </span><span class="c1"># Obtain total weights (instead of per-connection-per-ROI weights)</span>
-<span class="gp">   ...: </span><span class="n">conn_groups</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gp">   ...: </span><span class="n">total_conn_df</span> <span class="o">=</span> <span class="n">conn_groups</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-<span class="gp">   ...: </span><span class="n">total_conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
-<span class="gh">Out[3]:</span>
-<span class="go">   bodyId_pre  bodyId_post  weight</span>
-<span class="go">0   202916528    203253253       2</span>
-<span class="go">1   202916528    203257652       2</span>
-<span class="go">2   202916528    203598557       2</span>
-<span class="go">3   202916528    234292899       4</span>
-<span class="go">4   202916528    264986706       2</span>
-</pre></div>
-</div>
+<dt id="neuprint.queries.fetch_primary_rois">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_primary_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the list of ‘primary’ ROIs in the dataset.
+Primary ROIs do not overlap with each other.</p>
 </dd></dl>
 
 </div>

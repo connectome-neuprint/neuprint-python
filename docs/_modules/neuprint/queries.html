@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.2+9.g60fc670 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.2+11.gcb2647a documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.2+9.g60fc670
+                0.2+11.gcb2647a
               </div>
             
           
@@ -157,7 +157,7 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_iterable</span><span class="p">,</span> <span class="n">parse_properties</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_iterable</span><span class="p">,</span> <span class="n">make_args_iterable</span><span class="p">,</span> <span class="n">where_expr</span>
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 
 <span class="k">try</span><span class="p">:</span>
@@ -201,152 +201,17 @@
     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_meta</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the dataset metadata, parsing JSON fields where necessary.</span>
-<span class="sd">    </span>
-<span class="sd">    Returns:</span>
-<span class="sd">        dict</span>
-<span class="sd">    </span>
-<span class="sd">    Example</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: ipython</span>
-<span class="sd">    </span>
-<span class="sd">        In [1]: meta = fetch_meta()</span>
-<span class="sd">    </span>
-<span class="sd">        In [2]: list(meta.keys())</span>
-<span class="sd">        Out[2]:</span>
-<span class="sd">        [&#39;dataset&#39;,</span>
-<span class="sd">         &#39;info&#39;,</span>
-<span class="sd">         &#39;lastDatabaseEdit&#39;,</span>
-<span class="sd">         &#39;latestMutationId&#39;,</span>
-<span class="sd">         &#39;logo&#39;,</span>
-<span class="sd">         &#39;meshHost&#39;,</span>
-<span class="sd">         &#39;neuroglancerInfo&#39;,</span>
-<span class="sd">         &#39;neuroglancerMeta&#39;,</span>
-<span class="sd">         &#39;postHPThreshold&#39;,</span>
-<span class="sd">         &#39;postHighAccuracyThreshold&#39;,</span>
-<span class="sd">         &#39;preHPThreshold&#39;,</span>
-<span class="sd">         &#39;primaryRois&#39;,</span>
-<span class="sd">         &#39;roiHierarchy&#39;,</span>
-<span class="sd">         &#39;roiInfo&#39;,</span>
-<span class="sd">         &#39;statusDefinitions&#39;,</span>
-<span class="sd">         &#39;superLevelRois&#39;,</span>
-<span class="sd">         &#39;tag&#39;,</span>
-<span class="sd">         &#39;totalPostCount&#39;,</span>
-<span class="sd">         &#39;totalPreCount&#39;,</span>
-<span class="sd">         &#39;uuid&#39;]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        MATCH (m:Meta)</span>
-<span class="s2">        WITH m as m,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,</span>
-<span class="s2">             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions</span>
-<span class="s2">        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions</span>
-<span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;meta&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">meta</span></div>
-
-
-<div class="viewcode-block" id="fetch_all_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_all_rois">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the list of all ROIs in the dataset.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-    <span class="n">official_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
-
-    <span class="c1"># These two ROIs are special:</span>
-    <span class="c1"># For historical reasons, they exist as tags, but are not listed in the Meta roiInfo.</span>
-    <span class="n">hidden_rois</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FB-column3&#39;</span><span class="p">,</span> <span class="s1">&#39;AL-DC3&#39;</span><span class="p">}</span>
-
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">official_rois</span> <span class="o">|</span> <span class="n">hidden_rois</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="fetch_custom_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom_neurons">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_custom_neurons</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">neuprint_rois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Use a custom query to fetch a neuron list.</span>
-<span class="sd">    This function includes all Neuron fields in the results,</span>
-<span class="sd">    and also sends back ROI counts as a separate table.</span>
-<span class="sd">    </span>
-<span class="sd">    Args:</span>
-<span class="sd">        q:</span>
-<span class="sd">            Custom query.  Must match a neuron named ``n``, and must `` RETURN n``.</span>
-<span class="sd">            </span>
-<span class="sd">            .. code-block::</span>
-<span class="sd">            </span>
-<span class="sd">                [WITH ...]</span>
-<span class="sd">                MATCH (n :Neuron)</span>
-<span class="sd">                [WHERE ...]</span>
-<span class="sd">                RETURN n</span>
-<span class="sd">                [ORDER BY ...]</span>
-
-<span class="sd">        neuprint_rois:</span>
-<span class="sd">            Optional.  The list of ROI names from neuprint.</span>
-<span class="sd">            If not provided, they will be fetched</span>
-<span class="sd">            (so that ROI boolean columns can be dropped from the results).</span>
-<span class="sd">        </span>
-<span class="sd">    Returns:</span>
-<span class="sd">        Two DataFrames.</span>
-<span class="sd">        ``(neurons_df, roi_counts_df)``</span>
-<span class="sd">        </span>
-<span class="sd">        In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:</span>
-<span class="sd">        </span>
-<span class="sd">            - ROI boolean columns are removed</span>
-<span class="sd">            - ``roiInfo`` is parsed as JSON data</span>
-<span class="sd">            - ``somaLocation`` is provided as a list ``[x, y, z]``</span>
-<span class="sd">            - New columns ``input_rois`` and ``output_rois`` contain lists of each neuron&#39;s ROIs.</span>
-<span class="sd">        </span>
-<span class="sd">        In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table</span>
-<span class="sd">        of per-neuron-per-ROI synapse counts, with separate columns</span>
-<span class="sd">        for ``pre`` (outputs) and ``post`` (inputs).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
-    
-    <span class="k">if</span> <span class="n">neuprint_rois</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">neuprint_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">fetch_all_rois</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)}</span>
-    
-    <span class="c1"># Drop roi columns</span>
-    <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">neuron_df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
-    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[[</span><span class="o">*</span><span class="n">columns</span><span class="p">]]</span>
-
-    <span class="c1"># Extract somaLocation</span>
-    <span class="k">if</span> <span class="s1">&#39;somaLocation&#39;</span> <span class="ow">in</span> <span class="n">neuron_df</span><span class="p">:</span>
-        <span class="n">no_soma</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span>
-        <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">no_soma</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">no_soma</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">no_soma</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">sl</span><span class="p">:</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;coordinates&#39;</span><span class="p">))</span>
-    
-    <span class="c1"># Make a list of rois for every neuron (both pre and post)</span>
-    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">)]))</span>
-    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;outputRois&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">)]))</span>
-
-    <span class="c1"># Return roi info as a separate table</span>
-    <span class="n">roi_counts</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">itertuples</span><span class="p">():</span>
-        <span class="k">for</span> <span class="n">roi</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">roiInfo</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">pre</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="n">post</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="n">roi_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">bodyId</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span> <span class="p">)</span>
-
-    <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">roi_counts</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span></div>
-
-
 <div class="viewcode-block" id="find_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.find_neurons">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">find_neurons</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="nd">@make_args_iterable</span><span class="p">([</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;input_roi&#39;</span><span class="p">,</span> <span class="s1">&#39;output_roi&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">find_neurons</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">input_roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_roi</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">min_pre</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">min_post</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Python version of the Neuprint Explorer `Find Neurons`_ page.</span>
+
+<span class="sd">    Returns data in the the same format as :py:func:`find_custom_neurons()`,</span>
+<span class="sd">    but doesn&#39;t require you to write cypher.</span>
 <span class="sd">    </span>
-<span class="sd">    .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1    </span>
+<span class="sd">    .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        bodyId:</span>
@@ -367,6 +232,12 @@
 <span class="sd">            str or list of strings</span>
 <span class="sd">            Only Neurons which have outputs in EVERY one of the given ROIs will be matched.</span>
 <span class="sd">            ``regex`` does not apply to this parameter.</span>
+<span class="sd">        min_pre:</span>
+<span class="sd">            int</span>
+<span class="sd">            Exclude neurons that don&#39;t have at least this many t-bars (outputs).</span>
+<span class="sd">        min_post:</span>
+<span class="sd">            int</span>
+<span class="sd">            Exclude neurons that don&#39;t have at least this many PSDs (inputs).</span>
 <span class="sd">        regex:</span>
 <span class="sd">            Boolean.</span>
 <span class="sd">            If ``True``, the ``instance`` and ``type`` arguments will be interpreted as</span>
@@ -386,74 +257,108 @@
 <span class="sd">        In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table</span>
 <span class="sd">        of per-neuron-per-ROI synapse counts, with separate columns</span>
 <span class="sd">        for ``pre`` (outputs) and ``post`` (inputs).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">bodyIds</span> <span class="o">=</span> <span class="n">make_iterable</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span>
-    <span class="n">statuses</span> <span class="o">=</span> <span class="n">make_iterable</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
-    <span class="n">instances</span> <span class="o">=</span> <span class="n">make_iterable</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span>
-    <span class="n">types</span> <span class="o">=</span> <span class="n">make_iterable</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span>
-    <span class="n">input_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">make_iterable</span><span class="p">(</span><span class="n">input_roi</span><span class="p">)}</span>
-    <span class="n">output_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">make_iterable</span><span class="p">(</span><span class="n">output_roi</span><span class="p">)}</span>
 
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bodyIds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bodyIds</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">),</span> \
+<span class="sd">    See also:</span>
+
+<span class="sd">        If you like the output format of this function but you want</span>
+<span class="sd">        to provide your own cypher query, see :py:func:`fetch_custom_neurons()`.</span>
+
+
+<span class="sd">    Example:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: ipython</span>
+<span class="sd">        </span>
+<span class="sd">            In [1]: neurons_df, roi_counts_df = find_neurons(</span>
+<span class="sd">               ...:     input_roi=[&#39;SIP(R)&#39;, &#39;aL(R)&#39;], status=&#39;Traced&#39;,</span>
+<span class="sd">               ...:     type=&#39;MBON.*&#39;, instance=&#39;.*&#39;, regex=True)</span>
+<span class="sd">            </span>
+<span class="sd">            In [2]: neurons_df.columns</span>
+<span class="sd">            Out[2]:</span>
+<span class="sd">            Index([&#39;bodyId&#39;, &#39;status&#39;, &#39;cropped&#39;, &#39;type&#39;, &#39;instance&#39;, &#39;cellBodyFiber&#39;,</span>
+<span class="sd">                   &#39;somaRadius&#39;, &#39;somaLocation&#39;, &#39;size&#39;, &#39;pre&#39;, &#39;post&#39;, &#39;statusLabel&#39;,</span>
+<span class="sd">                   &#39;inputRois&#39;, &#39;outputRois&#39;, &#39;roiInfo&#39;],</span>
+<span class="sd">                  dtype=&#39;object&#39;)</span>
+<span class="sd">            </span>
+<span class="sd">            In [3]: neurons_df.iloc[:5, :11]</span>
+<span class="sd">            Out[3]:</span>
+<span class="sd">                  bodyId  status  cropped    type                     instance cellBodyFiber  somaRadius           somaLocation        size   pre   post</span>
+<span class="sd">            0  300972942  Traced    False  MBON14                 MBON14(a3)_R           NaN         NaN                   None  1563154937   543  13634</span>
+<span class="sd">            1  422725634  Traced    False  MBON06        MBON06(B1&gt;a)(AVM07)_L           NaN         NaN                   None  3118269136  1356  20978</span>
+<span class="sd">            2  423382015  Traced    False  MBON23        MBON23(a2sp)(PDL05)_R          SFS1       291.0   [7509, 13310, 14016]   857093893   733   4466</span>
+<span class="sd">            3  423774471  Traced    False  MBON19       MBON19(a2p3p)(PDL05)_R          SFS1       286.0   [5459, 15006, 10552]   628019179   299   1484</span>
+<span class="sd">            4  424767514  Traced    False  MBON11  MBON11(y1pedc&gt;a/B)(ADM05)_R        mAOTU2       694.5  [18614, 35832, 19448]  5249327644  1643  27641</span>
+<span class="sd">            </span>
+<span class="sd">            In [4]: neurons_df[&#39;inputRois&#39;].head()</span>
+<span class="sd">            Out[4]:</span>
+<span class="sd">            0    [MB(+ACA)(R), MB(R), None, SIP(R), SLP(R), SMP...</span>
+<span class="sd">            1    [CRE(-ROB,-RUB)(R), CRE(R), INP, MB(+ACA)(R), ...</span>
+<span class="sd">            2    [MB(+ACA)(R), MB(R), None, SIP(R), SLP(R), SMP...</span>
+<span class="sd">            3    [MB(+ACA)(R), MB(R), SIP(R), SMP(R), SNP(R), a...</span>
+<span class="sd">            4    [CRE(-ROB,-RUB)(R), CRE(L), CRE(R), INP, MB(+A...</span>
+<span class="sd">            Name: inputRois, dtype: object</span>
+<span class="sd">            </span>
+<span class="sd">            In [5]: roi_counts_df.head()</span>
+<span class="sd">            Out[5]:</span>
+<span class="sd">                  bodyId          roi  pre   post</span>
+<span class="sd">            0  300972942        MB(R)   17  13295</span>
+<span class="sd">            1  300972942        aL(R)   17  13271</span>
+<span class="sd">            2  300972942        a3(R)   17  13224</span>
+<span class="sd">            3  300972942  MB(+ACA)(R)   17  13295</span>
+<span class="sd">            4  300972942       SNP(R)  526    336</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">input_roi</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">input_roi</span><span class="p">}</span>
+    <span class="n">output_roi</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">output_roi</span><span class="p">}</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">),</span> \
         <span class="s2">&quot;bodyId should be an integer or list of integers&quot;</span>
     
     <span class="k">del</span> <span class="n">bodyId</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">input_roi</span><span class="p">,</span> <span class="n">output_roi</span>
 
-    <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">instances</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Please provide only one regex pattern for instance&quot;</span>
-    <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Please provide only one regex pattern for type&quot;</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Please provide only one regex pattern for instance&quot;</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Please provide only one regex pattern for type&quot;</span>
     
-    <span class="k">assert</span> <span class="nb">any</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">bodyIds</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">statuses</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">instances</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_rois</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_rois</span><span class="p">)]),</span> \
+    <span class="k">assert</span> <span class="nb">any</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">bodyId</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">status</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="nb">type</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_roi</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_roi</span><span class="p">)]),</span> \
         <span class="s2">&quot;Please provide at least one search argument!&quot;</span>
     
-    <span class="c1"># Verify ROI names, since we have to fetch the full ROI list anyway.    </span>
+    <span class="c1"># Verify ROI names against known ROIs.</span>
     <span class="n">neuprint_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">fetch_all_rois</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)}</span>
-    <span class="n">unknown_input_rois</span> <span class="o">=</span> <span class="n">input_rois</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
+    <span class="n">unknown_input_rois</span> <span class="o">=</span> <span class="n">input_roi</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
     <span class="k">if</span> <span class="n">unknown_input_rois</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized input ROIs: </span><span class="si">{unknown_input_rois}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">unknown_output_rois</span> <span class="o">=</span> <span class="n">output_rois</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
+    <span class="n">unknown_output_rois</span> <span class="o">=</span> <span class="n">output_roi</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
     <span class="k">if</span> <span class="n">unknown_output_rois</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized output ROIs: </span><span class="si">{unknown_output_rois}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">where_body</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bodyIds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">where_body</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.bodyId = </span><span class="si">{bodyIds[0]}</span><span class="s2">&quot;</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">bodyIds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">where_body</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.bodyId in {[*bodyIds]}&quot;</span>
-    
-    <span class="n">where_status</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">statuses</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">where_status</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.status = &#39;</span><span class="si">{statuses[0]}</span><span class="s2">&#39;&#39;&quot;</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">statuses</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">where_status</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.status in {[*statuses]}&quot;</span>
-    
-    <span class="n">where_instance</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">instances</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">regex</span><span class="p">:</span>
-        <span class="n">where_instance</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.instance =~ &#39;</span><span class="si">{instances[0]}</span><span class="s2">&#39;&quot;</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">instances</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">regex</span><span class="p">:</span>
-        <span class="n">where_instance</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.instance = &#39;</span><span class="si">{instances[0]}</span><span class="s2">&#39;&quot;</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">instances</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">where_instance</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.instance in {[*instances]}&quot;</span>
+    <span class="n">body_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="n">bodyId</span><span class="p">)</span>
+    <span class="n">status_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+    <span class="n">instance_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">regex</span><span class="p">)</span>
+    <span class="n">type_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">regex</span><span class="p">)</span>
 
-    <span class="n">where_type</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">regex</span><span class="p">:</span>
-        <span class="n">where_type</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.type =~ &#39;</span><span class="si">{types[0]}</span><span class="s2">&#39;&quot;</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">regex</span><span class="p">:</span>
-        <span class="n">where_type</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.type = &#39;</span><span class="si">{types[0]}</span><span class="s2">&#39;&quot;</span>
-    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">where_type</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.type in {[*types]}&quot;</span>
-
-    <span class="n">query_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">input_rois</span><span class="p">,</span> <span class="o">*</span><span class="n">output_rois</span><span class="p">}</span>
+    <span class="n">query_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">input_roi</span><span class="p">,</span> <span class="o">*</span><span class="n">output_roi</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">query_rois</span><span class="p">:</span>
-        <span class="n">where_roi</span> <span class="o">=</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot; AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n.`</span><span class="si">{roi}</span><span class="s2">`&quot;</span> <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="n">query_rois</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+        <span class="n">roi_expr</span> <span class="o">=</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="s2">&quot; AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;n.`</span><span class="si">{roi}</span><span class="s2">`&quot;</span> <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="n">query_rois</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">where_roi</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">roi_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
-    <span class="c1"># Build WHERE clause</span>
-    <span class="n">clauses</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="n">where_body</span><span class="p">,</span> <span class="n">where_status</span><span class="p">,</span> <span class="n">where_instance</span><span class="p">,</span> <span class="n">where_type</span><span class="p">,</span> <span class="n">where_roi</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">min_pre</span><span class="p">:</span>
+        <span class="n">pre_expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.pre &gt;= </span><span class="si">{min_pre}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pre_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">min_post</span><span class="p">:</span>
+        <span class="n">post_expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;n.post &gt;= </span><span class="si">{min_post}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">post_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="c1"># Build WHERE clause by combining the exprs</span>
+    <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="n">body_expr</span><span class="p">,</span> <span class="n">status_expr</span><span class="p">,</span> <span class="n">instance_expr</span><span class="p">,</span> <span class="n">type_expr</span><span class="p">,</span>
+             <span class="n">roi_expr</span><span class="p">,</span> <span class="n">pre_expr</span><span class="p">,</span> <span class="n">post_expr</span><span class="p">]</span>
+    <span class="n">exprs</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exprs</span><span class="p">)</span>
+
     <span class="n">WHERE</span> <span class="o">=</span>  <span class="s2">&quot;WHERE</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="n">WHERE</span> <span class="o">+=</span> <span class="s2">&quot;          &quot;</span>
-    <span class="n">WHERE</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">          AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clauses</span><span class="p">)</span>
+    <span class="n">WHERE</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">          AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exprs</span><span class="p">)</span>
 
     <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">        MATCH (n :Neuron)</span>
@@ -463,18 +368,20 @@
 <span class="s2">    &quot;&quot;&quot;</span>
     
     <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">fetch_custom_neurons</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">neuprint_rois</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">neuron_df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span>
 
     <span class="c1"># Our query matched any neuron that intersected all of the ROIs,</span>
     <span class="c1"># without distinguishing between input and output.</span>
     <span class="c1"># Now filter the list to ensure that input/output requirements are respected.</span>
-    <span class="k">if</span> <span class="n">input_rois</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">input_roi</span><span class="p">:</span>
         <span class="c1"># Keep only neurons where every required input ROI is present as an input.</span>
-        <span class="n">num_missing</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rois</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_rois</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}))</span>
+        <span class="n">num_missing</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rois</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_roi</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}))</span>
         <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">num_missing</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)]</span>
 
-    <span class="k">if</span> <span class="n">input_rois</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">input_roi</span><span class="p">:</span>
         <span class="c1"># Keep only neurons where every required output ROI is present as an output.</span>
-        <span class="n">num_missing</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;outputRois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rois</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_rois</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}))</span>
+        <span class="n">num_missing</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;outputRois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">rois</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_roi</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}))</span>
         <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">num_missing</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)]</span>
 
     <span class="c1"># Filter the ROI counts to exclude neurons that were removed above.</span>
@@ -486,13 +393,200 @@
 
 
 
+<div class="viewcode-block" id="fetch_custom_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom_neurons">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_custom_neurons</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">neuprint_rois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Use a custom query to fetch a neuron table, with nicer output</span>
+<span class="sd">    than you would get from a call to :py:func:`fetch_custom()`.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns data in the the same format as :py:func:`find_neurons()`.</span>
+<span class="sd">    but allows you to provide your own cypher query logic</span>
+<span class="sd">    (subject to certain requirements; see below).</span>
+
+<span class="sd">    This function includes all Neuron fields in the results,</span>
+<span class="sd">    and also sends back ROI counts as a separate table.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+
+<span class="sd">        q:</span>
+<span class="sd">            Custom query. Must match a neuron named ``n``,</span>
+<span class="sd">            and must ``RETURN n``.</span>
+<span class="sd">            </span>
+<span class="sd">            .. code-block::</span>
+<span class="sd">            </span>
+<span class="sd">                ...</span>
+<span class="sd">                MATCH (n :Neuron)</span>
+<span class="sd">                ...</span>
+<span class="sd">                RETURN n</span>
+<span class="sd">                ...</span>
+
+<span class="sd">        neuprint_rois:</span>
+<span class="sd">            Optional.  The list of ROI names from neuprint.</span>
+<span class="sd">            If not provided, they will be fetched</span>
+<span class="sd">            (so that ROI boolean columns can be dropped from the results).</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Two DataFrames.</span>
+<span class="sd">        ``(neurons_df, roi_counts_df)``</span>
+<span class="sd">        </span>
+<span class="sd">        In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:</span>
+<span class="sd">        </span>
+<span class="sd">            - ROI boolean columns are removed</span>
+<span class="sd">            - ``roiInfo`` is parsed as JSON data</span>
+<span class="sd">            - ``somaLocation`` is provided as a list ``[x, y, z]``</span>
+<span class="sd">            - New columns ``inputRois`` and ``outputRois`` contain lists of each neuron&#39;s ROIs.</span>
+<span class="sd">        </span>
+<span class="sd">        In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table</span>
+<span class="sd">        of per-neuron-per-ROI synapse counts, with separate columns</span>
+<span class="sd">        for ``pre`` (outputs) and ``post`` (inputs).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    
+    <span class="n">neuron_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;cropped&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="s1">&#39;cellBodyFiber&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;somaRadius&#39;</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">,</span> <span class="s1">&#39;size&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;statusLabel&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;inputRois&#39;</span><span class="p">,</span> <span class="s1">&#39;outputRois&#39;</span><span class="p">,</span> <span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span>
+    
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([],</span> <span class="n">columns</span><span class="o">=</span><span class="n">neuron_cols</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+        <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span>
+    
+    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;n&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">neuprint_rois</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">neuprint_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">fetch_all_rois</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)}</span>
+    
+    <span class="c1"># Drop roi columns</span>
+    <span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">neuron_df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
+    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[[</span><span class="o">*</span><span class="n">columns</span><span class="p">]]</span>
+
+    <span class="c1"># Extract somaLocation</span>
+    <span class="k">if</span> <span class="s1">&#39;somaLocation&#39;</span> <span class="ow">in</span> <span class="n">neuron_df</span><span class="p">:</span>
+        <span class="n">no_soma</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span>
+        <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">no_soma</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">no_soma</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">no_soma</span><span class="p">,</span> <span class="s1">&#39;somaLocation&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">sl</span><span class="p">:</span> <span class="n">sl</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;coordinates&#39;</span><span class="p">))</span>
+    
+    <span class="c1"># Make a list of rois for every neuron (both pre and post)</span>
+    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">)]))</span>
+    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;outputRois&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">)]))</span>
+
+    <span class="c1"># Specify column order:</span>
+    <span class="c1"># Standard columns first, than any extra columns in the results (if any).</span>
+    <span class="n">neuron_cols</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">neuron_cols</span><span class="p">)]</span>
+    <span class="n">extra_cols</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">neuron_df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">neuron_cols</span><span class="p">}</span>
+    <span class="n">neuron_cols</span> <span class="o">+=</span> <span class="p">[</span><span class="o">*</span><span class="n">extra_cols</span><span class="p">]</span>
+    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[[</span><span class="o">*</span><span class="n">neuron_cols</span><span class="p">]]</span>
+
+    <span class="c1"># Return roi info as a separate table</span>
+    <span class="n">roi_counts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">neuron_df</span><span class="o">.</span><span class="n">itertuples</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">roi</span><span class="p">,</span> <span class="n">counts</span> <span class="ow">in</span> <span class="n">row</span><span class="o">.</span><span class="n">roiInfo</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">pre</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">post</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">roi_counts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">bodyId</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">)</span> <span class="p">)</span>
+
+    <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">roi_counts</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span></div>
+
+
+<div class="viewcode-block" id="simple_connections"><a class="viewcode-back" href="../../queries.html#neuprint.queries.simple_connections">[docs]</a><span class="nd">@inject_client</span>
+<span class="nd">@make_args_iterable</span><span class="p">([</span><span class="s1">&#39;from_bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;from_instance&#39;</span><span class="p">,</span> <span class="s1">&#39;from_type&#39;</span><span class="p">,</span> <span class="s1">&#39;to_bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;to_instance&#39;</span><span class="p">,</span> <span class="s1">&#39;to_type&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">simple_connections</span><span class="p">(</span><span class="n">from_bodyId</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">from_instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">from_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">to_bodyId</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">to_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">min_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span>
+                       <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;cropped&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">],</span>
+                       <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find all connections to/from a set of neurons,</span>
+<span class="sd">    or all connections from one set of neurons and another.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        from_bodyId:</span>
+<span class="sd">            Integer or list of ints.</span>
+<span class="sd">        from_instance:</span>
+<span class="sd">            str or list of strings</span>
+<span class="sd">            If ``regex=True``, then the instance will be matched as a regular expression.</span>
+<span class="sd">        from_type:</span>
+<span class="sd">            str or list of strings</span>
+<span class="sd">            If ``regex=True``, then the type will be matched as a regular expression.</span>
+<span class="sd">        to_bodyId:</span>
+<span class="sd">            Integer or list of ints.</span>
+<span class="sd">        to_instance:</span>
+<span class="sd">            str or list of strings</span>
+<span class="sd">            If ``regex=True``, then the instance will be matched as a regular expression.</span>
+<span class="sd">        to_type:</span>
+<span class="sd">            str or list of strings</span>
+<span class="sd">            If ``regex=True``, then the type will be matched as a regular expression.</span>
+<span class="sd">        min_weight:</span>
+<span class="sd">            Exclude connections below this weight.</span>
+<span class="sd">        node_type:</span>
+<span class="sd">            Return results for Neurons (default) or all Segments.</span>
+<span class="sd">        properties:</span>
+<span class="sd">            Additional columns to include in the results, for both the upstream and downstream body.</span>
+<span class="sd">        regex:</span>
+<span class="sd">            If ``True``, instance and type arguments will be interpreted as regular expressions.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">        One row per connection, with columns for upstream and downstream properties.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">node_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">),</span> \
+        <span class="sa">f</span><span class="s2">&quot;Invalid node type: </span><span class="si">{node_type}</span><span class="s2">&quot;</span>
+    
+    <span class="k">assert</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="p">[</span><span class="n">from_bodyId</span><span class="p">,</span> <span class="n">from_instance</span><span class="p">,</span> <span class="n">from_type</span><span class="p">,</span>
+                         <span class="n">to_bodyId</span><span class="p">,</span> <span class="n">to_instance</span><span class="p">,</span> <span class="n">to_type</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> \
+        <span class="s2">&quot;Need at least one input criteria&quot;</span>
+
+    <span class="n">from_body_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="n">from_bodyId</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;upstream&#39;</span><span class="p">)</span>
+    <span class="n">from_instance_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="n">from_instance</span><span class="p">,</span> <span class="n">regex</span><span class="p">,</span> <span class="s1">&#39;upstream&#39;</span><span class="p">)</span>
+    <span class="n">from_type_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="n">from_type</span><span class="p">,</span> <span class="n">regex</span><span class="p">,</span> <span class="s1">&#39;upstream&#39;</span><span class="p">)</span>
+
+    <span class="n">to_body_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="n">to_bodyId</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;downstream&#39;</span><span class="p">)</span>
+    <span class="n">to_instance_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="n">to_instance</span><span class="p">,</span> <span class="n">regex</span><span class="p">,</span> <span class="s1">&#39;downstream&#39;</span><span class="p">)</span>
+    <span class="n">to_type_expr</span> <span class="o">=</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="n">to_type</span><span class="p">,</span> <span class="n">regex</span><span class="p">,</span> <span class="s1">&#39;downstream&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">min_weight</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">weight_expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;e.weight &gt;= </span><span class="si">{min_weight}</span><span class="s2">&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">weight_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    
+    <span class="c1"># Build WHERE clause by combining the exprs</span>
+    <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="n">from_body_expr</span><span class="p">,</span> <span class="n">from_instance_expr</span><span class="p">,</span> <span class="n">from_type_expr</span><span class="p">,</span>
+             <span class="n">to_body_expr</span><span class="p">,</span> <span class="n">to_instance_expr</span><span class="p">,</span> <span class="n">to_type_expr</span><span class="p">,</span>
+             <span class="n">weight_expr</span><span class="p">]</span>
+    <span class="n">exprs</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exprs</span><span class="p">)</span>
+
+    <span class="n">WHERE</span> <span class="o">=</span>  <span class="s2">&quot;WHERE &quot;</span>
+    <span class="n">WHERE</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">              AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exprs</span><span class="p">)</span>
+
+    <span class="n">return_props</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;upstream.bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;downstream.bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;e.weight as weight&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">properties</span><span class="p">:</span>
+        <span class="n">return_props</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;upstream.</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">]</span>
+        <span class="n">return_props</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;downstream.</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">]</span>
+    
+    <span class="n">return_props_str</span> <span class="o">=</span> <span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">               &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">return_props</span><span class="p">)</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">        MATCH (upstream:</span><span class="si">{node_type}</span><span class="s2">)-[e:ConnectsTo]-&gt;(downstream:</span><span class="si">{node_type}</span><span class="s2">)</span>
+<span class="s2">        </span><span class="si">{WHERE}</span><span class="s2"></span>
+<span class="s2">        RETURN </span><span class="si">{return_props_str}</span><span class="s2"></span>
+<span class="s2">        ORDER BY e.weight DESC,</span>
+<span class="s2">                 upstream.bodyId,</span>
+<span class="s2">                 downstream.bodyId</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">edges_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">edges_df</span></div>
+
+
 <div class="viewcode-block" id="fetch_traced_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_traced_adjacencies">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_traced_adjacencies</span><span class="p">(</span><span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.</span>
 <span class="sd">    Synapses which do not fall on any ROI will be listed as having ROI &#39;None&#39;.</span>
-<span class="sd">    </span>
-<span class="sd">    </span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        export_dir:</span>
 <span class="sd">            Optional. Export CSV files for the neuron table,</span>
@@ -508,7 +602,7 @@
 
 <span class="sd">    Note:</span>
 <span class="sd">        On the hemibrain dataset, this function takes a few minutes to run,</span>
-<span class="sd">        and the results results are somewhat large (~300 MB).</span>
+<span class="sd">        and the results are somewhat large (~300 MB).</span>
 <span class="sd">    </span>
 <span class="sd">    Example:</span>
 <span class="sd">        </span>
@@ -607,6 +701,86 @@
         <span class="n">total_conn_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">traced_neurons_df</span><span class="p">,</span> <span class="n">roi_conn_df</span></div>
+
+
+<div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_meta</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch the dataset metadata, parsing JSON fields where necessary.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict</span>
+<span class="sd">    </span>
+<span class="sd">    Example</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: ipython</span>
+<span class="sd">    </span>
+<span class="sd">        In [1]: meta = fetch_meta()</span>
+<span class="sd">    </span>
+<span class="sd">        In [2]: list(meta.keys())</span>
+<span class="sd">        Out[2]:</span>
+<span class="sd">        [&#39;dataset&#39;,</span>
+<span class="sd">         &#39;info&#39;,</span>
+<span class="sd">         &#39;lastDatabaseEdit&#39;,</span>
+<span class="sd">         &#39;latestMutationId&#39;,</span>
+<span class="sd">         &#39;logo&#39;,</span>
+<span class="sd">         &#39;meshHost&#39;,</span>
+<span class="sd">         &#39;neuroglancerInfo&#39;,</span>
+<span class="sd">         &#39;neuroglancerMeta&#39;,</span>
+<span class="sd">         &#39;postHPThreshold&#39;,</span>
+<span class="sd">         &#39;postHighAccuracyThreshold&#39;,</span>
+<span class="sd">         &#39;preHPThreshold&#39;,</span>
+<span class="sd">         &#39;primaryRois&#39;,</span>
+<span class="sd">         &#39;roiHierarchy&#39;,</span>
+<span class="sd">         &#39;roiInfo&#39;,</span>
+<span class="sd">         &#39;statusDefinitions&#39;,</span>
+<span class="sd">         &#39;superLevelRois&#39;,</span>
+<span class="sd">         &#39;tag&#39;,</span>
+<span class="sd">         &#39;totalPostCount&#39;,</span>
+<span class="sd">         &#39;totalPreCount&#39;,</span>
+<span class="sd">         &#39;uuid&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">        MATCH (m:Meta)</span>
+<span class="s2">        WITH m as m,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,</span>
+<span class="s2">             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions</span>
+<span class="s2">        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;meta&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">meta</span></div>
+
+
+<div class="viewcode-block" id="fetch_all_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_all_rois">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch the list of all ROIs in the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    <span class="n">official_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+    <span class="c1"># These two ROIs are special:</span>
+    <span class="c1"># For historical reasons, they exist as tags, but are not listed in the Meta roiInfo.</span>
+    <span class="n">hidden_rois</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FB-column3&#39;</span><span class="p">,</span> <span class="s1">&#39;AL-DC3&#39;</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">official_rois</span> <span class="o">|</span> <span class="n">hidden_rois</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fetch_primary_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_primary_rois">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_primary_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch the list of &#39;primary&#39; ROIs in the dataset.</span>
+<span class="sd">    Primary ROIs do not overlap with each other.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;MATCH (m:Meta) RETURN m.primaryRois as rois&quot;</span>
+    <span class="n">rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;rois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rois</span><span class="p">)</span></div>
+
 </pre></div>
 
            </div>
