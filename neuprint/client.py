@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import sys
 import copy
 import json
 import inspect
@@ -7,6 +8,7 @@ import logging
 import functools
 import threading
 import collections
+from textwrap import dedent, indent
 
 import pandas as pd
 
@@ -30,6 +32,34 @@ logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
 NEUPRINT_CLIENTS = {}
 
+
+def setup_debug_logging():
+    """
+    Simple debug logging configuration.
+    Useful for interactive terminal sessions.
+    
+    Warning:
+        Replaces your current logging setup.
+        If you've already set up logging for your app,
+        don't call this function.
+        Enable neuprint debug logging via:
+        
+        .. code-block:: python
+        
+            import logging
+            logging.getLogger('neuprint.client').setLevel(logging.DEBUG)
+    """
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(message)s')
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.handlers = []
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
+    
+    logger.setLevel(logging.DEBUG)
+    
 
 def default_client():
     """
@@ -503,6 +533,9 @@ class Client:
             raise RuntimeError(msg)
         
         dataset = dataset or self.dataset
+        
+        cypher = indent(dedent(cypher), '    ')
+        logger.debug(f"Issuing cypher query against dataset '{dataset}':\n{cypher}")
         
         result = self._fetch_json(url,
                                   json={"cypher": cypher, "dataset": dataset},
