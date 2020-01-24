@@ -1,7 +1,13 @@
 from collections.abc import Iterable
 
 def make_iterable(x):
-    """ Forces x into iterable """
+    """
+    If ``x`` is already a list or array, return it unchanged.
+    If ``x`` is ``None``, return an empty list ``[]``.
+    Otherwise, wrap it in a list.
+    """
+    if x is None:
+        return []
     if isinstance(x, Iterable) and not isinstance(x, str):
         return x
     else:
