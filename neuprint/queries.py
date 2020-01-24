@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 
-from .utils import make_iterable, parse_properties
+from .utils import make_iterable, where_expr
 from .client import inject_client
 
 try:
@@ -180,29 +180,6 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
     if unknown_output_rois:
         raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
 
-    def where_expr(field, values, regex=False):
-        """
-        Return an expression to match a particular
-        field against a list of values, to be used
-        within the WHERE clause.
-        """
-        assert not regex or len(values) <= 1, \
-            f"Can't use regex mode with more than one value: {values}"
-
-        if len(values) == 0:
-            return ""
-
-        if len(values) > 1:
-            return f"n.{field} in {[*values]}"
-
-        if regex:
-            return f"n.{field} =~ '{values[0]}'"
-
-        if isinstance(values[0], str):
-            return f"n.{field} = '{values[0]}'"
-
-        return f"n.{field} = {values[0]}"
-
     body_expr = where_expr('bodyId', bodyIds)
     status_expr = where_expr('status', statuses)
     instance_expr = where_expr('instance', instances, regex)
@@ -363,6 +340,104 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
 
     roi_counts_df = pd.DataFrame(roi_counts, columns=['bodyId', 'roi', 'pre', 'post'])
     return neuron_df, roi_counts_df
+
+
+@inject_client
+def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
+                       to_bodyId=None, to_instance=None, to_type=None,
+                       min_weight=1, node_type='Neuron',
+                       regex=False, properties=['status', 'cropped', 'type', 'instance'],
+                       *, client=None):
+    """
+    Find all connections to/from a set of neurons,
+    or all connections from one set of neurons and another.
+
+    Args:
+        from_bodyId:
+            Integer or list of ints.
+        from_instance:
+            str or list of strings
+            If ``regex=True``, then the instance will be matched as a regular expression.
+        from_type:
+            str or list of strings
+            If ``regex=True``, then the type will be matched as a regular expression.
+        to_bodyId:
+            Integer or list of ints.
+        to_instance:
+            str or list of strings
+            If ``regex=True``, then the instance will be matched as a regular expression.
+        to_type:
+            str or list of strings
+            If ``regex=True``, then the type will be matched as a regular expression.
+        min_weight:
+            Exclude connections below this weight.
+        node_type:
+            Return results for Neurons (default) or all Segments.
+        properties:
+            Additional columns to include in the results, for both the upstream and downstream body.
+        regex:
+            If ``True``, instance and type arguments will be interpreted as regular expressions.
+    
+    Returns:
+        DataFrame
+        One row per connection, with columns for upstream and downstream properties.
+    """
+    assert node_type in ('Neuron', 'Segment'), \
+        f"Invalid node type: {node_type}"
+    
+    from_bodyIds = make_iterable(from_bodyId)
+    from_instances = make_iterable(from_instance)
+    from_types = make_iterable(from_type)
+    to_bodyIds = make_iterable(to_bodyId)
+    to_instances = make_iterable(to_instance)
+    to_types = make_iterable(to_type)
+
+    del from_bodyId, from_instance, from_type
+    del to_bodyId, to_instance, to_type
+
+    assert sum(map(len, [from_bodyIds, from_instances, from_types,
+                         to_bodyIds, to_instances, to_types])) > 0, \
+        "Need at least one input criteria"
+
+    from_body_expr = where_expr('bodyId', from_bodyIds, False, 'upstream')
+    from_instance_expr = where_expr('instance', from_instances, regex, 'upstream')
+    from_type_expr = where_expr('type', from_types, regex, 'upstream')
+
+    to_body_expr = where_expr('bodyId', to_bodyIds, False, 'downstream')
+    to_instance_expr = where_expr('instance', to_instances, regex, 'downstream')
+    to_type_expr = where_expr('type', to_types, regex, 'downstream')
+
+    if min_weight > 1:
+        weight_expr = f"e.weight >= {min_weight}"
+    else:
+        weight_expr = ""
+    
+    # Build WHERE clause by combining the exprs
+    exprs = [from_body_expr, from_instance_expr, from_type_expr,
+             to_body_expr, to_instance_expr, to_type_expr,
+             weight_expr]
+    exprs = filter(None, exprs)
+
+    WHERE =  "WHERE "
+    WHERE += "\n              AND ".join(exprs)
+
+    return_props = ['upstream.bodyId', 'downstream.bodyId', 'e.weight as weight']
+    if properties:
+        return_props += [f'upstream.{p}' for p in properties]
+        return_props += [f'downstream.{p}' for p in properties]
+    
+    return_props_str = ',\n               '.join(return_props)
+
+    q = f"""\
+        MATCH (upstream:{node_type})-[e:ConnectsTo]->(downstream:{node_type})
+        {WHERE}
+        RETURN {return_props_str}
+        ORDER BY e.weight DESC,
+                 upstream.bodyId,
+                 downstream.bodyId
+    """
+    edges_df = client.fetch_custom(q)
+    return edges_df
 
 
 @inject_client
@@ -553,4 +628,15 @@ def fetch_all_rois(*, client):
     hidden_rois = {'FB-column3', 'AL-DC3'}
 
     return sorted(official_rois | hidden_rois)
+
+
+@inject_client
+def fetch_primary_rois(*, client):
+    """
+    Fetch the list of 'primary' ROIs in the dataset.
+    Primary ROIs do not overlap with each other.
+    """
+    q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
+    rois = client.fetch_custom(q)['rois'].iloc[0]
+    return sorted(rois)
 
