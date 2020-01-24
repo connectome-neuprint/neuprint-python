@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.com/connectome-neuprint/neuprint-python.svg?branch=master)](https://travis-ci.com/connectome-neuprint/neuprint-python)
-![docs-badge](docs/source/_static/docs-badge.svg)
+[![docs-badge](docs/source/_static/docs-badge.svg)][docs]
 
 neuprint-python
 ===============
