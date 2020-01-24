@@ -1,5 +1,5 @@
 .. currentmodule:: neuprint
-
+  
 .. _queries:
 
 
@@ -23,5 +23,6 @@ But the functions in this file offer a convenient API for common queries.
    <br />
 
 
-.. autofunction:: fetch_custom
-.. autofunction:: fetch_traced_adjacencies
+.. automodule:: neuprint.queries
+   :members:
+
