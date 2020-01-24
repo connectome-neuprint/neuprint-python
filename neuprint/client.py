@@ -1,3 +1,43 @@
+'''
+The ``client`` module contains the ``Client`` object and related utility functions.
+
+All communication to the neuPrint server is peformed using a ``Client`` object.
+Holds your authorization credentials, the dataset name to use,
+and other connection settings.
+
+Most ``neuprint-python`` functions do not require you to explicitly
+provide a Client object to use. Instead, the first ``Client`` you
+create will be stored as the default ``Client`` to be used with all
+``neuprint-python`` functions if you don't explicitly specify one.
+
+Example:
+
+    .. code-block:: ipython
+    
+        In [1]: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
+
+        In [2]: fetch_custom("""\\
+           ...:     MATCH (n: Neuron)
+           ...:     WHERE n.status = "Traced" AND NOT n.cropped
+           ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance
+           ...:     ORDER BY n.type, n.instance
+           ...: """)
+        Out[2]:
+                   bodyId        type             instance
+        0       511051477   5th s-LNv            5th s-LNv
+        1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R
+        2      1100952886  ADL01b_pct  ADL01b_pct(ADL01)_R
+        3      1228484534  ADL01b_pct  ADL01b_pct(ADL01)_R
+        4      1290563000  ADL01b_pct  ADL01b_pct(ADL01)_R
+        ...           ...         ...                  ...
+        21658  2346523421        None                 None
+        21659  2397377415        None                 None
+        21660  2429314661        None                 None
+        21661  2464541644        None                 None
+        21662  2404203061        None                 None
+        
+        [21663 rows x 3 columns]
+'''
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -89,6 +129,9 @@ def default_client():
 def set_default_client(client):
     """
     Set (or overwrite) the default Client.
+    This function is automatically called with
+    the first ``Client`` you create,
+    but you can call it again to replace the default.
     """
     global NEUPRINT_CLIENTS
     global DEFAULT_NEUPRINT_CLIENT
@@ -182,46 +225,11 @@ def verbose_errors(f):
 
 
 class Client:
-    '''
-    Used for all queries against neuprint.
-    Holds your authorization credentials, the dataset name to use,
-    and other connection settings.
-    
-    Most ``neuprint-python`` functions do not require you to explicitly
-    provide a Client object to use. Instead, the first ``Client`` you
-    create will be stored as the default ``Client`` to be used with all
-    ``neuprint-python`` functions if you don't explicitly specify one.
 
-    Example:
-    
-        .. code-block:: ipython
-        
-            In [1]: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
-
-            In [2]: fetch_custom("""\\
-               ...:     MATCH (n: Neuron)
-               ...:     WHERE n.status = "Traced" AND NOT n.cropped
-               ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance
-               ...:     ORDER BY n.type, n.instance
-               ...: """)
-            Out[2]:
-                       bodyId        type             instance
-            0       511051477   5th s-LNv            5th s-LNv
-            1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R
-            2      1100952886  ADL01b_pct  ADL01b_pct(ADL01)_R
-            3      1228484534  ADL01b_pct  ADL01b_pct(ADL01)_R
-            4      1290563000  ADL01b_pct  ADL01b_pct(ADL01)_R
-            ...           ...         ...                  ...
-            21658  2346523421        None                 None
-            21659  2397377415        None                 None
-            21660  2429314661        None                 None
-            21661  2464541644        None                 None
-            21662  2404203061        None                 None
-            
-            [21663 rows x 3 columns]
-    '''
     def __init__(self, server, dataset=None, token=None, verify=True):
         """
+        Client constructor.
+        
         Args:
             server:
                 URL of neuprintHttp server
@@ -318,6 +326,69 @@ class Client:
         else:
             return r.json()
 
+
+    ##
+    ## CUSTOM QUERIES
+    ##
+    ## Note: Transaction queries are not implemented here.  See admin.py
+
+    def fetch_custom(self, cypher, dataset="", format='pandas'):
+        """
+        Query the neuprint server with a custom Cypher query.
+        
+        Args:
+            cypher:
+                A cypher query string
+
+            dataset:
+                *Deprecated. Please provide your dataset as a Client constructor argument.*
+                
+                Which neuprint dataset to query against.
+                If None provided, the client's default dataset is used.
+
+            format:
+                Either ``'pandas'`` or ``'json'``.
+                Whether to load the results into a ``pandas.DataFrame``,
+                or return the server's raw JSON response as a Python ``dict``.
+        
+        Returns:
+            Either json or DataFrame, depending on ``format``.
+        """
+        url = f"{self.server}/api/custom/custom"
+        return self._fetch_cypher(url, cypher, dataset, format)
+    
+
+    def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
+        """
+        Fetch cypher from an endpoint.
+        Called by fetch_custom and by Transaction queries.
+        """
+        assert format in ('json', 'pandas')
+        
+        if set("‘’“”").intersection(cypher):
+            msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
+                   " which are not valid characters in cypher."
+                   " Please replace them with ordinary quotes (e.g. 'foo' or \"foo\").\n"
+                   "Your query was:\n"
+                   + cypher)
+            raise RuntimeError(msg)
+        
+        dataset = dataset or self.dataset
+        
+        cypher = indent(dedent(cypher), '    ')
+        logger.debug(f"Issuing cypher query against dataset '{dataset}':\n{cypher}")
+        
+        result = self._fetch_json(url,
+                                  json={"cypher": cypher, "dataset": dataset},
+                                  ispost=True)
+
+        if format == 'json':
+            return result
+
+        df = pd.DataFrame(result['data'], columns=result['columns'])
+        return df
+
+
     ##
     ## API-META
     ##
@@ -344,6 +415,9 @@ class Client:
 
 
     def fetch_version(self):
+        """
+        Returns the version of the ``neuPrintHTTP`` server.
+        """
         return self._fetch_json(f"{self.server}/api/version")['Version']
 
     ##
@@ -486,67 +560,6 @@ class Client:
         
         weights = [(*k.split('=>'), v['count'], v['weight']) for k,v in result["weights"].items()]
         df = pd.DataFrame(weights, columns=['from_roi', 'to_roi', 'count', 'weight'])
-        return df
-
-    ##
-    ## CUSTOM QUERIES
-    ##
-    ## Note: Transaction queries are not implemented here.  See admin.py
-
-    def fetch_custom(self, cypher, dataset="", format='pandas'):
-        """
-        Query the neuprint server with a custom Cypher query.
-        
-        Args:
-            cypher:
-                A cypher query string
-
-            dataset:
-                *Deprecated. Please provide your dataset as a Client constructor argument.*
-                
-                Which neuprint dataset to query against.
-                If None provided, the client's default dataset is used.
-
-            format:
-                Either ``'pandas'`` or ``'json'``.
-                Whether to load the results into a ``pandas.DataFrame``,
-                or return the server's raw JSON response as a Python ``dict``.
-        
-        Returns:
-            Either json or DataFrame, depending on ``format``.
-        """
-        url = f"{self.server}/api/custom/custom"
-        return self._fetch_cypher(url, cypher, dataset, format)
-    
-
-    def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
-        """
-        Fetch cypher from an endpoint.
-        Called by fetch_custom and by Transaction queries.
-        """
-        assert format in ('json', 'pandas')
-        
-        if set("‘’“”").intersection(cypher):
-            msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
-                   " which are not valid characters in cypher."
-                   " Please replace them with ordinary quotes (e.g. 'foo' or \"foo\").\n"
-                   "Your query was:\n"
-                   + cypher)
-            raise RuntimeError(msg)
-        
-        dataset = dataset or self.dataset
-        
-        cypher = indent(dedent(cypher), '    ')
-        logger.debug(f"Issuing cypher query against dataset '{dataset}':\n{cypher}")
-        
-        result = self._fetch_json(url,
-                                  json={"cypher": cypher, "dataset": dataset},
-                                  ispost=True)
-
-        if format == 'json':
-            return result
-
-        df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
 
     ##

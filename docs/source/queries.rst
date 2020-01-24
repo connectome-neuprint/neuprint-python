@@ -23,6 +23,7 @@ query language, you can write your own queries using
 :py:func:`fetch_custom <fetch_custom>`.
 But the functions in this file offer a convenient API for common queries.
 
+
 .. autosummary::
 
     fetch_custom
