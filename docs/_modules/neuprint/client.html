@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.2+6.g709cf7c documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.2+9.g60fc670 documentation</title>
   
 
   
@@ -58,7 +58,7 @@
             
             
               <div class="version">
-                0.2+6.g709cf7c
+                0.2+9.g60fc670
               </div>
             
           
@@ -153,6 +153,7 @@
   <h1>Source code for neuprint.client</h1><div class="highlight"><pre>
 <span></span><span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">inspect</span>
@@ -160,6 +161,7 @@
 <span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">import</span> <span class="nn">threading</span>
 <span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">dedent</span><span class="p">,</span> <span class="n">indent</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 
@@ -183,6 +185,34 @@
 <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="n">NEUPRINT_CLIENTS</span> <span class="o">=</span> <span class="p">{}</span>
 
+
+<span class="k">def</span> <span class="nf">setup_debug_logging</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple debug logging configuration.</span>
+<span class="sd">    Useful for interactive terminal sessions.</span>
+<span class="sd">    </span>
+<span class="sd">    Warning:</span>
+<span class="sd">        Replaces your current logging setup.</span>
+<span class="sd">        If you&#39;ve already set up logging for your app,</span>
+<span class="sd">        don&#39;t call this function.</span>
+<span class="sd">        Enable neuprint debug logging via:</span>
+<span class="sd">        </span>
+<span class="sd">        .. code-block:: python</span>
+<span class="sd">        </span>
+<span class="sd">            import logging</span>
+<span class="sd">            logging.getLogger(&#39;neuprint.client&#39;).setLevel(logging.DEBUG)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%(asctime)s</span><span class="s1">] </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+
+    <span class="n">root_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    
 
 <span class="k">def</span> <span class="nf">default_client</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -656,6 +686,9 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         
         <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span>
+        
+        <span class="n">cypher</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="n">dedent</span><span class="p">(</span><span class="n">cypher</span><span class="p">),</span> <span class="s1">&#39;    &#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Issuing cypher query against dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{cypher}</span><span class="s2">&quot;</span><span class="p">)</span>
         
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span>
                                   <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;cypher&quot;</span><span class="p">:</span> <span class="n">cypher</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">},</span>
