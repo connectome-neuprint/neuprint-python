@@ -123,6 +123,8 @@ def inject_client(f):
         if client is None:
             client = default_client()
         return f(*args, **kwargs, client=client)
+
+    wrapper.__signature__ = inspect.signature(f)
     return wrapper
 
 

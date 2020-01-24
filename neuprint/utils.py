@@ -1,4 +1,7 @@
+import inspect
+import functools
 from collections.abc import Iterable
+
 
 def make_iterable(x):
     """
@@ -13,6 +16,28 @@ def make_iterable(x):
     else:
         return [x]
 
+
+def make_args_iterable(argnames):
+    """
+    Returns a decorator.
+    For the given argument names, the decorator converts the
+    arguments into iterables via ``make_iterable()``.
+    """
+    def decorator(f):
+
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            callargs = inspect.getcallargs(f, *args, **kwargs)
+            for name in argnames:
+                callargs[name] = make_iterable(callargs[name])
+            return f(**callargs)
+
+        wrapper.__signature__ = inspect.signature(f)
+        return wrapper
+
+    return decorator
+
+
 def parse_properties(props, placeholder):
     """ Parses list of properties and returns a RETURN string."""
     props = props if isinstance(props, list) else list(props)
@@ -25,6 +50,7 @@ def parse_properties(props, placeholder):
             cypher.append(f'{placeholder}.{p} AS {p}')
 
     return ','.join(cypher)
+
 
 def where_expr(field, values, regex=False, name='n'):
     """

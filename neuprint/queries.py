@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm import trange
 
-from .utils import make_iterable, where_expr
+from .utils import make_iterable, make_args_iterable, where_expr
 from .client import inject_client
 
 try:
@@ -49,6 +49,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
 
 @inject_client
+@make_args_iterable(['bodyId', 'status', 'instance', 'type', 'input_roi', 'output_roi'])
 def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=None, output_roi=None,
                  min_pre=0, min_post=0, regex=False, *, client=None):
     """
@@ -152,40 +153,36 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
             3  300972942  MB(+ACA)(R)   17  13295
             4  300972942       SNP(R)  526    336
     """
-    bodyIds = make_iterable(bodyId)
-    statuses = make_iterable(status)
-    instances = make_iterable(instance)
-    types = make_iterable(type)
-    input_rois = {*make_iterable(input_roi)}
-    output_rois = {*make_iterable(output_roi)}
+    input_roi = {*input_roi}
+    output_roi = {*output_roi}
 
-    assert len(bodyIds) == 0 or np.issubdtype(np.asarray(bodyIds).dtype, np.integer), \
+    assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
         "bodyId should be an integer or list of integers"
     
     del bodyId, status, instance, type, input_roi, output_roi
 
-    assert not regex or len(instances) <= 1, "Please provide only one regex pattern for instance"
-    assert not regex or len(types) <= 1, "Please provide only one regex pattern for type"
+    assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
+    assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
     
-    assert any([len(bodyIds), len(statuses), len(instances), len(types), len(input_rois), len(output_rois)]), \
+    assert any([len(bodyId), len(status), len(instance), len(type), len(input_roi), len(output_roi)]), \
         "Please provide at least one search argument!"
     
     # Verify ROI names against known ROIs.
     neuprint_rois = {*fetch_all_rois(client=client)}
-    unknown_input_rois = input_rois - neuprint_rois
+    unknown_input_rois = input_roi - neuprint_rois
     if unknown_input_rois:
         raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
 
-    unknown_output_rois = output_rois - neuprint_rois
+    unknown_output_rois = output_roi - neuprint_rois
     if unknown_output_rois:
         raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
 
-    body_expr = where_expr('bodyId', bodyIds)
-    status_expr = where_expr('status', statuses)
-    instance_expr = where_expr('instance', instances, regex)
-    type_expr = where_expr('type', types, regex)
+    body_expr = where_expr('bodyId', bodyId)
+    status_expr = where_expr('status', status)
+    instance_expr = where_expr('instance', instance, regex)
+    type_expr = where_expr('type', type, regex)
 
-    query_rois = {*input_rois, *output_rois}
+    query_rois = {*input_roi, *output_roi}
     if query_rois:
         roi_expr = "(" + " AND ".join(f"n.`{roi}`" for roi in query_rois) + ")"
     else:
@@ -224,14 +221,14 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
     # Our query matched any neuron that intersected all of the ROIs,
     # without distinguishing between input and output.
     # Now filter the list to ensure that input/output requirements are respected.
-    if input_rois:
+    if input_roi:
         # Keep only neurons where every required input ROI is present as an input.
-        num_missing = neuron_df['inputRois'].apply(lambda rois: len(input_rois - {*rois}))
+        num_missing = neuron_df['inputRois'].apply(lambda rois: len(input_roi - {*rois}))
         neuron_df = neuron_df.loc[(num_missing == 0)]
 
-    if input_rois:
+    if input_roi:
         # Keep only neurons where every required output ROI is present as an output.
-        num_missing = neuron_df['outputRois'].apply(lambda rois: len(output_rois - {*rois}))
+        num_missing = neuron_df['outputRois'].apply(lambda rois: len(output_roi - {*rois}))
         neuron_df = neuron_df.loc[(num_missing == 0)]
 
     # Filter the ROI counts to exclude neurons that were removed above.
@@ -343,6 +340,7 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
 
 
 @inject_client
+@make_args_iterable(['from_bodyId', 'from_instance', 'from_type', 'to_bodyId', 'to_instance', 'to_type'])
 def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
                        to_bodyId=None, to_instance=None, to_type=None,
                        min_weight=1, node_type='Neuron',
@@ -385,27 +383,17 @@ def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
     assert node_type in ('Neuron', 'Segment'), \
         f"Invalid node type: {node_type}"
     
-    from_bodyIds = make_iterable(from_bodyId)
-    from_instances = make_iterable(from_instance)
-    from_types = make_iterable(from_type)
-    to_bodyIds = make_iterable(to_bodyId)
-    to_instances = make_iterable(to_instance)
-    to_types = make_iterable(to_type)
-
-    del from_bodyId, from_instance, from_type
-    del to_bodyId, to_instance, to_type
-
-    assert sum(map(len, [from_bodyIds, from_instances, from_types,
-                         to_bodyIds, to_instances, to_types])) > 0, \
+    assert sum(map(len, [from_bodyId, from_instance, from_type,
+                         to_bodyId, to_instance, to_type])) > 0, \
         "Need at least one input criteria"
 
-    from_body_expr = where_expr('bodyId', from_bodyIds, False, 'upstream')
-    from_instance_expr = where_expr('instance', from_instances, regex, 'upstream')
-    from_type_expr = where_expr('type', from_types, regex, 'upstream')
+    from_body_expr = where_expr('bodyId', from_bodyId, False, 'upstream')
+    from_instance_expr = where_expr('instance', from_instance, regex, 'upstream')
+    from_type_expr = where_expr('type', from_type, regex, 'upstream')
 
-    to_body_expr = where_expr('bodyId', to_bodyIds, False, 'downstream')
-    to_instance_expr = where_expr('instance', to_instances, regex, 'downstream')
-    to_type_expr = where_expr('type', to_types, regex, 'downstream')
+    to_body_expr = where_expr('bodyId', to_bodyId, False, 'downstream')
+    to_instance_expr = where_expr('instance', to_instance, regex, 'downstream')
+    to_type_expr = where_expr('type', to_type, regex, 'downstream')
 
     if min_weight > 1:
         weight_expr = f"e.weight >= {min_weight}"
