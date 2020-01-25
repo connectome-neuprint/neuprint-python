@@ -14,15 +14,17 @@ Example:
 
     .. code-block:: ipython
     
-        In [1]: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
+        In [1]: from neuprint import Client, fetch_custom, fetch_neurons
 
-        In [2]: fetch_custom("""\\
+        In [2]: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
+
+        In [3]: fetch_custom("""\\
            ...:     MATCH (n: Neuron)
            ...:     WHERE n.status = "Traced" AND NOT n.cropped
            ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance
            ...:     ORDER BY n.type, n.instance
            ...: """)
-        Out[2]:
+        Out[3]:
                    bodyId        type             instance
         0       511051477   5th s-LNv            5th s-LNv
         1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R
@@ -37,6 +39,12 @@ Example:
         21662  2404203061        None                 None
         
         [21663 rows x 3 columns]
+
+Tip:
+    
+    All cypher queries are logged, but the messages are not
+    shown in the console by default.  To display them, see
+    :py:func:`setup_debug_logging()`.
 '''
 # -*- coding: utf-8 -*-
 import os
