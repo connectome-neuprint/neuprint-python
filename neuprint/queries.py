@@ -49,11 +49,15 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
 
 @inject_client
-@make_args_iterable(['bodyId', 'status', 'instance', 'type', 'input_roi', 'output_roi'])
-def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=None, output_roi=None,
-                 min_pre=0, min_post=0, regex=False, *, client=None):
+@make_args_iterable(['bodyId', 'instance', 'type', 'status', 'input_roi', 'output_roi'])
+def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=None,
+                  input_roi=None, output_roi=None, min_pre=0, min_post=0,
+                  regex=False, *, client=None):
     """
-    Python version of the Neuprint Explorer `Find Neurons`_ page.
+    Search for a set of neurons by bodyId, instance, roi, etc.
+    Returns their properties, including the distibution of their synapses in all brain regions.
+    
+    This is the Python equivalent to the Neuprint Explorer `Find Neurons`_ page.
 
     Returns data in the the same format as :py:func:`find_custom_neurons()`,
     but doesn't require you to write cypher.
@@ -63,14 +67,17 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
     Args:
         bodyId:
             Integer or list of ints.
-        status:
-            str or list of strings
         instance:
             str or list of strings
             If ``regex=True``, then the instance will be matched as a regular expression.
         type:
             str or list of strings
             If ``regex=True``, then the type will be matched as a regular expression.
+        status:
+            str or list of strings
+        cropped:
+            Boolean.
+            If given, restrict results to neurons that are cropped or not.
         input_roi:
             str or list of strings
             Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
@@ -115,7 +122,7 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
     
         .. code-block:: ipython
         
-            In [1]: neurons_df, roi_counts_df = find_neurons(
+            In [1]: neurons_df, roi_counts_df = fetch_neurons(
                ...:     input_roi=['SIP(R)', 'aL(R)'], status='Traced',
                ...:     type='MBON.*', instance='.*', regex=True)
             
@@ -162,7 +169,8 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
     assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
     assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
     
-    assert any([len(bodyId), len(status), len(instance), len(type), len(input_roi), len(output_roi)]), \
+    assert any([len(bodyId), len(instance), len(type), len(status),
+                cropped is not None, len(input_roi), len(output_roi)]), \
         "Please provide at least one search argument!"
     
     # Verify ROI names against known ROIs.
@@ -176,9 +184,18 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
         raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
 
     body_expr = where_expr('bodyId', bodyId)
-    status_expr = where_expr('status', status)
     instance_expr = where_expr('instance', instance, regex)
     type_expr = where_expr('type', type, regex)
+    status_expr = where_expr('status', status)
+    
+    if cropped is None:
+        cropped_expr = ""
+    elif cropped:
+        cropped_expr = "n.cropped"
+    else:
+        # Not all neurons have the 'cropped' tag,
+        # so simply checking for False values isn't enough.
+        cropped_expr = "(NOT n.cropped OR NOT exists(n.cropped))"
 
     query_rois = {*input_roi, *output_roi}
     if query_rois:
@@ -197,8 +214,8 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
         post_expr = ""
 
     # Build WHERE clause by combining the exprs
-    exprs = [body_expr, status_expr, instance_expr, type_expr,
-             roi_expr, pre_expr, post_expr]
+    exprs = [body_expr, instance_expr, type_expr, status_expr,
+             cropped_expr, roi_expr, pre_expr, post_expr]
     exprs = filter(None, exprs)
 
     WHERE =  "WHERE\n"
@@ -244,7 +261,7 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
     Use a custom query to fetch a neuron table, with nicer output
     than you would get from a call to :py:func:`fetch_custom()`.
     
-    Returns data in the the same format as :py:func:`find_neurons()`.
+    Returns data in the the same format as :py:func:`fetch_neurons()`.
     but allows you to provide your own cypher query logic
     (subject to certain requirements; see below).
 
