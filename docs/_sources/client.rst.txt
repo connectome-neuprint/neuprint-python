@@ -6,9 +6,11 @@
 Client
 ======
 
+.. automodule:: neuprint.client
+
 .. autosummary::
 
-    Client.__init__
+    Client
     Client.fetch_custom
     Client.fetch_available
     Client.fetch_help
@@ -24,9 +26,11 @@ Client
     Client.fetch_roi_completeness
     Client.fetch_roi_connectivity
     Client.fetch_skeleton
+    setup_debug_logging
     set_default_client
 
-.. autoclass:: Client
+.. autoclass:: neuprint.client.Client
    :members:
 
 .. autofunction:: set_default_client
+.. autofunction:: setup_debug_logging

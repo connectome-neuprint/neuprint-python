@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.2.1+2.g4f7c4c1 documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.2.1+4.gdfce254 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.1+2.g4f7c4c1
+                0.2.1+4.gdfce254
               </div>
             
           
@@ -168,15 +168,17 @@
 
 <span class="sd">    .. code-block:: ipython</span>
 <span class="sd">    </span>
-<span class="sd">        In [1]: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0&#39;)</span>
+<span class="sd">        In [1]: from neuprint import Client, fetch_custom, fetch_neurons</span>
 
-<span class="sd">        In [2]: fetch_custom(&quot;&quot;&quot;\\</span>
+<span class="sd">        In [2]: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0&#39;)</span>
+
+<span class="sd">        In [3]: fetch_custom(&quot;&quot;&quot;\\</span>
 <span class="sd">           ...:     MATCH (n: Neuron)</span>
 <span class="sd">           ...:     WHERE n.status = &quot;Traced&quot; AND NOT n.cropped</span>
 <span class="sd">           ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance</span>
 <span class="sd">           ...:     ORDER BY n.type, n.instance</span>
 <span class="sd">           ...: &quot;&quot;&quot;)</span>
-<span class="sd">        Out[2]:</span>
+<span class="sd">        Out[3]:</span>
 <span class="sd">                   bodyId        type             instance</span>
 <span class="sd">        0       511051477   5th s-LNv            5th s-LNv</span>
 <span class="sd">        1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R</span>
@@ -191,6 +193,12 @@
 <span class="sd">        21662  2404203061        None                 None</span>
 <span class="sd">        </span>
 <span class="sd">        [21663 rows x 3 columns]</span>
+
+<span class="sd">Tip:</span>
+<span class="sd">    </span>
+<span class="sd">    All cypher queries are logged, but the messages are not</span>
+<span class="sd">    shown in the console by default.  To display them, see</span>
+<span class="sd">    :py:func:`setup_debug_logging()`.</span>
 <span class="sd">&#39;&#39;&#39;</span>
 <span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -227,7 +235,7 @@
 <span class="n">NEUPRINT_CLIENTS</span> <span class="o">=</span> <span class="p">{}</span>
 
 
-<span class="k">def</span> <span class="nf">setup_debug_logging</span><span class="p">():</span>
+<div class="viewcode-block" id="setup_debug_logging"><a class="viewcode-back" href="../../client.html#neuprint.client.setup_debug_logging">[docs]</a><span class="k">def</span> <span class="nf">setup_debug_logging</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Simple debug logging configuration.</span>
 <span class="sd">    Useful for interactive terminal sessions.</span>
@@ -252,7 +260,7 @@
     <span class="n">root_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
     <span class="n">root_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
     
-    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
     
 
 <span class="k">def</span> <span class="nf">default_client</span><span class="p">():</span>
