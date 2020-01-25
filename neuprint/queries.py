@@ -159,8 +159,6 @@ def find_neurons(bodyId=None, status=None, instance=None, type=None, input_roi=N
     assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
         "bodyId should be an integer or list of integers"
     
-    del bodyId, status, instance, type, input_roi, output_roi
-
     assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
     assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
     
