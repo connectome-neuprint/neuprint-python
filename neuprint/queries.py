@@ -356,11 +356,11 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
 
 @inject_client
 @make_args_iterable(['from_bodyId', 'from_instance', 'from_type', 'to_bodyId', 'to_instance', 'to_type'])
-def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
-                       to_bodyId=None, to_instance=None, to_type=None,
-                       min_weight=1, node_type='Neuron',
-                       regex=False, properties=['status', 'cropped', 'type', 'instance'],
-                       *, client=None):
+def fetch_simple_connections(from_bodyId=None, from_instance=None, from_type=None,
+                             to_bodyId=None, to_instance=None, to_type=None,
+                             min_weight=1, label='Neuron',
+                             regex=False, properties=['status', 'cropped', 'type', 'instance'],
+                             *, client=None):
     """
     Find all connections to/from a set of neurons,
     or all connections from one set of neurons and another.
@@ -384,7 +384,7 @@ def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
             If ``regex=True``, then the type will be matched as a regular expression.
         min_weight:
             Exclude connections below this weight.
-        node_type:
+        label:
             Return results for Neurons (default) or all Segments.
         properties:
             Additional columns to include in the results, for both the upstream and downstream body.
@@ -395,8 +395,8 @@ def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
         DataFrame
         One row per connection, with columns for upstream and downstream properties.
     """
-    assert node_type in ('Neuron', 'Segment'), \
-        f"Invalid node type: {node_type}"
+    assert label in ('Neuron', 'Segment'), \
+        f"Invalid node type: {label}"
     
     assert sum(map(len, [from_bodyId, from_instance, from_type,
                          to_bodyId, to_instance, to_type])) > 0, \
@@ -432,7 +432,7 @@ def simple_connections(from_bodyId=None, from_instance=None, from_type=None,
     return_props_str = ',\n               '.join(return_props)
 
     q = f"""\
-        MATCH (upstream:{node_type})-[e:ConnectsTo]->(downstream:{node_type})
+        MATCH (upstream:{label})-[e:ConnectsTo]->(downstream:{label})
         {WHERE}
         RETURN {return_props_str}
         ORDER BY e.weight DESC,
