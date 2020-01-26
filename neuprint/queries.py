@@ -456,12 +456,17 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
 
 
 @inject_client
-def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
     """
-    Fetch the adjacency table for all non-cropped traced neurons, broken down by ROI.
+    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Synapses which do not fall on any ROI will be listed as having ROI 'None'.
+    Only primary ROIs are included in the results.
 
     Args:
+        bodies:
+            Limit results to connections between the given bodyIds.
+            If not provided, then use all non-cropped Traced neurons. 
+            
         export_dir:
             Optional. Export CSV files for the neuron table,
             connection table (total weight), and connection table (per ROI).
@@ -473,6 +478,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     Returns:
         Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the
         table of neuron IDs and the per-ROI connection table, respectively.
+        Only primary ROIs are included in the per-ROI connection table.
 
     Note:
         On the hemibrain dataset, this function takes a few minutes to run,
@@ -505,30 +511,19 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             3   202916528    234292899       4
             4   202916528    264986706       2        
     """
-    ##
-    ## TODO: Options to specify non-cropped, etc.
-    ##
-    
-    # Fetch the list of primary ROIs
-    q = """\
-        MATCH (m:Meta)
-        RETURN m.primaryRois as rois
-    """
-    primary_rois = client.fetch_custom(q)['rois'].iloc[0]
-    
-    # Fetch the list of traced, non-cropped Neurons
-    q = """\
+    q = f"""\
+        WITH {[*bodies]} as bodies
         MATCH (n:Neuron)
-        WHERE n.status = "Traced" AND (not n.cropped)
+        WHERE n.bodyId in bodies
         RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
     """
-    traced_neurons_df = client.fetch_custom(q)
+    neurons_df = client.fetch_custom(q)
     
     # Fetch connections in batches
     conn_tables = []
-    for start in trange(0, len(traced_neurons_df), batch_size):
+    for start in trange(0, len(neurons_df), batch_size):
         stop = start + batch_size
-        batch_neurons = traced_neurons_df['bodyId'].iloc[start:stop].tolist()
+        batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
         q = f"""\
             MATCH (n:Neuron) - [e:ConnectsTo] -> (m:Neuron)
             WHERE n.bodyId in {batch_neurons} AND m.status = "Traced" AND (not m.cropped)
@@ -554,6 +549,12 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
                                columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
     
     # Filter out non-primary ROIs
+    # Fetch the list of primary ROIs
+    q = """\
+        MATCH (m:Meta)
+        RETURN m.primaryRois as rois
+    """
+    primary_rois = client.fetch_custom(q)['rois'].iloc[0]
     roi_conn_df = roi_conn_df.query('roi in @primary_rois or roi == "None"')
     
     # Export to CSV
@@ -562,7 +563,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 
         # Export Nodes
         p = f"{export_dir}/traced-neurons.csv"
-        traced_neurons_df.to_csv(p, index=False, header=True)
+        neurons_df.to_csv(p, index=False, header=True)
         
         # Export Edges (per ROI)
         p = f"{export_dir}/traced-roi-connections.csv"
@@ -574,7 +575,23 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
         total_conn_df = conn_groups['weight'].sum()
         total_conn_df.to_csv(p, index=False, header=True)
 
-    return traced_neurons_df, roi_conn_df
+    return neurons_df, roi_conn_df
+
+
+@inject_client
+def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
+    """
+    Finds the set of all non-cropped traced neurons, and then
+    calls :py:func:`fetch_adjacencies()`. 
+    """
+    # Fetch the list of traced, non-cropped Neurons
+    q = """\
+        MATCH (n:Neuron)
+        WHERE n.status = "Traced" AND (not n.cropped)
+        RETURN n.bodyId as bodyId
+    """
+    bodies = client.fetch_custom(q)['bodyId']
+    return fetch_adjacencies(bodies, export_dir, batch_size, client=client)
 
 
 @inject_client
