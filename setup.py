@@ -19,7 +19,7 @@ setup(
     author="Stuart Berg",
     author_email='bergs@hhmi.janelia.org',
     url='https://github.com/connectome-neuprint/neuprint-python',
-    packages=['neuprint'],
+    packages=['neuprint', 'neuprint.deprecated', 'neuprint.tests'],
     entry_points={},
     install_requires=requirements,
     keywords='neuprint-python',

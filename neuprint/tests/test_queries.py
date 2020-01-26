@@ -1,0 +1,126 @@
+import pytest
+import pandas as pd
+
+from neuprint import Client, default_client, set_default_client
+from neuprint import fetch_custom, fetch_neurons, fetch_meta, fetch_all_rois, fetch_primary_rois, fetch_simple_connections, fetch_adjacencies
+from neuprint.tests import NEUPRINT_SERVER, DATASET
+
+@pytest.fixture(scope='module')
+def client():
+    c = Client(NEUPRINT_SERVER, DATASET)
+    set_default_client(c)
+    assert default_client() is c
+    return c
+
+
+def test_fetch_custom(client):
+    df = fetch_custom("MATCH (m:Meta) RETURN m.primaryRois as rois")
+    assert isinstance(df, pd.DataFrame)
+    assert df.columns == ['rois']
+    assert len(df) == 1
+    assert isinstance(df['rois'].iloc[0], list)
+
+
+def test_fetch_neurons(client):
+    bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    neurons, roi_counts = fetch_neurons(bodyId=bodyId)
+    assert len(neurons) == len(bodyId)
+    assert set(roi_counts['bodyId']) == set(bodyId)
+    
+    neurons, roi_counts = fetch_neurons(instance='APL_R')
+    assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
+    assert neurons.loc[0, 'type'] == "APL"
+    assert neurons.loc[0, 'instance'] == "APL_R"
+
+    neurons, roi_counts = fetch_neurons(instance='APL[^ ]*', regex=True)
+    assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
+    assert neurons.loc[0, 'type'] == "APL"
+    assert neurons.loc[0, 'instance'] == "APL_R"
+
+    neurons, roi_counts = fetch_neurons(type='APL.*', regex=True)
+    assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
+    assert neurons.loc[0, 'type'] == "APL"
+    assert neurons.loc[0, 'instance'] == "APL_R"
+
+    neurons, roi_counts = fetch_neurons(status=['Traced', 'Orphan'], cropped=False)
+    assert neurons.eval('status == "Traced" or status == "Orphan"').all()
+    assert not neurons['cropped'].any() 
+    
+    neurons, roi_counts = fetch_neurons(inputRois='AL(R)', outputRois='SNP(R)')
+    assert all(['AL(R)' in rois for rois in neurons['inputRois']])
+    assert all(['SNP(R)' in rois for rois in neurons['outputRois']])
+    assert sorted(roi_counts.query('roi == "AL(R)" and post > 0')['bodyId']) == sorted(neurons['bodyId'])
+    assert sorted(roi_counts.query('roi == "SNP(R)" and pre > 0')['bodyId']) == sorted(neurons['bodyId'])
+
+    neurons, roi_counts = fetch_neurons(min_pre=1000, min_post=2000)
+    assert neurons.eval('pre >= 1000 and post >= 2000').all()
+
+
+def test_fetch_simple_connections(client):
+    bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    conn_df = fetch_simple_connections(upstream_bodyId=bodyId)
+    assert set(conn_df['upstream_bodyId'].unique()) == set(bodyId)
+
+    conn_df = fetch_simple_connections(downstream_bodyId=bodyId)
+    assert set(conn_df['downstream_bodyId'].unique()) == set(bodyId)
+    
+    APL_R = 425790257
+
+    conn_df = fetch_simple_connections(upstream_instance='APL_R')
+    assert (conn_df['upstream_bodyId'] == APL_R).all()
+
+    conn_df = fetch_simple_connections(upstream_type='APL')
+    assert (conn_df['upstream_bodyId'] == APL_R).all()
+
+    conn_df = fetch_simple_connections(downstream_instance='APL_R')
+    assert (conn_df['downstream_bodyId'] == APL_R).all()
+
+    conn_df = fetch_simple_connections(downstream_type='APL')
+    assert (conn_df['downstream_bodyId'] == APL_R).all()
+
+    conn_df = fetch_simple_connections(upstream_bodyId=APL_R, min_weight=10)
+    assert (conn_df['upstream_bodyId'] == APL_R).all()
+    assert (conn_df['weight'] >= 10).all()
+    
+    conn_df = fetch_simple_connections(upstream_bodyId=APL_R, min_weight=10, properties=['somaLocation'])
+    assert 'upstream_somaLocation' in conn_df
+    assert 'downstream_somaLocation' in conn_df
+
+    conn_df = fetch_simple_connections(upstream_bodyId=APL_R, min_weight=10, properties=['roiInfo'])
+    assert 'upstream_roiInfo' in conn_df
+    assert 'downstream_roiInfo' in conn_df
+    assert isinstance(conn_df['upstream_roiInfo'].iloc[0], dict)
+
+
+@pytest.mark.skip
+def test_fetch_traced_adjacencies(client):
+    pass
+
+
+def test_fetch_adjacencies(client):
+    bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+    neuron_df, roi_conn_df = fetch_adjacencies(bodies)
+
+    # Should not include non-primary ROIs (except 'None')    
+    assert not (set(roi_conn_df['roi'].unique()) - set(fetch_primary_rois()) - {'None'})
+
+
+def test_fetch_meta(client):
+    meta = fetch_meta()
+    assert isinstance(meta, dict)
+
+
+def test_fetch_all_rois(client):
+    all_rois = fetch_all_rois()
+    assert isinstance(all_rois, list)
+
+
+def test_fetch_primary_rois(client):
+    primary_rois = fetch_primary_rois()
+    assert isinstance(primary_rois, list)
+

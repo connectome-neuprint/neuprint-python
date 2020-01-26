@@ -19,10 +19,10 @@ build:
 
 requirements:
   build:
-    - python >=3.5
+    - python >=3.6
     - setuptools
   run:
-    - python >=3.5
+    - python >=3.6
     # dependencies are defined in setup.py
     {% for dep in data['install_requires'] %}
     - {{ dep.lower() }}
@@ -32,15 +32,10 @@ requirements:
 test:
   imports:
     - neuprint
-
-# There are no real tests yet.
-#  source_files:
-#    - tests
-#  requires:
-#    - pytest
-#    - pytest-cov
-#  commands:
-#    - pytest tests
+  requires:
+    - pytest
+  commands:
+    - pytest --pyargs neuprint.tests
 
 about:
   home: https://github.com/stuarteberg/neuprint-python
