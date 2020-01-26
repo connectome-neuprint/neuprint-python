@@ -96,7 +96,9 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
             Boolean.
             If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
             regular expressions, rather than exact match strings.
-
+        client:
+            If not provided, the global default ``Client`` will be used.
+    
     Returns:
         Two DataFrames.
         ``(neurons_df, roi_counts_df)``
@@ -287,6 +289,9 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
             Optional.  The list of ROI names from neuprint.
             If not provided, they will be fetched
             (so that ROI boolean columns can be dropped from the results).
+
+        client:
+            If not provided, the global default ``Client`` will be used.
         
     Returns:
         Two DataFrames.
@@ -392,6 +397,8 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
             Additional columns to include in the results, for both the upstream and downstream body.
         regex:
             If ``True``, instance and type arguments will be interpreted as regular expressions.
+        client:
+            If not provided, the global default ``Client`` will be used.
     
     Returns:
         DataFrame
@@ -473,6 +480,8 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
         batch_size:
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
+        client:
+            If not provided, the global default ``Client`` will be used.
     
     Returns:
         Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the
@@ -650,7 +659,7 @@ def fetch_meta(*, client=None):
 
 
 @inject_client
-def fetch_all_rois(*, client):
+def fetch_all_rois(*, client=None):
     """
     Fetch the list of all ROIs in the dataset,
     from the dataset metadata.
@@ -666,7 +675,7 @@ def fetch_all_rois(*, client):
 
 
 @inject_client
-def fetch_primary_rois(*, client):
+def fetch_primary_rois(*, client=None):
     """
     Fetch the list of 'primary' ROIs in the dataset,
     from the dataset metadata.

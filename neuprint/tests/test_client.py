@@ -1,9 +1,11 @@
 import os
+import pytest
 import pandas as pd
-from neuprint import Client, default_client, set_default_client
+from neuprint import Client, default_client, set_default_client, inject_client
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 EXAMPLE_BODY = 5813037876 # Delta6G, Delta6G_04, Traced, non-cropped
+
 
 def test_members():
     set_default_client(None)
@@ -37,3 +39,24 @@ def test_members():
     assert isinstance(c.fetch_roi_completeness(), pd.DataFrame)
     assert isinstance(c.fetch_roi_connectivity(), pd.DataFrame)
     assert isinstance(c.fetch_skeleton(EXAMPLE_BODY), str)
+
+
+def test_inject_client():
+    c = Client(NEUPRINT_SERVER, DATASET)
+    c2 = Client(NEUPRINT_SERVER, DATASET)
+
+    set_default_client(c)
+
+    @inject_client
+    def f(*, client):
+        return client
+    
+    # Uses default client unless client was specified
+    assert f() is c
+    assert f(client=c2) is c2
+
+    with pytest.raises(AssertionError):
+        # Wrong signature -- asserts
+        @inject_client
+        def f2(client):
+            pass
