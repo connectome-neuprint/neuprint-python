@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.2.2+1.g16e4173 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.2.2+1.ga21271a documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.2+1.g16e4173
+                0.2.2+1.ga21271a
               </div>
             
           
@@ -423,8 +423,7 @@ Only primary ROIs are included in the results.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>bodies</strong> – Limit results to connections between the given bodyIds.
-If not provided, then use all non-cropped Traced neurons.</li>
+<li><strong>bodies</strong> – Limit results to connections between the given bodyIds.</li>
 <li><strong>export_dir</strong> – Optional. Export CSV files for the neuron table,
 connection table (total weight), and connection table (per ROI).</li>
 <li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
@@ -439,6 +438,17 @@ Only primary ROIs are included in the per-ROI connection table.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_traced_adjacecies()</span></code></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_traced_adjacencies">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_traced_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the set of all non-cropped traced neurons, and then
+calls <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">On the hemibrain dataset, this function takes a few minutes to run,
@@ -469,13 +479,6 @@ and the results are somewhat large (~300 MB).</p>
 <span class="go">4   202916528    264986706       2</span>
 </pre></div>
 </div>
-</dd></dl>
-
-<dl class="function">
-<dt id="neuprint.queries.fetch_traced_adjacencies">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_traced_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
-<dd><p>Finds the set of all non-cropped traced neurons, and then
-calls <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="function">
