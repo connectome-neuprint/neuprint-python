@@ -27,9 +27,10 @@ But the functions in this file offer a convenient API for common queries.
 .. autosummary::
 
     fetch_custom
-    find_neurons
+    fetch_neurons
     fetch_custom_neurons
-    simple_connections
+    fetch_simple_connections
+    fetch_adjacencies
     fetch_traced_adjacencies
     fetch_meta
     fetch_all_rois
