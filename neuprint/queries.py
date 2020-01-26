@@ -101,7 +101,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
         Two DataFrames.
         ``(neurons_df, roi_counts_df)``
         
-        In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:
+        In ``neurons_df``, all available ``:Neuron`` columns are returned, with the following changes:
         
             - ROI boolean columns are removed
             - ``roiInfo`` is parsed as json data
@@ -465,7 +465,6 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
     Args:
         bodies:
             Limit results to connections between the given bodyIds.
-            If not provided, then use all non-cropped Traced neurons. 
             
         export_dir:
             Optional. Export CSV files for the neuron table,
@@ -480,37 +479,9 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
         table of neuron IDs and the per-ROI connection table, respectively.
         Only primary ROIs are included in the per-ROI connection table.
 
-    Note:
-        On the hemibrain dataset, this function takes a few minutes to run,
-        and the results are somewhat large (~300 MB).
-    
-    Example:
-        
-        .. code-block:: ipython
-        
-            In [1]: neurons_df, roi_conn_df = fetch_traced_adjacencies('exported-connections')
-
-            In [2]: roi_conn_df.head()
-            Out[2]:
-                   bodyId_pre  bodyId_post        roi  weight
-            0      5813009352    516098538     SNP(R)       2
-            1      5813009352    516098538     SLP(R)       2
-            2       326119769    516098538     SNP(R)       1
-            3       326119769    516098538     SLP(R)       1
-            4       915960391    202916528         FB       1
-
-            In [3]: # Obtain total weights (instead of per-connection-per-ROI weights)
-               ...: conn_groups = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)
-               ...: total_conn_df = conn_groups['weight'].sum()
-               ...: total_conn_df.head()
-            Out[3]:
-               bodyId_pre  bodyId_post  weight
-            0   202916528    203253253       2
-            1   202916528    203257652       2
-            2   202916528    203598557       2
-            3   202916528    234292899       4
-            4   202916528    264986706       2        
-    """
+    See also:
+        :py:func:`fetch_traced_adjacecies()`
+   """
     q = f"""\
         WITH {[*bodies]} as bodies
         MATCH (n:Neuron)
@@ -583,7 +554,38 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     """
     Finds the set of all non-cropped traced neurons, and then
     calls :py:func:`fetch_adjacencies()`. 
-    """
+ 
+    Note:
+        On the hemibrain dataset, this function takes a few minutes to run,
+        and the results are somewhat large (~300 MB).
+    
+    Example:
+        
+        .. code-block:: ipython
+        
+            In [1]: neurons_df, roi_conn_df = fetch_traced_adjacencies('exported-connections')
+
+            In [2]: roi_conn_df.head()
+            Out[2]:
+                   bodyId_pre  bodyId_post        roi  weight
+            0      5813009352    516098538     SNP(R)       2
+            1      5813009352    516098538     SLP(R)       2
+            2       326119769    516098538     SNP(R)       1
+            3       326119769    516098538     SLP(R)       1
+            4       915960391    202916528         FB       1
+
+            In [3]: # Obtain total weights (instead of per-connection-per-ROI weights)
+               ...: conn_groups = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)
+               ...: total_conn_df = conn_groups['weight'].sum()
+               ...: total_conn_df.head()
+            Out[3]:
+               bodyId_pre  bodyId_post  weight
+            0   202916528    203253253       2
+            1   202916528    203257652       2
+            2   202916528    203598557       2
+            3   202916528    234292899       4
+            4   202916528    264986706       2        
+     """
     # Fetch the list of traced, non-cropped Neurons
     q = """\
         MATCH (n:Neuron)
