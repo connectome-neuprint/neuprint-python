@@ -46,7 +46,6 @@ Tip:
     shown in the console by default.  To display them, see
     :py:func:`setup_debug_logging()`.
 '''
-# -*- coding: utf-8 -*-
 import os
 import sys
 import copy
@@ -233,7 +232,6 @@ def verbose_errors(f):
 
 
 class Client:
-
     def __init__(self, server, dataset=None, token=None, verify=True):
         """
         Client constructor.
@@ -310,6 +308,7 @@ class Client:
         global DEFAULT_NEUPRINT_CLIENT
         if DEFAULT_NEUPRINT_CLIENT is None:
             set_default_client(self)
+
 
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
@@ -428,6 +427,7 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/version")['Version']
 
+
     ##
     ## DB-META
     ##
@@ -458,6 +458,7 @@ class Client:
         Fetch the database version
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/version")['Version']
+
 
     ##
     ## USER
@@ -570,6 +571,37 @@ class Client:
         df = pd.DataFrame(weights, columns=['from_roi', 'to_roi', 'count', 'weight'])
         return df
 
+
+    ##
+    ## ROI MESHES
+    ##
+    def fetch_roi_mesh(self, roi, export_path=None):
+        """
+        Fetch a mesh for the given ROI, in ``.obj`` format.
+        
+        Args:
+            roi:
+                Name of an ROI
+            export_path:
+                Optional. Writes the ``.obj`` file to the given path.
+            
+        Returns:
+            bytes
+            The contents of the fetched ``.obj`` mesh file.
+
+        Note:
+            ROI meshes are intended for visualization only.
+            (They are not suitable for quantitative analysis.)
+        """
+        url = f"{self.server}/api/roimeshes/mesh/{self.dataset}/{roi}"
+        data = self._fetch_raw(url, ispost=False)
+        
+        if export_path:
+            with open(export_path, 'wb') as f:
+                f.write(data)
+        return data
+        
+    
     ##
     ## SKELETONS
     ##
@@ -606,3 +638,28 @@ class Client:
 
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
+
+
+    ##
+    ## RAW KEY-VALUE
+    ##
+    def fetch_raw_keyvalue(self, instance, key):
+        """
+        Fetch a value from the ``neuprintHTTP`` server.
+        The data address is given by both the instance name and key.
+        (For admins and experts only.)
+        """
+        url = f"{self.server}/api/raw/keyvalue/key/{instance}/{key}"
+        return self._fetch_raw(url, ispost=False)
+        
+
+    def post_raw_keyvalue(self, instance, key, value):
+        """
+        Post a value from the ``neuprintHTTP`` server.
+        The data address is given by both the instance name and key.
+        (For admins and experts only.)
+        """
+        assert isinstance(value, bytes)
+        url = f"{self.server}/api/raw/keyvalue/key/{instance}/{key}"
+        r = self.session.post(url, data=value, verify=self.verify)
+        r.raise_for_status()

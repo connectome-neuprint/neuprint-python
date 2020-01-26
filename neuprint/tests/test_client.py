@@ -1,4 +1,3 @@
-import os
 import pytest
 import pandas as pd
 from neuprint import Client, default_client, set_default_client, inject_client
@@ -29,16 +28,35 @@ def test_members():
     assert isinstance(c.fetch_version(), str)
     assert isinstance(c.fetch_database(), dict)
     assert isinstance(c.fetch_datasets(), dict)
-    
-    #assert isinstance(c.fetch_instances(), list)  # Broken. neuprint returns error 500 
-
     assert isinstance(c.fetch_db_version(), str)
     assert isinstance(c.fetch_profile(), dict)
     assert isinstance(c.fetch_token(), str)
     assert isinstance(c.fetch_daily_type(), tuple)
     assert isinstance(c.fetch_roi_completeness(), pd.DataFrame)
     assert isinstance(c.fetch_roi_connectivity(), pd.DataFrame)
+    assert isinstance(c.fetch_roi_mesh('AB(R)'), bytes)
     assert isinstance(c.fetch_skeleton(EXAMPLE_BODY), str)
+
+
+@pytest.mark.xfail
+def test_broken_members():
+    """
+    These endpoints are listed in the neuprintHTTP API,
+    but don't seem to work.
+    """    
+    c = Client(NEUPRINT_SERVER, DATASET)
+
+    # Broken. neuprint returns error 500
+    assert isinstance(c.fetch_instances(), list) 
+
+
+@pytest.mark.skip
+def test_keyvalue():
+    # TODO:
+    # What is an appropriate key/value to test with?
+    c = Client(NEUPRINT_SERVER, DATASET)
+    c.post_raw_keyvalue(instance, key, b'test-test-test')
+    c.fetch_raw_keyvalue(instance, key)
 
 
 def test_inject_client():
