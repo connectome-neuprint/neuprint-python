@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.2.2+1.ga21271a documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.2.2+2.gde801dc documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.2+1.ga21271a
+                0.2.2+2.gde801dc
               </div>
             
           
@@ -250,7 +250,9 @@
 <span class="sd">            Boolean.</span>
 <span class="sd">            If ``True``, the ``instance`` and ``type`` arguments will be interpreted as</span>
 <span class="sd">            regular expressions, rather than exact match strings.</span>
-
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
+<span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Two DataFrames.</span>
 <span class="sd">        ``(neurons_df, roi_counts_df)``</span>
@@ -441,6 +443,9 @@
 <span class="sd">            Optional.  The list of ROI names from neuprint.</span>
 <span class="sd">            If not provided, they will be fetched</span>
 <span class="sd">            (so that ROI boolean columns can be dropped from the results).</span>
+
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
 <span class="sd">        </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Two DataFrames.</span>
@@ -546,6 +551,8 @@
 <span class="sd">            Additional columns to include in the results, for both the upstream and downstream body.</span>
 <span class="sd">        regex:</span>
 <span class="sd">            If ``True``, instance and type arguments will be interpreted as regular expressions.</span>
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        DataFrame</span>
@@ -627,6 +634,8 @@
 <span class="sd">        batch_size:</span>
 <span class="sd">            For optimal performance, connections will be fetched in batches.</span>
 <span class="sd">            This parameter specifies the batch size.</span>
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the</span>
@@ -804,7 +813,7 @@
 
 
 <div class="viewcode-block" id="fetch_all_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_all_rois">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch the list of all ROIs in the dataset,</span>
 <span class="sd">    from the dataset metadata.</span>
@@ -820,7 +829,7 @@
 
 
 <div class="viewcode-block" id="fetch_primary_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_primary_rois">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_primary_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">fetch_primary_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch the list of &#39;primary&#39; ROIs in the dataset,</span>
 <span class="sd">    from the dataset metadata.</span>

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.2.2+1.ga21271a documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.2.2+2.gde801dc documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.2+1.ga21271a
+                0.2.2+2.gde801dc
               </div>
             
           
@@ -190,10 +190,10 @@ But the functions in this file offer a convenient API for common queries.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_meta" title="neuprint.queries.fetch_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_meta</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the dataset metadata, parsing json fields where necessary.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_all_rois" title="neuprint.queries.fetch_all_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_all_rois</span></code></a>(*,&nbsp;client)</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_all_rois" title="neuprint.queries.fetch_all_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_all_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the list of all ROIs in the dataset, from the dataset metadata.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*,&nbsp;client)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the list of ‘primary’ ROIs in the dataset, from the dataset metadata.</td>
 </tr>
 </tbody>
@@ -263,6 +263,7 @@ Exclude neurons that don’t have at least this many PSDs (inputs).</li>
 <li><strong>regex</strong> – Boolean.
 If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the <code class="docutils literal notranslate"><span class="pre">instance</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> arguments will be interpreted as
 regular expressions, rather than exact match strings.</li>
+<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -352,6 +353,7 @@ and must <code class="docutils literal notranslate"><span class="pre">RETURN</sp
 <li><strong>neuprint_rois</strong> – Optional.  The list of ROI names from neuprint.
 If not provided, they will be fetched
 (so that ROI boolean columns can be dropped from the results).</li>
+<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -401,6 +403,7 @@ If <code class="docutils literal notranslate"><span class="pre">regex=True</span
 <li><strong>label</strong> – Return results for Neurons (default) or all Segments.</li>
 <li><strong>properties</strong> – Additional columns to include in the results, for both the upstream and downstream body.</li>
 <li><strong>regex</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, instance and type arguments will be interpreted as regular expressions.</li>
+<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -428,6 +431,7 @@ Only primary ROIs are included in the results.</p>
 connection table (total weight), and connection table (per ROI).</li>
 <li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
 This parameter specifies the batch size.</li>
+<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -524,14 +528,14 @@ and the results are somewhat large (~300 MB).</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_all_rois">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_all_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_all_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_all_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_all_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_all_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_all_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the list of all ROIs in the dataset,
 from the dataset metadata.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_primary_rois">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_primary_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_primary_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the list of ‘primary’ ROIs in the dataset,
 from the dataset metadata.
 Primary ROIs do not overlap with each other.</p>
