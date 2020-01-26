@@ -49,9 +49,9 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
 
 @inject_client
-@make_args_iterable(['bodyId', 'instance', 'type', 'status', 'input_roi', 'output_roi'])
+@make_args_iterable(['bodyId', 'instance', 'type', 'status', 'inputRois', 'outputRois'])
 def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=None,
-                  input_roi=None, output_roi=None, min_pre=0, min_post=0,
+                  inputRois=None, outputRois=None, min_pre=0, min_post=0,
                   regex=False, *, client=None):
     """
     Search for a set of neurons by bodyId, instance, roi, etc.
@@ -78,11 +78,11 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
         cropped:
             Boolean.
             If given, restrict results to neurons that are cropped or not.
-        input_roi:
+        inputRoi:
             str or list of strings
             Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
             ``regex`` does not apply to this parameter.
-        output_roi:
+        outputRoi:
             str or list of strings
             Only Neurons which have outputs in EVERY one of the given ROIs will be matched.
             ``regex`` does not apply to this parameter.
@@ -160,8 +160,8 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
             3  300972942  MB(+ACA)(R)   17  13295
             4  300972942       SNP(R)  526    336
     """
-    input_roi = {*input_roi}
-    output_roi = {*output_roi}
+    inputRois = {*inputRois}
+    outputRois = {*outputRois}
 
     assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
         "bodyId should be an integer or list of integers"
@@ -170,16 +170,17 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
     
     assert any([len(bodyId), len(instance), len(type), len(status),
-                cropped is not None, len(input_roi), len(output_roi)]), \
+                cropped is not None, len(inputRois), len(outputRois),
+                min_pre, min_post]), \
         "Please provide at least one search argument!"
     
     # Verify ROI names against known ROIs.
     neuprint_rois = {*fetch_all_rois(client=client)}
-    unknown_input_rois = input_roi - neuprint_rois
+    unknown_input_rois = inputRois - neuprint_rois
     if unknown_input_rois:
         raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
 
-    unknown_output_rois = output_roi - neuprint_rois
+    unknown_output_rois = outputRois - neuprint_rois
     if unknown_output_rois:
         raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
 
@@ -197,7 +198,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
         # so simply checking for False values isn't enough.
         cropped_expr = "(NOT n.cropped OR NOT exists(n.cropped))"
 
-    query_rois = {*input_roi, *output_roi}
+    query_rois = {*inputRois, *outputRois}
     if query_rois:
         roi_expr = "(" + " AND ".join(f"n.`{roi}`" for roi in query_rois) + ")"
     else:
@@ -236,14 +237,14 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     # Our query matched any neuron that intersected all of the ROIs,
     # without distinguishing between input and output.
     # Now filter the list to ensure that input/output requirements are respected.
-    if input_roi:
+    if inputRois:
         # Keep only neurons where every required input ROI is present as an input.
-        num_missing = neuron_df['inputRois'].apply(lambda rois: len(input_roi - {*rois}))
+        num_missing = neuron_df['inputRois'].apply(lambda rowInputRois: len(inputRois - {*rowInputRois}))
         neuron_df = neuron_df.loc[(num_missing == 0)]
 
-    if input_roi:
+    if outputRois:
         # Keep only neurons where every required output ROI is present as an output.
-        num_missing = neuron_df['outputRois'].apply(lambda rois: len(output_roi - {*rois}))
+        num_missing = neuron_df['outputRois'].apply(lambda rowOutputRois: len(outputRois - {*rowOutputRois}))
         neuron_df = neuron_df.loc[(num_missing == 0)]
 
     # Filter the ROI counts to exclude neurons that were removed above.
@@ -296,7 +297,7 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
             - ROI boolean columns are removed
             - ``roiInfo`` is parsed as json data
             - ``somaLocation`` is provided as a list ``[x, y, z]``
-            - New columns ``inputRois`` and ``outputRois`` contain lists of each neuron's ROIs.
+            - New columns ``inputRoi`` and ``outputRoi`` contain lists of each neuron's ROIs.
         
         In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table
         of per-neuron-per-ROI synapse counts, with separate columns
@@ -304,10 +305,10 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
     """
     results = client.fetch_custom(q)
     
-    neuron_cols = ['bodyId', 'status', 'cropped', 'type', 'instance', 'cellBodyFiber',
-                   'somaRadius', 'somaLocation', 'size',
-                   'pre', 'post',
-                   'statusLabel',
+    neuron_cols = ['bodyId', 'instance', 'type', 'cellBodyFiber',
+                   'pre', 'post', 'size',
+                   'status', 'cropped', 'statusLabel',
+                   'somaRadius', 'somaLocation',
                    'inputRois', 'outputRois', 'roiInfo']
     
     if len(results) == 0:
@@ -355,31 +356,32 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
 
 
 @inject_client
-@make_args_iterable(['from_bodyId', 'from_instance', 'from_type', 'to_bodyId', 'to_instance', 'to_type'])
-def fetch_simple_connections(from_bodyId=None, from_instance=None, from_type=None,
-                             to_bodyId=None, to_instance=None, to_type=None,
+@make_args_iterable(['upstream_bodyId', 'upstream_instance', 'upstream_type', 'downstream_bodyId', 'downstream_instance', 'downstream_type'])
+def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstream_type=None,
+                             downstream_bodyId=None, downstream_instance=None, downstream_type=None,
                              min_weight=1, label='Neuron',
                              regex=False, properties=['status', 'cropped', 'type', 'instance'],
                              *, client=None):
     """
-    Find all connections to/from a set of neurons,
-    or all connections from one set of neurons and another.
+    Find all connections from a set of "upstream" neurons,
+    or to a set of "downstream" neurons,
+    or all connections from a set of upstream neurons to a set of downstream neurons.
 
     Args:
-        from_bodyId:
+        upstream_bodyId:
             Integer or list of ints.
-        from_instance:
+        upstream_instance:
             str or list of strings
             If ``regex=True``, then the instance will be matched as a regular expression.
-        from_type:
+        upstream_type:
             str or list of strings
             If ``regex=True``, then the type will be matched as a regular expression.
-        to_bodyId:
+        downstream_bodyId:
             Integer or list of ints.
-        to_instance:
+        downstream_instance:
             str or list of strings
             If ``regex=True``, then the instance will be matched as a regular expression.
-        to_type:
+        downstream_type:
             str or list of strings
             If ``regex=True``, then the type will be matched as a regular expression.
         min_weight:
@@ -398,17 +400,17 @@ def fetch_simple_connections(from_bodyId=None, from_instance=None, from_type=Non
     assert label in ('Neuron', 'Segment'), \
         f"Invalid node type: {label}"
     
-    assert sum(map(len, [from_bodyId, from_instance, from_type,
-                         to_bodyId, to_instance, to_type])) > 0, \
+    assert sum(map(len, [upstream_bodyId, upstream_instance, upstream_type,
+                         downstream_bodyId, downstream_instance, downstream_type])) > 0, \
         "Need at least one input criteria"
 
-    from_body_expr = where_expr('bodyId', from_bodyId, False, 'upstream')
-    from_instance_expr = where_expr('instance', from_instance, regex, 'upstream')
-    from_type_expr = where_expr('type', from_type, regex, 'upstream')
+    upstream_body_expr = where_expr('bodyId', upstream_bodyId, False, 'upstream')
+    upstream_instance_expr = where_expr('instance', upstream_instance, regex, 'upstream')
+    upstream_type_expr = where_expr('type', upstream_type, regex, 'upstream')
 
-    to_body_expr = where_expr('bodyId', to_bodyId, False, 'downstream')
-    to_instance_expr = where_expr('instance', to_instance, regex, 'downstream')
-    to_type_expr = where_expr('type', to_type, regex, 'downstream')
+    downstream_body_expr = where_expr('bodyId', downstream_bodyId, False, 'downstream')
+    downstream_instance_expr = where_expr('instance', downstream_instance, regex, 'downstream')
+    downstream_type_expr = where_expr('type', downstream_type, regex, 'downstream')
 
     if min_weight > 1:
         weight_expr = f"e.weight >= {min_weight}"
@@ -416,8 +418,8 @@ def fetch_simple_connections(from_bodyId=None, from_instance=None, from_type=Non
         weight_expr = ""
     
     # Build WHERE clause by combining the exprs
-    exprs = [from_body_expr, from_instance_expr, from_type_expr,
-             to_body_expr, to_instance_expr, to_type_expr,
+    exprs = [upstream_body_expr, upstream_instance_expr, upstream_type_expr,
+             downstream_body_expr, downstream_instance_expr, downstream_type_expr,
              weight_expr]
     exprs = filter(None, exprs)
 
