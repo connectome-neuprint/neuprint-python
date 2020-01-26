@@ -433,6 +433,12 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
     
     return_props_str = ',\n               '.join(return_props)
 
+    # If roiInfo is requested, convert from json
+    return_props_str = return_props_str.replace('upstream.roiInfo',
+                            'apoc.convert.fromJsonMap(upstream.roiInfo) as upstream_roiInfo')
+    return_props_str = return_props_str.replace('downstream.roiInfo',
+                            'apoc.convert.fromJsonMap(downstream.roiInfo) as downstream_roiInfo')
+
     q = f"""\
         MATCH (upstream:{label})-[e:ConnectsTo]->(downstream:{label})
         {WHERE}
