@@ -448,6 +448,10 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
                  downstream.bodyId
     """
     edges_df = client.fetch_custom(q)
+    
+    # Rename columns: Replace '.' with '_'.
+    renames = {col: col.replace('.', '_') for col in edges_df.columns}
+    edges_df.rename(columns=renames, inplace=True)
     return edges_df
 
 
