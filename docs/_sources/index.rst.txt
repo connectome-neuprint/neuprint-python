@@ -17,10 +17,8 @@ web UI.  Try exploring the `Janelia FlyEM Hemibrain neuprint database <https://n
 
 
 Once you're familiar with the basics, you're ready to start writing
-Python scripts to query the database programmatically.
-That's where this project comes in.  ``neuprint-python`` contains utilities
-for querying a neuprint database.
-
+Python scripts to query the database programmatically with 
+``neuprint-python``.
 
 .. _install:
 
