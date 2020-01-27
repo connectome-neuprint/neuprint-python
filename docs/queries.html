@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.2.2+4.g053c040 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.2.3+1.g2375fb9 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.2+4.g053c040
+                0.2.3+1.g2375fb9
               </div>
             
           
@@ -348,19 +348,21 @@ to provide your own cypher query, see <a class="reference internal" href="#neupr
 </div>
 <p>Post-filter by per-ROI counts:</p>
 <blockquote>
-<div><p>..code-block:: python</p>
-<blockquote>
-<div><p>rois = [‘EB’, ‘PB’]
-neurons_df, roi_counts_df = fetch_neurons(inputRois=rois)</p>
-<p># Select neurons that have 100 PSDs in ANY of the input ROIs
-roi_counts_df[‘post100’] = roi_counts_df.eval(‘post &gt;= 100’)
-keep_neurons = roi_counts_df.query(‘roi in &#64;rois and post100’)[‘bodyId’]</p>
-<p># Or select neurons that have 100 PSDs in ALL of the input ROIs
-keep = roi_counts_df.query(‘roi in &#64;rois’).groupby(‘bodyId’)[‘post100’].all()
-keep_neurons = keep[keep].index</p>
-<p>neurons_df = neurons_df.query(‘bodyId in &#64;keep_neurons’)
-roi_counts_df = roi_counts_df.query(‘bodyId in &#64;keep_neurons’)</p>
-</div></blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">rois</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;EB&#39;</span><span class="p">,</span> <span class="s1">&#39;PB&#39;</span><span class="p">]</span>
+<span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">inputRois</span><span class="o">=</span><span class="n">rois</span><span class="p">)</span>
+
+<span class="c1"># Select neurons that have 100 PSDs in ANY of the input ROIs</span>
+<span class="n">roi_counts_df</span><span class="p">[</span><span class="s1">&#39;post100&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;post &gt;= 100&#39;</span><span class="p">)</span>
+<span class="n">keep_neurons</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @rois and post100&#39;</span><span class="p">)[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span>
+
+<span class="c1"># Or select neurons that have 100 PSDs in ALL of the input ROIs</span>
+<span class="n">keep</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @rois&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">)[</span><span class="s1">&#39;post100&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">keep_neurons</span> <span class="o">=</span> <span class="n">keep</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+
+<span class="n">neurons_df</span> <span class="o">=</span> <span class="n">neurons_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;bodyId in @keep_neurons&#39;</span><span class="p">)</span>
+<span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;bodyId in @keep_neurons&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div></blockquote>
 </dd></dl>
 
