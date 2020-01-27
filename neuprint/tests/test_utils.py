@@ -31,7 +31,7 @@ def test_make_args_iterable():
 
 
 def test_where_expr():
-    assert where_expr('bodyId', [1], name='m') == 'm.bodyId = 1'
-    assert where_expr('bodyId', [1,2], name='m') == 'm.bodyId in [1, 2]'
+    assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
+    assert where_expr('bodyId', [1,2], matchvar='m') == 'm.bodyId in [1, 2]'
     assert where_expr('bodyId', []) == ""
-    assert where_expr('instance', ['foo.*'], regex=True, name='m') == "m.instance =~ 'foo.*'"
+    assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"

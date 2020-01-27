@@ -1,11 +1,13 @@
 import os
+import copy
+from textwrap import indent, dedent
 
-import numpy as np
 import pandas as pd
 from tqdm import trange
 
-from .utils import make_iterable, make_args_iterable, where_expr
+from .utils import make_args_iterable, where_expr
 from .client import inject_client
+from .segmentcriteria import SegmentCriteria
 
 try:
     # ujson is faster than Python's builtin json module;
@@ -49,12 +51,9 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
 
 @inject_client
-@make_args_iterable(['bodyId', 'instance', 'type', 'status', 'inputRois', 'outputRois'])
-def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=None,
-                  inputRois=None, outputRois=None, min_pre=0, min_post=0,
-                  regex=False, label='Neuron', roi_match='all', *, client=None):
+def fetch_neurons(criteria, *, client=None):
     """
-    Search for a set of neurons by bodyId, instance, roi, etc.
+    Search for a set of Neurons (or Segments) that match the given :py:class:`SegmentCriteria`.
     Returns their properties, including the distibution of their synapses in all brain regions.
     
     This is the Python equivalent to the Neuprint Explorer `Find Neurons`_ page.
@@ -65,53 +64,10 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
     
     Args:
-        bodyId:
-            Integer or list of ints.
-        instance:
-            str or list of strings
-            If ``regex=True``, then the instance will be matched as a regular expression.
-        type:
-            str or list of strings
-            If ``regex=True``, then the type will be matched as a regular expression.
-        status:
-            str or list of strings
-        cropped:
-            Boolean.
-            If given, restrict results to neurons that are cropped or not.
-        inputRoi:
-            str or list of strings
-            Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
-            ``regex`` does not apply to this parameter.
-        outputRoi:
-            str or list of strings
-            Only Neurons which have outputs in EVERY one of the given ROIs will be matched.
-            ``regex`` does not apply to this parameter.
-        min_pre:
-            int
-            Exclude neurons that don't have at least this many t-bars (outputs).
+        criteria:
+            :py:class:`SegmentCriteria`
+            Only Neurons which satisfy all components of the given criteria are returned.
 
-            Note:
-                This adds a constraint to the overall number of t-bars in each
-                neuron, regardless of how many t-bars exist in any particular ROI.
-                To filter by per-ROI synapse counts, see example below.
-        min_post:
-            int
-            Exclude neurons that don't have at least this many PSDs (inputs).
-
-            Note:
-                This adds a constraint to the overall number of PSDs in each
-                neuron, regardless of how many PSDs exist in any particular ROI.
-                To filter by per-ROI synapse counts, see example below.
-        regex:
-            Boolean.
-            If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
-            regular expressions, rather than exact match strings.
-        label:
-            Either 'Neuron' or 'Segment' (which includes Neurons)
-        roi_match:
-            Either 'any' or 'all'.
-            Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
-            When using 'any', each neuron must still match at least one input AND at least one output ROI.
         client:
             If not provided, the global default ``Client`` will be used.
     
@@ -196,137 +152,21 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
             neurons_df = neurons_df.query('bodyId in @keep_neurons')
             roi_counts_df = roi_counts_df.query('bodyId in @keep_neurons')
     """
-    inputRois = {*inputRois}
-    outputRois = {*outputRois}
-
-    assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
-    assert any([len(bodyId), len(instance), len(type), len(status),
-                cropped is not None, len(inputRois), len(outputRois),
-                min_pre, min_post]), \
-        "Please provide at least one search argument!"
-
-    # Obtain the list of exprs for each field
-    exprs = _body_search_conditions( client, bodyId, instance, type, status, cropped,
-                                     inputRois, outputRois, min_pre, min_post,
-                                     regex, roi_match, name='n' )
-
-    # Build WHERE clause by combining exprs for each field
-    WHERE =  "WHERE\n"
-    WHERE += "          "
-    WHERE += "\n          AND ".join(exprs)
+    assert any([len(criteria.bodyId), len(criteria.instance), len(criteria.type),
+                len(criteria.status), criteria.cropped is not None,
+                len(criteria.inputRois), len(criteria.outputRois),
+                criteria.min_pre, criteria.min_post]), \
+        "Please provide at least one component to the criteria!"
 
     q = f"""\
-        MATCH (n :{label})
-        {WHERE}
+        MATCH (n :{criteria.label})
+        {criteria.all_conditions(prefix=8)}
         RETURN n
         ORDER BY n.bodyId
     """
     
-    neuron_df, roi_counts_df = fetch_custom_neurons(q, client=client)
-    if len(neuron_df) == 0:
-        return neuron_df, roi_counts_df
+    return fetch_custom_neurons(q, client=client)
 
-    # Our query matched any neuron that intersected all of the ROIs,
-    # without distinguishing between input and output.
-    # Now filter the list to ensure that input/output requirements are respected.
-    if inputRois:
-        num_missing = neuron_df['inputRois'].apply(lambda rowInputRois: len(inputRois - {*rowInputRois}))
-        if roi_match == 'all':
-            # Keep only neurons where every required input ROI is present as an input.
-            neuron_df = neuron_df.loc[(num_missing == 0)]
-        else:
-            # Keep only neurons which aren't missing ALL
-            # listed input ROIs (they have at least one).
-            neuron_df = neuron_df.loc[(num_missing < len(inputRois))]
-
-    if outputRois:
-        # Keep only neurons where every required output ROI is present as an output.
-        num_missing = neuron_df['outputRois'].apply(lambda rowOutputRois: len(outputRois - {*rowOutputRois}))
-        if roi_match == 'all':
-            # Keep only neurons where every required output ROI is present as an input.
-            neuron_df = neuron_df.loc[(num_missing == 0)]
-        else:
-            # Keep only neurons which aren't missing ALL
-            # listed output ROIs (they have at least one).
-            neuron_df = neuron_df.loc[(num_missing < len(outputRois))]
-
-    # Filter the ROI counts to exclude neurons that were removed above.
-    _filtered_bodies = neuron_df['bodyId']
-    roi_counts_df.query('bodyId in @_filtered_bodies', inplace=True)
-    
-    neuron_df = neuron_df.copy()
-    return neuron_df, roi_counts_df
-
-
-@make_args_iterable(['bodyId', 'instance', 'type', 'status', 'inputRois', 'outputRois'])
-def _body_search_conditions(client, bodyId=None, instance=None, type=None, status=None, cropped=None,
-                            inputRois=None, outputRois=None, min_pre=0, min_post=0,
-                            regex=False, roi_match='all', name='n'):
-    """
-    Helper function.
-    Constructs a combined condition for a WHERE clause,
-    to select neurons by any of the input criteria.
-    
-    You must combine the returned strings with "AND" (or "OR")
-    in the WHERE clause for your query.
-
-    Client is used for metadata only.
-    """
-    assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
-        "bodyId should be an integer or list of integers"
-    
-    assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
-    assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
-    assert roi_match in ('any', 'all')
-    
-    # Verify ROI names against known ROIs.
-    neuprint_rois = {*client.all_rois}
-    unknown_input_rois = inputRois - neuprint_rois
-    if unknown_input_rois:
-        raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
-
-    unknown_output_rois = outputRois - neuprint_rois
-    if unknown_output_rois:
-        raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
-
-    body_expr = where_expr('bodyId', bodyId, False, name)
-    instance_expr = where_expr('instance', instance, regex, name)
-    type_expr = where_expr('type', type, regex, name)
-    status_expr = where_expr('status', status, False, name)
-    
-    if cropped is None:
-        cropped_expr = ""
-    elif cropped:
-        cropped_expr = f"{name}.cropped"
-    else:
-        # Not all neurons have the 'cropped' tag,
-        # so simply checking for False values isn't enough.
-        # Must check exists().
-        cropped_expr = f"(NOT {name}.cropped OR NOT exists({name}.cropped))"
-
-    query_rois = {*inputRois, *outputRois}
-    roi_logic = {'any': 'OR', 'all': 'AND'}[roi_match]
-    if query_rois:
-        roi_expr = "(" + f" {roi_logic} ".join(f"{name}.`{roi}`" for roi in query_rois) + ")"
-    else:
-        roi_expr = ""
-
-    if min_pre:
-        pre_expr = f"{name}.pre >= {min_pre}"
-    else:
-        pre_expr = ""
-
-    if min_post:
-        post_expr = f"{name}.post >= {min_post}"
-    else:
-        post_expr = ""
-
-    exprs = [body_expr, instance_expr, type_expr, status_expr,
-             cropped_expr, roi_expr, pre_expr, post_expr]
-
-    exprs = [*filter(None, exprs)]
-
-    return exprs
 
 
 @inject_client
@@ -393,7 +233,6 @@ def fetch_custom_neurons(q, *, client=None):
         return neuron_df, roi_counts_df
     
     neuron_df = pd.DataFrame(results['n'].tolist())
-    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: json.loads(s))
     
     # Drop roi columns
     columns = {*neuron_df.columns} - {*client.all_rois}
@@ -405,16 +244,17 @@ def fetch_custom_neurons(q, *, client=None):
         neuron_df.loc[no_soma, 'somaLocation'] = None
         neuron_df.loc[~no_soma, 'somaLocation'] = neuron_df.loc[~no_soma, 'somaLocation'].apply(lambda sl: sl.get('coordinates'))
     
-    # Make a list of rois for every neuron (both pre and post)
-    neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
-    neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
-
     # Specify column order:
     # Standard columns first, than any extra columns in the results (if any).
     neuron_cols = [*filter(lambda c: c in neuron_df.columns, neuron_cols)]
     extra_cols = {*neuron_df.columns} - {*neuron_cols}
     neuron_cols += [*extra_cols]
     neuron_df = neuron_df[[*neuron_cols]]
+
+    # Make a list of rois for every neuron (both pre and post)
+    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: json.loads(s))
+    neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
+    neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
 
     # Return roi info as a separate table
     roi_counts = []
@@ -429,11 +269,8 @@ def fetch_custom_neurons(q, *, client=None):
 
 
 @inject_client
-@make_args_iterable(['upstream_bodyId', 'upstream_instance', 'upstream_type', 'downstream_bodyId', 'downstream_instance', 'downstream_type'])
-def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstream_type=None,
-                             downstream_bodyId=None, downstream_instance=None, downstream_type=None,
-                             min_weight=1, label='Neuron',
-                             regex=False, properties=['status', 'cropped', 'type', 'instance'],
+def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, min_weight=1,
+                             properties=['type', 'instance'],
                              *, client=None):
     """
     Find all connections from a set of "upstream" neurons,
@@ -441,26 +278,14 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
     or all connections from a set of upstream neurons to a set of downstream neurons.
 
     Args:
-        upstream_bodyId:
-            Integer or list of ints.
-        upstream_instance:
-            str or list of strings
-            If ``regex=True``, then the instance will be matched as a regular expression.
-        upstream_type:
-            str or list of strings
-            If ``regex=True``, then the type will be matched as a regular expression.
-        downstream_bodyId:
-            Integer or list of ints.
-        downstream_instance:
-            str or list of strings
-            If ``regex=True``, then the instance will be matched as a regular expression.
-        downstream_type:
-            str or list of strings
-            If ``regex=True``, then the type will be matched as a regular expression.
+        upstream_criteria:
+            SegmentCriteria indicating how to filter for neurons
+            on the presynaptic side of connections.
+        downstream_criteria:
+            SegmentCriteria indicating how to filter for neurons
+            on the postsynaptic side of connections.
         min_weight:
             Exclude connections below this weight.
-        label:
-            Return results for Neurons (default) or all Segments.
         properties:
             Additional columns to include in the results, for both the upstream and downstream body.
         regex:
@@ -472,40 +297,39 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
         DataFrame
         One row per connection, with columns for upstream and downstream properties.
     """
-    assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
+    SC = SegmentCriteria
+    up_crit = copy.deepcopy(upstream_criteria)
+    down_crit = copy.deepcopy(downstream_criteria)
+
+    if up_crit is None:
+        up_crit = SC(label='Neuron')
+    if down_crit is None:
+        down_crit = SC(label='Neuron')
+
+    up_crit.matchvar = 'upstream'
+    down_crit.matchvar = 'downstream'
     
-    assert sum(map(len, [upstream_bodyId, upstream_instance, upstream_type,
-                         downstream_bodyId, downstream_instance, downstream_type])) > 0, \
-        "Need at least one input criteria"
+    assert up_crit is not None or down_crit is not None, "No criteria specified"
 
-    upstream_body_expr = where_expr('bodyId', upstream_bodyId, False, 'upstream')
-    upstream_instance_expr = where_expr('instance', upstream_instance, regex, 'upstream')
-    upstream_type_expr = where_expr('type', upstream_type, regex, 'upstream')
-
-    downstream_body_expr = where_expr('bodyId', downstream_bodyId, False, 'downstream')
-    downstream_instance_expr = where_expr('instance', downstream_instance, regex, 'downstream')
-    downstream_type_expr = where_expr('type', downstream_type, regex, 'downstream')
+    combined_conditions = SC.combined_conditions([up_crit, down_crit],
+                                                 ('upstream', 'downstream', 'e'),
+                                                 prefix=8)
 
     if min_weight > 1:
-        weight_expr = f"e.weight >= {min_weight}"
+        weight_expr = dedent(f"""\
+            WITH upstream, downstream, e
+            WHERE e.weight >= {min_weight}\
+            """)
+        weight_expr = indent(weight_expr, ' '*8)[8:] 
     else:
         weight_expr = ""
-    
-    # Build WHERE clause by combining the exprs
-    exprs = [upstream_body_expr, upstream_instance_expr, upstream_type_expr,
-             downstream_body_expr, downstream_instance_expr, downstream_type_expr,
-             weight_expr]
-    exprs = filter(None, exprs)
-
-    WHERE =  "WHERE "
-    WHERE += "\n              AND ".join(exprs)
 
     return_props = ['upstream.bodyId', 'downstream.bodyId', 'e.weight as weight']
     if properties:
         return_props += [f'upstream.{p}' for p in properties]
         return_props += [f'downstream.{p}' for p in properties]
     
-    return_props_str = ',\n               '.join(return_props)
+    return_props_str = indent(',\n'.join(return_props), prefix=' '*15)[15:]
 
     # If roiInfo is requested, convert from json
     return_props_str = return_props_str.replace('upstream.roiInfo',
@@ -514,8 +338,10 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
                             'apoc.convert.fromJsonMap(downstream.roiInfo) as downstream_roiInfo')
 
     q = f"""\
-        MATCH (upstream:{label})-[e:ConnectsTo]->(downstream:{label})
-        {WHERE}
+        MATCH (upstream:{up_crit.label})-[e:ConnectsTo]->(downstream:{down_crit.label})
+
+        {combined_conditions}
+        {weight_expr}
         RETURN {return_props_str}
         ORDER BY e.weight DESC,
                  upstream.bodyId,
@@ -533,8 +359,8 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
 def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
-    Synapses which do not fall on any ROI will be listed as having ROI 'None'.
     Only primary ROIs are included in the results.
+    Synapses which do not fall on any primary ROI are not listed in the per-ROI table.
 
     Args:
         bodies:
@@ -547,8 +373,10 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
         batch_size:
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
+
         label:
             Either 'Neuron' or 'Segment' (which includes Neurons)
+
         client:
             If not provided, the global default ``Client`` will be used.
     
@@ -575,7 +403,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
         stop = start + batch_size
         batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
         q = f"""\
-            MATCH (n:{label}) - [e:ConnectsTo] -> (m:{label})
+            MATCH (n:{label})-[e:ConnectsTo]->(m:{label})
             WHERE n.bodyId in {batch_neurons} AND m.status = "Traced" AND (not m.cropped)
             RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
         """
@@ -599,13 +427,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
                                columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
     
     # Filter out non-primary ROIs
-    # Fetch the list of primary ROIs
-    q = """\
-        MATCH (m:Meta)
-        RETURN m.primaryRois as rois
-    """
-    primary_rois = client.fetch_custom(q)['rois'].iloc[0]
-    roi_conn_df = roi_conn_df.query('roi in @primary_rois or roi == "None"')
+    roi_conn_df = roi_conn_df.query('roi in @client.primary_rois')
     
     # Export to CSV
     if export_dir:
@@ -620,10 +442,8 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
         roi_conn_df.to_csv(p, index=False, header=True)
 
         # Export Edges (total weight)
-        p = f"{export_dir}/traced-connections.csv"
-        conn_groups = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)
-        total_conn_df = conn_groups['weight'].sum()
-        total_conn_df.to_csv(p, index=False, header=True)
+        p = f"{export_dir}/traced-total-connections.csv"
+        connections_df[['bodyId_pre', 'bodyId_post', 'weight']].to_csv(p, index=False, header=True)
 
     return neurons_df, roi_conn_df
 
