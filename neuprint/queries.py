@@ -52,7 +52,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 @make_args_iterable(['bodyId', 'instance', 'type', 'status', 'inputRois', 'outputRois'])
 def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=None,
                   inputRois=None, outputRois=None, min_pre=0, min_post=0,
-                  regex=False, label='Neuron', *, client=None):
+                  regex=False, label='Neuron', roi_match='all', *, client=None):
     """
     Search for a set of neurons by bodyId, instance, roi, etc.
     Returns their properties, including the distibution of their synapses in all brain regions.
@@ -108,6 +108,10 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
             regular expressions, rather than exact match strings.
         label:
             Either 'Neuron' or 'Segment' (which includes Neurons)
+        roi_match:
+            Either 'any' or 'all'.
+            Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
+            When using 'any', each neuron must still match at least one input AND at least one output ROI.
         client:
             If not provided, the global default ``Client`` will be used.
     
@@ -196,62 +200,17 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     outputRois = {*outputRois}
 
     assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
-    assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
-        "bodyId should be an integer or list of integers"
-    
-    assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
-    assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
-    
     assert any([len(bodyId), len(instance), len(type), len(status),
                 cropped is not None, len(inputRois), len(outputRois),
                 min_pre, min_post]), \
         "Please provide at least one search argument!"
-    
-    # Verify ROI names against known ROIs.
-    neuprint_rois = {*fetch_all_rois(client=client)}
-    unknown_input_rois = inputRois - neuprint_rois
-    if unknown_input_rois:
-        raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
 
-    unknown_output_rois = outputRois - neuprint_rois
-    if unknown_output_rois:
-        raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
+    # Obtain the list of exprs for each field
+    exprs = _body_search_conditions( client, bodyId, instance, type, status, cropped,
+                                     inputRois, outputRois, min_pre, min_post,
+                                     regex, roi_match, name='n' )
 
-    body_expr = where_expr('bodyId', bodyId)
-    instance_expr = where_expr('instance', instance, regex)
-    type_expr = where_expr('type', type, regex)
-    status_expr = where_expr('status', status)
-    
-    if cropped is None:
-        cropped_expr = ""
-    elif cropped:
-        cropped_expr = "n.cropped"
-    else:
-        # Not all neurons have the 'cropped' tag,
-        # so simply checking for False values isn't enough.
-        cropped_expr = "(NOT n.cropped OR NOT exists(n.cropped))"
-
-    query_rois = {*inputRois, *outputRois}
-    if query_rois:
-        roi_expr = "(" + " AND ".join(f"n.`{roi}`" for roi in query_rois) + ")"
-    else:
-        roi_expr = ""
-
-    if min_pre:
-        pre_expr = f"n.pre >= {min_pre}"
-    else:
-        pre_expr = ""
-
-    if min_post:
-        post_expr = f"n.post >= {min_post}"
-    else:
-        post_expr = ""
-
-    # Build WHERE clause by combining the exprs
-    exprs = [body_expr, instance_expr, type_expr, status_expr,
-             cropped_expr, roi_expr, pre_expr, post_expr]
-    exprs = filter(None, exprs)
-
+    # Build WHERE clause by combining exprs for each field
     WHERE =  "WHERE\n"
     WHERE += "          "
     WHERE += "\n          AND ".join(exprs)
@@ -263,7 +222,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
         ORDER BY n.bodyId
     """
     
-    neuron_df, roi_counts_df = fetch_custom_neurons(q, neuprint_rois, client=client)
+    neuron_df, roi_counts_df = fetch_custom_neurons(q, client=client)
     if len(neuron_df) == 0:
         return neuron_df, roi_counts_df
 
@@ -271,14 +230,25 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     # without distinguishing between input and output.
     # Now filter the list to ensure that input/output requirements are respected.
     if inputRois:
-        # Keep only neurons where every required input ROI is present as an input.
         num_missing = neuron_df['inputRois'].apply(lambda rowInputRois: len(inputRois - {*rowInputRois}))
-        neuron_df = neuron_df.loc[(num_missing == 0)]
+        if roi_match == 'all':
+            # Keep only neurons where every required input ROI is present as an input.
+            neuron_df = neuron_df.loc[(num_missing == 0)]
+        else:
+            # Keep only neurons which aren't missing ALL
+            # listed input ROIs (they have at least one).
+            neuron_df = neuron_df.loc[(num_missing < len(inputRois))]
 
     if outputRois:
         # Keep only neurons where every required output ROI is present as an output.
         num_missing = neuron_df['outputRois'].apply(lambda rowOutputRois: len(outputRois - {*rowOutputRois}))
-        neuron_df = neuron_df.loc[(num_missing == 0)]
+        if roi_match == 'all':
+            # Keep only neurons where every required output ROI is present as an input.
+            neuron_df = neuron_df.loc[(num_missing == 0)]
+        else:
+            # Keep only neurons which aren't missing ALL
+            # listed output ROIs (they have at least one).
+            neuron_df = neuron_df.loc[(num_missing < len(outputRois))]
 
     # Filter the ROI counts to exclude neurons that were removed above.
     _filtered_bodies = neuron_df['bodyId']
@@ -287,6 +257,76 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     neuron_df = neuron_df.copy()
     return neuron_df, roi_counts_df
 
+
+@make_args_iterable(['bodyId', 'instance', 'type', 'status', 'inputRois', 'outputRois'])
+def _body_search_conditions(client, bodyId=None, instance=None, type=None, status=None, cropped=None,
+                            inputRois=None, outputRois=None, min_pre=0, min_post=0,
+                            regex=False, roi_match='all', name='n'):
+    """
+    Helper function.
+    Constructs a combined condition for a WHERE clause,
+    to select neurons by any of the input criteria.
+    
+    You must combine the returned strings with "AND" (or "OR")
+    in the WHERE clause for your query.
+
+    Client is used for metadata only.
+    """
+    assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
+        "bodyId should be an integer or list of integers"
+    
+    assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
+    assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
+    assert roi_match in ('any', 'all')
+    
+    # Verify ROI names against known ROIs.
+    neuprint_rois = {*client.all_rois}
+    unknown_input_rois = inputRois - neuprint_rois
+    if unknown_input_rois:
+        raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
+
+    unknown_output_rois = outputRois - neuprint_rois
+    if unknown_output_rois:
+        raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
+
+    body_expr = where_expr('bodyId', bodyId, False, name)
+    instance_expr = where_expr('instance', instance, regex, name)
+    type_expr = where_expr('type', type, regex, name)
+    status_expr = where_expr('status', status, False, name)
+    
+    if cropped is None:
+        cropped_expr = ""
+    elif cropped:
+        cropped_expr = f"{name}.cropped"
+    else:
+        # Not all neurons have the 'cropped' tag,
+        # so simply checking for False values isn't enough.
+        # Must check exists().
+        cropped_expr = f"(NOT {name}.cropped OR NOT exists({name}.cropped))"
+
+    query_rois = {*inputRois, *outputRois}
+    roi_logic = {'any': 'OR', 'all': 'AND'}[roi_match]
+    if query_rois:
+        roi_expr = "(" + f" {roi_logic} ".join(f"{name}.`{roi}`" for roi in query_rois) + ")"
+    else:
+        roi_expr = ""
+
+    if min_pre:
+        pre_expr = f"{name}.pre >= {min_pre}"
+    else:
+        pre_expr = ""
+
+    if min_post:
+        post_expr = f"{name}.post >= {min_post}"
+    else:
+        post_expr = ""
+
+    exprs = [body_expr, instance_expr, type_expr, status_expr,
+             cropped_expr, roi_expr, pre_expr, post_expr]
+
+    exprs = [*filter(None, exprs)]
+
+    return exprs
 
 
 @inject_client
