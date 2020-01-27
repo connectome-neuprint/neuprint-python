@@ -176,7 +176,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
 
     Post-filter by per-ROI counts:
     
-        ..code-block:: python
+        .. code-block:: python
         
             rois = ['EB', 'PB']
             neurons_df, roi_counts_df = fetch_neurons(inputRois=rois)
