@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.2.2+2.gde801dc documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.2.2+4.g053c040 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.2+2.gde801dc
+                0.2.2+4.g053c040
               </div>
             
           
@@ -200,7 +200,6 @@
 <span class="sd">    shown in the console by default.  To display them, see</span>
 <span class="sd">    :py:func:`setup_debug_logging()`.</span>
 <span class="sd">&#39;&#39;&#39;</span>
-<span class="c1"># -*- coding: utf-8 -*-</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
@@ -387,7 +386,6 @@
 
 
 <div class="viewcode-block" id="Client"><a class="viewcode-back" href="../../client.html#neuprint.client.Client">[docs]</a><span class="k">class</span> <span class="nc">Client</span><span class="p">:</span>
-
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Client constructor.</span>
@@ -464,6 +462,7 @@
         <span class="k">global</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span>
         <span class="k">if</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">set_default_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
 
     <span class="nd">@verbose_errors</span>
     <span class="k">def</span> <span class="nf">_fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -582,6 +581,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/version&quot;</span><span class="p">)[</span><span class="s1">&#39;Version&#39;</span><span class="p">]</span></div>
 
+
     <span class="c1">##</span>
     <span class="c1">## DB-META</span>
     <span class="c1">##</span>
@@ -612,6 +612,7 @@
 <span class="sd">        Fetch the database version</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/dbmeta/version&quot;</span><span class="p">)[</span><span class="s1">&#39;Version&#39;</span><span class="p">]</span></div>
+
 
     <span class="c1">##</span>
     <span class="c1">## USER</span>
@@ -724,6 +725,37 @@
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;from_roi&#39;</span><span class="p">,</span> <span class="s1">&#39;to_roi&#39;</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">df</span></div>
 
+
+    <span class="c1">##</span>
+    <span class="c1">## ROI MESHES</span>
+    <span class="c1">##</span>
+<div class="viewcode-block" id="Client.fetch_roi_mesh"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_roi_mesh">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_roi_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">export_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch a mesh for the given ROI, in ``.obj`` format.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            roi:</span>
+<span class="sd">                Name of an ROI</span>
+<span class="sd">            export_path:</span>
+<span class="sd">                Optional. Writes the ``.obj`` file to the given path.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bytes</span>
+<span class="sd">            The contents of the fetched ``.obj`` mesh file.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            ROI meshes are intended for visualization only.</span>
+<span class="sd">            (They are not suitable for quantitative analysis.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/roimeshes/mesh/</span><span class="si">{self.dataset}</span><span class="s2">/</span><span class="si">{roi}</span><span class="s2">&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">export_path</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">export_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+        
+    
     <span class="c1">##</span>
     <span class="c1">## SKELETONS</span>
     <span class="c1">##</span>
@@ -759,7 +791,32 @@
             <span class="k">return</span> <span class="n">result</span>
 
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">df</span></div></div>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## RAW KEY-VALUE</span>
+    <span class="c1">##</span>
+<div class="viewcode-block" id="Client.fetch_raw_keyvalue"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_raw_keyvalue">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_raw_keyvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch a value from the ``neuprintHTTP`` server.</span>
+<span class="sd">        The data address is given by both the instance name and key.</span>
+<span class="sd">        (For admins and experts only.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/raw/keyvalue/key/</span><span class="si">{instance}</span><span class="s2">/</span><span class="si">{key}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        
+
+<div class="viewcode-block" id="Client.post_raw_keyvalue"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.post_raw_keyvalue">[docs]</a>    <span class="k">def</span> <span class="nf">post_raw_keyvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Post a value from the ``neuprintHTTP`` server.</span>
+<span class="sd">        The data address is given by both the instance name and key.</span>
+<span class="sd">        (For admins and experts only.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/raw/keyvalue/key/</span><span class="si">{instance}</span><span class="s2">/</span><span class="si">{key}</span><span class="s2">&quot;</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span></div></div>
 </pre></div>
 
            </div>

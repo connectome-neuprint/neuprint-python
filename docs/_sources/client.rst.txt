@@ -10,6 +10,11 @@ Client
 
 .. autosummary::
 
+    setup_debug_logging
+    set_default_client
+
+.. autosummary::
+
     Client
     Client.fetch_custom
     Client.fetch_available
@@ -25,9 +30,10 @@ Client
     Client.fetch_daily_type
     Client.fetch_roi_completeness
     Client.fetch_roi_connectivity
+    Client.fetch_roi_mesh
     Client.fetch_skeleton
-    setup_debug_logging
-    set_default_client
+    Client.fetch_raw_keyvalue
+    Client.post_raw_keyvalue
 
 .. autoclass:: neuprint.client.Client
    :members:

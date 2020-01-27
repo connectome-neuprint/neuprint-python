@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Client &mdash; neuprint-python 0.2.2+2.gde801dc documentation</title>
+  <title>Client &mdash; neuprint-python 0.2.2+4.g053c040 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.2+2.gde801dc
+                0.2.2+4.g053c040
               </div>
             
           
@@ -205,6 +205,20 @@ shown in the console by default.  To display them, see
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.setup_debug_logging" title="neuprint.client.setup_debug_logging"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_debug_logging</span></code></a>()</td>
+<td>Simple debug logging configuration.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.set_default_client" title="neuprint.client.set_default_client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_client</span></code></a>(client)</td>
+<td>Set (or overwrite) the default Client.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client</span></code></a>(server[,&nbsp;dataset,&nbsp;token,&nbsp;verify])</td>
 <td>Client constructor.</td>
 </tr>
@@ -250,14 +264,17 @@ shown in the console by default.  To display them, see
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_roi_connectivity" title="neuprint.client.Client.fetch_roi_connectivity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_roi_connectivity</span></code></a>([format])</td>
 <td>Fetch the pre-computed connectivity statistics between primary ROIs in the dataset.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_skeleton</span></code></a>(body[,&nbsp;format])</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_roi_mesh" title="neuprint.client.Client.fetch_roi_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_roi_mesh</span></code></a>(roi[,&nbsp;export_path])</td>
+<td>Fetch a mesh for the given ROI, in <code class="docutils literal notranslate"><span class="pre">.obj</span></code> format.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_skeleton</span></code></a>(body[,&nbsp;format])</td>
 <td>Fetch the skeleton for a neuron or segment.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.setup_debug_logging" title="neuprint.client.setup_debug_logging"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_debug_logging</span></code></a>()</td>
-<td>Simple debug logging configuration.</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.Client.fetch_raw_keyvalue" title="neuprint.client.Client.fetch_raw_keyvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.fetch_raw_keyvalue</span></code></a>(instance,&nbsp;key)</td>
+<td>Fetch a value from the <code class="docutils literal notranslate"><span class="pre">neuprintHTTP</span></code> server.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.client.set_default_client" title="neuprint.client.set_default_client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_client</span></code></a>(client)</td>
-<td>Set (or overwrite) the default Client.</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.client.Client.post_raw_keyvalue" title="neuprint.client.Client.post_raw_keyvalue"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client.post_raw_keyvalue</span></code></a>(instance,&nbsp;key,&nbsp;value)</td>
+<td>Post a value from the <code class="docutils literal notranslate"><span class="pre">neuprintHTTP</span></code> server.</td>
 </tr>
 </tbody>
 </table>
@@ -427,6 +444,33 @@ They are computed periodically and cached.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="neuprint.client.Client.fetch_roi_mesh">
+<code class="descname">fetch_roi_mesh</code><span class="sig-paren">(</span><em>roi</em>, <em>export_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_roi_mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch a mesh for the given ROI, in <code class="docutils literal notranslate"><span class="pre">.obj</span></code> format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>roi</strong> – Name of an ROI</li>
+<li><strong>export_path</strong> – Optional. Writes the <code class="docutils literal notranslate"><span class="pre">.obj</span></code> file to the given path.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bytes
+The contents of the fetched <code class="docutils literal notranslate"><span class="pre">.obj</span></code> mesh file.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">ROI meshes are intended for visualization only.
+(They are not suitable for quantitative analysis.)</p>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="neuprint.client.Client.fetch_skeleton">
 <code class="descname">fetch_skeleton</code><span class="sig-paren">(</span><em>body</em>, <em>format='swc'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_skeleton"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the skeleton for a neuron or segment.</p>
@@ -445,6 +489,22 @@ They are computed periodically and cached.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.fetch_raw_keyvalue">
+<code class="descname">fetch_raw_keyvalue</code><span class="sig-paren">(</span><em>instance</em>, <em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.fetch_raw_keyvalue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.fetch_raw_keyvalue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch a value from the <code class="docutils literal notranslate"><span class="pre">neuprintHTTP</span></code> server.
+The data address is given by both the instance name and key.
+(For admins and experts only.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.client.Client.post_raw_keyvalue">
+<code class="descname">post_raw_keyvalue</code><span class="sig-paren">(</span><em>instance</em>, <em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client.post_raw_keyvalue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client.post_raw_keyvalue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Post a value from the <code class="docutils literal notranslate"><span class="pre">neuprintHTTP</span></code> server.
+The data address is given by both the instance name and key.
+(For admins and experts only.)</p>
 </dd></dl>
 
 </dd></dl>
