@@ -52,7 +52,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 @make_args_iterable(['bodyId', 'instance', 'type', 'status', 'inputRois', 'outputRois'])
 def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=None,
                   inputRois=None, outputRois=None, min_pre=0, min_post=0,
-                  regex=False, *, client=None):
+                  regex=False, label='Neuron', *, client=None):
     """
     Search for a set of neurons by bodyId, instance, roi, etc.
     Returns their properties, including the distibution of their synapses in all brain regions.
@@ -89,13 +89,25 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
         min_pre:
             int
             Exclude neurons that don't have at least this many t-bars (outputs).
+
+            Note:
+                This adds a constraint to the overall number of t-bars in each
+                neuron, regardless of how many t-bars exist in any particular ROI.
+                To filter by per-ROI synapse counts, see example below.
         min_post:
             int
             Exclude neurons that don't have at least this many PSDs (inputs).
+
+            Note:
+                This adds a constraint to the overall number of PSDs in each
+                neuron, regardless of how many PSDs exist in any particular ROI.
+                To filter by per-ROI synapse counts, see example below.
         regex:
             Boolean.
             If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
             regular expressions, rather than exact match strings.
+        label:
+            Either 'Neuron' or 'Segment' (which includes Neurons)
         client:
             If not provided, the global default ``Client`` will be used.
     
@@ -125,7 +137,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
         .. code-block:: ipython
         
             In [1]: neurons_df, roi_counts_df = fetch_neurons(
-               ...:     input_roi=['SIP(R)', 'aL(R)'], status='Traced',
+               ...:     inputRois=['SIP(R)', 'aL(R)'], status='Traced',
                ...:     type='MBON.*', instance='.*', regex=True)
             
             In [2]: neurons_df.columns
@@ -161,10 +173,29 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
             2  300972942        a3(R)   17  13224
             3  300972942  MB(+ACA)(R)   17  13295
             4  300972942       SNP(R)  526    336
+
+    Post-filter by per-ROI counts:
+    
+        ..code-block:: python
+        
+            rois = ['EB', 'PB']
+            neurons_df, roi_counts_df = fetch_neurons(inputRois=rois)
+
+            # Select neurons that have 100 PSDs in ANY of the input ROIs
+            roi_counts_df['post100'] = roi_counts_df.eval('post >= 100')
+            keep_neurons = roi_counts_df.query('roi in @rois and post100')['bodyId']
+            
+            # Or select neurons that have 100 PSDs in ALL of the input ROIs
+            keep = roi_counts_df.query('roi in @rois').groupby('bodyId')['post100'].all()
+            keep_neurons = keep[keep].index
+
+            neurons_df = neurons_df.query('bodyId in @keep_neurons')
+            roi_counts_df = roi_counts_df.query('bodyId in @keep_neurons')
     """
     inputRois = {*inputRois}
     outputRois = {*outputRois}
 
+    assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
     assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
         "bodyId should be an integer or list of integers"
     
@@ -226,7 +257,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
     WHERE += "\n          AND ".join(exprs)
 
     q = f"""\
-        MATCH (n :Neuron)
+        MATCH (n :{label})
         {WHERE}
         RETURN n
         ORDER BY n.bodyId
@@ -404,8 +435,7 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
         DataFrame
         One row per connection, with columns for upstream and downstream properties.
     """
-    assert label in ('Neuron', 'Segment'), \
-        f"Invalid node type: {label}"
+    assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
     
     assert sum(map(len, [upstream_bodyId, upstream_instance, upstream_type,
                          downstream_bodyId, downstream_instance, downstream_type])) > 0, \
@@ -463,7 +493,7 @@ def fetch_simple_connections(upstream_bodyId=None, upstream_instance=None, upstr
 
 
 @inject_client
-def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Synapses which do not fall on any ROI will be listed as having ROI 'None'.
@@ -480,6 +510,8 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
         batch_size:
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
+        label:
+            Either 'Neuron' or 'Segment' (which includes Neurons)
         client:
             If not provided, the global default ``Client`` will be used.
     
@@ -490,10 +522,11 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
 
     See also:
         :py:func:`fetch_traced_adjacecies()`
-   """
+    """
+    assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
     q = f"""\
         WITH {[*bodies]} as bodies
-        MATCH (n:Neuron)
+        MATCH (n:{label})
         WHERE n.bodyId in bodies
         RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
     """
@@ -505,7 +538,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, *, client=None):
         stop = start + batch_size
         batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
         q = f"""\
-            MATCH (n:Neuron) - [e:ConnectsTo] -> (m:Neuron)
+            MATCH (n:{label}) - [e:ConnectsTo] -> (m:{label})
             WHERE n.bodyId in {batch_neurons} AND m.status = "Traced" AND (not m.cropped)
             RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
         """
