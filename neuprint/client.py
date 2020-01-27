@@ -303,11 +303,18 @@ class Client:
             raise RuntimeError(f"Dataset '{dataset}' does not exist on"
                                f" the neuprint server ({self.server}).\n"
                                f"Available datasets: {all_datasets}")
-            
+
         # Set this as the default client if there isn't one already
         global DEFAULT_NEUPRINT_CLIENT
         if DEFAULT_NEUPRINT_CLIENT is None:
             set_default_client(self)
+
+        from .queries import fetch_meta, _all_rois_from_meta
+        # Pre-cache these metadata fields,
+        # to avoid re-fetching them for many queries that need them.
+        self.meta = fetch_meta(client=self)
+        self.primary_rois = self.meta['primaryRois']
+        self.all_rois = _all_rois_from_meta(self.meta)
 
 
     @verbose_errors

@@ -290,7 +290,7 @@ def fetch_neurons(bodyId=None, instance=None, type=None, status=None, cropped=No
 
 
 @inject_client
-def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
+def fetch_custom_neurons(q, *, client=None):
     """
     Use a custom query to fetch a neuron table, with nicer output
     than you would get from a call to :py:func:`fetch_custom()`.
@@ -355,11 +355,8 @@ def fetch_custom_neurons(q, neuprint_rois=None, *, client=None):
     neuron_df = pd.DataFrame(results['n'].tolist())
     neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: json.loads(s))
     
-    if neuprint_rois is None:
-        neuprint_rois = {*fetch_all_rois(client=client)}
-    
     # Drop roi columns
-    columns = {*neuron_df.columns} - neuprint_rois
+    columns = {*neuron_df.columns} - {*client.all_rois}
     neuron_df = neuron_df[[*columns]]
 
     # Extract somaLocation
@@ -698,10 +695,15 @@ def fetch_all_rois(*, client=None):
     from the dataset metadata.
     """
     meta = fetch_meta(client=client)
+    return _all_rois_from_meta(meta)
+
+
+def _all_rois_from_meta(meta):
     official_rois = {*meta['roiInfo'].keys()}
 
     # These two ROIs are special:
-    # For historical reasons, they exist as tags, but are not listed in the Meta roiInfo.
+    # For historical reasons, they exist as tags,
+    # but are not listed in the Meta roiInfo.
     hidden_rois = {'FB-column3', 'AL-DC3'}
 
     return sorted(official_rois | hidden_rois)
