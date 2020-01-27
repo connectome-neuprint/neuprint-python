@@ -1,3 +1,5 @@
+.. currentmodule:: neuprint.client
+
 .. _quickstart:
 
 Quickstart
@@ -7,11 +9,12 @@ Quickstart
 Client and Authorization Token
 ------------------------------
 
-All communication with the ``neuPrintHTTP`` server is done via a ``Client`` object.
+All communication with the ``neuPrintHTTP`` server is done via a :py:class:`Client` object.
 
-To create a ``Client``, you must provide two things:
+To create a :py:class:`Client`, you must provide three things:
 
     - The neuprint server address (e.g. ``neuprint.janelia.org``)
+    - Which dataset you'll be fetching from (e.g. ``hemibrain:v1.0``)
     - Your personal authentication token
 
 To obtain your authorization token, follow these steps:
@@ -47,9 +50,12 @@ Alternatively, you can set your token in the following environment variable, in 
 Execute a query
 ---------------
 
-Use your ``Client`` to request data from neuprint.
-The :py:func:``fetch_custom()`` method will run an arbitrary cypher query against the database.
-For information about the neuprint data model, see the `neuprint explorer web help. <https://neuprint.janelia.org/help>`_.
+Use your :py:class:`Client` to request data from neuprint.
+
+The :py:meth:`Client.fetch_custom()` method will run an arbitrary cypher query against the database.
+For information about the neuprint data model, see the `neuprint explorer web help. <https://neuprint.janelia.org/help>`_
+
+Also, ``neuprint-python`` comes with convenience functions to implement common queries. See :ref:`queries`.
 
     .. code-block:: ipython
 

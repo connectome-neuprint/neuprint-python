@@ -1,7 +1,5 @@
 .. currentmodule:: neuprint.queries
   
-.. _queries:
-
 
 ..
    (The following |br| definition is the only way
@@ -11,6 +9,8 @@
 
    <br />
 
+
+.. _queries:
 
 Common Queries
 ==============
