@@ -4,12 +4,14 @@ docs-criteria/_modules/neuprint/admin.html
 docs-criteria/_modules/neuprint/client.html
 docs-criteria/_modules/neuprint/deprecated/fetch.html
 docs-criteria/_modules/neuprint/queries.html
+docs-criteria/_modules/neuprint/segmentcriteria.html
 docs-criteria/_sources/admin.rst.txt
 docs-criteria/_sources/client.rst.txt
 docs-criteria/_sources/deprecated.rst.txt
 docs-criteria/_sources/index.rst.txt
 docs-criteria/_sources/queries.rst.txt
 docs-criteria/_sources/quickstart.rst.txt
+docs-criteria/_sources/segmentcriteria.rst.txt
 docs-criteria/_static/ajax-loader.gif
 docs-criteria/_static/basic.css
 docs-criteria/_static/comment-bright.png
@@ -79,3 +81,4 @@ docs-criteria/queries.html
 docs-criteria/quickstart.html
 docs-criteria/search.html
 docs-criteria/searchindex.js
+docs-criteria/segmentcriteria.html

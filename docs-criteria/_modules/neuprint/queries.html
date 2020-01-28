@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.2.3+5.g6c02b07 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.2.3+6.gcb58e49 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.3+5.g6c02b07
+                0.2.3+6.gcb58e49
               </div>
             
           
@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../queries.html">Common Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
 </ul>
@@ -159,7 +160,6 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_args_iterable</span><span class="p">,</span> <span class="n">where_expr</span>
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 <span class="kn">from</span> <span class="nn">.segmentcriteria</span> <span class="kn">import</span> <span class="n">SegmentCriteria</span>
 
@@ -174,7 +174,7 @@
 <div class="viewcode-block" id="fetch_custom"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Alternative form of ``Client.fetch_custom()``, as a free function.</span>
+<span class="sd">    Alternative form of :py:meth:`.Client.fetch_custom()`, as a free function.</span>
 <span class="sd">    That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.</span>
 
 <span class="sd">    If ``client=None``, the default ``Client`` is used</span>
@@ -196,7 +196,7 @@
 <span class="sd">            or return the server&#39;s raw json response as a Python dict.</span>
 
 <span class="sd">        client:</span>
-<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Either json or DataFrame, depending on ``format``.</span>
@@ -207,23 +207,23 @@
 <div class="viewcode-block" id="fetch_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_neurons">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_neurons</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Search for a set of Neurons (or Segments) that match the given :py:class:`SegmentCriteria`.</span>
+<span class="sd">    Search for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.</span>
 <span class="sd">    Returns their properties, including the distibution of their synapses in all brain regions.</span>
 <span class="sd">    </span>
 <span class="sd">    This is the Python equivalent to the Neuprint Explorer `Find Neurons`_ page.</span>
 
-<span class="sd">    Returns data in the the same format as :py:func:`find_custom_neurons()`,</span>
+<span class="sd">    Returns data in the the same format as :py:func:`fetch_custom_neurons()`,</span>
 <span class="sd">    but doesn&#39;t require you to write cypher.</span>
 <span class="sd">    </span>
 <span class="sd">    .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        criteria:</span>
-<span class="sd">            :py:class:`SegmentCriteria`</span>
+<span class="sd">            :py:class:`.SegmentCriteria`</span>
 <span class="sd">            Only Neurons which satisfy all components of the given criteria are returned.</span>
 
 <span class="sd">        client:</span>
-<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Two DataFrames.</span>
@@ -243,7 +243,7 @@
 <span class="sd">    See also:</span>
 
 <span class="sd">        If you like the output format of this function but you want</span>
-<span class="sd">        to provide your own cypher query, see :py:func:`fetch_custom_neurons()`.</span>
+<span class="sd">        to provide your own cypher query, see :py:func:`.fetch_custom_neurons()`.</span>
 
 
 <span class="sd">    Example:</span>
@@ -327,9 +327,9 @@
 <span class="k">def</span> <span class="nf">fetch_custom_neurons</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Use a custom query to fetch a neuron table, with nicer output</span>
-<span class="sd">    than you would get from a call to :py:func:`fetch_custom()`.</span>
+<span class="sd">    than you would get from a call to :py:func:`.fetch_custom()`.</span>
 <span class="sd">    </span>
-<span class="sd">    Returns data in the the same format as :py:func:`fetch_neurons()`.</span>
+<span class="sd">    Returns data in the the same format as :py:func:`.fetch_neurons()`.</span>
 <span class="sd">    but allows you to provide your own cypher query logic</span>
 <span class="sd">    (subject to certain requirements; see below).</span>
 
@@ -442,10 +442,8 @@
 <span class="sd">            Exclude connections below this weight.</span>
 <span class="sd">        properties:</span>
 <span class="sd">            Additional columns to include in the results, for both the upstream and downstream body.</span>
-<span class="sd">        regex:</span>
-<span class="sd">            If ``True``, instance and type arguments will be interpreted as regular expressions.</span>
 <span class="sd">        client:</span>
-<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        DataFrame</span>
@@ -509,6 +507,69 @@
     <span class="k">return</span> <span class="n">edges_df</span></div>
 
 
+<div class="viewcode-block" id="fetch_common_connectivity"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_common_connectivity">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_common_connectivity</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">search_direction</span><span class="o">=</span><span class="s1">&#39;upstream&#39;</span><span class="p">,</span> <span class="n">min_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a set of neurons that match the given criteria, find neurons</span>
+<span class="sd">    that connect to ALL of the neurons in the set, i.e. connections</span>
+<span class="sd">    that are common to all neurons in the matched set.</span>
+<span class="sd">    </span>
+<span class="sd">    This is the Python equivalent to the Neuprint Explorer `Common Connectivity`_ page.</span>
+
+<span class="sd">    .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=commonconnectivity&amp;q=1</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        criteria:</span>
+<span class="sd">            :py:class:`.SegmentCriteria` used to determine the match set,</span>
+<span class="sd">            for which common connections will be found.</span>
+
+<span class="sd">        search_direction (``&quot;upstream&quot;`` or ``&quot;downstream&quot;``):</span>
+<span class="sd">            Whether or not to search for common connections upstream of</span>
+<span class="sd">            the matched neurons or downstream of the matched neurons. </span>
+<span class="sd">        </span>
+<span class="sd">        min_weight:</span>
+<span class="sd">            Connections below the given strength will not be included in the results.</span>
+
+<span class="sd">        properties:</span>
+<span class="sd">            Additional columns to include in the results, for both the upstream and downstream body.</span>
+
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns: DataFrame</span>
+<span class="sd">        (Same format as returned by :py:func:`fetch_simple_connections()`.)</span>
+<span class="sd">        One row per connection, with columns for upstream and downstream properties.</span>
+<span class="sd">        For instance, if ``search_direction=&quot;upstream&quot;``, then the matched neurons will appear</span>
+<span class="sd">        in the ``downstream_`` columns, and the common connections will appear in the ``upstream_``</span>
+<span class="sd">        columns.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">search_direction</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;upstream&#39;</span><span class="p">,</span> <span class="s1">&#39;downstream&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">search_direction</span> <span class="o">==</span> <span class="s2">&quot;upstream&quot;</span><span class="p">:</span>
+        <span class="n">edges_df</span> <span class="o">=</span> <span class="n">fetch_simple_connections</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">criteria</span><span class="p">,</span> <span class="n">min_weight</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+        
+        <span class="c1"># How bodies many met primary serach criteria?</span>
+        <span class="n">num_primary</span> <span class="o">=</span> <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;downstream_bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+
+        <span class="c1"># upstream bodies that connect to ALL of the primary are the &#39;common&#39; bodies.</span>
+        <span class="n">upstream_counts</span> <span class="o">=</span> <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;upstream_bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">upstream_counts</span><span class="p">[</span><span class="n">upstream_counts</span> <span class="o">==</span> <span class="n">num_primary</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+        
+        <span class="k">return</span> <span class="n">edges_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;upstream_bodyId in @keep&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">search_direction</span> <span class="o">==</span> <span class="s2">&quot;downstream&quot;</span><span class="p">:</span>
+        <span class="n">edges_df</span> <span class="o">=</span> <span class="n">fetch_simple_connections</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">min_weight</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+        
+        <span class="c1"># How bodies many met primary serach criteria?</span>
+        <span class="n">num_primary</span> <span class="o">=</span> <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;upstream_bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+
+        <span class="c1"># upstream bodies that connect to ALL of the primary are the &#39;common&#39; bodies.</span>
+        <span class="n">upstream_counts</span> <span class="o">=</span> <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;downstream_bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">upstream_counts</span><span class="p">[</span><span class="n">upstream_counts</span> <span class="o">==</span> <span class="n">num_primary</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+        
+        <span class="k">return</span> <span class="n">edges_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;downstream_bodyId in @keep&#39;</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="fetch_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_adjacencies">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">bodies</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -532,7 +593,7 @@
 <span class="sd">            Either &#39;Neuron&#39; or &#39;Segment&#39; (which includes Neurons)</span>
 
 <span class="sd">        client:</span>
-<span class="sd">            If not provided, the global default ``Client`` will be used.</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the</span>
@@ -540,7 +601,7 @@
 <span class="sd">        Only primary ROIs are included in the per-ROI connection table.</span>
 
 <span class="sd">    See also:</span>
-<span class="sd">        :py:func:`fetch_traced_adjacecies()`</span>
+<span class="sd">        :py:func:`.fetch_traced_adjacecies()`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Invalid label: </span><span class="si">{label}</span><span class="s2">&quot;</span>
     <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
@@ -606,7 +667,7 @@
 <span class="k">def</span> <span class="nf">fetch_traced_adjacencies</span><span class="p">(</span><span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Finds the set of all non-cropped traced neurons, and then</span>
-<span class="sd">    calls :py:func:`fetch_adjacencies()`. </span>
+<span class="sd">    calls :py:func:`.fetch_adjacencies()`. </span>
 <span class="sd"> </span>
 <span class="sd">    Note:</span>
 <span class="sd">        On the hemibrain dataset, this function takes a few minutes to run,</span>
