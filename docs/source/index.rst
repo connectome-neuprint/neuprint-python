@@ -49,5 +49,6 @@ Contents
    quickstart
    client
    queries
+   segmentcriteria
    admin
    deprecated

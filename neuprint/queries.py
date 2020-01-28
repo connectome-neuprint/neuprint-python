@@ -5,7 +5,6 @@ from textwrap import indent, dedent
 import pandas as pd
 from tqdm import trange
 
-from .utils import make_args_iterable, where_expr
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
 
@@ -20,7 +19,7 @@ except ImportError:
 @inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
-    Alternative form of ``Client.fetch_custom()``, as a free function.
+    Alternative form of :py:meth:`.Client.fetch_custom()`, as a free function.
     That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
 
     If ``client=None``, the default ``Client`` is used
@@ -42,7 +41,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
             or return the server's raw json response as a Python dict.
 
         client:
-            If not provided, the global default ``Client`` will be used.
+            If not provided, the global default :py:class:`.Client` will be used.
     
     Returns:
         Either json or DataFrame, depending on ``format``.
@@ -53,23 +52,23 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 @inject_client
 def fetch_neurons(criteria, *, client=None):
     """
-    Search for a set of Neurons (or Segments) that match the given :py:class:`SegmentCriteria`.
+    Search for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.
     Returns their properties, including the distibution of their synapses in all brain regions.
     
     This is the Python equivalent to the Neuprint Explorer `Find Neurons`_ page.
 
-    Returns data in the the same format as :py:func:`find_custom_neurons()`,
+    Returns data in the the same format as :py:func:`fetch_custom_neurons()`,
     but doesn't require you to write cypher.
     
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
     
     Args:
         criteria:
-            :py:class:`SegmentCriteria`
+            :py:class:`.SegmentCriteria`
             Only Neurons which satisfy all components of the given criteria are returned.
 
         client:
-            If not provided, the global default ``Client`` will be used.
+            If not provided, the global default :py:class:`.Client` will be used.
     
     Returns:
         Two DataFrames.
@@ -89,7 +88,7 @@ def fetch_neurons(criteria, *, client=None):
     See also:
 
         If you like the output format of this function but you want
-        to provide your own cypher query, see :py:func:`fetch_custom_neurons()`.
+        to provide your own cypher query, see :py:func:`.fetch_custom_neurons()`.
 
 
     Example:
@@ -173,9 +172,9 @@ def fetch_neurons(criteria, *, client=None):
 def fetch_custom_neurons(q, *, client=None):
     """
     Use a custom query to fetch a neuron table, with nicer output
-    than you would get from a call to :py:func:`fetch_custom()`.
+    than you would get from a call to :py:func:`.fetch_custom()`.
     
-    Returns data in the the same format as :py:func:`fetch_neurons()`.
+    Returns data in the the same format as :py:func:`.fetch_neurons()`.
     but allows you to provide your own cypher query logic
     (subject to certain requirements; see below).
 
@@ -288,10 +287,8 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
             Exclude connections below this weight.
         properties:
             Additional columns to include in the results, for both the upstream and downstream body.
-        regex:
-            If ``True``, instance and type arguments will be interpreted as regular expressions.
         client:
-            If not provided, the global default ``Client`` will be used.
+            If not provided, the global default :py:class:`.Client` will be used.
     
     Returns:
         DataFrame
@@ -356,6 +353,69 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 
 
 @inject_client
+def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
+    """
+    Given a set of neurons that match the given criteria, find neurons
+    that connect to ALL of the neurons in the set, i.e. connections
+    that are common to all neurons in the matched set.
+    
+    This is the Python equivalent to the Neuprint Explorer `Common Connectivity`_ page.
+
+    .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=commonconnectivity&q=1
+    
+    
+    Args:
+        criteria:
+            :py:class:`.SegmentCriteria` used to determine the match set,
+            for which common connections will be found.
+
+        search_direction (``"upstream"`` or ``"downstream"``):
+            Whether or not to search for common connections upstream of
+            the matched neurons or downstream of the matched neurons. 
+        
+        min_weight:
+            Connections below the given strength will not be included in the results.
+
+        properties:
+            Additional columns to include in the results, for both the upstream and downstream body.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+    
+    Returns: DataFrame
+        (Same format as returned by :py:func:`fetch_simple_connections()`.)
+        One row per connection, with columns for upstream and downstream properties.
+        For instance, if ``search_direction="upstream"``, then the matched neurons will appear
+        in the ``downstream_`` columns, and the common connections will appear in the ``upstream_``
+        columns.
+    """
+    assert search_direction in ('upstream', 'downstream')
+    if search_direction == "upstream":
+        edges_df = fetch_simple_connections(None, criteria, min_weight, properties, client=client)
+        
+        # How bodies many met primary serach criteria?
+        num_primary = edges_df['downstream_bodyId'].nunique()
+
+        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
+        upstream_counts = edges_df['upstream_bodyId'].value_counts()
+        keep = upstream_counts[upstream_counts == num_primary].index
+        
+        return edges_df.query('upstream_bodyId in @keep')
+
+    if search_direction == "downstream":
+        edges_df = fetch_simple_connections(criteria, None, min_weight, properties, client=client)
+        
+        # How bodies many met primary serach criteria?
+        num_primary = edges_df['upstream_bodyId'].nunique()
+
+        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
+        upstream_counts = edges_df['downstream_bodyId'].value_counts()
+        keep = upstream_counts[upstream_counts == num_primary].index
+        
+        return edges_df.query('downstream_bodyId in @keep')
+
+
+@inject_client
 def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
@@ -378,7 +438,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
             Either 'Neuron' or 'Segment' (which includes Neurons)
 
         client:
-            If not provided, the global default ``Client`` will be used.
+            If not provided, the global default :py:class:`.Client` will be used.
     
     Returns:
         Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the
@@ -386,7 +446,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
         Only primary ROIs are included in the per-ROI connection table.
 
     See also:
-        :py:func:`fetch_traced_adjacecies()`
+        :py:func:`.fetch_traced_adjacecies()`
     """
     assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
     q = f"""\
@@ -452,7 +512,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
 def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     """
     Finds the set of all non-cropped traced neurons, and then
-    calls :py:func:`fetch_adjacencies()`. 
+    calls :py:func:`.fetch_adjacencies()`. 
  
     Note:
         On the hemibrain dataset, this function takes a few minutes to run,
