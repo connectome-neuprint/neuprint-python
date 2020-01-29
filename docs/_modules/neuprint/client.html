@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.2.3+2.ga5c4f81 documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.3 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.3+2.ga5c4f81
+                0.3
               </div>
             
           
@@ -87,6 +87,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../client.html">Client</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../queries.html">Common Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
 </ul>
@@ -457,11 +458,18 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39; does not exist on&quot;</span>
                                <span class="sa">f</span><span class="s2">&quot; the neuprint server (</span><span class="si">{self.server}</span><span class="s2">).</span><span class="se">\n</span><span class="s2">&quot;</span>
                                <span class="sa">f</span><span class="s2">&quot;Available datasets: </span><span class="si">{all_datasets}</span><span class="s2">&quot;</span><span class="p">)</span>
-            
+
         <span class="c1"># Set this as the default client if there isn&#39;t one already</span>
         <span class="k">global</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span>
         <span class="k">if</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">set_default_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">.queries</span> <span class="kn">import</span> <span class="n">fetch_meta</span><span class="p">,</span> <span class="n">_all_rois_from_meta</span>
+        <span class="c1"># Pre-cache these metadata fields,</span>
+        <span class="c1"># to avoid re-fetching them for many queries that need them.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary_rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;primaryRois&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_rois</span> <span class="o">=</span> <span class="n">_all_rois_from_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">)</span>
 
 
     <span class="nd">@verbose_errors</span>
@@ -537,7 +545,7 @@
         <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span>
         
         <span class="n">cypher</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="n">dedent</span><span class="p">(</span><span class="n">cypher</span><span class="p">),</span> <span class="s1">&#39;    &#39;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Issuing cypher query against dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{cypher}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Performing cypher query against dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{cypher}</span><span class="s2">&quot;</span><span class="p">)</span>
         
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span>
                                   <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;cypher&quot;</span><span class="p">:</span> <span class="n">cypher</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">},</span>

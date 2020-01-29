@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.2.3+2.ga5c4f81 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.3 documentation</title>
   
 
   
@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Admin Tools" href="admin.html" />
+    <link rel="next" title="SegmentCriteria" href="segmentcriteria.html" />
     <link rel="prev" title="Client" href="client.html" /> 
 </head>
 
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.3+2.ga5c4f81
+                0.3
               </div>
             
           
@@ -89,6 +89,7 @@
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Common Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
@@ -170,16 +171,22 @@ But the functions in this file offer a convenient API for common queries.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_custom</span></code></a>(cypher[,&nbsp;dataset,&nbsp;format,&nbsp;client])</td>
-<td>Alternative form of <code class="docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code>, as a free function.</td>
+<td>Alternative form of <a class="reference internal" href="client.html#neuprint.client.Client.fetch_custom" title="neuprint.client.Client.fetch_custom"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code></a>, as a free function.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_neurons</span></code></a>([bodyId,&nbsp;instance,&nbsp;type,&nbsp;…])</td>
-<td>Search for a set of neurons by bodyId, instance, roi, etc.</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_neurons</span></code></a>(criteria,&nbsp;*[,&nbsp;client])</td>
+<td>Search for a set of Neurons (or Segments) that match the given <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_custom_neurons</span></code></a>(q[,&nbsp;neuprint_rois,&nbsp;client])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_custom_neurons</span></code></a>(q,&nbsp;*[,&nbsp;client])</td>
 <td>Use a custom query to fetch a neuron table, with nicer output than you would get from a call to <a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom()</span></code></a>.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_simple_connections" title="neuprint.queries.fetch_simple_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_simple_connections</span></code></a>([upstream_bodyId,&nbsp;…])</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_simple_connections" title="neuprint.queries.fetch_simple_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_simple_connections</span></code></a>([…])</td>
 <td>Find all connections from a set of “upstream” neurons, or to a set of “downstream” neurons, or all connections from a set of upstream neurons to a set of downstream neurons.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_common_connectivity" title="neuprint.queries.fetch_common_connectivity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_common_connectivity</span></code></a>(criteria[,&nbsp;…])</td>
+<td>Given a set of neurons that match the given criteria, find neurons that connect to ALL of the neurons in the set, i.e.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_shortest_paths" title="neuprint.queries.fetch_shortest_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_shortest_paths</span></code></a>(upstream_bodyId,&nbsp;…[,&nbsp;…])</td>
+<td>Find all neurons along the shortest path between two neurons.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>(bodies[,&nbsp;export_dir,&nbsp;…])</td>
 <td>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</td>
@@ -201,7 +208,7 @@ But the functions in this file offer a convenient API for common queries.</p>
 <span class="target" id="module-neuprint.queries"></span><dl class="function">
 <dt id="neuprint.queries.fetch_custom">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom</code><span class="sig-paren">(</span><em>cypher</em>, <em>dataset=''</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_custom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alternative form of <code class="docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code>, as a free function.
+<dd><p>Alternative form of <a class="reference internal" href="client.html#neuprint.client.Client.fetch_custom" title="neuprint.client.Client.fetch_custom"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code></a>, as a free function.
 That is, <code class="docutils literal notranslate"><span class="pre">fetch_custom(...,</span> <span class="pre">client=c)</span></code> is equivalent to <code class="docutils literal notranslate"><span class="pre">c.fetch_custom(...)</span></code>.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">client=None</span></code>, the default <code class="docutils literal notranslate"><span class="pre">Client</span></code> is used
 (assuming you have created at least one <code class="docutils literal notranslate"><span class="pre">Client</span></code>.)</p>
@@ -218,7 +225,7 @@ If None provided, the client’s default dataset is used.</p>
 <li><strong>format</strong> – Either ‘pandas’ or ‘json’.
 Whether to load the results into a pandas DataFrame,
 or return the server’s raw json response as a Python dict.</li>
-<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -231,54 +238,20 @@ or return the server’s raw json response as a Python dict.</li>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_neurons">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_neurons</code><span class="sig-paren">(</span><em>bodyId=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>status=None</em>, <em>cropped=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>regex=False</em>, <em>label='Neuron'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_neurons" title="Permalink to this definition">¶</a></dt>
-<dd><p>Search for a set of neurons by bodyId, instance, roi, etc.
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_neurons</code><span class="sig-paren">(</span><em>criteria</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_neurons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for a set of Neurons (or Segments) that match the given <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>.
 Returns their properties, including the distibution of their synapses in all brain regions.</p>
 <p>This is the Python equivalent to the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1">Find Neurons</a> page.</p>
-<p>Returns data in the the same format as <code class="xref py py-func docutils literal notranslate"><span class="pre">find_custom_neurons()</span></code>,
+<p>Returns data in the the same format as <a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom_neurons()</span></code></a>,
 but doesn’t require you to write cypher.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>bodyId</strong> – Integer or list of ints.</li>
-<li><strong>instance</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
-<li><strong>type</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
-<li><strong>status</strong> – str or list of strings</li>
-<li><strong>cropped</strong> – Boolean.
-If given, restrict results to neurons that are cropped or not.</li>
-<li><strong>inputRoi</strong> – str or list of strings
-Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
-<code class="docutils literal notranslate"><span class="pre">regex</span></code> does not apply to this parameter.</li>
-<li><strong>outputRoi</strong> – str or list of strings
-Only Neurons which have outputs in EVERY one of the given ROIs will be matched.
-<code class="docutils literal notranslate"><span class="pre">regex</span></code> does not apply to this parameter.</li>
-<li><strong>min_pre</strong> – <p>int
-Exclude neurons that don’t have at least this many t-bars (outputs).</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This adds a constraint to the overall number of t-bars in each
-neuron, regardless of how many t-bars exist in any particular ROI.
-To filter by per-ROI synapse counts, see example below.</p>
-</div>
-</li>
-<li><strong>min_post</strong> – <p>int
-Exclude neurons that don’t have at least this many PSDs (inputs).</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This adds a constraint to the overall number of PSDs in each
-neuron, regardless of how many PSDs exist in any particular ROI.
-To filter by per-ROI synapse counts, see example below.</p>
-</div>
-</li>
-<li><strong>regex</strong> – Boolean.
-If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the <code class="docutils literal notranslate"><span class="pre">instance</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> arguments will be interpreted as
-regular expressions, rather than exact match strings.</li>
-<li><strong>label</strong> – Either ‘Neuron’ or ‘Segment’ (which includes Neurons)</li>
-<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
+<li><strong>criteria</strong> – <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>
+Only Neurons which satisfy all components of the given criteria are returned.</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -368,7 +341,7 @@ to provide your own cypher query, see <a class="reference internal" href="#neupr
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_custom_neurons">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom_neurons</code><span class="sig-paren">(</span><em>q</em>, <em>neuprint_rois=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_custom_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom_neurons" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom_neurons</code><span class="sig-paren">(</span><em>q</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_custom_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom_neurons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use a custom query to fetch a neuron table, with nicer output
 than you would get from a call to <a class="reference internal" href="#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom()</span></code></a>.</p>
 <p>Returns data in the the same format as <a class="reference internal" href="#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a>.
@@ -413,7 +386,7 @@ for <code class="docutils literal notranslate"><span class="pre">pre</span></cod
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_simple_connections">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_simple_connections</code><span class="sig-paren">(</span><em>upstream_bodyId=None, upstream_instance=None, upstream_type=None, downstream_bodyId=None, downstream_instance=None, downstream_type=None, min_weight=1, label='Neuron', regex=False, properties=['status', 'cropped', 'type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_simple_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_simple_connections" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_simple_connections</code><span class="sig-paren">(</span><em>upstream_criteria=None, downstream_criteria=None, min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_simple_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_simple_connections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find all connections from a set of “upstream” neurons,
 or to a set of “downstream” neurons,
 or all connections from a set of upstream neurons to a set of downstream neurons.</p>
@@ -422,21 +395,13 @@ or all connections from a set of upstream neurons to a set of downstream neurons
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>upstream_bodyId</strong> – Integer or list of ints.</li>
-<li><strong>upstream_instance</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
-<li><strong>upstream_type</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
-<li><strong>downstream_bodyId</strong> – Integer or list of ints.</li>
-<li><strong>downstream_instance</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.</li>
-<li><strong>downstream_type</strong> – str or list of strings
-If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.</li>
+<li><strong>upstream_criteria</strong> – SegmentCriteria indicating how to filter for neurons
+on the presynaptic side of connections.</li>
+<li><strong>downstream_criteria</strong> – SegmentCriteria indicating how to filter for neurons
+on the postsynaptic side of connections.</li>
 <li><strong>min_weight</strong> – Exclude connections below this weight.</li>
-<li><strong>label</strong> – Return results for Neurons (default) or all Segments.</li>
 <li><strong>properties</strong> – Additional columns to include in the results, for both the upstream and downstream body.</li>
-<li><strong>regex</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, instance and type arguments will be interpreted as regular expressions.</li>
-<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -449,11 +414,96 @@ One row per connection, with columns for upstream and downstream properties.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="neuprint.queries.fetch_common_connectivity">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_common_connectivity</code><span class="sig-paren">(</span><em>criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_common_connectivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_common_connectivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a set of neurons that match the given criteria, find neurons
+that connect to ALL of the neurons in the set, i.e. connections
+that are common to all neurons in the matched set.</p>
+<p>This is the Python equivalent to the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=commonconnectivity&amp;q=1">Common Connectivity</a> page.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>criteria</strong> – <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a> used to determine the match set,
+for which common connections will be found.</li>
+<li><strong>search_direction</strong> (<code class="docutils literal notranslate"><span class="pre">&quot;upstream&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;downstream&quot;</span></code>) – Whether or not to search for common connections upstream of
+the matched neurons or downstream of the matched neurons.</li>
+<li><strong>min_weight</strong> – Connections below the given strength will not be included in the results.</li>
+<li><strong>properties</strong> – Additional columns to include in the results, for both the upstream and downstream body.</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="docutils">
+<dt>Returns: DataFrame</dt>
+<dd>(Same format as returned by <a class="reference internal" href="#neuprint.queries.fetch_simple_connections" title="neuprint.queries.fetch_simple_connections"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_simple_connections()</span></code></a>.)
+One row per connection, with columns for upstream and downstream properties.
+For instance, if <code class="docutils literal notranslate"><span class="pre">search_direction=&quot;upstream&quot;</span></code>, then the matched neurons will appear
+in the <code class="docutils literal notranslate"><span class="pre">downstream_</span></code> columns, and the common connections will appear in the <code class="docutils literal notranslate"><span class="pre">upstream_</span></code>
+columns.</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_shortest_paths">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_shortest_paths</code><span class="sig-paren">(</span><em>upstream_bodyId</em>, <em>downstream_bodyId</em>, <em>min_weight=1</em>, <em>intermediate_criteria=None</em>, <em>timeout=5.0</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_shortest_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_shortest_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all neurons along the shortest path between two neurons.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>upstream_bodyId</strong> – The starting neuron</li>
+<li><strong>downstream_bodyId</strong> – The destination neuron</li>
+<li><strong>min_weight</strong> – Minimum connection strength for each step in the path.</li>
+<li><strong>intermediate_criteria</strong> (<a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>) – Filtering criteria for neurons on path.
+All intermediate neurons in the path must satisfy this criteria.
+By default, <code class="docutils literal notranslate"><span class="pre">SegmentCriteria(status=&quot;Traced&quot;)</span></code> is used.</li>
+<li><strong>timeout</strong> – Give up after this many seconds, in which case an <strong>empty DataFrame is returned.</strong>
+No exception is raised!</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>All paths are concatenated into a single DataFrame.
+The <cite>path</cite> column indicates which path that row belongs to.
+The <cite>weight</cite> column indicates the connection strength to that
+body from the previous body in the path.</p>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">fetch_shortest_paths</span><span class="p">(</span><span class="mi">329566174</span><span class="p">,</span> <span class="mi">294792184</span><span class="p">,</span> <span class="n">min_weight</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gh">Out[1]:</span>
+<span class="go">      path     bodyId                       type  weight</span>
+<span class="go">0        0  329566174                    OA-VPM3       0</span>
+<span class="go">1        0  517169460                 PDL05h_pct      11</span>
+<span class="go">2        0  297251714                ADM01om_pct      15</span>
+<span class="go">3        0  294424196                PDL13ob_pct      11</span>
+<span class="go">4        0  295133927               PDM18a_d_pct      10</span>
+<span class="go">...    ...        ...                        ...     ...</span>
+<span class="go">5773   962  511271574                 ADL24h_pct      43</span>
+<span class="go">5774   962  480923210                PDL10od_pct      18</span>
+<span class="go">5775   962  294424196                PDL13ob_pct      21</span>
+<span class="go">5776   962  295133927               PDM18a_d_pct      10</span>
+<span class="go">5777   962  294792184  olfactory multi vPN mlALT      10</span>
+
+<span class="go">[5778 rows x 4 columns]</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="neuprint.queries.fetch_adjacencies">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>bodies</em>, <em>export_dir=None</em>, <em>batch_size=200</em>, <em>label='Neuron'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
-Synapses which do not fall on any ROI will be listed as having ROI ‘None’.
-Only primary ROIs are included in the results.</p>
+Only primary ROIs are included in the results.
+Synapses which do not fall on any primary ROI are not listed in the per-ROI table.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -465,7 +515,7 @@ connection table (total weight), and connection table (per ROI).</li>
 <li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
 This parameter specifies the batch size.</li>
 <li><strong>label</strong> – Either ‘Neuron’ or ‘Segment’ (which includes Neurons)</li>
-<li><strong>client</strong> – If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
 </tr>
@@ -585,7 +635,7 @@ Primary ROIs do not overlap with each other.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="admin.html" class="btn btn-neutral float-right" title="Admin Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="segmentcriteria.html" class="btn btn-neutral float-right" title="SegmentCriteria" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="client.html" class="btn btn-neutral float-left" title="Client" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
