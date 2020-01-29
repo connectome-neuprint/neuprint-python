@@ -55,7 +55,7 @@ def fetch_neurons(criteria, *, client=None):
     Search for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.
     Returns their properties, including the distibution of their synapses in all brain regions.
     
-    This is the Python equivalent to the Neuprint Explorer `Find Neurons`_ page.
+    This implements a superset of the features on the Neuprint Explorer `Find Neurons`_ page.
 
     Returns data in the the same format as :py:func:`fetch_custom_neurons()`,
     but doesn't require you to write cypher.
@@ -63,8 +63,7 @@ def fetch_neurons(criteria, *, client=None):
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
     
     Args:
-        criteria:
-            :py:class:`.SegmentCriteria`
+        criteria (:py:class:`.SegmentCriteria`):
             Only Neurons which satisfy all components of the given criteria are returned.
 
         client:
@@ -95,25 +94,22 @@ def fetch_neurons(criteria, *, client=None):
     
         .. code-block:: ipython
         
-            In [1]: neurons_df, roi_counts_df = fetch_neurons(
-               ...:     inputRois=['SIP(R)', 'aL(R)'], status='Traced',
-               ...:     type='MBON.*', instance='.*', regex=True)
-            
-            In [2]: neurons_df.columns
-            Out[2]:
-            Index(['bodyId', 'status', 'cropped', 'type', 'instance', 'cellBodyFiber',
-                   'somaRadius', 'somaLocation', 'size', 'pre', 'post', 'statusLabel',
-                   'inputRois', 'outputRois', 'roiInfo'],
-                  dtype='object')
+            In [1]: from neuprint import fetch_neurons, SegmentCriteria as SC
+
+            In [2]: neurons_df, roi_counts_df = fetch_neurons(
+               ...:     SC(inputRois=['SIP(R)', 'aL(R)'],
+               ...:        status='Traced',
+               ...:        type='MBON.*',
+               ...:        regex=True))
             
             In [3]: neurons_df.iloc[:5, :11]
             Out[3]:
-                  bodyId  status  cropped    type                     instance cellBodyFiber  somaRadius           somaLocation        size   pre   post
-            0  300972942  Traced    False  MBON14                 MBON14(a3)_R           NaN         NaN                   None  1563154937   543  13634
-            1  422725634  Traced    False  MBON06        MBON06(B1>a)(AVM07)_L           NaN         NaN                   None  3118269136  1356  20978
-            2  423382015  Traced    False  MBON23        MBON23(a2sp)(PDL05)_R          SFS1       291.0   [7509, 13310, 14016]   857093893   733   4466
-            3  423774471  Traced    False  MBON19       MBON19(a2p3p)(PDL05)_R          SFS1       286.0   [5459, 15006, 10552]   628019179   299   1484
-            4  424767514  Traced    False  MBON11  MBON11(y1pedc>a/B)(ADM05)_R        mAOTU2       694.5  [18614, 35832, 19448]  5249327644  1643  27641
+                  bodyId                     instance    type cellBodyFiber   pre   post        size  status  cropped     statusLabel  somaRadius
+            0  300972942                 MBON14(a3)_R  MBON14           NaN   543  13634  1563154937  Traced    False  Roughly traced         NaN
+            1  422725634        MBON06(B1>a)(AVM07)_L  MBON06           NaN  1356  20978  3118269136  Traced    False  Roughly traced         NaN
+            2  423382015        MBON23(a2sp)(PDL05)_R  MBON23          SFS1   733   4466   857093893  Traced    False  Roughly traced       291.0
+            3  423774471       MBON19(a2p3p)(PDL05)_R  MBON19          SFS1   299   1484   628019179  Traced    False  Roughly traced       286.0
+            4  424767514  MBON11(y1pedc>a/B)(ADM05)_R  MBON11        mAOTU2  1643  27641  5249327644  Traced    False          Traced       694.5
             
             In [4]: neurons_df['inputRois'].head()
             Out[4]:
@@ -132,24 +128,6 @@ def fetch_neurons(criteria, *, client=None):
             2  300972942        a3(R)   17  13224
             3  300972942  MB(+ACA)(R)   17  13295
             4  300972942       SNP(R)  526    336
-
-    Post-filter by per-ROI counts:
-    
-        .. code-block:: python
-        
-            rois = ['EB', 'PB']
-            neurons_df, roi_counts_df = fetch_neurons(inputRois=rois)
-
-            # Select neurons that have 100 PSDs in ANY of the input ROIs
-            roi_counts_df['post100'] = roi_counts_df.eval('post >= 100')
-            keep_neurons = roi_counts_df.query('roi in @rois and post100')['bodyId']
-            
-            # Or select neurons that have 100 PSDs in ALL of the input ROIs
-            keep = roi_counts_df.query('roi in @rois').groupby('bodyId')['post100'].all()
-            keep_neurons = keep[keep].index
-
-            neurons_df = neurons_df.query('bodyId in @keep_neurons')
-            roi_counts_df = roi_counts_df.query('bodyId in @keep_neurons')
     """
     assert any([len(criteria.bodyId), len(criteria.instance), len(criteria.type),
                 len(criteria.status), criteria.cropped is not None,
