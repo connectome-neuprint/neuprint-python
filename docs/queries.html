@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.3 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.3+1.gedf0413 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3
+                0.3+1.gedf0413
               </div>
             
           
@@ -241,7 +241,7 @@ or return the server’s raw json response as a Python dict.</li>
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_neurons</code><span class="sig-paren">(</span><em>criteria</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_neurons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_neurons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Search for a set of Neurons (or Segments) that match the given <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>.
 Returns their properties, including the distibution of their synapses in all brain regions.</p>
-<p>This is the Python equivalent to the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1">Find Neurons</a> page.</p>
+<p>This implements a superset of the features on the Neuprint Explorer <a class="reference external" href="https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1">Find Neurons</a> page.</p>
 <p>Returns data in the the same format as <a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom_neurons()</span></code></a>,
 but doesn’t require you to write cypher.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -280,25 +280,20 @@ for <code class="docutils literal notranslate"><span class="pre">pre</span></cod
 to provide your own cypher query, see <a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom_neurons()</span></code></a>.</p>
 </div>
 <p class="rubric">Example</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">inputRois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SIP(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;aL(R)&#39;</span><span class="p">],</span> <span class="n">status</span><span class="o">=</span><span class="s1">&#39;Traced&#39;</span><span class="p">,</span>
-<span class="gp">   ...: </span>    <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="s1">&#39;.*&#39;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_neurons</span><span class="p">,</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span>
 
-<span class="gp">In [2]: </span><span class="n">neurons_df</span><span class="o">.</span><span class="n">columns</span>
-<span class="gh">Out[2]:</span>
-<span class="go">Index([&#39;bodyId&#39;, &#39;status&#39;, &#39;cropped&#39;, &#39;type&#39;, &#39;instance&#39;, &#39;cellBodyFiber&#39;,</span>
-<span class="go">       &#39;somaRadius&#39;, &#39;somaLocation&#39;, &#39;size&#39;, &#39;pre&#39;, &#39;post&#39;, &#39;statusLabel&#39;,</span>
-<span class="go">       &#39;inputRois&#39;, &#39;outputRois&#39;, &#39;roiInfo&#39;],</span>
-<span class="go">      dtype=&#39;object&#39;)</span>
+<span class="gp">In [2]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span>
+<span class="gp">   ...: </span>    <span class="n">SC</span><span class="p">(</span><span class="n">inputRois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SIP(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;aL(R)&#39;</span><span class="p">],</span> <span class="n">status</span><span class="o">=</span><span class="s1">&#39;Traced&#39;</span><span class="p">,</span>
+<span class="gp">   ...: </span>       <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="s1">&#39;.*&#39;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 
 <span class="gp">In [3]: </span><span class="n">neurons_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">,</span> <span class="p">:</span><span class="mi">11</span><span class="p">]</span>
 <span class="gh">Out[3]:</span>
-<span class="go">      bodyId  status  cropped    type                     instance cellBodyFiber  somaRadius           somaLocation        size   pre   post</span>
-<span class="go">0  300972942  Traced    False  MBON14                 MBON14(a3)_R           NaN         NaN                   None  1563154937   543  13634</span>
-<span class="go">1  422725634  Traced    False  MBON06        MBON06(B1&gt;a)(AVM07)_L           NaN         NaN                   None  3118269136  1356  20978</span>
-<span class="go">2  423382015  Traced    False  MBON23        MBON23(a2sp)(PDL05)_R          SFS1       291.0   [7509, 13310, 14016]   857093893   733   4466</span>
-<span class="go">3  423774471  Traced    False  MBON19       MBON19(a2p3p)(PDL05)_R          SFS1       286.0   [5459, 15006, 10552]   628019179   299   1484</span>
-<span class="go">4  424767514  Traced    False  MBON11  MBON11(y1pedc&gt;a/B)(ADM05)_R        mAOTU2       694.5  [18614, 35832, 19448]  5249327644  1643  27641</span>
+<span class="go">      bodyId                     instance    type cellBodyFiber   pre   post        size  status  cropped     statusLabel  somaRadius</span>
+<span class="go">0  300972942                 MBON14(a3)_R  MBON14           NaN   543  13634  1563154937  Traced    False  Roughly traced         NaN</span>
+<span class="go">1  422725634        MBON06(B1&gt;a)(AVM07)_L  MBON06           NaN  1356  20978  3118269136  Traced    False  Roughly traced         NaN</span>
+<span class="go">2  423382015        MBON23(a2sp)(PDL05)_R  MBON23          SFS1   733   4466   857093893  Traced    False  Roughly traced       291.0</span>
+<span class="go">3  423774471       MBON19(a2p3p)(PDL05)_R  MBON19          SFS1   299   1484   628019179  Traced    False  Roughly traced       286.0</span>
+<span class="go">4  424767514  MBON11(y1pedc&gt;a/B)(ADM05)_R  MBON11        mAOTU2  1643  27641  5249327644  Traced    False          Traced       694.5</span>
 
 <span class="gp">In [4]: </span><span class="n">neurons_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[4]:</span>
@@ -319,24 +314,6 @@ to provide your own cypher query, see <a class="reference internal" href="#neupr
 <span class="go">4  300972942       SNP(R)  526    336</span>
 </pre></div>
 </div>
-<p>Post-filter by per-ROI counts:</p>
-<blockquote>
-<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">rois</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;EB&#39;</span><span class="p">,</span> <span class="s1">&#39;PB&#39;</span><span class="p">]</span>
-<span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">inputRois</span><span class="o">=</span><span class="n">rois</span><span class="p">)</span>
-
-<span class="c1"># Select neurons that have 100 PSDs in ANY of the input ROIs</span>
-<span class="n">roi_counts_df</span><span class="p">[</span><span class="s1">&#39;post100&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;post &gt;= 100&#39;</span><span class="p">)</span>
-<span class="n">keep_neurons</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @rois and post100&#39;</span><span class="p">)[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span>
-
-<span class="c1"># Or select neurons that have 100 PSDs in ALL of the input ROIs</span>
-<span class="n">keep</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @rois&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">)[</span><span class="s1">&#39;post100&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-<span class="n">keep_neurons</span> <span class="o">=</span> <span class="n">keep</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
-
-<span class="n">neurons_df</span> <span class="o">=</span> <span class="n">neurons_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;bodyId in @keep_neurons&#39;</span><span class="p">)</span>
-<span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">roi_counts_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;bodyId in @keep_neurons&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div></blockquote>
 </dd></dl>
 
 <dl class="function">

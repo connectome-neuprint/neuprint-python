@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3+1.gedf0413 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3
+                0.3+1.gedf0413
               </div>
             
           
@@ -210,7 +210,7 @@
 <span class="sd">    Search for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.</span>
 <span class="sd">    Returns their properties, including the distibution of their synapses in all brain regions.</span>
 <span class="sd">    </span>
-<span class="sd">    This is the Python equivalent to the Neuprint Explorer `Find Neurons`_ page.</span>
+<span class="sd">    This implements a superset of the features on the Neuprint Explorer `Find Neurons`_ page.</span>
 
 <span class="sd">    Returns data in the the same format as :py:func:`fetch_custom_neurons()`,</span>
 <span class="sd">    but doesn&#39;t require you to write cypher.</span>
@@ -250,25 +250,20 @@
 <span class="sd">    </span>
 <span class="sd">        .. code-block:: ipython</span>
 <span class="sd">        </span>
-<span class="sd">            In [1]: neurons_df, roi_counts_df = fetch_neurons(</span>
-<span class="sd">               ...:     inputRois=[&#39;SIP(R)&#39;, &#39;aL(R)&#39;], status=&#39;Traced&#39;,</span>
-<span class="sd">               ...:     type=&#39;MBON.*&#39;, instance=&#39;.*&#39;, regex=True)</span>
-<span class="sd">            </span>
-<span class="sd">            In [2]: neurons_df.columns</span>
-<span class="sd">            Out[2]:</span>
-<span class="sd">            Index([&#39;bodyId&#39;, &#39;status&#39;, &#39;cropped&#39;, &#39;type&#39;, &#39;instance&#39;, &#39;cellBodyFiber&#39;,</span>
-<span class="sd">                   &#39;somaRadius&#39;, &#39;somaLocation&#39;, &#39;size&#39;, &#39;pre&#39;, &#39;post&#39;, &#39;statusLabel&#39;,</span>
-<span class="sd">                   &#39;inputRois&#39;, &#39;outputRois&#39;, &#39;roiInfo&#39;],</span>
-<span class="sd">                  dtype=&#39;object&#39;)</span>
+<span class="sd">            In [1]: from neuprint import fetch_neurons, SegmentCriteria as SC</span>
+
+<span class="sd">            In [2]: neurons_df, roi_counts_df = fetch_neurons(</span>
+<span class="sd">               ...:     SC(inputRois=[&#39;SIP(R)&#39;, &#39;aL(R)&#39;], status=&#39;Traced&#39;,</span>
+<span class="sd">               ...:        type=&#39;MBON.*&#39;, instance=&#39;.*&#39;, regex=True))</span>
 <span class="sd">            </span>
 <span class="sd">            In [3]: neurons_df.iloc[:5, :11]</span>
 <span class="sd">            Out[3]:</span>
-<span class="sd">                  bodyId  status  cropped    type                     instance cellBodyFiber  somaRadius           somaLocation        size   pre   post</span>
-<span class="sd">            0  300972942  Traced    False  MBON14                 MBON14(a3)_R           NaN         NaN                   None  1563154937   543  13634</span>
-<span class="sd">            1  422725634  Traced    False  MBON06        MBON06(B1&gt;a)(AVM07)_L           NaN         NaN                   None  3118269136  1356  20978</span>
-<span class="sd">            2  423382015  Traced    False  MBON23        MBON23(a2sp)(PDL05)_R          SFS1       291.0   [7509, 13310, 14016]   857093893   733   4466</span>
-<span class="sd">            3  423774471  Traced    False  MBON19       MBON19(a2p3p)(PDL05)_R          SFS1       286.0   [5459, 15006, 10552]   628019179   299   1484</span>
-<span class="sd">            4  424767514  Traced    False  MBON11  MBON11(y1pedc&gt;a/B)(ADM05)_R        mAOTU2       694.5  [18614, 35832, 19448]  5249327644  1643  27641</span>
+<span class="sd">                  bodyId                     instance    type cellBodyFiber   pre   post        size  status  cropped     statusLabel  somaRadius</span>
+<span class="sd">            0  300972942                 MBON14(a3)_R  MBON14           NaN   543  13634  1563154937  Traced    False  Roughly traced         NaN</span>
+<span class="sd">            1  422725634        MBON06(B1&gt;a)(AVM07)_L  MBON06           NaN  1356  20978  3118269136  Traced    False  Roughly traced         NaN</span>
+<span class="sd">            2  423382015        MBON23(a2sp)(PDL05)_R  MBON23          SFS1   733   4466   857093893  Traced    False  Roughly traced       291.0</span>
+<span class="sd">            3  423774471       MBON19(a2p3p)(PDL05)_R  MBON19          SFS1   299   1484   628019179  Traced    False  Roughly traced       286.0</span>
+<span class="sd">            4  424767514  MBON11(y1pedc&gt;a/B)(ADM05)_R  MBON11        mAOTU2  1643  27641  5249327644  Traced    False          Traced       694.5</span>
 <span class="sd">            </span>
 <span class="sd">            In [4]: neurons_df[&#39;inputRois&#39;].head()</span>
 <span class="sd">            Out[4]:</span>
@@ -287,24 +282,6 @@
 <span class="sd">            2  300972942        a3(R)   17  13224</span>
 <span class="sd">            3  300972942  MB(+ACA)(R)   17  13295</span>
 <span class="sd">            4  300972942       SNP(R)  526    336</span>
-
-<span class="sd">    Post-filter by per-ROI counts:</span>
-<span class="sd">    </span>
-<span class="sd">        .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">            rois = [&#39;EB&#39;, &#39;PB&#39;]</span>
-<span class="sd">            neurons_df, roi_counts_df = fetch_neurons(inputRois=rois)</span>
-
-<span class="sd">            # Select neurons that have 100 PSDs in ANY of the input ROIs</span>
-<span class="sd">            roi_counts_df[&#39;post100&#39;] = roi_counts_df.eval(&#39;post &gt;= 100&#39;)</span>
-<span class="sd">            keep_neurons = roi_counts_df.query(&#39;roi in @rois and post100&#39;)[&#39;bodyId&#39;]</span>
-<span class="sd">            </span>
-<span class="sd">            # Or select neurons that have 100 PSDs in ALL of the input ROIs</span>
-<span class="sd">            keep = roi_counts_df.query(&#39;roi in @rois&#39;).groupby(&#39;bodyId&#39;)[&#39;post100&#39;].all()</span>
-<span class="sd">            keep_neurons = keep[keep].index</span>
-
-<span class="sd">            neurons_df = neurons_df.query(&#39;bodyId in @keep_neurons&#39;)</span>
-<span class="sd">            roi_counts_df = roi_counts_df.query(&#39;bodyId in @keep_neurons&#39;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">any</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">criteria</span><span class="o">.</span><span class="n">bodyId</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">criteria</span><span class="o">.</span><span class="n">instance</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">criteria</span><span class="o">.</span><span class="n">type</span><span class="p">),</span>
                 <span class="nb">len</span><span class="p">(</span><span class="n">criteria</span><span class="o">.</span><span class="n">status</span><span class="p">),</span> <span class="n">criteria</span><span class="o">.</span><span class="n">cropped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span>
