@@ -416,6 +416,116 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
 
 
 @inject_client
+def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
+                         intermediate_criteria=None,
+                         timeout=5.0, *, client=None):
+    """
+    Find all neurons along the shortest path between two neurons.
+    
+    Args:
+        upstream_bodyId:
+            The starting neuron
+        
+        downstream_bodyId:
+            The destination neuron
+        
+        min_weight:
+            Minimum connection strength for each step in the path.
+        
+        intermediate_criteria (:py:class:`.SegmentCriteria`):
+            Filtering criteria for neurons on path.
+            All intermediate neurons in the path must satisfy this criteria.
+            By default, ``SegmentCriteria(status="Traced")`` is used.
+        
+        timeout:
+            Give up after this many seconds, in which case an **empty DataFrame is returned.**
+            No exception is raised!
+        
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+    
+    Returns:
+        All paths are concatenated into a single DataFrame.
+        The `path` column indicates which path that row belongs to.
+        The `weight` column indicates the connection strength to that
+        body from the previous body in the path.
+        
+        Example:
+        
+            .. code-block:: ipython
+            
+                In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
+                Out[1]:
+                      path     bodyId                       type  weight
+                0        0  329566174                    OA-VPM3       0
+                1        0  517169460                 PDL05h_pct      11
+                2        0  297251714                ADM01om_pct      15
+                3        0  294424196                PDL13ob_pct      11
+                4        0  295133927               PDM18a_d_pct      10
+                ...    ...        ...                        ...     ...
+                5773   962  511271574                 ADL24h_pct      43
+                5774   962  480923210                PDL10od_pct      18
+                5775   962  294424196                PDL13ob_pct      21
+                5776   962  295133927               PDM18a_d_pct      10
+                5777   962  294792184  olfactory multi vPN mlALT      10
+                
+                [5778 rows x 4 columns]
+    """
+    if intermediate_criteria is None:
+        intermediate_criteria = SegmentCriteria(status="Traced")
+    
+    assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
+        "This function doesn't support search criteria that specifies inputRois or outputRois. "\
+        "You can specify generic (intersecting) rois, though."
+
+    intermediate_criteria = copy.copy(intermediate_criteria)
+    intermediate_criteria.matchvar = 'n'
+
+    timeout_ms = int(1000*timeout)
+
+    nodes_where = intermediate_criteria.basic_conditions(comments=False)
+    nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
+    nodes_where = nodes_where.replace('\n', '')
+    
+    q = f"""\
+        call apoc.cypher.runTimeboxed(
+            "MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
+                   (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
+                   p = allShortestPaths((src)-[:ConnectsTo*]->(dest))
+
+            WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
+                  AND ALL (n in nodes(p) {nodes_where})
+
+            RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
+                   [x in relationships(p) | x.weight] AS weights",
+            
+            {{}},{timeout_ms}) YIELD value
+            RETURN value.path as path, value.weights AS weights
+    """
+    results_df = fetch_custom(q)
+    
+    table_indexes = []
+    table_bodies = []
+    table_types = []
+    table_weights = []
+
+    for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
+        bodies, types = zip(*path)
+        weights = [0, *weights]
+        
+        table_indexes += len(bodies)*[path_index]
+        table_bodies += bodies
+        table_types += types
+        table_weights += weights
+
+    paths_df = pd.DataFrame({'path': table_indexes,
+                             'bodyId': table_bodies,
+                             'type': table_types,
+                             'weight': table_weights})
+    return paths_df
+
+
+@inject_client
 def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.

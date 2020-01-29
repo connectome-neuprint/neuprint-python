@@ -390,7 +390,7 @@ class Client:
         dataset = dataset or self.dataset
         
         cypher = indent(dedent(cypher), '    ')
-        logger.debug(f"Issuing cypher query against dataset '{dataset}':\n{cypher}")
+        logger.debug(f"Performing cypher query against dataset '{dataset}':\n{cypher}")
         
         result = self._fetch_json(url,
                                   json={"cypher": cypher, "dataset": dataset},

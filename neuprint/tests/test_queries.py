@@ -4,7 +4,7 @@ import pandas as pd
 from neuprint import Client, default_client, set_default_client
 from neuprint import (fetch_custom, SegmentCriteria as SC, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
-                      fetch_adjacencies)
+                      fetch_adjacencies, fetch_shortest_paths)
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 @pytest.fixture(scope='module')
@@ -96,6 +96,16 @@ def test_fetch_simple_connections(client):
     assert 'upstream_roiInfo' in conn_df
     assert 'downstream_roiInfo' in conn_df
     assert isinstance(conn_df['upstream_roiInfo'].iloc[0], dict)
+
+
+def test_fetch_shortest_paths(client):
+    src = 329566174
+    dst = 294792184
+    paths_df = fetch_shortest_paths(src, dst, min_weight=10)
+    assert (paths_df.groupby('path')['bodyId'].first() == src).all()
+    assert (paths_df.groupby('path')['bodyId'].last() == dst).all()
+
+    assert (paths_df.groupby('path')['weight'].first() == 0).all()
 
 
 @pytest.mark.skip

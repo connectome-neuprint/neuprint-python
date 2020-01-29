@@ -219,12 +219,12 @@ class SegmentCriteria:
             return ""
 
 
-    def all_conditions(self, *vars, prefix=0):
+    def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
             prefix = ' '*prefix
         
-        basic_cond = self.basic_conditions(*vars)
-        roi_cond = self.directed_rois_condition(*vars)
+        basic_cond = self.basic_conditions(*vars, comments=comments)
+        roi_cond = self.directed_rois_condition(*vars, comments=comments)
         
         if roi_cond:
             combined = basic_cond + "\n\n" + roi_cond
@@ -235,7 +235,7 @@ class SegmentCriteria:
         
 
     @classmethod
-    def combined_conditions(cls, segment_conditions, vars=None, prefix=0):
+    def combined_conditions(cls, segment_conditions, vars=None, prefix=0, comments=True):
         """
         Combine the conditions from multiple SegmentCriteria into a single string,
         putting the "cheap" conditions first and the "expensive" conditions last.
@@ -248,15 +248,15 @@ class SegmentCriteria:
             vars = [sc.matchvar for sc in segment_conditions]
         
         
-        basic_conds = [sc.basic_conditions(*vars) for sc in segment_conditions]
+        basic_conds = [sc.basic_conditions(*vars, comments=comments) for sc in segment_conditions]
         basic_conds = [*filter(None, basic_conds)]
         if not basic_conds:
             return ""
         
-        basic_conds = '\n\n'.join(sc.basic_conditions(*vars) for sc in segment_conditions)
+        basic_conds = '\n\n'.join(basic_conds)
         combined = basic_conds
         
-        roi_conds = [sc.directed_rois_condition(*vars) for sc in segment_conditions]
+        roi_conds = [sc.directed_rois_condition(*vars, comments=comments) for sc in segment_conditions]
         roi_conds = [*filter(None, roi_conds)]
         if roi_conds:
             roi_conds = '\n\n'.join(roi_conds)
@@ -265,7 +265,7 @@ class SegmentCriteria:
         return indent(combined, prefix)[len(prefix):]
         
 
-    def basic_conditions(self, *vars, prefix=0):
+    def basic_conditions(self, *vars, prefix=0, comments=True):
         """
         Construct a WHERE clause based on the basic conditions
         in this criteria (i.e. everything except for the "directed ROI" conditions.)
@@ -278,7 +278,10 @@ class SegmentCriteria:
             prefix = prefix*' '
             
         # Build WHERE clause by combining exprs for each field
-        clauses = f"// -- Basic conditions for segment '{self.matchvar}' --\n"
+        clauses = ""
+        if comments:
+            clauses += f"// -- Basic conditions for segment '{self.matchvar}' --\n"
+            
         if vars:
             clauses += f"WITH {', '.join(vars)}\n"
         
@@ -289,7 +292,7 @@ class SegmentCriteria:
         return indent(clauses, prefix)[len(prefix):]
 
 
-    def directed_rois_condition(self, *vars, prefix=0):
+    def directed_rois_condition(self, *vars, prefix=0, comments=True):
         """
         Construct the ```WITH...WHERE``` statements that apply the "directed ROI"
         conditions specified by this criteria's ``inputRois`` and ``outputRois``
@@ -355,6 +358,9 @@ class SegmentCriteria:
             WHERE numMatchingOutputRois >= {min_output_matches}
             """)
             #RETURN n, matchingInputRois, matchingOutputRois
+
+        if not comments:
+            conditions = '\n'.join(filter(lambda s: '//' not in s, conditions.split('\n')))
 
         return indent(conditions, prefix)[len(prefix):]
 
