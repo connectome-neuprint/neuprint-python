@@ -31,6 +31,7 @@ But the functions in this file offer a convenient API for common queries.
     fetch_custom_neurons
     fetch_simple_connections
     fetch_common_connectivity
+    fetch_shortest_paths
     fetch_adjacencies
     fetch_traced_adjacencies
     fetch_meta

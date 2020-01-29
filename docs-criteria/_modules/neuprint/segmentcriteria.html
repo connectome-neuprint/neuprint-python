@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.segmentcriteria &mdash; neuprint-python 0.2.3+6.gcb58e49 documentation</title>
+  <title>neuprint.segmentcriteria &mdash; neuprint-python 0.2.3+7.g2fdccba documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.3+6.gcb58e49
+                0.2.3+7.g2fdccba
               </div>
             
           
@@ -374,12 +374,12 @@
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
 
-    <span class="k">def</span> <span class="nf">all_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">all_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">*</span><span class="n">prefix</span>
         
-        <span class="n">basic_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">)</span>
-        <span class="n">roi_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">directed_rois_condition</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">)</span>
+        <span class="n">basic_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span>
+        <span class="n">roi_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">directed_rois_condition</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="n">roi_cond</span><span class="p">:</span>
             <span class="n">combined</span> <span class="o">=</span> <span class="n">basic_cond</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">roi_cond</span>
@@ -390,7 +390,7 @@
         
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">combined_conditions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">segment_conditions</span><span class="p">,</span> <span class="nb">vars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">combined_conditions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">segment_conditions</span><span class="p">,</span> <span class="nb">vars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Combine the conditions from multiple SegmentCriteria into a single string,</span>
 <span class="sd">        putting the &quot;cheap&quot; conditions first and the &quot;expensive&quot; conditions last.</span>
@@ -403,15 +403,15 @@
             <span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">matchvar</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
         
         
-        <span class="n">basic_conds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
+        <span class="n">basic_conds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
         <span class="n">basic_conds</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">basic_conds</span><span class="p">)]</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">basic_conds</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
         
-        <span class="n">basic_conds</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">)</span>
+        <span class="n">basic_conds</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">basic_conds</span><span class="p">)</span>
         <span class="n">combined</span> <span class="o">=</span> <span class="n">basic_conds</span>
         
-        <span class="n">roi_conds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">directed_rois_condition</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
+        <span class="n">roi_conds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">directed_rois_condition</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
         <span class="n">roi_conds</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">roi_conds</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">roi_conds</span><span class="p">:</span>
             <span class="n">roi_conds</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">roi_conds</span><span class="p">)</span>
@@ -420,7 +420,7 @@
         <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span>
         
 
-    <span class="k">def</span> <span class="nf">basic_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">basic_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct a WHERE clause based on the basic conditions</span>
 <span class="sd">        in this criteria (i.e. everything except for the &quot;directed ROI&quot; conditions.)</span>
@@ -433,7 +433,10 @@
             <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="o">*</span><span class="s1">&#39; &#39;</span>
             
         <span class="c1"># Build WHERE clause by combining exprs for each field</span>
-        <span class="n">clauses</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;// -- Basic conditions for segment &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39; --</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">clauses</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="n">clauses</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;// -- Basic conditions for segment &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39; --</span><span class="se">\n</span><span class="s2">&quot;</span>
+            
         <span class="k">if</span> <span class="nb">vars</span><span class="p">:</span>
             <span class="n">clauses</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;WITH {&#39;, &#39;.join(vars)}</span><span class="se">\n</span><span class="s2">&quot;</span>
         
@@ -444,7 +447,7 @@
         <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">clauses</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span>
 
 
-    <span class="k">def</span> <span class="nf">directed_rois_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">directed_rois_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct the ```WITH...WHERE``` statements that apply the &quot;directed ROI&quot;</span>
 <span class="sd">        conditions specified by this criteria&#39;s ``inputRois`` and ``outputRois``</span>
@@ -510,6 +513,9 @@
 <span class="s2">            WHERE numMatchingOutputRois &gt;= </span><span class="si">{min_output_matches}</span><span class="s2"></span>
 <span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
             <span class="c1">#RETURN n, matchingInputRois, matchingOutputRois</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="n">conditions</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s1">&#39;//&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">s</span><span class="p">,</span> <span class="n">conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)))</span>
 
         <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span></div>
 

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.2.3+6.gcb58e49 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.2.3+7.g2fdccba documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.3+6.gcb58e49
+                0.2.3+7.g2fdccba
               </div>
             
           
@@ -185,19 +185,22 @@ But the functions in this file offer a convenient API for common queries.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_common_connectivity" title="neuprint.queries.fetch_common_connectivity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_common_connectivity</span></code></a>(criteria[,&nbsp;…])</td>
 <td>Given a set of neurons that match the given criteria, find neurons that connect to ALL of the neurons in the set, i.e.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>(bodies[,&nbsp;export_dir,&nbsp;…])</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_shortest_paths" title="neuprint.queries.fetch_shortest_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_shortest_paths</span></code></a>(upstream_bodyId,&nbsp;…[,&nbsp;…])</td>
+<td>Find all neurons along the shortest path between two neurons.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>(bodies[,&nbsp;export_dir,&nbsp;…])</td>
 <td>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_traced_adjacencies" title="neuprint.queries.fetch_traced_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_traced_adjacencies</span></code></a>([export_dir,&nbsp;…])</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_traced_adjacencies" title="neuprint.queries.fetch_traced_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_traced_adjacencies</span></code></a>([export_dir,&nbsp;…])</td>
 <td>Finds the set of all non-cropped traced neurons, and then calls <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_meta" title="neuprint.queries.fetch_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_meta</span></code></a>(*[,&nbsp;client])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_meta" title="neuprint.queries.fetch_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_meta</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the dataset metadata, parsing json fields where necessary.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_all_rois" title="neuprint.queries.fetch_all_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_all_rois</span></code></a>(*[,&nbsp;client])</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_all_rois" title="neuprint.queries.fetch_all_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_all_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the list of all ROIs in the dataset, from the dataset metadata.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*[,&nbsp;client])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the list of ‘primary’ ROIs in the dataset, from the dataset metadata.</td>
 </tr>
 </tbody>
@@ -442,6 +445,57 @@ For instance, if <code class="docutils literal notranslate"><span class="pre">se
 in the <code class="docutils literal notranslate"><span class="pre">downstream_</span></code> columns, and the common connections will appear in the <code class="docutils literal notranslate"><span class="pre">upstream_</span></code>
 columns.</dd>
 </dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_shortest_paths">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_shortest_paths</code><span class="sig-paren">(</span><em>upstream_bodyId</em>, <em>downstream_bodyId</em>, <em>min_weight=1</em>, <em>intermediate_criteria=None</em>, <em>timeout=5.0</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_shortest_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_shortest_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find all neurons along the shortest path between two neurons.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>upstream_bodyId</strong> – The starting neuron</li>
+<li><strong>downstream_bodyId</strong> – The destination neuron</li>
+<li><strong>min_weight</strong> – Minimum connection strength for each step in the path.</li>
+<li><strong>intermediate_criteria</strong> (<a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>) – Filtering criteria for neurons on path.
+All intermediate neurons in the path must satisfy this criteria.
+By default, <code class="docutils literal notranslate"><span class="pre">SegmentCriteria(status=&quot;Traced&quot;)</span></code> is used.</li>
+<li><strong>timeout</strong> – Give up after this many seconds, in which case an <strong>empty DataFrame is returned.</strong>
+No exception is raised!</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>All paths are concatenated into a single DataFrame.
+The <cite>path</cite> column indicates which path that row belongs to.
+The <cite>weight</cite> column indicates the connection strength to that
+body from the previous body in the path.</p>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">fetch_shortest_paths</span><span class="p">(</span><span class="mi">329566174</span><span class="p">,</span> <span class="mi">294792184</span><span class="p">,</span> <span class="n">min_weight</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="gh">Out[1]:</span>
+<span class="go">      path     bodyId                       type  weight</span>
+<span class="go">0        0  329566174                    OA-VPM3       0</span>
+<span class="go">1        0  517169460                 PDL05h_pct      11</span>
+<span class="go">2        0  297251714                ADM01om_pct      15</span>
+<span class="go">3        0  294424196                PDL13ob_pct      11</span>
+<span class="go">4        0  295133927               PDM18a_d_pct      10</span>
+<span class="go">...    ...        ...                        ...     ...</span>
+<span class="go">5773   962  511271574                 ADL24h_pct      43</span>
+<span class="go">5774   962  480923210                PDL10od_pct      18</span>
+<span class="go">5775   962  294424196                PDL13ob_pct      21</span>
+<span class="go">5776   962  295133927               PDM18a_d_pct      10</span>
+<span class="go">5777   962  294792184  olfactory multi vPN mlALT      10</span>
+
+<span class="go">[5778 rows x 4 columns]</span>
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">
