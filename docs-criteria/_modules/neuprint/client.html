@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.2.3+7.g2fdccba documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.2.3+7.gd946ee8 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.2.3+7.g2fdccba
+                0.2.3+7.gd946ee8
               </div>
             
           
@@ -545,7 +545,7 @@
         <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span>
         
         <span class="n">cypher</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="n">dedent</span><span class="p">(</span><span class="n">cypher</span><span class="p">),</span> <span class="s1">&#39;    &#39;</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Issuing cypher query against dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{cypher}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Performing cypher query against dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{cypher}</span><span class="s2">&quot;</span><span class="p">)</span>
         
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span>
                                   <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;cypher&quot;</span><span class="p">:</span> <span class="n">cypher</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">},</span>
