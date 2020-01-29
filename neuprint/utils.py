@@ -38,7 +38,7 @@ def make_args_iterable(argnames):
     return decorator
 
 
-def where_expr(field, values, regex=False, name='n'):
+def where_expr(field, values, regex=False, matchvar='n'):
     """
     Return an expression to match a particular
     field against a list of values, to be used
@@ -51,14 +51,14 @@ def where_expr(field, values, regex=False, name='n'):
         return ""
 
     if len(values) > 1:
-        return f"{name}.{field} in {[*values]}"
+        return f"{matchvar}.{field} in {[*values]}"
 
     if regex:
-        return f"{name}.{field} =~ '{values[0]}'"
+        return f"{matchvar}.{field} =~ '{values[0]}'"
 
     if isinstance(values[0], str):
-        return f"{name}.{field} = '{values[0]}'"
+        return f"{matchvar}.{field} = '{values[0]}'"
 
-    return f"{name}.{field} = {values[0]}"
+    return f"{matchvar}.{field} = {values[0]}"
 
 
