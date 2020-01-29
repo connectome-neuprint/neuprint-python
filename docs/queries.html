@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.3+1.g51eb0ce documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.3+1.gc86f0eb documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3+1.g51eb0ce
+                0.3+1.gc86f0eb
               </div>
             
           
@@ -282,8 +282,10 @@ to provide your own cypher query, see <a class="reference internal" href="#neupr
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_neurons</span><span class="p">,</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span>
 
 <span class="gp">In [2]: </span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span>
-<span class="gp">   ...: </span>    <span class="n">SC</span><span class="p">(</span><span class="n">inputRois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SIP(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;aL(R)&#39;</span><span class="p">],</span> <span class="n">status</span><span class="o">=</span><span class="s1">&#39;Traced&#39;</span><span class="p">,</span>
-<span class="gp">   ...: </span>       <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="s1">&#39;.*&#39;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="gp">   ...: </span>    <span class="n">SC</span><span class="p">(</span><span class="n">inputRois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SIP(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;aL(R)&#39;</span><span class="p">],</span>
+<span class="gp">   ...: </span>       <span class="n">status</span><span class="o">=</span><span class="s1">&#39;Traced&#39;</span><span class="p">,</span>
+<span class="gp">   ...: </span>       <span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span>
+<span class="gp">   ...: </span>       <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 
 <span class="gp">In [3]: </span><span class="n">neurons_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">5</span><span class="p">,</span> <span class="p">:</span><span class="mi">11</span><span class="p">]</span>
 <span class="gh">Out[3]:</span>
