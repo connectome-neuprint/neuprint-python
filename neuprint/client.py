@@ -130,6 +130,10 @@ def default_client():
     Obtain the default Client object to use.
     This function returns a separate copy of the
     default client for each thread (and process).
+    
+    There's usually no need to call this function.
+    It is automatically called by all query functions if
+    you haven't passed in an explict `client` argument.
     """
     global DEFAULT_NEUPRINT_CLIENT
 
@@ -153,9 +157,11 @@ def default_client():
 def set_default_client(client):
     """
     Set (or overwrite) the default Client.
-    This function is automatically called with
-    the first ``Client`` you create,
-    but you can call it again to replace the default.
+    
+    There's usually no need to call this function.
+    It's is automatically called when your first
+    ``Client`` is created, but you can call it again
+    to replace the default.
     """
     global NEUPRINT_CLIENTS
     global DEFAULT_NEUPRINT_CLIENT

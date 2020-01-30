@@ -11,6 +11,7 @@ Client
 .. autosummary::
 
     setup_debug_logging
+    default_client()
     set_default_client
 
 .. autosummary::
