@@ -49,7 +49,6 @@ Tip:
 import os
 import sys
 import copy
-import json
 import inspect
 import logging
 import functools
@@ -66,14 +65,8 @@ from urllib3.exceptions import InsecureRequestWarning
 from requests import Session, RequestException, HTTPError
 from requests.adapters import HTTPAdapter
 
-try:
-    # ujson is faster than Python's builtin json module;
-    # use it if the user happens to have it installed.
-    import ujson
-    _use_ujson = True
-except ImportError:
-    _use_ujson = False
-
+# ujson is faster than Python's builtin json module
+import ujson
 
 logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
@@ -286,7 +279,7 @@ class Client:
 
         if ':' in token:
             try:
-                token = json.loads(token)['token']
+                token = ujson.loads(token)['token']
             except Exception:
                 raise RuntimeError("Did not understand token. Please provide the entire JSON document or (only) the complete token string")
 
@@ -358,11 +351,7 @@ class Client:
 
     def _fetch_json(self, url, json=None, ispost=False):
         r = self._fetch(url, json=json, ispost=ispost)
-        
-        if _use_ujson:
-            return ujson.loads(r.content)
-        else:
-            return r.json()
+        return ujson.loads(r.content)
 
 
     ##

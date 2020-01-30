@@ -8,12 +8,8 @@ from tqdm import trange
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
 
-try:
-    # ujson is faster than Python's builtin json module;
-    # use it if the user happens to have it installed.
-    import ujson as json
-except ImportError:
-    import json
+# ujson is faster than Python's builtin json module
+import ujson
 
 
 @inject_client
@@ -226,7 +222,7 @@ def fetch_custom_neurons(q, *, client=None):
     neuron_df = neuron_df[[*neuron_cols]]
 
     # Make a list of rois for every neuron (both pre and post)
-    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: json.loads(s))
+    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: ujson.loads(s))
     neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
     neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
 
@@ -558,7 +554,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
     connections_df = pd.concat(conn_tables, ignore_index=True)
     
     # Parse roiInfo json
-    connections_df['roiInfo'] = connections_df['roiInfo'].apply(json.loads)
+    connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
 
     # Extract per-ROI counts from the roiInfo column
     # to construct one big table of per-ROI counts
