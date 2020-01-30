@@ -10,9 +10,9 @@ Client
 
 .. autosummary::
 
-    setup_debug_logging
-    default_client()
+    default_client
     set_default_client
+    setup_debug_logging
 
 .. autosummary::
 
@@ -39,5 +39,6 @@ Client
 .. autoclass:: neuprint.client.Client
    :members:
 
+.. autofunction:: default_client
 .. autofunction:: set_default_client
 .. autofunction:: setup_debug_logging

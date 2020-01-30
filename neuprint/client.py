@@ -125,6 +125,7 @@ def setup_debug_logging():
     
     logger.setLevel(logging.DEBUG)
 
+
 def default_client():
     """
     Obtain the default Client object to use.
