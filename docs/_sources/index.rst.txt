@@ -47,10 +47,6 @@ Contents
    :maxdepth: 2
 
    quickstart
-   client
-   queries
-   segmentcriteria
-   admin
-   deprecated
+   api
    development
    faq

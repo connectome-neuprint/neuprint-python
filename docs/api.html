@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Admin Tools &mdash; neuprint-python 0.3.2+3.g0fc1d39 documentation</title>
+  <title>API &mdash; neuprint-python 0.3.2+3.g0fc1d39 documentation</title>
   
 
   
@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Deprecated API" href="deprecated.html" />
-    <link rel="prev" title="SegmentCriteria" href="segmentcriteria.html" /> 
+    <link rel="next" title="Client" href="client.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,11 +87,11 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Admin Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
 </li>
@@ -142,15 +142,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-          <li><a href="api.html">API</a> &raquo;</li>
-        
-      <li>Admin Tools</li>
+      <li>API</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/admin.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -163,49 +161,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-neuprint.admin">
-<span id="admin-tools"></span><span id="admin"></span><h1>Admin Tools<a class="headerlink" href="#module-neuprint.admin" title="Permalink to this headline">¶</a></h1>
-<p>Administration utilities for managing a neuprint server.
-Using these tools requires admin privileges on the neuPrintHttp server.</p>
-<dl class="class">
-<dt id="neuprint.admin.Transaction">
-<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/admin.html#Transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>For admins only.
-Used to batch a set of operations into a single database transaction.</p>
-<p>This class is implemented as a context manager.</p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Transaction</span><span class="p">(</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
-    <span class="n">t</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;MATCH (n :Neuron </span><span class="si">{bodyId: 1047426385}</span><span class="s2">) SET m.type=TuBu4)&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Transaction constructor.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataset</strong> – Name of the dataset to use.  Required.</li>
-<li><strong>client</strong> – Client object to use.</li>
+  <div class="section" id="api">
+<span id="id1"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="queries.html">Common Queries</a></li>
+<li class="toctree-l1"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="neuprint.admin.Transaction.query">
-<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/admin.html#Transaction.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make a custom cypher query within the context
-of this transaction (allows writes).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.admin.Transaction.kill">
-<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/admin.html#Transaction.kill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
-<dd><p>Kills (rolls back) transaction.</p>
-</dd></dl>
-
-</dd></dl>
-
+</div>
 </div>
 
 
@@ -216,10 +182,10 @@ of this transaction (allows writes).</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="deprecated.html" class="btn btn-neutral float-right" title="Deprecated API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="client.html" class="btn btn-neutral float-right" title="Client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="segmentcriteria.html" class="btn btn-neutral float-left" title="SegmentCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
