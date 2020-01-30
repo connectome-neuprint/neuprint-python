@@ -95,6 +95,31 @@ def setup_debug_logging():
         
             import logging
             logging.getLogger('neuprint.client').setLevel(logging.DEBUG)
+
+    To disable cypher logging again, increase the logging severity threshold:
+    
+        .. code-block:: python
+        
+            import logging
+            logging.getLogger('neuprint.client').setLevel(logging.INFO)
+
+    Example:
+    
+        .. code-block:: ipython
+        
+            In [1]: from neuprint.client import setup_debug_logging
+               ...: from neuprint import fetch_neurons
+               ...:
+               ...: setup_debug_logging()
+               ...: neuron_df, roi_df = fetch_neurons(SC(type='MBON.*', rois=['MB(R)']))
+            [2020-01-29 21:56:05,545] DEBUG Performing cypher query against dataset 'hemibrain:v1.0':
+                MATCH (n :Neuron)
+                // -- Basic conditions for segment 'n' --
+                WHERE
+                  n.type = 'MBON.*'
+                  AND (n.`MB(R)`)
+                RETURN n
+                ORDER BY n.bodyId
     """
     formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(message)s')
     handler = logging.StreamHandler(sys.stdout)
@@ -106,7 +131,6 @@ def setup_debug_logging():
     root_logger.setLevel(logging.INFO)
     
     logger.setLevel(logging.DEBUG)
-    
 
 def default_client():
     """

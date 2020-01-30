@@ -52,3 +52,4 @@ Contents
    segmentcriteria
    admin
    deprecated
+   faq
