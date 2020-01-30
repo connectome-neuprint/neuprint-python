@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.1+1.g1a179e6 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.2 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.1+1.g1a179e6
+                0.3.2
               </div>
             
           
@@ -90,6 +90,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development.html">Development Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 
@@ -164,12 +165,8 @@
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 <span class="kn">from</span> <span class="nn">.segmentcriteria</span> <span class="kn">import</span> <span class="n">SegmentCriteria</span>
 
-<span class="k">try</span><span class="p">:</span>
-    <span class="c1"># ujson is faster than Python&#39;s builtin json module;</span>
-    <span class="c1"># use it if the user happens to have it installed.</span>
-    <span class="kn">import</span> <span class="nn">ujson</span> <span class="k">as</span> <span class="nn">json</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">json</span>
+<span class="c1"># ujson is faster than Python&#39;s builtin json module</span>
+<span class="kn">import</span> <span class="nn">ujson</span>
 
 
 <div class="viewcode-block" id="fetch_custom"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom">[docs]</a><span class="nd">@inject_client</span>
@@ -382,7 +379,7 @@
     <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[[</span><span class="o">*</span><span class="n">neuron_cols</span><span class="p">]]</span>
 
     <span class="c1"># Make a list of rois for every neuron (both pre and post)</span>
-    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
     <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;inputRois&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">)]))</span>
     <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;outputRois&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">neuron_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">)]))</span>
 
@@ -714,7 +711,7 @@
     <span class="n">connections_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">conn_tables</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     
     <span class="c1"># Parse roiInfo json</span>
-    <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+    <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
 
     <span class="c1"># Extract per-ROI counts from the roiInfo column</span>
     <span class="c1"># to construct one big table of per-ROI counts</span>

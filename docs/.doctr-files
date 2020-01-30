@@ -9,6 +9,7 @@ docs/_modules/neuprint/segmentcriteria.html
 docs/_sources/admin.rst.txt
 docs/_sources/client.rst.txt
 docs/_sources/deprecated.rst.txt
+docs/_sources/development.rst.txt
 docs/_sources/faq.rst.txt
 docs/_sources/index.rst.txt
 docs/_sources/queries.rst.txt
@@ -76,6 +77,7 @@ docs/_static/websupport.js
 docs/admin.html
 docs/client.html
 docs/deprecated.html
+docs/development.html
 docs/faq.html
 docs/genindex.html
 docs/index.html
