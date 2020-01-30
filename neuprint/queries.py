@@ -1,5 +1,6 @@
 import os
 import copy
+import collections
 from textwrap import indent, dedent
 
 import pandas as pd
@@ -497,15 +498,15 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 
 @inject_client
-def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *, client=None):
+def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Only primary ROIs are included in the results.
     Synapses which do not fall on any primary ROI are not listed in the per-ROI table.
 
     Args:
-        bodies:
-            Limit results to connections between the given bodyIds.
+        criteria:
+            Limit results to connections between bodies that match this criteria.
             
         export_dir:
             Optional. Export CSV files for the neuron table,
@@ -529,12 +530,21 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
     See also:
         :py:func:`.fetch_traced_adjacecies()`
     """
-    assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
+    if not isinstance(criteria, SegmentCriteria):
+        # A previous version of this function accepted a list of bodyIds.
+        # We still support that for now.
+        assert isinstance(criteria, collections.abc.Iterable), \
+            f"Invalid criteria: {criteria}"
+        criteria = SegmentCriteria(bodyId=criteria)
+    
+    criteria = copy.copy(criteria)
+    criteria.matchvar = 'n'
+    
     q = f"""\
-        WITH {[*bodies]} as bodies
-        MATCH (n:{label})
-        WHERE n.bodyId in bodies
+        MATCH (n:{criteria.label})
+        {criteria.all_conditions(prefix=8)}
         RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
+        ORDER BY n.bodyId
     """
     neurons_df = client.fetch_custom(q)
     
@@ -544,7 +554,7 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
         stop = start + batch_size
         batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
         q = f"""\
-            MATCH (n:{label})-[e:ConnectsTo]->(m:{label})
+            MATCH (n:{criteria.label})-[e:ConnectsTo]->(m:{criteria.label})
             WHERE n.bodyId in {batch_neurons} AND m.status = "Traced" AND (not m.cropped)
             RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
         """
@@ -592,8 +602,8 @@ def fetch_adjacencies(bodies, export_dir=None, batch_size=200, label='Neuron', *
 @inject_client
 def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     """
-    Finds the set of all non-cropped traced neurons, and then
-    calls :py:func:`.fetch_adjacencies()`. 
+    Convenience function for calling :py:func:`.fetch_adjacencies()`
+    for traced, non-cropped neurons. 
  
     Note:
         On the hemibrain dataset, this function takes a few minutes to run,
@@ -626,14 +636,8 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             3   202916528    234292899       4
             4   202916528    264986706       2        
      """
-    # Fetch the list of traced, non-cropped Neurons
-    q = """\
-        MATCH (n:Neuron)
-        WHERE n.status = "Traced" AND (not n.cropped)
-        RETURN n.bodyId as bodyId
-    """
-    bodies = client.fetch_custom(q)['bodyId']
-    return fetch_adjacencies(bodies, export_dir, batch_size, client=client)
+    criteria = SegmentCriteria(status="Traced", cropped=False)
+    return fetch_adjacencies(criteria, export_dir, batch_size, client=client)
 
 
 @inject_client

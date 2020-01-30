@@ -119,11 +119,24 @@ def test_fetch_traced_adjacencies(client):
 def test_fetch_adjacencies(client):
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
-    _neuron_df, roi_conn_df = fetch_adjacencies(bodies)
+    neuron_df, roi_conn_df = fetch_adjacencies(SC(bodyId=bodies))
 
     # Should not include non-primary ROIs (or None)
     assert not (set(roi_conn_df['roi'].unique()) - set(fetch_primary_rois()))
 
+    #
+    # For backwards compatibility with the previous API,
+    # You can also pass a list of bodyIds to this function (instead of SegmentCriteria).
+    #
+    bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+    neuron_df2, roi_conn_df2 = fetch_adjacencies(bodies)
+
+    # Should not include non-primary ROIs (or None)
+    assert not (set(roi_conn_df['roi'].unique()) - set(fetch_primary_rois()))
+
+    assert (neuron_df == neuron_df2).all().all()
+    assert (roi_conn_df == roi_conn_df2).all().all()
 
 def test_fetch_meta(client):
     meta = fetch_meta()
