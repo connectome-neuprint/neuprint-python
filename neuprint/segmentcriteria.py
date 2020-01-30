@@ -172,7 +172,7 @@ class SegmentCriteria:
     def basic_exprs(self):
         """
         Return the list of expressions that correspond
-        to the members in this SegmentWhere object.
+        to the members in this SegmentCriteria object.
         They're intended be combined (via 'AND') in
         the WHERE clause of a cypher query. 
         """
