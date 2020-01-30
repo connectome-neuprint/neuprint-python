@@ -129,11 +129,8 @@ def fetch_neurons(criteria, *, client=None):
             3  300972942  MB(+ACA)(R)   17  13295
             4  300972942       SNP(R)  526    336
     """
-    assert any([len(criteria.bodyId), len(criteria.instance), len(criteria.type),
-                len(criteria.status), criteria.cropped is not None,
-                len(criteria.inputRois), len(criteria.outputRois),
-                criteria.min_pre, criteria.min_post]), \
-        "Please provide at least one component to the criteria!"
+    criteria = copy.copy(criteria)
+    criteria.matchvar = 'n'
 
     q = f"""\
         MATCH (n :{criteria.label})

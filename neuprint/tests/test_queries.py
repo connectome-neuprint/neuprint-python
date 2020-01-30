@@ -27,6 +27,9 @@ def test_fetch_neurons(client):
     bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
 
+    # This works but takes a long time.
+    #neurons, roi_counts = fetch_neurons(SC())
+
     neurons, roi_counts = fetch_neurons(SC(bodyId=bodyId))
     assert len(neurons) == len(bodyId)
     assert set(roi_counts['bodyId']) == set(bodyId)
