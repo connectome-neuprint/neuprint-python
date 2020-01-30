@@ -104,12 +104,12 @@ def setup_debug_logging():
                ...: from neuprint import fetch_neurons
                ...:
                ...: setup_debug_logging()
-               ...: neuron_df, roi_df = fetch_neurons(SC(type='MBON.*', rois=['MB(R)']))
-            [2020-01-29 21:56:05,545] DEBUG Performing cypher query against dataset 'hemibrain:v1.0':
+               ...: neuron_df, roi_df = fetch_neurons(SC(type='MBON.*', rois=['MB(R)'], regex=True))
+            [2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset 'hemibrain:v1.0':
                 MATCH (n :Neuron)
                 // -- Basic conditions for segment 'n' --
                 WHERE
-                  n.type = 'MBON.*'
+                  n.type =~ 'MBON.*'
                   AND (n.`MB(R)`)
                 RETURN n
                 ORDER BY n.bodyId

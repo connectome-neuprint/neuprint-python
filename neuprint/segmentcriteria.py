@@ -111,6 +111,15 @@ class SegmentCriteria:
         
         assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
         assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
+
+        if not regex and len(instance) == 1:
+            assert '.*' not in instance[0], \
+                f"instance appears to be a regular expression ('{instance[0]}'), but you didn't pass regex=True"
+        
+        if not regex and len(type) == 1:
+            assert '.*' not in type[0], \
+                f"type appears to be a regular expression ('{type[0]}'), but you didn't pass regex=True"
+        
         assert roi_req in ('any', 'all')
 
         assert min_roi_inputs <= 1 or inputRois, \
