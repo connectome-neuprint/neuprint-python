@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.2+3.g0fc1d39 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.3 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.2+3.g0fc1d39
+                0.3.3
               </div>
             
           
@@ -153,6 +153,7 @@
   <h1>Source code for neuprint.queries</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
@@ -650,15 +651,15 @@
 
 
 <div class="viewcode-block" id="fetch_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_adjacencies">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">bodies</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</span>
 <span class="sd">    Only primary ROIs are included in the results.</span>
 <span class="sd">    Synapses which do not fall on any primary ROI are not listed in the per-ROI table.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        bodies:</span>
-<span class="sd">            Limit results to connections between the given bodyIds.</span>
+<span class="sd">        criteria:</span>
+<span class="sd">            Limit results to connections between bodies that match this criteria.</span>
 <span class="sd">            </span>
 <span class="sd">        export_dir:</span>
 <span class="sd">            Optional. Export CSV files for the neuron table,</span>
@@ -682,12 +683,21 @@
 <span class="sd">    See also:</span>
 <span class="sd">        :py:func:`.fetch_traced_adjacecies()`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Invalid label: </span><span class="si">{label}</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+        <span class="c1"># A previous version of this function accepted a list of bodyIds.</span>
+        <span class="c1"># We still support that for now.</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
+            <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{criteria}</span><span class="s2">&quot;</span>
+        <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">criteria</span><span class="p">)</span>
+    
+    <span class="n">criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
+    <span class="n">criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+    
     <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        WITH {[*bodies]} as bodies</span>
-<span class="s2">        MATCH (n:</span><span class="si">{label}</span><span class="s2">)</span>
-<span class="s2">        WHERE n.bodyId in bodies</span>
+<span class="s2">        MATCH (n:</span><span class="si">{criteria.label}</span><span class="s2">)</span>
+<span class="s2">        {criteria.all_conditions(prefix=8)}</span>
 <span class="s2">        RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
+<span class="s2">        ORDER BY n.bodyId</span>
 <span class="s2">    &quot;&quot;&quot;</span>
     <span class="n">neurons_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
     
@@ -697,7 +707,7 @@
         <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">batch_size</span>
         <span class="n">batch_neurons</span> <span class="o">=</span> <span class="n">neurons_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">            MATCH (n:</span><span class="si">{label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{label}</span><span class="s2">)</span>
+<span class="s2">            MATCH (n:</span><span class="si">{criteria.label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{criteria.label}</span><span class="s2">)</span>
 <span class="s2">            WHERE n.bodyId in </span><span class="si">{batch_neurons}</span><span class="s2"> AND m.status = &quot;Traced&quot; AND (not m.cropped)</span>
 <span class="s2">            RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
 <span class="s2">        &quot;&quot;&quot;</span>
@@ -745,8 +755,8 @@
 <div class="viewcode-block" id="fetch_traced_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_traced_adjacencies">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_traced_adjacencies</span><span class="p">(</span><span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Finds the set of all non-cropped traced neurons, and then</span>
-<span class="sd">    calls :py:func:`.fetch_adjacencies()`. </span>
+<span class="sd">    Convenience function for calling :py:func:`.fetch_adjacencies()`</span>
+<span class="sd">    for traced, non-cropped neurons. </span>
 <span class="sd"> </span>
 <span class="sd">    Note:</span>
 <span class="sd">        On the hemibrain dataset, this function takes a few minutes to run,</span>
@@ -779,14 +789,8 @@
 <span class="sd">            3   202916528    234292899       4</span>
 <span class="sd">            4   202916528    264986706       2        </span>
 <span class="sd">     &quot;&quot;&quot;</span>
-    <span class="c1"># Fetch the list of traced, non-cropped Neurons</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        MATCH (n:Neuron)</span>
-<span class="s2">        WHERE n.status = &quot;Traced&quot; AND (not n.cropped)</span>
-<span class="s2">        RETURN n.bodyId as bodyId</span>
-<span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">bodies</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">bodies</span><span class="p">,</span> <span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
+    <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
