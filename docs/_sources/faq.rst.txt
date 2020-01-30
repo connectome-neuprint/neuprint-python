@@ -4,7 +4,7 @@ FAQ
 ===
 
 What Cypher Queries is my code using?
-----------------------------------------------
+-------------------------------------
 
 Enable debug logging to see the cypher queries that are being sent to the neuPrint server.
 See :py:func:`.setup_debug_logging()` for details.
@@ -14,7 +14,7 @@ Can this library be used with ``multiprocessing``?
 --------------------------------------------------
 
 Yes. ``neuprint-python``'s mechanism for selecting the "default" client will automatically
-copy the default client once per thread/process if necessary.  Thus, as you're not
+copy the default client once per thread/process if necessary.  Thus, as long you're not
 explicitly passing a ``client`` to any ``neuprint`` queries, your code can be run in
 a ``threading`` or ``multiprocessing`` context without special care.
 But if you are *not* using the default client, then it's your responsibility to create

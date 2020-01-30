@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>FAQ &mdash; neuprint-python 0.3.1+1.gc63efbd documentation</title>
+  <title>FAQ &mdash; neuprint-python 0.3.1+1.g1a179e6 documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.3.1+1.gc63efbd
+                0.3.1+1.g1a179e6
               </div>
             
           
@@ -171,7 +171,7 @@ See <a class="reference internal" href="client.html#neuprint.client.setup_debug_
 <div class="section" id="can-this-library-be-used-with-multiprocessing">
 <h2>Can this library be used with <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code>?<a class="headerlink" href="#can-this-library-be-used-with-multiprocessing" title="Permalink to this headline">¶</a></h2>
 <p>Yes. <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>’s mechanism for selecting the “default” client will automatically
-copy the default client once per thread/process if necessary.  Thus, as you’re not
+copy the default client once per thread/process if necessary.  Thus, as long you’re not
 explicitly passing a <code class="docutils literal notranslate"><span class="pre">client</span></code> to any <code class="docutils literal notranslate"><span class="pre">neuprint</span></code> queries, your code can be run in
 a <code class="docutils literal notranslate"><span class="pre">threading</span></code> or <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> context without special care.
 But if you are <em>not</em> using the default client, then it’s your responsibility to create
