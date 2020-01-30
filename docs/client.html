@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Client &mdash; neuprint-python 0.3.1 documentation</title>
+  <title>Client &mdash; neuprint-python 0.3.1+1.gc63efbd documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.1
+                0.3.1+1.gc63efbd
               </div>
             
           
@@ -92,6 +92,7 @@
 <li class="toctree-l1"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
             
@@ -534,6 +535,29 @@ Enable neuprint debug logging via:</p>
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;neuprint.client&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
 </pre></div>
 </div>
+</div>
+<p>To disable cypher logging again, increase the logging severity threshold:</p>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;neuprint.client&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint.client</span> <span class="kn">import</span> <span class="n">setup_debug_logging</span>
+<span class="gp">   ...: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_neurons</span>
+<span class="gp">   ...:</span>
+<span class="gp">   ...: </span><span class="n">setup_debug_logging</span><span class="p">()</span>
+<span class="gp">   ...: </span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MB(R)&#39;</span><span class="p">]))</span>
+<span class="go">[2020-01-29 21:56:05,545] DEBUG Performing cypher query against dataset &#39;hemibrain:v1.0&#39;:</span>
+<span class="go">    MATCH (n :Neuron)</span>
+<span class="go">    // -- Basic conditions for segment &#39;n&#39; --</span>
+<span class="go">    WHERE</span>
+<span class="go">      n.type = &#39;MBON.*&#39;</span>
+<span class="go">      AND (n.`MB(R)`)</span>
+<span class="go">    RETURN n</span>
+<span class="go">    ORDER BY n.bodyId</span>
+</pre></div>
 </div>
 </dd></dl>
 

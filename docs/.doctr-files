@@ -1,3 +1,4 @@
+docs/_images/neuprint-explorer-cypher-button.png
 docs/_images/token-screenshot.png
 docs/_modules/index.html
 docs/_modules/neuprint/admin.html
@@ -8,6 +9,7 @@ docs/_modules/neuprint/segmentcriteria.html
 docs/_sources/admin.rst.txt
 docs/_sources/client.rst.txt
 docs/_sources/deprecated.rst.txt
+docs/_sources/faq.rst.txt
 docs/_sources/index.rst.txt
 docs/_sources/queries.rst.txt
 docs/_sources/quickstart.rst.txt
@@ -60,6 +62,7 @@ docs/_static/js/modernizr.min.js
 docs/_static/js/theme.js
 docs/_static/language_data.js
 docs/_static/minus.png
+docs/_static/neuprint-explorer-cypher-button.png
 docs/_static/plus.png
 docs/_static/pygments.css
 docs/_static/searchtools.js
@@ -73,6 +76,7 @@ docs/_static/websupport.js
 docs/admin.html
 docs/client.html
 docs/deprecated.html
+docs/faq.html
 docs/genindex.html
 docs/index.html
 docs/objects.inv

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.3.1 documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.3.1+1.gc63efbd documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.1
+                0.3.1+1.gc63efbd
               </div>
             
           
@@ -90,6 +90,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../admin.html">Admin Tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../deprecated.html">Deprecated API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 
             
@@ -250,6 +251,31 @@
 <span class="sd">        </span>
 <span class="sd">            import logging</span>
 <span class="sd">            logging.getLogger(&#39;neuprint.client&#39;).setLevel(logging.DEBUG)</span>
+
+<span class="sd">    To disable cypher logging again, increase the logging severity threshold:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: python</span>
+<span class="sd">        </span>
+<span class="sd">            import logging</span>
+<span class="sd">            logging.getLogger(&#39;neuprint.client&#39;).setLevel(logging.INFO)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: ipython</span>
+<span class="sd">        </span>
+<span class="sd">            In [1]: from neuprint.client import setup_debug_logging</span>
+<span class="sd">               ...: from neuprint import fetch_neurons</span>
+<span class="sd">               ...:</span>
+<span class="sd">               ...: setup_debug_logging()</span>
+<span class="sd">               ...: neuron_df, roi_df = fetch_neurons(SC(type=&#39;MBON.*&#39;, rois=[&#39;MB(R)&#39;]))</span>
+<span class="sd">            [2020-01-29 21:56:05,545] DEBUG Performing cypher query against dataset &#39;hemibrain:v1.0&#39;:</span>
+<span class="sd">                MATCH (n :Neuron)</span>
+<span class="sd">                // -- Basic conditions for segment &#39;n&#39; --</span>
+<span class="sd">                WHERE</span>
+<span class="sd">                  n.type = &#39;MBON.*&#39;</span>
+<span class="sd">                  AND (n.`MB(R)`)</span>
+<span class="sd">                RETURN n</span>
+<span class="sd">                ORDER BY n.bodyId</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%(asctime)s</span><span class="s1">] </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
@@ -261,7 +287,6 @@
     <span class="n">root_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
     
     <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
-    
 
 <span class="k">def</span> <span class="nf">default_client</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
