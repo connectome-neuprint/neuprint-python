@@ -8,6 +8,7 @@ from tqdm import trange
 
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
+from .utils import make_iterable
 
 # ujson is faster than Python's builtin json module
 import ujson
@@ -753,3 +754,49 @@ def fetch_primary_rois(*, client=None):
     rois = client.fetch_custom(q)['rois'].iloc[0]
     return sorted(rois)
 
+
+@inject_client
+def fetch_synapses(query, *, client=None):
+    """
+    Fetch synapses for given neuron(s).
+
+    Args:
+        query:
+            Can be either a single bodyID, a list-like of multiple body IDs,
+            a DataFrame with a `bodyId` column or a :py:class:`.SegmentCriteria`
+            used to find a set of body IDs.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+        DataFrame in which each row represent a single synapse.
+
+    """
+    datatype = 'Neuron'
+    if isinstance(query, pd.DataFrame):
+        assert 'bodyId' in query.columns, 'DataFrame must have "bodyId" column'
+        query = query.bodyId.values
+    elif isinstance(query, SegmentCriteria):
+        datatype = query.label
+        neurons_df, roi_counts_df = fetch_neurons(query, client=client)
+        query = neurons_df.bodyId.values
+
+    query = make_iterable(query)
+
+    cypher = f"""
+              WITH {list(query)} AS bodyIds
+              MATCH (n:`{datatype}`)-[:Contains]->(ss:SynapseSet),
+                    (ss)-[:Contains]->(s:Synapse)
+              WHERE n.bodyId in bodyIds
+              RETURN DISTINCT n.bodyId, s
+              """
+
+    # Get data
+    r = client.fetch_custom(cypher, format='json')
+
+    # Flatten Synapse data
+    s = pd.io.json.json_normalize([s[1] for s in r['data']])
+    s['bodyId'] = [s[0] for s in r['data']]
+
+    return s.fillna(False)
