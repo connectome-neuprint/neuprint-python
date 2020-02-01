@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.3.3 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.3.4 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.4
               </div>
             
           
@@ -396,6 +396,12 @@ One row per connection, with columns for upstream and downstream properties.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This function is not intended to be used with very large neuron sets.
+To fetch all adjacencies between a large set of neurons,
+set <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>, which queries the server in batches.</p>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -487,8 +493,9 @@ body from the previous body in the path.</p>
 <dt id="neuprint.queries.fetch_adjacencies">
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>criteria</em>, <em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
-Only primary ROIs are included in the results.
-Synapses which do not fall on any primary ROI are not listed in the per-ROI table.</p>
+Only primary ROIs are included in the per-ROI connection table.
+Connections outside of the primary ROIs are labeled with the special name
+<cite>NotPrimary</cite> (which is not currently an ROI name in neuprint itself).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -504,9 +511,9 @@ This parameter specifies the batch size.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df)</span></code>, containing the
-table of neuron IDs and the per-ROI connection table, respectively.
-Only primary ROIs are included in the per-ROI connection table.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df,</span> <span class="pre">total_conn_df)</span></code>,
+containing the table of neuron IDs and the per-ROI connection table,
+respectively. See caveat above concerning non-primary ROIs.</p>
 </td>
 </tr>
 </tbody>

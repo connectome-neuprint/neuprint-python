@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.3 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.4 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.4
               </div>
             
           
@@ -418,6 +418,11 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        DataFrame</span>
 <span class="sd">        One row per connection, with columns for upstream and downstream properties.</span>
+<span class="sd">        </span>
+<span class="sd">    Note:</span>
+<span class="sd">        This function is not intended to be used with very large neuron sets.</span>
+<span class="sd">        To fetch all adjacencies between a large set of neurons,</span>
+<span class="sd">        set :py:func:`fetch_adjacencies()`, which queries the server in batches.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">SC</span> <span class="o">=</span> <span class="n">SegmentCriteria</span>
     <span class="n">up_crit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">upstream_criteria</span><span class="p">)</span>
@@ -654,9 +659,10 @@
 <span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</span>
-<span class="sd">    Only primary ROIs are included in the results.</span>
-<span class="sd">    Synapses which do not fall on any primary ROI are not listed in the per-ROI table.</span>
-
+<span class="sd">    Only primary ROIs are included in the per-ROI connection table.</span>
+<span class="sd">    Connections outside of the primary ROIs are labeled with the special name</span>
+<span class="sd">    `NotPrimary` (which is not currently an ROI name in neuprint itself).</span>
+<span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">        criteria:</span>
 <span class="sd">            Limit results to connections between bodies that match this criteria.</span>
@@ -676,9 +682,9 @@
 <span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
 <span class="sd">    </span>
 <span class="sd">    Returns:</span>
-<span class="sd">        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the</span>
-<span class="sd">        table of neuron IDs and the per-ROI connection table, respectively.</span>
-<span class="sd">        Only primary ROIs are included in the per-ROI connection table.</span>
+<span class="sd">        Two DataFrames, ``(traced_neurons_df, roi_conn_df, total_conn_df)``,</span>
+<span class="sd">        containing the table of neuron IDs and the per-ROI connection table,</span>
+<span class="sd">        respectively. See caveat above concerning non-primary ROIs.</span>
 
 <span class="sd">    See also:</span>
 <span class="sd">        :py:func:`.fetch_traced_adjacecies()`</span>
@@ -708,7 +714,7 @@
         <span class="n">batch_neurons</span> <span class="o">=</span> <span class="n">neurons_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="s2">            MATCH (n:</span><span class="si">{criteria.label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{criteria.label}</span><span class="s2">)</span>
-<span class="s2">            WHERE n.bodyId in </span><span class="si">{batch_neurons}</span><span class="s2"> AND m.status = &quot;Traced&quot; AND (not m.cropped)</span>
+<span class="s2">            WHERE n.bodyId in </span><span class="si">{batch_neurons}</span><span class="s2"></span>
 <span class="s2">            RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
 <span class="s2">        &quot;&quot;&quot;</span>
         <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="p">)</span>
@@ -733,20 +739,42 @@
     <span class="c1"># Filter out non-primary ROIs</span>
     <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @client.primary_rois&#39;</span><span class="p">)</span>
     
+    <span class="c1"># Add a special roi name &quot;NotPrimary&quot; to account for the</span>
+    <span class="c1"># difference between total weights and primary-only weights.</span>
+    <span class="n">primary_totals</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="n">totals_df</span> <span class="o">=</span> <span class="n">connections_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">primary_totals</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_all&#39;</span><span class="p">,</span> <span class="s1">&#39;_primary&#39;</span><span class="p">])</span>
+    <span class="n">totals_df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">totals_df</span><span class="p">[</span><span class="s1">&#39;weight_notprimary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">totals_df</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;weight_all - weight_primary&#39;</span><span class="p">)</span>
+    <span class="n">totals_df</span><span class="p">[</span><span class="s1">&#39;roi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;NotPrimary&#39;</span>
+    
+    <span class="c1"># Drop weights other than NotPrimary</span>
+    <span class="n">totals_df</span> <span class="o">=</span> <span class="n">totals_df</span><span class="p">[[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;weight_notprimary&#39;</span><span class="p">]]</span>
+    <span class="n">totals_df</span> <span class="o">=</span> <span class="n">totals_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;weight_notprimary&#39;</span><span class="p">:</span> <span class="s1">&#39;weight&#39;</span><span class="p">})</span>
+    
+    <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">roi_conn_df</span><span class="p">,</span> <span class="n">totals_df</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="c1"># Double-check our math against the original totals</span>
+    <span class="n">summed_roi_weights</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">compare_df</span> <span class="o">=</span> <span class="n">connections_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">summed_roi_weights</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_orig&#39;</span><span class="p">,</span> <span class="s1">&#39;_summed&#39;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">compare_df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;weight_orig == weight_summed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    
     <span class="c1"># Export to CSV</span>
     <span class="k">if</span> <span class="n">export_dir</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">export_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># Export Nodes</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/traced-neurons.csv&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/neurons.csv&quot;</span>
         <span class="n">neurons_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         
         <span class="c1"># Export Edges (per ROI)</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/traced-roi-connections.csv&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/roi-connections.csv&quot;</span>
         <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># Export Edges (total weight)</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/traced-total-connections.csv&quot;</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{export_dir}</span><span class="s2">/total-connections.csv&quot;</span>
         <span class="n">connections_df</span><span class="p">[[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">neurons_df</span><span class="p">,</span> <span class="n">roi_conn_df</span></div>
