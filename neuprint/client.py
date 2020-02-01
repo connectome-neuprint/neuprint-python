@@ -300,6 +300,10 @@ class Client:
             protocol = server.split('://')[0]
             raise RuntimeError(f"Unknown protocol: {protocol}")
 
+        # Remove trailing backslash
+        while server.endswith('/'):
+            server = server[:-1]
+
         self.server = server
 
         self.session = Session()
