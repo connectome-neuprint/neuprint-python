@@ -561,7 +561,7 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
         batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
         q = f"""\
             MATCH (n:{criteria.label})-[e:ConnectsTo]->(m:{criteria.label})
-            WHERE n.bodyId in {batch_neurons} AND m.status = "Traced" AND (not m.cropped)
+            WHERE n.bodyId in {batch_neurons}
             RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
         """
         conn_tables.append( client.fetch_custom(q) )
@@ -613,15 +613,15 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
         os.makedirs(export_dir, exist_ok=True)
 
         # Export Nodes
-        p = f"{export_dir}/traced-neurons.csv"
+        p = f"{export_dir}/neurons.csv"
         neurons_df.to_csv(p, index=False, header=True)
         
         # Export Edges (per ROI)
-        p = f"{export_dir}/traced-roi-connections.csv"
+        p = f"{export_dir}/roi-connections.csv"
         roi_conn_df.to_csv(p, index=False, header=True)
 
         # Export Edges (total weight)
-        p = f"{export_dir}/traced-total-connections.csv"
+        p = f"{export_dir}/total-connections.csv"
         connections_df[['bodyId_pre', 'bodyId_post', 'weight']].to_csv(p, index=False, header=True)
 
     return neurons_df, roi_conn_df
