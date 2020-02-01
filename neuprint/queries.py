@@ -265,6 +265,11 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
     Returns:
         DataFrame
         One row per connection, with columns for upstream and downstream properties.
+        
+    Note:
+        This function is not intended to be used with very large neuron sets.
+        To fetch all adjacencies between a large set of neurons,
+        set :py:func:`fetch_adjacencies()`, which queries the server in batches.
     """
     SC = SegmentCriteria
     up_crit = copy.deepcopy(upstream_criteria)
@@ -501,9 +506,10 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
-    Only primary ROIs are included in the results.
-    Synapses which do not fall on any primary ROI are not listed in the per-ROI table.
-
+    Only primary ROIs are included in the per-ROI connection table.
+    Connections outside of the primary ROIs are labeled with the special name
+    `NotPrimary` (which is not currently an ROI name in neuprint itself).
+    
     Args:
         criteria:
             Limit results to connections between bodies that match this criteria.
@@ -523,9 +529,9 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
             If not provided, the global default :py:class:`.Client` will be used.
     
     Returns:
-        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing the
-        table of neuron IDs and the per-ROI connection table, respectively.
-        Only primary ROIs are included in the per-ROI connection table.
+        Two DataFrames, ``(traced_neurons_df, roi_conn_df, total_conn_df)``,
+        containing the table of neuron IDs and the per-ROI connection table,
+        respectively. See caveat above concerning non-primary ROIs.
 
     See also:
         :py:func:`.fetch_traced_adjacecies()`
@@ -555,7 +561,7 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
         batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
         q = f"""\
             MATCH (n:{criteria.label})-[e:ConnectsTo]->(m:{criteria.label})
-            WHERE n.bodyId in {batch_neurons} AND m.status = "Traced" AND (not m.cropped)
+            WHERE n.bodyId in {batch_neurons}
             RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
         """
         conn_tables.append( client.fetch_custom(q) )
@@ -580,20 +586,42 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
     # Filter out non-primary ROIs
     roi_conn_df = roi_conn_df.query('roi in @client.primary_rois')
     
+    # Add a special roi name "NotPrimary" to account for the
+    # difference between total weights and primary-only weights.
+    primary_totals = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+
+    totals_df = connections_df.merge(primary_totals, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_all', '_primary'])
+    totals_df.fillna(0, inplace=True)
+    totals_df['weight_notprimary'] = totals_df.eval('weight_all - weight_primary')
+    totals_df['roi'] = 'NotPrimary'
+    
+    # Drop weights other than NotPrimary
+    totals_df = totals_df[['bodyId_pre', 'bodyId_post', 'roi', 'weight_notprimary']]
+    totals_df = totals_df.rename(columns={'weight_notprimary': 'weight'})
+    
+    roi_conn_df = pd.concat((roi_conn_df, totals_df), ignore_index=True)
+    roi_conn_df.sort_values(['bodyId_pre', 'bodyId_post', 'weight'], ascending=[True, True, False], inplace=True)
+    roi_conn_df.reset_index(drop=True, inplace=True)
+    
+    # Double-check our math against the original totals
+    summed_roi_weights = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+    compare_df = connections_df.merge(summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
+    assert compare_df.fillna(0).eval('weight_orig == weight_summed').all()
+    
     # Export to CSV
     if export_dir:
         os.makedirs(export_dir, exist_ok=True)
 
         # Export Nodes
-        p = f"{export_dir}/traced-neurons.csv"
+        p = f"{export_dir}/neurons.csv"
         neurons_df.to_csv(p, index=False, header=True)
         
         # Export Edges (per ROI)
-        p = f"{export_dir}/traced-roi-connections.csv"
+        p = f"{export_dir}/roi-connections.csv"
         roi_conn_df.to_csv(p, index=False, header=True)
 
         # Export Edges (total weight)
-        p = f"{export_dir}/traced-total-connections.csv"
+        p = f"{export_dir}/total-connections.csv"
         connections_df[['bodyId_pre', 'bodyId_post', 'weight']].to_csv(p, index=False, header=True)
 
     return neurons_df, roi_conn_df

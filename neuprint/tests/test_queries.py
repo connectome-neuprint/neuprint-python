@@ -121,8 +121,8 @@ def test_fetch_adjacencies(client):
               424379864, 425790257, 451982486, 480927537, 481268653]
     neuron_df, roi_conn_df = fetch_adjacencies(SC(bodyId=bodies))
 
-    # Should not include non-primary ROIs (or None)
-    assert not (set(roi_conn_df['roi'].unique()) - set(fetch_primary_rois()))
+    # Should not include non-primary ROIs (except 'NotPrimary')
+    assert not ({*roi_conn_df['roi'].unique()} - {*fetch_primary_rois()} - {'NotPrimary'})
 
     #
     # For backwards compatibility with the previous API,
@@ -132,8 +132,8 @@ def test_fetch_adjacencies(client):
               424379864, 425790257, 451982486, 480927537, 481268653]
     neuron_df2, roi_conn_df2 = fetch_adjacencies(bodies)
 
-    # Should not include non-primary ROIs (or None)
-    assert not (set(roi_conn_df['roi'].unique()) - set(fetch_primary_rois()))
+    # Should not include non-primary ROIs (except 'NotPrimary')
+    assert not ({*roi_conn_df2['roi'].unique()} - {*fetch_primary_rois()} - {'NotPrimary'})
 
     assert (neuron_df == neuron_df2).all().all()
     assert (roi_conn_df == roi_conn_df2).all().all()
