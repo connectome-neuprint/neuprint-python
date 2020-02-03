@@ -1,5 +1,8 @@
-from textwrap import indent, dedent
 import numpy as np
+
+from textwrap import indent, dedent
+from collections.abc import Iterable
+
 from .utils import make_args_iterable, where_expr
 from .client import inject_client
 
@@ -9,7 +12,7 @@ class SegmentCriteria:
     This class does not send queries itself, but you use it to specify search
     criteria for various query functions.
     """
-    
+
     @inject_client
     @make_args_iterable(['bodyId', 'instance', 'type', 'status', 'rois', 'inputRois', 'outputRois'])
     def __init__( self, matchvar='n', *,
@@ -21,24 +24,24 @@ class SegmentCriteria:
                   client=None ):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
-        
+
         .. note::
-        
+
             **Options for specifying ROI criteria**
-        
+
             The ``rois`` argument merely matches neurons that intersect the given ROIs at all
             (without distinguishing between inputs and outputs).
-            
+
             The ``inputRois`` and ``outputRois`` arguments allow you to put requirements
             on whether or not neurons have inputs or outputs in the listed ROIs.
             It results a more expensive query, but its more powerful.
             It also enables you to require a minimum number of connections in the given
             ``inputRois`` or ``outputRois`` using the ``min_roi_inputs`` and ``min_roi_outputs``
             criteria.
-            
+
             In either case, use use ``roi_req`` to specify whether a neuron must match just
             one (``any``) of the listed ROIs, or ``all`` of them.
-        
+
         Args:
             matchvar (str):
                 An arbitrary cypher variable name to use when this
@@ -60,23 +63,23 @@ class SegmentCriteria:
                 regular expressions, rather than exact match strings.
 
             status (str or list of str):
-            
+
             cropped (bool):
                 If given, restrict results to neurons that are cropped or not.
 
             min_pre (int):
                 Exclude neurons that don't have at least this many t-bars (outputs) overall,
-                regardless of how many t-bars exist in any particular ROI. 
+                regardless of how many t-bars exist in any particular ROI.
 
             min_post (int):
                 Exclude neurons that don't have at least this many PSDs (inputs) overall,
                 regardless of how many PSDs exist in any particular ROI.
-            
+
             rois (str or list of str):
                 ROIs that merely intersect the neuron, without specifying whether
                 they're intersected by input or output synapses.
                 If not provided, will be auto-set from ``inputRois`` and ``outputRois``.
-            
+
             inputRois (str or list of str):
                 Only Neurons which have inputs in EVERY one of the given ROIs will be matched.
                 ``regex`` does not apply to this parameter.
@@ -108,18 +111,18 @@ class SegmentCriteria:
         assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
         assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
             "bodyId should be an integer or list of integers"
-        
+
         assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
         assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
 
         if not regex and len(instance) == 1:
             assert '.*' not in instance[0], \
                 f"instance appears to be a regular expression ('{instance[0]}'), but you didn't pass regex=True"
-        
+
         if not regex and len(type) == 1:
             assert '.*' not in type[0], \
                 f"type appears to be a regular expression ('{type[0]}'), but you didn't pass regex=True"
-        
+
         assert roi_req in ('any', 'all')
 
         assert min_roi_inputs <= 1 or inputRois, \
@@ -137,13 +140,13 @@ class SegmentCriteria:
 
         # Make sure intersecting is a superset of inputRois and outputRois
         rois |= {*inputRois, *outputRois}
-        
+
         # Verify ROI names against known ROIs.
         neuprint_rois = {*client.all_rois}
         unknown_input_rois = inputRois - neuprint_rois
         if unknown_input_rois:
             raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
-    
+
         unknown_output_rois = outputRois - neuprint_rois
         if unknown_output_rois:
             raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
@@ -168,13 +171,48 @@ class SegmentCriteria:
         self.regex = regex
         self.label = label
         self.roi_req = roi_req
-    
+
+        # Keep track of parameters for comparisons
+        self.__params = ['matchvar', 'bodyId', 'instance', 'type', 'status',
+                         'cropped', 'min_pre', 'min_post', 'rois', 'inputRois',
+                         'outputRois', 'min_roi_inputs', 'min_roi_outputs',
+                         'regex', 'label', 'roi_req']
+
+    def __eq__(self, value):
+        """
+        Implement comparison between criteria.
+        """
+        if not isinstance(value, SegmentCriteria):
+            return NotImplemented
+
+        # Return True if it's the exact same object
+        if id(self) == id(value):
+            return True
+
+        # Compare attributes one by one
+        for at in self.__params:
+            me = getattr(self, at)
+            other = getattr(value, at)
+
+            # If not the same type, return False
+            if type(me) != type(other):
+                return False
+
+            # If iterable (e.g. ROIs or body IDs) we don't care about order
+            if isinstance(me, Iterable):
+                if not all([v in other for v in me]):
+                    return False
+            elif me != other:
+                return False
+        # If all comparisons have passed, return True
+        return True
+
     def basic_exprs(self):
         """
         Return the list of expressions that correspond
         to the members in this SegmentCriteria object.
         They're intended be combined (via 'AND') in
-        the WHERE clause of a cypher query. 
+        the WHERE clause of a cypher query.
         """
         exprs = [self.bodyId_expr(), self.instance_expr(), self.type_expr(), self.status_expr(),
                  self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr()]
