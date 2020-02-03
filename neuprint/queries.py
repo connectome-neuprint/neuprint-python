@@ -504,21 +504,26 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 
 @inject_client
-def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
     `NotPrimary` (which is not currently an ROI name in neuprint itself).
-    
+
     Args:
-        criteria:
-            Limit results to connections between bodies that match this criteria.
-            
+        sources:
+            Limit results to connections from bodies that match this criteria.
+            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
+            will include all bodies upstream of ``targets``.
+        targets:
+            Limit results to connections to bodies that match this criteria.
+            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
+            will include all bodies downstream of ``sources``.
         export_dir:
             Optional. Export CSV files for the neuron table,
             connection table (total weight), and connection table (per ROI).
-            
+
         batch_size:
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
@@ -528,48 +533,104 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
-        Two DataFrames, ``(traced_neurons_df, roi_conn_df, total_conn_df)``,
-        containing the table of neuron IDs and the per-ROI connection table,
-        respectively. See caveat above concerning non-primary ROIs.
+        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing a
+        table of neuron IDs and the per-ROI connection table, respectively.
+        See caveat above concerning non-primary ROIs.
 
     See also:
-        :py:func:`.fetch_traced_adjacecies()`
+        :py:func:`.fetch_traced_adjacencies()`
+
     """
-    if not isinstance(criteria, SegmentCriteria):
-        # A previous version of this function accepted a list of bodyIds.
-        # We still support that for now.
-        assert isinstance(criteria, collections.abc.Iterable), \
-            f"Invalid criteria: {criteria}"
-        criteria = SegmentCriteria(bodyId=criteria)
-    
-    criteria = copy.copy(criteria)
-    criteria.matchvar = 'n'
-    
-    q = f"""\
-        MATCH (n:{criteria.label})
-        {criteria.all_conditions(prefix=8)}
-        RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
-        ORDER BY n.bodyId
-    """
-    neurons_df = client.fetch_custom(q)
-    
+    assert (not isinstance(sources, type(None)) or not isinstance(targets, type(None))), \
+              "Must provide either sources or targets or both."
+
+    neurons_df = []
+    if not isinstance(sources, type(None)):
+        if not isinstance(sources, SegmentCriteria):
+            # A previous version of this function accepted a list of bodyIds.
+            # We still support that for now.
+            assert isinstance(sources, collections.abc.Iterable), \
+                f"Invalid criteria: {sources}"
+            sources = SegmentCriteria(bodyId=sources)
+        else:
+            sources = copy.copy(sources)
+            sources.matchvar = 'n'
+
+        q = f"""\
+            MATCH (n:{sources.label})
+            {sources.all_conditions(prefix=8)}
+            RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
+            ORDER BY n.bodyId
+        """
+        sources_df = client.fetch_custom(q)
+        neurons_df.append(sources_df)
+
+    if not isinstance(targets, type(None)):
+        if not isinstance(targets, SegmentCriteria):
+            # A previous version of this function accepted a list of bodyIds.
+            # We still support that for now.
+            assert isinstance(targets, collections.abc.Iterable), \
+                f"Invalid criteria: {targets}"
+            targets = SegmentCriteria(bodyId=targets)
+        else:
+            targets = copy.copy(targets)
+            targets.matchvar = 'n'
+
+        # Save time in cases where sources = targets
+        if targets == sources:
+            targets_df = sources_df
+        else:
+            q = f"""\
+                MATCH (n:{targets.label})
+                {targets.all_conditions(prefix=8)}
+                RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
+                ORDER BY n.bodyId
+            """
+            targets_df = client.fetch_custom(q)
+            neurons_df.append(targets_df)
+
+    # Merge sources and targets
+    neurons_df = pd.concat(neurons_df, ignore_index=True)
+    neurons_df.drop_duplicates('bodyId', inplace=True)
+    neurons_df.reset_index(drop=True, inplace=True)
+
+    # If either sources or targets is not provided use the others label
+    sources_label = sources.label if sources else targets.label
+    targets_label = targets.label if targets else sources.label
+
     # Fetch connections in batches
     conn_tables = []
-    for start in trange(0, len(neurons_df), batch_size):
-        stop = start + batch_size
-        batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
-        q = f"""\
-            MATCH (n:{criteria.label})-[e:ConnectsTo]->(m:{criteria.label})
-            WHERE n.bodyId in {batch_neurons}
-            RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
-        """
-        conn_tables.append( client.fetch_custom(q) )
-    
+    sources_iter = sources_df.bodyId.values if sources else [None]
+    targets_iter = targets_df.bodyId.values if targets else [None]
+    for sources_start in trange(0, len(sources_iter), batch_size,
+                                disable=len(sources_iter) == 1,
+                                leave=False):
+        sources_stop = sources_start + batch_size
+        sources_batch = sources_iter[sources_start:sources_stop]
+        for targets_start in trange(0, len(targets_iter), batch_size,
+                                    disable=len(targets_iter) == 1,
+                                    leave=False):
+            targets_stop = targets_start + batch_size
+            targets_batch = targets_iter[targets_start:targets_stop]
+
+            where = []
+            if any(sources_batch):
+                where.append(f'n.bodyId in {sources_batch.tolist()}')
+            if any(targets_batch):
+                where.append(f'm.bodyId in {targets_batch.tolist()}')
+
+            q = f"""\
+                MATCH (n:{sources_label})-[e:ConnectsTo]->(m:{targets_label})
+                WHERE {'AND '.join(where)}
+                RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
+            """
+            conn_tables.append(client.fetch_custom(q))
+
     # Combine batches
     connections_df = pd.concat(conn_tables, ignore_index=True)
-    
+
     # Parse roiInfo json
     connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
 
