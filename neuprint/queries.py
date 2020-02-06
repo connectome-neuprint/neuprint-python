@@ -1,14 +1,16 @@
 import os
+import sys
 import copy
 import collections
 from textwrap import indent, dedent
 
+import numpy as np
 import pandas as pd
 from tqdm import trange
 
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
-from .utils import make_iterable
+from .utils import make_args_iterable
 
 # ujson is faster than Python's builtin json module
 import ujson
@@ -817,47 +819,195 @@ def fetch_primary_rois(*, client=None):
 
 
 @inject_client
-def fetch_synapses(query, *, client=None):
+@make_args_iterable(['syn_rois'])
+def fetch_synapses(segment_criteria, syn_rois=None, syn_type=None, syn_conf=0.0, primary_only=False, *, client=None):
     """
-    Fetch synapses for given neuron(s).
+    Fetch synapses from neuron or selection of neurons.
 
     Args:
-        query:
+    
+        criteria (SegmentCriteria or bodyId list):
             Can be either a single bodyID, a list-like of multiple body IDs,
             a DataFrame with a `bodyId` column or a :py:class:`.SegmentCriteria`
             used to find a set of body IDs.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        syn_rois (str or list):
+            Optional.
+            If provided, limit the results to synapses that reside within the given roi(s).
+
+        syn_type:
+            If provided, limit results to either 'pre' or 'post' synapses.
+
+        syn_conf (float, 0.0-1.0):
+            Limit results to synapses of at least this confidence rating.
+
+        primary_only (boolean):
+            If True, only include primary ROI names in the results.
+            If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.
+            Since 'primary' ROIs do not overlap, each synapse will be listed only once.
+            Otherwise, all ROI names will be included in the results.
+            In that case, some synapses will be listed multiple times -- once per intersecting ROI.
+            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
+
+            Note:
+                This paramter does NOT filter by ROI. (See the ``syn_rois`` argument for that.)
+                It merely determines whether or not synapses should be duplicated in
+                the output for every non-primary ROI the synapse intersects.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
     Returns:
+    
         DataFrame in which each row represent a single synapse.
-
+        Unless ``primary_only`` was specified, some synapses may be listed more than once,
+        if they reside in more than one overlapping ROI.
+    
+    Example:
+    
+        .. code-block:: ipython
+        
+            In [1]: from neuprint import SegmentCriteria as SC, fetch_synapses
+               ...: fetch_synapses(SC(type='ADL.*', regex=True, rois=['FB']),
+               ...:                syn_rois=['LH(R)', 'SIP(R)'], primary_only=True)
+            Out[1]:
+                    bodyId  type     roi      x      y      z  confidence
+            0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            1   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            2   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            3   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            4   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            5   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            6   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            7   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            8   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            9   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            10  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            11  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            12  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            13  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            14  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            15  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            16  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            17  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            18  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            19  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            20  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            21  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            22  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            23  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            24  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            25  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            26  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            27  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            28  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            29   764377593  post   LH(R)   8043  21587  15146    0.804000
+            30   764377593  post   LH(R)   8057  21493  15140    0.906482
+            31   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+            32   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+            33   859152522  post  SIP(R)  13349  25337  13653    0.818386
+            34   859152522  post  SIP(R)  12793  26362  14202    0.926918
+            35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
     """
-    datatype = 'Neuron'
-    if isinstance(query, pd.DataFrame):
-        assert 'bodyId' in query.columns, 'DataFrame must have "bodyId" column'
-        query = query.bodyId.values
-    elif isinstance(query, SegmentCriteria):
-        datatype = query.label
-        neurons_df, roi_counts_df = fetch_neurons(query, client=client)
-        query = neurons_df.bodyId.values
+    criteria = segment_criteria
+    del segment_criteria
 
-    query = make_iterable(query)
+    if isinstance(criteria, pd.DataFrame):
+        assert 'bodyId' in criteria.columns, \
+            'If passing a DataFrame, it must have "bodyId" column'
+        criteria = SegmentCriteria(bodyId=criteria['bodyId'].values)
+    elif not isinstance(criteria, SegmentCriteria):
+        criteria = SegmentCriteria(bodyId=criteria)
 
-    cypher = f"""
-              WITH {list(query)} AS bodyIds
-              MATCH (n:`{datatype}`)-[:Contains]->(ss:SynapseSet),
-                    (ss)-[:Contains]->(s:Synapse)
-              WHERE n.bodyId in bodyIds
-              RETURN DISTINCT n.bodyId, s
-              """
+    assert isinstance(criteria, SegmentCriteria), \
+        ("Please pass a SegmentCriteria, a list of bodyIds, "
+         f"or a DataFrame with a 'bodyId' column, not {criteria}")
 
-    # Get data
-    r = client.fetch_custom(cypher, format='json')
+    criteria = copy.copy(criteria)
+    criteria.matchvar = 'n'
 
-    # Flatten Synapse data
-    s = pd.io.json.json_normalize([s[1] for s in r['data']])
-    s['bodyId'] = [s[0] for s in r['data']]
+    unknown_rois = {*syn_rois} - {*client.all_rois}
+    assert not unknown_rois, f"Unrecognized synapse rois: {unknown_rois}"
+    assert syn_type in ('pre', 'post', None), \
+        f"Invalid synapse type: {syn_type}.  Choices are 'pre' and 'post'."
 
-    return s.fillna(False)
+    if primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    # If the user specified rois to filter synapses by, but hasn't specified rois
+    # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
+    if syn_rois and not criteria.rois:
+        criteria.rois = {*syn_rois}
+        criteria.roi_req = 'any'
+
+    # Construct cypher for synapse filters (if any)
+    def syn_condition(prefix=''):
+        if isinstance(prefix, int):
+            prefix = ' '*prefix
+        
+        roi_expr = conf_expr = type_expr = ""
+        if syn_rois:
+            roi_expr = '(' + ' OR '.join([f's.`{roi}`' for roi in syn_rois]) + ')'
+
+        if syn_conf:
+            conf_expr = f'(s.confidence > {syn_conf})'
+
+        if syn_type:
+            type_expr = f"(s.type = '{syn_type}')"
+
+        syn_exprs = [*filter(None, [roi_expr, conf_expr, type_expr])]
+
+        if not syn_exprs:
+            syn_cond = ""
+        else:
+            syn_cond = dedent(f"""\
+                // -- Filter synapses --
+                WITH n, s
+                WHERE {' AND '.join(syn_exprs)}
+                """)
+            syn_cond = indent(syn_cond, prefix)[len(prefix):]
+
+        return syn_cond
+
+    # Fetch results
+    cypher = dedent(f"""\
+        MATCH (n:{criteria.label})-[:Contains]->(ss:SynapseSet),
+              (ss)-[:Contains]->(s:Synapse)
+
+        {criteria.all_conditions(prefix=8)}
+        {syn_condition(prefix=8)}
+        RETURN n.bodyId as bodyId, s
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for body, syn_info in data:
+        x, y, z = syn_info['location']['coordinates']
+        syn_rois = return_rois & {*syn_info.keys()}
+        conf = syn_info['confidence']
+        syn_type = syn_info['type']
+
+        for roi in syn_rois:
+            syn_table.append((body, syn_type, roi, x, y, z, conf))
+
+        if not syn_rois:
+            syn_table.append((body, syn_type, None, x, y, z, conf))
+
+    syn_df = pd.DataFrame(syn_table, columns=['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence'])
+
+    # Save RAM with smaller dtypes and interned strings
+    syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
+    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['x'] = syn_df['x'].astype(np.int32)
+    syn_df['y'] = syn_df['y'].astype(np.int32)
+    syn_df['z'] = syn_df['z'].astype(np.int32)
+    syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    return syn_df

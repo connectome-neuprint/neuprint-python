@@ -37,6 +37,7 @@ But the functions in this file offer a convenient API for common queries.
     fetch_meta
     fetch_all_rois
     fetch_primary_rois
+    fetch_synapses
 
 .. automodule:: neuprint.queries
    :members:
