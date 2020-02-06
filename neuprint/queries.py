@@ -10,6 +10,7 @@ from tqdm import trange
 
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
+from .synapsecriteria import SynapseCriteria
 from .utils import make_args_iterable
 
 # ujson is faster than Python's builtin json module
@@ -819,14 +820,13 @@ def fetch_primary_rois(*, client=None):
 
 
 @inject_client
-@make_args_iterable(['syn_rois'])
-def fetch_synapses(segment_criteria, syn_rois=None, syn_type=None, syn_conf=0.0, primary_only=False, *, client=None):
+def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
     """
     Fetch synapses from neuron or selection of neurons.
 
     Args:
     
-        criteria (SegmentCriteria or bodyId list):
+        segment_criteria (SegmentCriteria or bodyId list):
             Can be either a single bodyID, a list-like of multiple body IDs,
             a DataFrame with a `bodyId` column or a :py:class:`.SegmentCriteria`
             used to find a set of body IDs.
@@ -835,28 +835,9 @@ def fetch_synapses(segment_criteria, syn_rois=None, syn_type=None, syn_conf=0.0,
                 Any ROI criteria specified in this argument does not affect
                 which synapses are returned, only which bodies are inspected.
 
-        syn_rois (str or list):
-            Optional.
-            If provided, limit the results to synapses that reside within the given roi(s).
-
-        syn_type:
-            If provided, limit results to either 'pre' or 'post' synapses.
-
-        syn_conf (float, 0.0-1.0):
-            Limit results to synapses of at least this confidence rating.
-
-        primary_only (boolean):
-            If True, only include primary ROI names in the results.
-            If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.
-            Since 'primary' ROIs do not overlap, each synapse will be listed only once.
-            Otherwise, all ROI names will be included in the results.
-            In that case, some synapses will be listed multiple times -- once per intersecting ROI.
-            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
-
-            Note:
-                This paramter does NOT filter by ROI. (See the ``syn_rois`` argument for that.)
-                It merely determines whether or not synapses should be duplicated in
-                the output for every non-primary ROI the synapse intersects.
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            See :py:class:`.SynapseCriteria` for details.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -871,9 +852,9 @@ def fetch_synapses(segment_criteria, syn_rois=None, syn_type=None, syn_conf=0.0,
     
         .. code-block:: ipython
         
-            In [1]: from neuprint import SegmentCriteria as SC, fetch_synapses
+            In [1]: from neuprint import SegmentCriteria as SC, SynapseCriteria as SynC, fetch_synapses
                ...: fetch_synapses(SC(type='ADL.*', regex=True, rois=['FB']),
-               ...:                syn_rois=['LH(R)', 'SIP(R)'], primary_only=True)
+               ...:                SynC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
             Out[1]:
                     bodyId  type     roi      x      y      z  confidence
             0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
@@ -912,76 +893,43 @@ def fetch_synapses(segment_criteria, syn_rois=None, syn_type=None, syn_conf=0.0,
             33   859152522  post  SIP(R)  13349  25337  13653    0.818386
             34   859152522  post  SIP(R)  12793  26362  14202    0.926918
             35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+
     """
-    criteria = segment_criteria
-    del segment_criteria
-
-    if isinstance(criteria, pd.DataFrame):
-        assert 'bodyId' in criteria.columns, \
+    if isinstance(segment_criteria, pd.DataFrame):
+        assert 'bodyId' in segment_criteria.columns, \
             'If passing a DataFrame, it must have "bodyId" column'
-        criteria = SegmentCriteria(bodyId=criteria['bodyId'].values)
-    elif not isinstance(criteria, SegmentCriteria):
-        criteria = SegmentCriteria(bodyId=criteria)
+        segment_criteria = SegmentCriteria(bodyId=segment_criteria['bodyId'].values, client=client)
+    elif not isinstance(segment_criteria, SegmentCriteria):
+        segment_criteria = SegmentCriteria(bodyId=segment_criteria, client=client)
 
-    assert isinstance(criteria, SegmentCriteria), \
+    assert isinstance(segment_criteria, SegmentCriteria), \
         ("Please pass a SegmentCriteria, a list of bodyIds, "
-         f"or a DataFrame with a 'bodyId' column, not {criteria}")
+         f"or a DataFrame with a 'bodyId' column, not {segment_criteria}")
 
-    criteria = copy.copy(criteria)
-    criteria.matchvar = 'n'
+    segment_criteria = copy.copy(segment_criteria)
+    segment_criteria.matchvar = 'n'
+    
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria()
 
-    unknown_rois = {*syn_rois} - {*client.all_rois}
-    assert not unknown_rois, f"Unrecognized synapse rois: {unknown_rois}"
-    assert syn_type in ('pre', 'post', None), \
-        f"Invalid synapse type: {syn_type}.  Choices are 'pre' and 'post'."
-
-    if primary_only:
+    if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
     else:
         return_rois = {*client.all_rois}
 
     # If the user specified rois to filter synapses by, but hasn't specified rois
     # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
-    if syn_rois and not criteria.rois:
-        criteria.rois = {*syn_rois}
-        criteria.roi_req = 'any'
-
-    # Construct cypher for synapse filters (if any)
-    def syn_condition(prefix=''):
-        if isinstance(prefix, int):
-            prefix = ' '*prefix
-        
-        roi_expr = conf_expr = type_expr = ""
-        if syn_rois:
-            roi_expr = '(' + ' OR '.join([f's.`{roi}`' for roi in syn_rois]) + ')'
-
-        if syn_conf:
-            conf_expr = f'(s.confidence > {syn_conf})'
-
-        if syn_type:
-            type_expr = f"(s.type = '{syn_type}')"
-
-        syn_exprs = [*filter(None, [roi_expr, conf_expr, type_expr])]
-
-        if not syn_exprs:
-            syn_cond = ""
-        else:
-            syn_cond = dedent(f"""\
-                // -- Filter synapses --
-                WITH n, s
-                WHERE {' AND '.join(syn_exprs)}
-                """)
-            syn_cond = indent(syn_cond, prefix)[len(prefix):]
-
-        return syn_cond
+    if synapse_criteria.rois and not segment_criteria.rois:
+        segment_criteria.rois = {*synapse_criteria.rois}
+        segment_criteria.roi_req = 'any'
 
     # Fetch results
     cypher = dedent(f"""\
-        MATCH (n:{criteria.label})-[:Contains]->(ss:SynapseSet),
+        MATCH (n:{segment_criteria.label})-[:Contains]->(ss:SynapseSet),
               (ss)-[:Contains]->(s:Synapse)
 
-        {criteria.all_conditions(prefix=8)}
-        {syn_condition(prefix=8)}
+        {segment_criteria.all_conditions(prefix=8)}
+        {synapse_criteria.condition('n', 's', prefix=8)}
         RETURN n.bodyId as bodyId, s
     """)
     data = client.fetch_custom(cypher, format='json')['data']

@@ -3,6 +3,7 @@ import platform
 
 from .client import Client, default_client, set_default_client
 from .segmentcriteria import SegmentCriteria
+from .synapsecriteria import SynapseCriteria
 from .queries import *
 
 from ._version import get_versions

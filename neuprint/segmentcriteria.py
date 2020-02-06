@@ -294,7 +294,6 @@ class SegmentCriteria:
         if not vars:
             vars = [sc.matchvar for sc in segment_conditions]
         
-        
         basic_conds = [sc.basic_conditions(*vars, comments=comments) for sc in segment_conditions]
         basic_conds = [*filter(None, basic_conds)]
         if not basic_conds:

@@ -9,5 +9,6 @@ API
    client
    queries
    segmentcriteria
+   synapsecriteria
    admin
    deprecated
