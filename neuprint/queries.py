@@ -730,7 +730,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             4   202916528    264986706       2        
      """
     criteria = SegmentCriteria(status="Traced", cropped=False)
-    return fetch_adjacencies(criteria, export_dir, batch_size, client=client)
+    return fetch_adjacencies(criteria, criteria, export_dir, batch_size, client=client)
 
 
 @inject_client
