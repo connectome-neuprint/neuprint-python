@@ -930,18 +930,22 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
         {segment_criteria.all_conditions(prefix=8)}
         {synapse_criteria.condition('n', 's', prefix=8)}
-        RETURN n.bodyId as bodyId, s
+        
+        RETURN n.bodyId as bodyId,
+               s.type as type,
+               s.confidence as confidence,
+               s.location.x as x,
+               s.location.y as y,
+               s.location.z as z,
+               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
     """)
     data = client.fetch_custom(cypher, format='json')['data']
 
     # Assemble DataFrame
     syn_table = []
-    for body, syn_info in data:
-        x, y, z = syn_info['location']['coordinates']
+    for body, syn_type, conf, x, y, z, syn_info in data:
+        # Exclude non-primary ROIs if necessary
         syn_rois = return_rois & {*syn_info.keys()}
-        conf = syn_info['confidence']
-        syn_type = syn_info['type']
-
         for roi in syn_rois:
             syn_table.append((body, syn_type, roi, x, y, z, conf))
 
