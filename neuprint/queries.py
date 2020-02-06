@@ -839,6 +839,13 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
             Optional. Allows you to filter synapses by roi, type, confidence.
             See :py:class:`.SynapseCriteria` for details.
 
+            If the criteria specifies ``primary_only=True`` only primary ROIs will be returned in the results.
+            If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.
+            (Since 'primary' ROIs do not overlap, each synapse will be listed only once.)
+            Otherwise, all ROI names will be included in the results.
+            In that case, some synapses will be listed multiple times -- once per intersecting ROI.
+            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 

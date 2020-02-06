@@ -33,16 +33,12 @@ class SynapseCriteria:
     
             primary_only (boolean):
                 If True, only include primary ROI names in the results.
-                If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.
-                Since 'primary' ROIs do not overlap, each synapse will be listed only once.
-                Otherwise, all ROI names will be included in the results.
-                In that case, some synapses will be listed multiple times -- once per intersecting ROI.
-                If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
-    
+
                 Note:
-                    This paramter does NOT filter by ROI. (See the ``rois`` argument for that.)
-                    It merely determines whether or not synapses should be duplicated in
-                    the output for every non-primary ROI the synapse intersects.
+                    This parameter does NOT filter by ROI. (See the ``rois`` argument for that.)
+                    It merely determines whether or each synapse should be associated with exactly
+                    one ROI in the query output, or with multiple ROIs (one for every non-primary
+                    ROI the synapse intersects).
     
             client:
                 Used to validate ROI names.
