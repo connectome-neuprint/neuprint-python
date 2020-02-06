@@ -626,7 +626,7 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
 
             q = f"""\
                 MATCH (n:{sources_label})-[e:ConnectsTo]->(m:{targets_label})
-                WHERE {'AND '.join(where)}
+                WHERE {' AND '.join(where)}
                 RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
             """
             conn_tables.append(client.fetch_custom(q))
@@ -968,5 +968,197 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
     syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    return syn_df
+
+
+@inject_client
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, *, client=None):
+    """
+    Fetch a table of synapse-synapse connections between source and target neurons.
+    
+    Args:
+    
+        source_criteria (SegmentCriteria or bodyId list):
+            Criteria to by which to filter source (pre-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        target_criteria (SegmentCriteria or bodyId list):
+            Criteria to by which to filter target (post-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            The same criteria is used to filter both ``pre`` and ``post`` sides
+            of the connection.
+            By default, ``SynapseCriteria(primary_only=True)`` is used.
+            
+            If ``primary_only`` is specified in the criteria, then the resulting
+            ``upstream_roi`` and ``downstream_roi`` columns will contain a single
+            string (or ``None``) in every row.
+            
+            Otherwise, the roi columns will contain a list of ROIs for every row.
+            (Primary ROIs do not overlap, so every synapse resides in only one
+            (or zero) primary ROI.)
+            See :py:class:`.SynapseCriteria` for details.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+    
+        DataFrame in which each row represents a single synaptic connection
+        between an upstream and downstream body.
+        Synapse locations are listed in columns ``[ux, uy, uz]`` and ``[dx, dy, dz]``
+        for the upstream and downstream syanpses, respectively.
+        The ``upstream_roi`` and ``downstream_roi`` columns will contain either strings
+        or lists-of-strings, depending on the ``primary_only`` synapse criteria as
+        described above.
+    
+    Example:
+
+        .. code-block:: ipython
+
+            In [1]: from neuprint import fetch_synapse_connections, SegmentCriteria as SC, SynapseCriteria as SynC
+               ...: fetch_synapse_connections(SC(bodyId=792368888), None, SynC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
+            Out[1]:
+                upstream_bodyId  downstream_bodyId upstream_roi downstream_roi     ux     uy     uz     dx     dy     dz  upstream_confidence  downstream_confidence
+            0         792368888          754547386       PED(R)         PED(R)  14013  27747  19307  13992  27720  19313                0.996               0.401035
+            1         792368888          612742248       PED(R)         PED(R)  14049  27681  19417  14044  27662  19408                0.921               0.881487
+            2         792368888         5901225361       PED(R)         PED(R)  14049  27681  19417  14055  27653  19420                0.921               0.436177
+            3         792368888         5813117385       SMP(R)         SMP(R)  23630  29443  16297  23634  29437  16279                0.984               0.970746
+            4         792368888         5813083733       SMP(R)         SMP(R)  23630  29443  16297  23634  29419  16288                0.984               0.933871
+            5         792368888         5813058320       SMP(R)         SMP(R)  18662  34144  12692  18655  34155  12697                0.853               0.995000
+            6         792368888         5812981989       PED(R)         PED(R)  14331  27921  20099  14351  27928  20085                0.904               0.877373
+            7         792368888         5812981381       PED(R)         PED(R)  14331  27921  20099  14301  27919  20109                0.904               0.567321
+            8         792368888         5812981381       PED(R)         PED(R)  14013  27747  19307  14020  27747  19285                0.996               0.697836
+            9         792368888         5812979314       PED(R)         PED(R)  14331  27921  20099  14329  27942  20109                0.904               0.638362
+            10        792368888          424767514       PED(R)         PED(R)  14331  27921  20099  14324  27934  20085                0.904               0.985734
+            11        792368888          424767514       PED(R)         PED(R)  14013  27747  19307  14020  27760  19294                0.996               0.942831
+            12        792368888          424767514       PED(R)         PED(R)  14049  27681  19417  14040  27663  19420                0.921               0.993586
+            13        792368888          331662710       SMP(R)         SMP(R)  23630  29443  16297  23644  29429  16302                0.984               0.996389
+            14        792368888         1196854070       PED(R)         PED(R)  14331  27921  20099  14317  27935  20101                0.904               0.968408
+            15        792368888         1131831702       SMP(R)         SMP(R)  23630  29443  16297  23651  29434  16316                0.984               0.362952
+    """
+    def prepare_sc(sc, matchvar):
+        if sc is None:
+            sc = SegmentCriteria()
+        
+        if isinstance(sc, pd.DataFrame):
+            assert 'bodyId' in sc.columns, \
+                'If passing a DataFrame, it must have "bodyId" column'
+            sc = SegmentCriteria(bodyId=sc['bodyId'].values, client=client)
+        elif not isinstance(sc, SegmentCriteria):
+            sc = SegmentCriteria(bodyId=sc, client=client)
+    
+        assert isinstance(sc, SegmentCriteria), \
+            ("Please pass a SegmentCriteria, a list of bodyIds, "
+             f"or a DataFrame with a 'bodyId' column, not {sc}")
+    
+        sc = copy.copy(sc)
+        sc.matchvar = matchvar
+        
+        # If the user specified rois to filter synapses by, but hasn't specified rois
+        # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
+        if sc.rois and not sc.rois:
+            sc.rois = {*synapse_criteria.rois}
+            sc.roi_req = 'any'
+    
+        return sc
+
+    assert source_criteria is not None or target_criteria is not None, \
+        "Please specify either source or target search criteria (or both)."
+
+    source_criteria = prepare_sc(source_criteria, 'n')
+    target_criteria = prepare_sc(target_criteria, 'm')
+
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria(primary_only=True)
+    
+    if synapse_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    source_syn_crit = copy.copy(synapse_criteria)
+    target_syn_crit = copy.copy(synapse_criteria)
+
+    source_syn_crit.matchvar = 'ns'
+    target_syn_crit.matchvar = 'ms'
+    
+    # Fetch results
+    cypher = dedent(f"""\
+        MATCH (n:{source_criteria.label})-[:ConnectsTo]->(m:{target_criteria.label}),
+              (n)-[:Contains]->(nss:SynapseSet),
+              (m)-[:Contains]->(mss:SynapseSet),
+              (nss)-[:ConnectsTo]->(mss),
+              (nss)-[:Contains]->(ns:Synapse),
+              (mss)-[:Contains]->(ms:Synapse),
+              (ns)-[:SynapsesTo]->(ms)
+
+        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
+
+        {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
+        {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
+        
+        RETURN n.bodyId as upstream_bodyId,
+               m.bodyId as downstream_bodyId,
+               ns.location.x as ux,
+               ns.location.y as uy,
+               ns.location.z as uz,
+               ms.location.x as dx,
+               ms.location.y as dy,
+               ms.location.z as dz,
+               ns.confidence as up_conf,
+               ms.confidence as dn_conf,
+               apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as upstream_info,
+               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as downstream_info
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for upstream_body, downstream_body, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, upstream_info, downstream_info in data:
+        # Exclude non-primary ROIs if necessary
+        up_rois = return_rois & {*upstream_info.keys()}
+        dn_rois = return_rois & {*downstream_info.keys()}
+
+        # Intern the ROIs to save RAM
+        up_rois = sorted(map(sys.intern, up_rois))
+        dn_rois = sorted(map(sys.intern, dn_rois))
+
+        up_rois = up_rois or [None]
+        dn_rois = dn_rois or [None]
+
+        # Should be (at most) one ROI when primary_only=True,
+        # so only show that one (not a list)
+        if synapse_criteria.primary_only:
+            up_rois = up_rois[0]
+            dn_rois = dn_rois[0]
+        
+        syn_table.append((upstream_body, downstream_body, up_rois, dn_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
+
+    syn_df = pd.DataFrame(syn_table, columns=['upstream_bodyId', 'downstream_bodyId',
+                                              'upstream_roi', 'downstream_roi',
+                                              'ux', 'uy', 'uz', 'dx', 'dy', 'dz',
+                                              'upstream_confidence', 'downstream_confidence'])
+
+    # Save RAM with smaller dtypes
+    syn_df['ux'] = syn_df['ux'].astype(np.int32)
+    syn_df['uy'] = syn_df['uy'].astype(np.int32)
+    syn_df['uz'] = syn_df['uz'].astype(np.int32)
+    syn_df['dx'] = syn_df['dx'].astype(np.int32)
+    syn_df['dy'] = syn_df['dy'].astype(np.int32)
+    syn_df['dz'] = syn_df['dz'].astype(np.int32)
+    syn_df['upstream_confidence'] = syn_df['upstream_confidence'].astype(np.float32)
+    syn_df['downstream_confidence'] = syn_df['downstream_confidence'].astype(np.float32)
 
     return syn_df
