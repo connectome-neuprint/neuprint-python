@@ -1,0 +1,328 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neuprint.synapsecriteria &mdash; neuprint-python 0.3.4+12.gaaf6aa0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.4+12.gaaf6aa0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>neuprint.synapsecriteria</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for neuprint.synapsecriteria</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
+
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_args_iterable</span>
+<span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
+
+<div class="viewcode-block" id="SynapseCriteria"><a class="viewcode-back" href="../../synapsecriteria.html#neuprint.SynapseCriteria">[docs]</a><span class="k">class</span> <span class="nc">SynapseCriteria</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specifies which fields to filter by when searching for a Synapses.</span>
+<span class="sd">    This class does not send queries itself, but you use it to specify search</span>
+<span class="sd">    criteria for various query functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@inject_client</span>
+    <span class="nd">@make_args_iterable</span><span class="p">([</span><span class="s1">&#39;rois&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matchvar</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">confidence</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">primary_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Except for ``matchvar``, all parameters must be passed as keyword arguments.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            matchvar (str):</span>
+<span class="sd">                An arbitrary cypher variable name to use when this</span>
+<span class="sd">                ``SynapseCriteria`` is used to construct cypher queries.</span>
+<span class="sd">        </span>
+<span class="sd">            rois (str or list):</span>
+<span class="sd">                Optional.</span>
+<span class="sd">                If provided, limit the results to synapses that reside within the given roi(s).</span>
+<span class="sd">    </span>
+<span class="sd">            type:</span>
+<span class="sd">                If provided, limit results to either &#39;pre&#39; or &#39;post&#39; synapses.</span>
+<span class="sd">    </span>
+<span class="sd">            confidence (float, 0.0-1.0):</span>
+<span class="sd">                Limit results to synapses of at least this confidence rating.</span>
+<span class="sd">    </span>
+<span class="sd">            primary_only (boolean):</span>
+<span class="sd">                If True, only include primary ROI names in the results.</span>
+
+<span class="sd">                Note:</span>
+<span class="sd">                    This parameter does NOT filter by ROI. (See the ``rois`` argument for that.)</span>
+<span class="sd">                    It merely determines whether or each synapse should be associated with exactly</span>
+<span class="sd">                    one ROI in the query output, or with multiple ROIs (one for every non-primary</span>
+<span class="sd">                    ROI the synapse intersects).</span>
+<span class="sd">    </span>
+<span class="sd">            client:</span>
+<span class="sd">                Used to validate ROI names.</span>
+<span class="sd">                If not provided, the global default :py:class:`.Client` will be used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">unknown_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">all_rois</span><span class="p">}</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">unknown_rois</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unrecognized synapse rois: </span><span class="si">{unknown_rois}</span><span class="s2">&quot;</span>
+
+        <span class="k">assert</span> <span class="nb">type</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> \
+            <span class="sa">f</span><span class="s2">&quot;Invalid synapse type: </span><span class="si">{type}</span><span class="s2">.  Choices are &#39;pre&#39; and &#39;post&#39;.&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="n">rois</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">=</span> <span class="n">confidence</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary_only</span> <span class="o">=</span> <span class="n">primary_only</span>
+        
+    
+    <span class="k">def</span> <span class="nf">condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a cypher WITH..WHERE clause to filter for synapse criteria.</span>
+<span class="sd">        </span>
+<span class="sd">        Any match variables you wish to &quot;carry through&quot; for subsequent clauses</span>
+<span class="sd">        in your query must be named in the ``vars`` arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">vars</span><span class="p">:</span>
+            <span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span><span class="p">]</span>
+        
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">,</span> \
+            <span class="p">(</span><span class="s2">&quot;Please pass all match vars, including the one that &quot;</span>
+             <span class="sa">f</span><span class="s2">&quot;belongs to this criteria (&#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39;).&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">*</span><span class="n">prefix</span>
+        
+        <span class="n">roi_expr</span> <span class="o">=</span> <span class="n">conf_expr</span> <span class="o">=</span> <span class="n">type_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">roi_expr</span> <span class="o">=</span> <span class="s1">&#39;(&#39;</span> <span class="o">+</span> <span class="s1">&#39; OR &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{self.matchvar}</span><span class="s1">.`</span><span class="si">{roi}</span><span class="s1">`&#39;</span> <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;)&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">:</span>
+            <span class="n">conf_expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{self.matchvar}</span><span class="s1">.confidence &gt; </span><span class="si">{self.confidence}</span><span class="s1">)&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+            <span class="n">type_expr</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{self.matchvar}</span><span class="s2">.type = &#39;</span><span class="si">{self.type}</span><span class="s2">&#39;)&quot;</span>
+
+        <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="n">roi_expr</span><span class="p">,</span> <span class="n">conf_expr</span><span class="p">,</span> <span class="n">type_expr</span><span class="p">])]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exprs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="n">cond</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">            WITH {&#39;, &#39;.join(vars)}</span>
+<span class="s2">            WHERE {&#39; AND &#39;.join(exprs)}</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="n">cond</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;// -- Filter synapse &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39; --</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">cond</span>
+
+        <span class="n">cond</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span>
+        <span class="k">return</span> <span class="n">cond</span>
+
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">matchvar</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">rois</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">confidence</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">primary_only</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">primary_only</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;SynapseCriteria(&#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39;&quot;</span>
+        
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;rois=[&quot;</span> <span class="o">+</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{roi}</span><span class="s2">&#39;&quot;</span> <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;]&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;type=&#39;</span><span class="si">{self.type}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;confidence=</span><span class="si">{self.confidence}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">primary_only</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;primary_only=True&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;, &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
