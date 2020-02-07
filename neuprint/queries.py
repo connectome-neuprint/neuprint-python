@@ -253,6 +253,14 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
     or to a set of "downstream" neurons,
     or all connections from a set of upstream neurons to a set of downstream neurons.
 
+    Note:
+        This function is not intended to be used with very large neuron sets.
+        To fetch all adjacencies between a large set of neurons,
+        set :py:func:`fetch_adjacencies()`, which queries the server in batches.
+        However, this function returns additional information on every row of the
+        connection table, such as ``type`` and ``instance``, so it may be more
+        convenient for small queries.
+
     Args:
         upstream_criteria:
             SegmentCriteria indicating how to filter for neurons
@@ -270,11 +278,24 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
     Returns:
         DataFrame
         One row per connection, with columns for upstream and downstream properties.
+    
+    Example:
+    
+        .. code-block:: ipython
         
-    Note:
-        This function is not intended to be used with very large neuron sets.
-        To fetch all adjacencies between a large set of neurons,
-        set :py:func:`fetch_adjacencies()`, which queries the server in batches.
+            In [1]: from neuprint import SegmentCriteria as SC, fetch_simple_connections
+               ...: sources = [329566174, 425790257, 424379864, 329599710]
+               ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
+               ...: fetch_simple_connections(SC(bodyId=sources), SC(bodyId=targets))
+            Out[1]:
+               upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance
+            0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R
+            1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R
+            2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R
+            3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R
+            4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R
+            5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R
+            6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R
     """
     SC = SegmentCriteria
     up_crit = copy.deepcopy(upstream_criteria)
@@ -515,6 +536,13 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
     Connections outside of the primary ROIs are labeled with the special name
     `NotPrimary` (which is not currently an ROI name in neuprint itself).
 
+    Note:
+        :py:func:`.fetch_simple_connections()` has similar functionality,
+        but that function isn't suitable for querying large sets of neurons.
+        It does, however, return additional information on every row of the 
+        connection table, such as ``type`` and ``instance``, so it may be more
+        convenient for small queries.
+
     Args:
         sources:
             Limit results to connections from bodies that match this criteria.
@@ -544,7 +572,54 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
         See caveat above concerning non-primary ROIs.
 
     See also:
+        :py:func:`.fetch_simple_connections()`
         :py:func:`.fetch_traced_adjacencies()`
+
+    Example:
+    
+        .. code-block:: ipython
+        
+            In [1]: from neuprint import Client
+               ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0.1')
+            
+            In [2]: from neuprint import SegmentCriteria as SC, fetch_adjacencies
+               ...: sources = [329566174, 425790257, 424379864, 329599710]
+               ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
+               ...: neuron_df, connection_df = fetch_adjacencies(SC(bodyId=sources), SC(bodyId=targets))
+            
+            In [3]: neuron_df
+            Out[3]:
+                  bodyId             instance                       type
+            0  329566174   OA-VPM3(NO2/NO3)_R                    OA-VPM3
+            1  329599710        mPNX(AVM06)_R  olfactory multi lvPN mALT
+            2  424379864  AVM03e_pct(AVM03)_R                 AVM03e_pct
+            3  425790257                APL_R                        APL
+            4  420274150  AVM03m_pct(AVM03)_R                 AVM03m_pct
+            
+            In [4]: connection_df
+            Out[4]:
+                bodyId_pre  bodyId_post     roi  weight
+            0    329566174    329599710  SLP(R)       1
+            1    329566174    420274150  SLP(R)       1
+            2    329566174    424379864  SLP(R)      31
+            3    329566174    424379864  SCL(R)       3
+            4    329566174    424379864  SIP(R)       3
+            5    329566174    425790257   gL(R)      17
+            6    329566174    425790257   CA(R)      10
+            7    329566174    425790257  CRE(R)       4
+            8    329566174    425790257  b'L(R)       3
+            9    329566174    425790257   aL(R)       3
+            10   329566174    425790257  PED(R)       3
+            11   329566174    425790257   bL(R)       2
+            12   329566174    425790257  a'L(R)       1
+            13   329599710    329566174  SLP(R)       3
+            14   329599710    329566174  SIP(R)       1
+            15   424379864    329566174  SLP(R)       4
+            16   424379864    329566174  SCL(R)       2
+            17   424379864    329566174  SIP(R)       1
+            18   425790257    329566174   gL(R)       8
+            19   425790257    329566174   CA(R)       3
+            20   425790257    329566174   aL(R)       1
 
     """
     assert (not isinstance(sources, type(None)) or not isinstance(targets, type(None))), \
