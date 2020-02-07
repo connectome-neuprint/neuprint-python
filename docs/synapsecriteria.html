@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Admin Tools &mdash; neuprint-python 0.3.4+17.gd35a1ac documentation</title>
+  <title>SynapseCriteria &mdash; neuprint-python 0.3.4+17.gd35a1ac documentation</title>
   
 
   
@@ -36,8 +36,8 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Deprecated API" href="deprecated.html" />
-    <link rel="prev" title="SynapseCriteria" href="synapsecriteria.html" /> 
+    <link rel="next" title="Admin Tools" href="admin.html" />
+    <link rel="prev" title="SegmentCriteria" href="segmentcriteria.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -91,8 +91,8 @@
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
-<li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Admin Tools</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">SynapseCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
 </li>
@@ -145,13 +145,13 @@
         
           <li><a href="api.html">API</a> &raquo;</li>
         
-      <li>Admin Tools</li>
+      <li>SynapseCriteria</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/admin.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/synapsecriteria.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -164,47 +164,42 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-neuprint.admin">
-<span id="admin-tools"></span><span id="admin"></span><h1>Admin Tools<a class="headerlink" href="#module-neuprint.admin" title="Permalink to this headline">¶</a></h1>
-<p>Administration utilities for managing a neuprint server.
-Using these tools requires admin privileges on the neuPrintHttp server.</p>
+  <div class="section" id="synapsecriteria">
+<span id="id1"></span><h1>SynapseCriteria<a class="headerlink" href="#synapsecriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="neuprint.admin.Transaction">
-<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/admin.html#Transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
-<dd><p>For admins only.
-Used to batch a set of operations into a single database transaction.</p>
-<p>This class is implemented as a context manager.</p>
-<p class="rubric">Example</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Transaction</span><span class="p">(</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
-    <span class="n">t</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;MATCH (n :Neuron </span><span class="si">{bodyId: 1047426385}</span><span class="s2">) SET m.type=TuBu4)&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Transaction constructor.</p>
+<dt id="neuprint.SynapseCriteria">
+<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">SynapseCriteria</code><span class="sig-paren">(</span><em>matchvar='s'</em>, <em>*</em>, <em>rois=None</em>, <em>type=None</em>, <em>confidence=0.0</em>, <em>primary_only=False</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/synapsecriteria.html#SynapseCriteria"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SynapseCriteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies which fields to filter by when searching for a Synapses.
+This class does not send queries itself, but you use it to specify search
+criteria for various query functions.</p>
+<p>Except for <code class="docutils literal notranslate"><span class="pre">matchvar</span></code>, all parameters must be passed as keyword arguments.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>dataset</strong> – Name of the dataset to use.  Required.</li>
-<li><strong>client</strong> – Client object to use.</li>
+<li><strong>matchvar</strong> (<em>str</em>) – An arbitrary cypher variable name to use when this
+<code class="docutils literal notranslate"><span class="pre">SynapseCriteria</span></code> is used to construct cypher queries.</li>
+<li><strong>rois</strong> (<em>str</em><em> or </em><em>list</em>) – Optional.
+If provided, limit the results to synapses that reside within the given roi(s).</li>
+<li><strong>type</strong> – If provided, limit results to either ‘pre’ or ‘post’ synapses.</li>
+<li><strong>confidence</strong> (<em>float</em><em>, </em><em>0.0-1.0</em>) – Limit results to synapses of at least this confidence rating.</li>
+<li><strong>primary_only</strong> (<em>boolean</em>) – <p>If True, only include primary ROI names in the results.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This parameter does NOT filter by ROI. (See the <code class="docutils literal notranslate"><span class="pre">rois</span></code> argument for that.)
+It merely determines whether or each synapse should be associated with exactly
+one ROI in the query output, or with multiple ROIs (one for every non-primary
+ROI the synapse intersects).</p>
+</div>
+</li>
+<li><strong>client</strong> – Used to validate ROI names.
+If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="neuprint.admin.Transaction.query">
-<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/admin.html#Transaction.query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make a custom cypher query within the context
-of this transaction (allows writes).</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="neuprint.admin.Transaction.kill">
-<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/admin.html#Transaction.kill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
-<dd><p>Kills (rolls back) transaction.</p>
-</dd></dl>
-
 </dd></dl>
 
 </div>
@@ -217,10 +212,10 @@ of this transaction (allows writes).</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="deprecated.html" class="btn btn-neutral float-right" title="Deprecated API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="admin.html" class="btn btn-neutral float-right" title="Admin Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="segmentcriteria.html" class="btn btn-neutral float-left" title="SegmentCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

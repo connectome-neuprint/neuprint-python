@@ -6,6 +6,7 @@ docs/_modules/neuprint/client.html
 docs/_modules/neuprint/deprecated/fetch.html
 docs/_modules/neuprint/queries.html
 docs/_modules/neuprint/segmentcriteria.html
+docs/_modules/neuprint/synapsecriteria.html
 docs/_sources/admin.rst.txt
 docs/_sources/api.rst.txt
 docs/_sources/client.rst.txt
@@ -16,6 +17,7 @@ docs/_sources/index.rst.txt
 docs/_sources/queries.rst.txt
 docs/_sources/quickstart.rst.txt
 docs/_sources/segmentcriteria.rst.txt
+docs/_sources/synapsecriteria.rst.txt
 docs/_static/ajax-loader.gif
 docs/_static/basic.css
 docs/_static/comment-bright.png
@@ -90,3 +92,4 @@ docs/quickstart.html
 docs/search.html
 docs/searchindex.js
 docs/segmentcriteria.html
+docs/synapsecriteria.html

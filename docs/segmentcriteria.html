@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>SegmentCriteria &mdash; neuprint-python 0.3.4 documentation</title>
+  <title>SegmentCriteria &mdash; neuprint-python 0.3.4+17.gd35a1ac documentation</title>
   
 
   
@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Admin Tools" href="admin.html" />
+    <link rel="next" title="SynapseCriteria" href="synapsecriteria.html" />
     <link rel="prev" title="Common Queries" href="queries.html" /> 
 </head>
 
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.4
+                0.3.4+17.gd35a1ac
               </div>
             
           
@@ -91,6 +91,7 @@
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">SegmentCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
@@ -192,7 +193,10 @@ one (<code class="docutils literal notranslate"><span class="pre">any</span></co
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>matchvar</strong> (<em>str</em>) – An arbitrary cypher variable name to use when this
-<code class="docutils literal notranslate"><span class="pre">SegmentCriteria</span></code> is used to construct cypher queries.</li>
+<code class="docutils literal notranslate"><span class="pre">SegmentCriteria</span></code> is used to construct cypher queries.
+To help catch errors (such as accidentally passing a <code class="docutils literal notranslate"><span class="pre">type</span></code> or
+<code class="docutils literal notranslate"><span class="pre">instance</span></code> name in the wrong argument position), we require that
+<code class="docutils literal notranslate"><span class="pre">matchvar</span></code> begin with a lowercase letter.</li>
 <li><strong>bodyId</strong> (<em>int</em><em> or </em><em>list of ints</em>) – List of bodyId values.</li>
 <li><strong>instance</strong> (<em>str</em><em> or </em><em>list of str</em>) – If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.
 Otherwise, only exact matches are found.</li>
@@ -240,7 +244,7 @@ If not provided, the global default <code class="docutils literal notranslate"><
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="admin.html" class="btn btn-neutral float-right" title="Admin Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="synapsecriteria.html" class="btn btn-neutral float-right" title="SynapseCriteria" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="queries.html" class="btn btn-neutral float-left" title="Common Queries" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

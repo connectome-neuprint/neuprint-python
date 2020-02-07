@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.3.4 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.3.4+17.gd35a1ac documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.4
+                0.3.4+17.gd35a1ac
               </div>
             
           
@@ -91,6 +91,7 @@
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Common Queries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
 </ul>
@@ -195,7 +196,7 @@ But the functions in this file offer a convenient API for common queries.</p>
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_shortest_paths" title="neuprint.queries.fetch_shortest_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_shortest_paths</span></code></a>(upstream_bodyId,&nbsp;…[,&nbsp;…])</td>
 <td>Find all neurons along the shortest path between two neurons.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>(criteria[,&nbsp;export_dir,&nbsp;…])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>([sources,&nbsp;targets,&nbsp;…])</td>
 <td>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_traced_adjacencies" title="neuprint.queries.fetch_traced_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_traced_adjacencies</span></code></a>([export_dir,&nbsp;…])</td>
@@ -209,6 +210,12 @@ But the functions in this file offer a convenient API for common queries.</p>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the list of ‘primary’ ROIs in the dataset, from the dataset metadata.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_synapses" title="neuprint.queries.fetch_synapses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_synapses</span></code></a>(segment_criteria[,&nbsp;…])</td>
+<td>Fetch synapses from neuron or selection of neurons.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_synapse_connections" title="neuprint.queries.fetch_synapse_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_synapse_connections</span></code></a>([source_criteria,&nbsp;…])</td>
+<td>Fetch a table of synapse-synapse connections between source and target neurons.</td>
 </tr>
 </tbody>
 </table>
@@ -491,7 +498,7 @@ body from the previous body in the path.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_adjacencies">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>criteria</em>, <em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>sources=None</em>, <em>targets=None</em>, <em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
 Only primary ROIs are included in the per-ROI connection table.
 Connections outside of the primary ROIs are labeled with the special name
@@ -501,7 +508,12 @@ Connections outside of the primary ROIs are labeled with the special name
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>criteria</strong> – Limit results to connections between bodies that match this criteria.</li>
+<li><strong>sources</strong> – Limit results to connections from bodies that match this criteria.
+Can be list of body IDs or <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>. If <code class="docutils literal notranslate"><span class="pre">None</span>
+<span class="pre">will</span> <span class="pre">include</span> <span class="pre">all</span> <span class="pre">bodies</span> <span class="pre">upstream</span> <span class="pre">of</span> <span class="pre">``targets</span></code>.</li>
+<li><strong>targets</strong> – Limit results to connections to bodies that match this criteria.
+Can be list of body IDs or <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>. If <code class="docutils literal notranslate"><span class="pre">None</span>
+<span class="pre">will</span> <span class="pre">include</span> <span class="pre">all</span> <span class="pre">bodies</span> <span class="pre">downstream</span> <span class="pre">of</span> <span class="pre">``sources</span></code>.</li>
 <li><strong>export_dir</strong> – Optional. Export CSV files for the neuron table,
 connection table (total weight), and connection table (per ROI).</li>
 <li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
@@ -511,16 +523,16 @@ This parameter specifies the batch size.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df,</span> <span class="pre">total_conn_df)</span></code>,
-containing the table of neuron IDs and the per-ROI connection table,
-respectively. See caveat above concerning non-primary ROIs.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Two DataFrames, <code class="docutils literal notranslate"><span class="pre">(traced_neurons_df,</span> <span class="pre">roi_conn_df)</span></code>, containing a
+table of neuron IDs and the per-ROI connection table, respectively.
+See caveat above concerning non-primary ROIs.</p>
 </td>
 </tr>
 </tbody>
 </table>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_traced_adjacecies()</span></code></p>
+<p class="last"><a class="reference internal" href="#neuprint.queries.fetch_traced_adjacencies" title="neuprint.queries.fetch_traced_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_traced_adjacencies()</span></code></a></p>
 </div>
 </dd></dl>
 
@@ -615,6 +627,167 @@ from the dataset metadata.</p>
 <dd><p>Fetch the list of ‘primary’ ROIs in the dataset,
 from the dataset metadata.
 Primary ROIs do not overlap with each other.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_synapses">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>segment_criteria</em>, <em>synapse_criteria=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_synapses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch synapses from neuron or selection of neurons.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>segment_criteria</strong> (<a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><em>SegmentCriteria</em></a><em> or </em><em>bodyId list</em>) – <p>Can be either a single bodyID, a list-like of multiple body IDs,
+a DataFrame with a <cite>bodyId</cite> column or a <a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SegmentCriteria</span></code></a>
+used to find a set of body IDs.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Any ROI criteria specified in this argument does not affect
+which synapses are returned, only which bodies are inspected.</p>
+</div>
+</li>
+<li><strong>synapse_criteria</strong> (<a class="reference internal" href="synapsecriteria.html#neuprint.SynapseCriteria" title="neuprint.SynapseCriteria"><em>SynapseCriteria</em></a>) – <p>Optional. Allows you to filter synapses by roi, type, confidence.
+See <a class="reference internal" href="synapsecriteria.html#neuprint.SynapseCriteria" title="neuprint.SynapseCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SynapseCriteria</span></code></a> for details.</p>
+<p>If the criteria specifies <code class="docutils literal notranslate"><span class="pre">primary_only=True</span></code> only primary ROIs will be returned in the results.
+If a synapse does not intersect any primary ROI, it will be listed with an roi of <code class="docutils literal notranslate"><span class="pre">None</span></code>.
+(Since ‘primary’ ROIs do not overlap, each synapse will be listed only once.)
+Otherwise, all ROI names will be included in the results.
+In that case, some synapses will be listed multiple times – once per intersecting ROI.
+If a synapse does not intersect any ROI, it will be listed with an roi of <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame in which each row represent a single synapse.
+Unless <code class="docutils literal notranslate"><span class="pre">primary_only</span></code> was specified, some synapses may be listed more than once,
+if they reside in more than one overlapping ROI.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span><span class="p">,</span> <span class="n">SynapseCriteria</span> <span class="k">as</span> <span class="n">SynC</span><span class="p">,</span> <span class="n">fetch_synapses</span>
+<span class="gp">   ...: </span><span class="n">fetch_synapses</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ADL.*&#39;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;FB&#39;</span><span class="p">]),</span>
+<span class="gp">   ...: </span>               <span class="n">SynC</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;LH(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;SIP(R)&#39;</span><span class="p">],</span> <span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="gh">Out[1]:</span>
+<span class="go">        bodyId  type     roi      x      y      z  confidence</span>
+<span class="go">0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">1   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">2   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">3   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">4   5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">5   5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">6   5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">7   5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">8   5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">9   5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">10  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">11  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">12  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">13  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">14  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">15  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">16  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">17  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">18  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">19  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">20  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">21  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="go">22  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="go">23  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">24  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">25  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">26  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">27  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">28  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="go">29   764377593  post   LH(R)   8043  21587  15146    0.804000</span>
+<span class="go">30   764377593  post   LH(R)   8057  21493  15140    0.906482</span>
+<span class="go">31   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
+<span class="go">32   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
+<span class="go">33   859152522  post  SIP(R)  13349  25337  13653    0.818386</span>
+<span class="go">34   859152522  post  SIP(R)  12793  26362  14202    0.926918</span>
+<span class="go">35   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_synapse_connections">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapse_connections</code><span class="sig-paren">(</span><em>source_criteria=None</em>, <em>target_criteria=None</em>, <em>synapse_criteria=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_synapse_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapse_connections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch a table of synapse-synapse connections between source and target neurons.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source_criteria</strong> (<a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><em>SegmentCriteria</em></a><em> or </em><em>bodyId list</em>) – <p>Criteria to by which to filter source (pre-synaptic) neurons.
+If omitted, all Neurons will be considered as possible sources.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Any ROI criteria specified in this argument does not affect
+which synapses are returned, only which bodies are inspected.</p>
+</div>
+</li>
+<li><strong>target_criteria</strong> (<a class="reference internal" href="segmentcriteria.html#neuprint.SegmentCriteria" title="neuprint.SegmentCriteria"><em>SegmentCriteria</em></a><em> or </em><em>bodyId list</em>) – <p>Criteria to by which to filter target (post-synaptic) neurons.
+If omitted, all Neurons will be considered as possible sources.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Any ROI criteria specified in this argument does not affect
+which synapses are returned, only which bodies are inspected.</p>
+</div>
+</li>
+<li><strong>synapse_criteria</strong> (<a class="reference internal" href="synapsecriteria.html#neuprint.SynapseCriteria" title="neuprint.SynapseCriteria"><em>SynapseCriteria</em></a>) – <p>Optional. Allows you to filter synapses by roi, type, confidence.
+The same criteria is used to filter both <code class="docutils literal notranslate"><span class="pre">pre</span></code> and <code class="docutils literal notranslate"><span class="pre">post</span></code> sides
+of the connection.
+By default, <code class="docutils literal notranslate"><span class="pre">SynapseCriteria(primary_only=True)</span></code> is used.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">primary_only</span></code> is specified in the criteria, then the resulting
+<code class="docutils literal notranslate"><span class="pre">upstream_roi</span></code> and <code class="docutils literal notranslate"><span class="pre">downstream_roi</span></code> columns will contain a single
+string (or <code class="docutils literal notranslate"><span class="pre">None</span></code>) in every row.</p>
+<p>Otherwise, the roi columns will contain a list of ROIs for every row.
+(Primary ROIs do not overlap, so every synapse resides in only one
+(or zero) primary ROI.)
+See <a class="reference internal" href="synapsecriteria.html#neuprint.SynapseCriteria" title="neuprint.SynapseCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">SynapseCriteria</span></code></a> for details.</p>
+</li>
+<li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame in which each row represents a single synaptic connection
+between an upstream and downstream body.
+Synapse locations are listed in columns <code class="docutils literal notranslate"><span class="pre">[ux,</span> <span class="pre">uy,</span> <span class="pre">uz]</span></code> and <code class="docutils literal notranslate"><span class="pre">[dx,</span> <span class="pre">dy,</span> <span class="pre">dz]</span></code>
+for the upstream and downstream syanpses, respectively.
+The <code class="docutils literal notranslate"><span class="pre">upstream_roi</span></code> and <code class="docutils literal notranslate"><span class="pre">downstream_roi</span></code> columns will contain either strings
+or lists-of-strings, depending on the <code class="docutils literal notranslate"><span class="pre">primary_only</span></code> synapse criteria as
+described above.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_synapse_connections</span><span class="p">,</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span><span class="p">,</span> <span class="n">SynapseCriteria</span> <span class="k">as</span> <span class="n">SynC</span>
+<span class="gp">   ...: </span><span class="n">fetch_synapse_connections</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="mi">792368888</span><span class="p">),</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SynC</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PED(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;SMP(R)&#39;</span><span class="p">],</span> <span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="gh">Out[1]:</span>
+<span class="go">    upstream_bodyId  downstream_bodyId upstream_roi downstream_roi     ux     uy     uz     dx     dy     dz  upstream_confidence  downstream_confidence</span>
+<span class="go">0         792368888          754547386       PED(R)         PED(R)  14013  27747  19307  13992  27720  19313                0.996               0.401035</span>
+<span class="go">1         792368888          612742248       PED(R)         PED(R)  14049  27681  19417  14044  27662  19408                0.921               0.881487</span>
+<span class="go">2         792368888         5901225361       PED(R)         PED(R)  14049  27681  19417  14055  27653  19420                0.921               0.436177</span>
+<span class="go">3         792368888         5813117385       SMP(R)         SMP(R)  23630  29443  16297  23634  29437  16279                0.984               0.970746</span>
+<span class="go">4         792368888         5813083733       SMP(R)         SMP(R)  23630  29443  16297  23634  29419  16288                0.984               0.933871</span>
+<span class="go">5         792368888         5813058320       SMP(R)         SMP(R)  18662  34144  12692  18655  34155  12697                0.853               0.995000</span>
+<span class="go">6         792368888         5812981989       PED(R)         PED(R)  14331  27921  20099  14351  27928  20085                0.904               0.877373</span>
+<span class="go">7         792368888         5812981381       PED(R)         PED(R)  14331  27921  20099  14301  27919  20109                0.904               0.567321</span>
+<span class="go">8         792368888         5812981381       PED(R)         PED(R)  14013  27747  19307  14020  27747  19285                0.996               0.697836</span>
+<span class="go">9         792368888         5812979314       PED(R)         PED(R)  14331  27921  20099  14329  27942  20109                0.904               0.638362</span>
+<span class="go">10        792368888          424767514       PED(R)         PED(R)  14331  27921  20099  14324  27934  20085                0.904               0.985734</span>
+<span class="go">11        792368888          424767514       PED(R)         PED(R)  14013  27747  19307  14020  27760  19294                0.996               0.942831</span>
+<span class="go">12        792368888          424767514       PED(R)         PED(R)  14049  27681  19417  14040  27663  19420                0.921               0.993586</span>
+<span class="go">13        792368888          331662710       SMP(R)         SMP(R)  23630  29443  16297  23644  29429  16302                0.984               0.996389</span>
+<span class="go">14        792368888         1196854070       PED(R)         PED(R)  14331  27921  20099  14317  27935  20101                0.904               0.968408</span>
+<span class="go">15        792368888         1131831702       SMP(R)         SMP(R)  23630  29443  16297  23651  29434  16316                0.984               0.362952</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>

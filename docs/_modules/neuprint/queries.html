@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.4 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.4+17.gd35a1ac documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.4
+                0.3.4+17.gd35a1ac
               </div>
             
           
@@ -152,15 +152,20 @@
             
   <h1>Source code for neuprint.queries</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 <span class="kn">from</span> <span class="nn">.segmentcriteria</span> <span class="kn">import</span> <span class="n">SegmentCriteria</span>
+<span class="kn">from</span> <span class="nn">.synapsecriteria</span> <span class="kn">import</span> <span class="n">SynapseCriteria</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_args_iterable</span>
 
 <span class="c1"># ujson is faster than Python&#39;s builtin json module</span>
 <span class="kn">import</span> <span class="nn">ujson</span>
@@ -656,21 +661,26 @@
 
 
 <div class="viewcode-block" id="fetch_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_adjacencies">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">sources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</span>
 <span class="sd">    Only primary ROIs are included in the per-ROI connection table.</span>
 <span class="sd">    Connections outside of the primary ROIs are labeled with the special name</span>
 <span class="sd">    `NotPrimary` (which is not currently an ROI name in neuprint itself).</span>
-<span class="sd">    </span>
+
 <span class="sd">    Args:</span>
-<span class="sd">        criteria:</span>
-<span class="sd">            Limit results to connections between bodies that match this criteria.</span>
-<span class="sd">            </span>
+<span class="sd">        sources:</span>
+<span class="sd">            Limit results to connections from bodies that match this criteria.</span>
+<span class="sd">            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None</span>
+<span class="sd">            will include all bodies upstream of ``targets``.</span>
+<span class="sd">        targets:</span>
+<span class="sd">            Limit results to connections to bodies that match this criteria.</span>
+<span class="sd">            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None</span>
+<span class="sd">            will include all bodies downstream of ``sources``.</span>
 <span class="sd">        export_dir:</span>
 <span class="sd">            Optional. Export CSV files for the neuron table,</span>
 <span class="sd">            connection table (total weight), and connection table (per ROI).</span>
-<span class="sd">            </span>
+
 <span class="sd">        batch_size:</span>
 <span class="sd">            For optimal performance, connections will be fetched in batches.</span>
 <span class="sd">            This parameter specifies the batch size.</span>
@@ -680,48 +690,109 @@
 
 <span class="sd">        client:</span>
 <span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
-<span class="sd">    </span>
+
 <span class="sd">    Returns:</span>
-<span class="sd">        Two DataFrames, ``(traced_neurons_df, roi_conn_df, total_conn_df)``,</span>
-<span class="sd">        containing the table of neuron IDs and the per-ROI connection table,</span>
-<span class="sd">        respectively. See caveat above concerning non-primary ROIs.</span>
+<span class="sd">        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing a</span>
+<span class="sd">        table of neuron IDs and the per-ROI connection table, respectively.</span>
+<span class="sd">        See caveat above concerning non-primary ROIs.</span>
 
 <span class="sd">    See also:</span>
-<span class="sd">        :py:func:`.fetch_traced_adjacecies()`</span>
+<span class="sd">        :py:func:`.fetch_traced_adjacencies()`</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
-        <span class="c1"># A previous version of this function accepted a list of bodyIds.</span>
-        <span class="c1"># We still support that for now.</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
-            <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{criteria}</span><span class="s2">&quot;</span>
-        <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">criteria</span><span class="p">)</span>
-    
-    <span class="n">criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
-    <span class="n">criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
-    
-    <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        MATCH (n:</span><span class="si">{criteria.label}</span><span class="s2">)</span>
-<span class="s2">        {criteria.all_conditions(prefix=8)}</span>
-<span class="s2">        RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
-<span class="s2">        ORDER BY n.bodyId</span>
-<span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">neurons_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-    
+    <span class="k">assert</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> \
+              <span class="s2">&quot;Must provide either sources or targets or both.&quot;</span>
+
+    <span class="n">neurons_df</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+            <span class="c1"># A previous version of this function accepted a list of bodyIds.</span>
+            <span class="c1"># We still support that for now.</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
+                <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{sources}</span><span class="s2">&quot;</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sources</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sources</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+
+        <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">            MATCH (n:</span><span class="si">{sources.label}</span><span class="s2">)</span>
+<span class="s2">            {sources.all_conditions(prefix=8)}</span>
+<span class="s2">            RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
+<span class="s2">            ORDER BY n.bodyId</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">sources_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+        <span class="n">neurons_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sources_df</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+            <span class="c1"># A previous version of this function accepted a list of bodyIds.</span>
+            <span class="c1"># We still support that for now.</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
+                <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{targets}</span><span class="s2">&quot;</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">targets</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
+            <span class="n">targets</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+
+        <span class="c1"># Save time in cases where sources = targets</span>
+        <span class="k">if</span> <span class="n">targets</span> <span class="o">==</span> <span class="n">sources</span><span class="p">:</span>
+            <span class="n">targets_df</span> <span class="o">=</span> <span class="n">sources_df</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">                MATCH (n:</span><span class="si">{targets.label}</span><span class="s2">)</span>
+<span class="s2">                {targets.all_conditions(prefix=8)}</span>
+<span class="s2">                RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
+<span class="s2">                ORDER BY n.bodyId</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+            <span class="n">targets_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+            <span class="n">neurons_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">targets_df</span><span class="p">)</span>
+
+    <span class="c1"># Merge sources and targets</span>
+    <span class="n">neurons_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">neurons_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">neurons_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># If either sources or targets is not provided use the others label</span>
+    <span class="n">sources_label</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">label</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="n">targets</span><span class="o">.</span><span class="n">label</span>
+    <span class="n">targets_label</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">label</span> <span class="k">if</span> <span class="n">targets</span> <span class="k">else</span> <span class="n">sources</span><span class="o">.</span><span class="n">label</span>
+
     <span class="c1"># Fetch connections in batches</span>
     <span class="n">conn_tables</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">neurons_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
-        <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">batch_size</span>
-        <span class="n">batch_neurons</span> <span class="o">=</span> <span class="n">neurons_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-        <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">            MATCH (n:</span><span class="si">{criteria.label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{criteria.label}</span><span class="s2">)</span>
-<span class="s2">            WHERE n.bodyId in </span><span class="si">{batch_neurons}</span><span class="s2"></span>
-<span class="s2">            RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
-<span class="s2">        &quot;&quot;&quot;</span>
-        <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="p">)</span>
-    
+    <span class="n">sources_iter</span> <span class="o">=</span> <span class="n">sources_df</span><span class="o">.</span><span class="n">bodyId</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+    <span class="n">targets_iter</span> <span class="o">=</span> <span class="n">targets_df</span><span class="o">.</span><span class="n">bodyId</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">targets</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+
+    <span class="n">total_chunks</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">*</span> \
+                   <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total_chunks</span><span class="p">,</span>
+              <span class="n">disable</span><span class="o">=</span><span class="n">total_chunks</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
+              <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">sources_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">sources_stop</span> <span class="o">=</span> <span class="n">sources_start</span> <span class="o">+</span> <span class="n">batch_size</span>
+            <span class="n">sources_batch</span> <span class="o">=</span> <span class="n">sources_iter</span><span class="p">[</span><span class="n">sources_start</span><span class="p">:</span><span class="n">sources_stop</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">targets_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+                <span class="n">targets_stop</span> <span class="o">=</span> <span class="n">targets_start</span> <span class="o">+</span> <span class="n">batch_size</span>
+                <span class="n">targets_batch</span> <span class="o">=</span> <span class="n">targets_iter</span><span class="p">[</span><span class="n">targets_start</span><span class="p">:</span><span class="n">targets_stop</span><span class="p">]</span>
+
+                <span class="n">where</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">sources_batch</span><span class="p">):</span>
+                    <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;n.bodyId in {sources_batch.tolist()}&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">targets_batch</span><span class="p">):</span>
+                    <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;m.bodyId in {targets_batch.tolist()}&#39;</span><span class="p">)</span>
+
+                <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">                    MATCH (n:</span><span class="si">{sources_label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{targets_label}</span><span class="s2">)</span>
+<span class="s2">                WHERE {&#39; AND &#39;.join(where)}</span>
+<span class="s2">                    RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
+<span class="s2">                &quot;&quot;&quot;</span>
+                <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
     <span class="c1"># Combine batches</span>
     <span class="n">connections_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">conn_tables</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    
+
     <span class="c1"># Parse roiInfo json</span>
     <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
 
@@ -818,7 +889,7 @@
 <span class="sd">            4   202916528    264986706       2        </span>
 <span class="sd">     &quot;&quot;&quot;</span>
     <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
@@ -906,6 +977,350 @@
     <span class="n">rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;rois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rois</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="fetch_synapses"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_synapses">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_synapses</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch synapses from neuron or selection of neurons.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">    </span>
+<span class="sd">        segment_criteria (SegmentCriteria or bodyId list):</span>
+<span class="sd">            Can be either a single bodyID, a list-like of multiple body IDs,</span>
+<span class="sd">            a DataFrame with a `bodyId` column or a :py:class:`.SegmentCriteria`</span>
+<span class="sd">            used to find a set of body IDs.</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                Any ROI criteria specified in this argument does not affect</span>
+<span class="sd">                which synapses are returned, only which bodies are inspected.</span>
+
+<span class="sd">        synapse_criteria (SynapseCriteria):</span>
+<span class="sd">            Optional. Allows you to filter synapses by roi, type, confidence.</span>
+<span class="sd">            See :py:class:`.SynapseCriteria` for details.</span>
+
+<span class="sd">            If the criteria specifies ``primary_only=True`` only primary ROIs will be returned in the results.</span>
+<span class="sd">            If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.</span>
+<span class="sd">            (Since &#39;primary&#39; ROIs do not overlap, each synapse will be listed only once.)</span>
+<span class="sd">            Otherwise, all ROI names will be included in the results.</span>
+<span class="sd">            In that case, some synapses will be listed multiple times -- once per intersecting ROI.</span>
+<span class="sd">            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.</span>
+
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    </span>
+<span class="sd">        DataFrame in which each row represent a single synapse.</span>
+<span class="sd">        Unless ``primary_only`` was specified, some synapses may be listed more than once,</span>
+<span class="sd">        if they reside in more than one overlapping ROI.</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: ipython</span>
+<span class="sd">        </span>
+<span class="sd">            In [1]: from neuprint import SegmentCriteria as SC, SynapseCriteria as SynC, fetch_synapses</span>
+<span class="sd">               ...: fetch_synapses(SC(type=&#39;ADL.*&#39;, regex=True, rois=[&#39;FB&#39;]),</span>
+<span class="sd">               ...:                SynC(rois=[&#39;LH(R)&#39;, &#39;SIP(R)&#39;], primary_only=True))</span>
+<span class="sd">            Out[1]:</span>
+<span class="sd">                    bodyId  type     roi      x      y      z  confidence</span>
+<span class="sd">            0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            1   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            2   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            3   5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            4   5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            5   5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            6   5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            7   5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            8   5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            9   5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            10  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            11  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            12  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            13  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            14  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            15  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            16  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            17  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            18  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            19  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            20  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            21  5812983094   pre   LH(R)   5434  21270  19201    0.995000</span>
+<span class="sd">            22  5812983094   pre   LH(R)   5447  21281  19155    0.991000</span>
+<span class="sd">            23  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            24  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            25  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            26  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            27  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            28  5812983094   pre  SIP(R)  15300  25268  14043    0.992000</span>
+<span class="sd">            29   764377593  post   LH(R)   8043  21587  15146    0.804000</span>
+<span class="sd">            30   764377593  post   LH(R)   8057  21493  15140    0.906482</span>
+<span class="sd">            31   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
+<span class="sd">            32   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
+<span class="sd">            33   859152522  post  SIP(R)  13349  25337  13653    0.818386</span>
+<span class="sd">            34   859152522  post  SIP(R)  12793  26362  14202    0.926918</span>
+<span class="sd">            35   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="s1">&#39;bodyId&#39;</span> <span class="ow">in</span> <span class="n">segment_criteria</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> \
+            <span class="s1">&#39;If passing a DataFrame, it must have &quot;bodyId&quot; column&#39;</span>
+        <span class="n">segment_criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">segment_criteria</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+        <span class="n">segment_criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">),</span> \
+        <span class="p">(</span><span class="s2">&quot;Please pass a SegmentCriteria, a list of bodyIds, &quot;</span>
+         <span class="sa">f</span><span class="s2">&quot;or a DataFrame with a &#39;bodyId&#39; column, not </span><span class="si">{segment_criteria}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">segment_criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">)</span>
+    <span class="n">segment_criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+    
+    <span class="k">if</span> <span class="n">synapse_criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">synapse_criteria</span> <span class="o">=</span> <span class="n">SynapseCriteria</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">primary_only</span><span class="p">:</span>
+        <span class="n">return_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">primary_rois</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">return_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">all_rois</span><span class="p">}</span>
+
+    <span class="c1"># If the user specified rois to filter synapses by, but hasn&#39;t specified rois</span>
+    <span class="c1"># in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.</span>
+    <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">segment_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+        <span class="n">segment_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">}</span>
+        <span class="n">segment_criteria</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
+
+    <span class="c1"># Fetch results</span>
+    <span class="n">cypher</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">        MATCH (n:</span><span class="si">{segment_criteria.label}</span><span class="s2">)-[:Contains]-&gt;(ss:SynapseSet),</span>
+<span class="s2">              (ss)-[:Contains]-&gt;(s:Synapse)</span>
+
+<span class="s2">        {segment_criteria.all_conditions(prefix=8)}</span>
+<span class="s2">        {synapse_criteria.condition(&#39;n&#39;, &#39;s&#39;, prefix=8)}</span>
+<span class="s2">        </span>
+<span class="s2">        RETURN n.bodyId as bodyId,</span>
+<span class="s2">               s.type as type,</span>
+<span class="s2">               s.confidence as confidence,</span>
+<span class="s2">               s.location.x as x,</span>
+<span class="s2">               s.location.y as y,</span>
+<span class="s2">               s.location.z as z,</span>
+<span class="s2">               apoc.map.removeKeys(s, [&#39;location&#39;, &#39;confidence&#39;, &#39;type&#39;]) as syn_info</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Assemble DataFrame</span>
+    <span class="n">syn_table</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">body</span><span class="p">,</span> <span class="n">syn_type</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">syn_info</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="c1"># Exclude non-primary ROIs if necessary</span>
+        <span class="n">syn_rois</span> <span class="o">=</span> <span class="n">return_rois</span> <span class="o">&amp;</span> <span class="p">{</span><span class="o">*</span><span class="n">syn_info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="n">syn_rois</span><span class="p">:</span>
+            <span class="n">syn_table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">body</span><span class="p">,</span> <span class="n">syn_type</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">conf</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">syn_rois</span><span class="p">:</span>
+            <span class="n">syn_table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">body</span><span class="p">,</span> <span class="n">syn_type</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">conf</span><span class="p">))</span>
+
+    <span class="n">syn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">syn_table</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;confidence&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Save RAM with smaller dtypes and interned strings</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">])</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;roi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;roi&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">sys</span><span class="o">.</span><span class="n">intern</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span> <span class="k">else</span> <span class="n">s</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;y&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">syn_df</span></div>
+
+
+<div class="viewcode-block" id="fetch_synapse_connections"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_synapse_connections">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_synapse_connections</span><span class="p">(</span><span class="n">source_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch a table of synapse-synapse connections between source and target neurons.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">    </span>
+<span class="sd">        source_criteria (SegmentCriteria or bodyId list):</span>
+<span class="sd">            Criteria to by which to filter source (pre-synaptic) neurons.</span>
+<span class="sd">            If omitted, all Neurons will be considered as possible sources.</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                Any ROI criteria specified in this argument does not affect</span>
+<span class="sd">                which synapses are returned, only which bodies are inspected.</span>
+
+<span class="sd">        target_criteria (SegmentCriteria or bodyId list):</span>
+<span class="sd">            Criteria to by which to filter target (post-synaptic) neurons.</span>
+<span class="sd">            If omitted, all Neurons will be considered as possible sources.</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                Any ROI criteria specified in this argument does not affect</span>
+<span class="sd">                which synapses are returned, only which bodies are inspected.</span>
+
+<span class="sd">        synapse_criteria (SynapseCriteria):</span>
+<span class="sd">            Optional. Allows you to filter synapses by roi, type, confidence.</span>
+<span class="sd">            The same criteria is used to filter both ``pre`` and ``post`` sides</span>
+<span class="sd">            of the connection.</span>
+<span class="sd">            By default, ``SynapseCriteria(primary_only=True)`` is used.</span>
+<span class="sd">            </span>
+<span class="sd">            If ``primary_only`` is specified in the criteria, then the resulting</span>
+<span class="sd">            ``upstream_roi`` and ``downstream_roi`` columns will contain a single</span>
+<span class="sd">            string (or ``None``) in every row.</span>
+<span class="sd">            </span>
+<span class="sd">            Otherwise, the roi columns will contain a list of ROIs for every row.</span>
+<span class="sd">            (Primary ROIs do not overlap, so every synapse resides in only one</span>
+<span class="sd">            (or zero) primary ROI.)</span>
+<span class="sd">            See :py:class:`.SynapseCriteria` for details.</span>
+
+<span class="sd">        client:</span>
+<span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    </span>
+<span class="sd">        DataFrame in which each row represents a single synaptic connection</span>
+<span class="sd">        between an upstream and downstream body.</span>
+<span class="sd">        Synapse locations are listed in columns ``[ux, uy, uz]`` and ``[dx, dy, dz]``</span>
+<span class="sd">        for the upstream and downstream syanpses, respectively.</span>
+<span class="sd">        The ``upstream_roi`` and ``downstream_roi`` columns will contain either strings</span>
+<span class="sd">        or lists-of-strings, depending on the ``primary_only`` synapse criteria as</span>
+<span class="sd">        described above.</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+
+<span class="sd">        .. code-block:: ipython</span>
+
+<span class="sd">            In [1]: from neuprint import fetch_synapse_connections, SegmentCriteria as SC, SynapseCriteria as SynC</span>
+<span class="sd">               ...: fetch_synapse_connections(SC(bodyId=792368888), None, SynC(rois=[&#39;PED(R)&#39;, &#39;SMP(R)&#39;], primary_only=True))</span>
+<span class="sd">            Out[1]:</span>
+<span class="sd">                upstream_bodyId  downstream_bodyId upstream_roi downstream_roi     ux     uy     uz     dx     dy     dz  upstream_confidence  downstream_confidence</span>
+<span class="sd">            0         792368888          754547386       PED(R)         PED(R)  14013  27747  19307  13992  27720  19313                0.996               0.401035</span>
+<span class="sd">            1         792368888          612742248       PED(R)         PED(R)  14049  27681  19417  14044  27662  19408                0.921               0.881487</span>
+<span class="sd">            2         792368888         5901225361       PED(R)         PED(R)  14049  27681  19417  14055  27653  19420                0.921               0.436177</span>
+<span class="sd">            3         792368888         5813117385       SMP(R)         SMP(R)  23630  29443  16297  23634  29437  16279                0.984               0.970746</span>
+<span class="sd">            4         792368888         5813083733       SMP(R)         SMP(R)  23630  29443  16297  23634  29419  16288                0.984               0.933871</span>
+<span class="sd">            5         792368888         5813058320       SMP(R)         SMP(R)  18662  34144  12692  18655  34155  12697                0.853               0.995000</span>
+<span class="sd">            6         792368888         5812981989       PED(R)         PED(R)  14331  27921  20099  14351  27928  20085                0.904               0.877373</span>
+<span class="sd">            7         792368888         5812981381       PED(R)         PED(R)  14331  27921  20099  14301  27919  20109                0.904               0.567321</span>
+<span class="sd">            8         792368888         5812981381       PED(R)         PED(R)  14013  27747  19307  14020  27747  19285                0.996               0.697836</span>
+<span class="sd">            9         792368888         5812979314       PED(R)         PED(R)  14331  27921  20099  14329  27942  20109                0.904               0.638362</span>
+<span class="sd">            10        792368888          424767514       PED(R)         PED(R)  14331  27921  20099  14324  27934  20085                0.904               0.985734</span>
+<span class="sd">            11        792368888          424767514       PED(R)         PED(R)  14013  27747  19307  14020  27760  19294                0.996               0.942831</span>
+<span class="sd">            12        792368888          424767514       PED(R)         PED(R)  14049  27681  19417  14040  27663  19420                0.921               0.993586</span>
+<span class="sd">            13        792368888          331662710       SMP(R)         SMP(R)  23630  29443  16297  23644  29429  16302                0.984               0.996389</span>
+<span class="sd">            14        792368888         1196854070       PED(R)         PED(R)  14331  27921  20099  14317  27935  20101                0.904               0.968408</span>
+<span class="sd">            15        792368888         1131831702       SMP(R)         SMP(R)  23630  29443  16297  23651  29434  16316                0.984               0.362952</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">prepare_sc</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">()</span>
+        
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="s1">&#39;bodyId&#39;</span> <span class="ow">in</span> <span class="n">sc</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> \
+                <span class="s1">&#39;If passing a DataFrame, it must have &quot;bodyId&quot; column&#39;</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sc</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sc</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">),</span> \
+            <span class="p">(</span><span class="s2">&quot;Please pass a SegmentCriteria, a list of bodyIds, &quot;</span>
+             <span class="sa">f</span><span class="s2">&quot;or a DataFrame with a &#39;bodyId&#39; column, not </span><span class="si">{sc}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+        <span class="n">sc</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">sc</span><span class="p">)</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
+        
+        <span class="c1"># If the user specified rois to filter synapses by, but hasn&#39;t specified rois</span>
+        <span class="c1"># in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.</span>
+        <span class="k">if</span> <span class="n">sc</span><span class="o">.</span><span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">}</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
+    
+        <span class="k">return</span> <span class="n">sc</span>
+
+    <span class="k">assert</span> <span class="n">source_criteria</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target_criteria</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
+        <span class="s2">&quot;Please specify either source or target search criteria (or both).&quot;</span>
+
+    <span class="n">source_criteria</span> <span class="o">=</span> <span class="n">prepare_sc</span><span class="p">(</span><span class="n">source_criteria</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">)</span>
+    <span class="n">target_criteria</span> <span class="o">=</span> <span class="n">prepare_sc</span><span class="p">(</span><span class="n">target_criteria</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">synapse_criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">synapse_criteria</span> <span class="o">=</span> <span class="n">SynapseCriteria</span><span class="p">(</span><span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">primary_only</span><span class="p">:</span>
+        <span class="n">return_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">primary_rois</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">return_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">all_rois</span><span class="p">}</span>
+
+    <span class="n">source_syn_crit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">synapse_criteria</span><span class="p">)</span>
+    <span class="n">target_syn_crit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">synapse_criteria</span><span class="p">)</span>
+
+    <span class="n">source_syn_crit</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;ns&#39;</span>
+    <span class="n">target_syn_crit</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;ms&#39;</span>
+    
+    <span class="c1"># Fetch results</span>
+    <span class="n">cypher</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">        MATCH (n:</span><span class="si">{source_criteria.label}</span><span class="s2">)-[:ConnectsTo]-&gt;(m:</span><span class="si">{target_criteria.label}</span><span class="s2">),</span>
+<span class="s2">              (n)-[:Contains]-&gt;(nss:SynapseSet),</span>
+<span class="s2">              (m)-[:Contains]-&gt;(mss:SynapseSet),</span>
+<span class="s2">              (nss)-[:ConnectsTo]-&gt;(mss),</span>
+<span class="s2">              (nss)-[:Contains]-&gt;(ns:Synapse),</span>
+<span class="s2">              (mss)-[:Contains]-&gt;(ms:Synapse),</span>
+<span class="s2">              (ns)-[:SynapsesTo]-&gt;(ms)</span>
+
+<span class="s2">        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), (&#39;n&#39;, &#39;m&#39;, &#39;ns&#39;, &#39;ms&#39;), prefix=8)}</span>
+
+<span class="s2">        {source_syn_crit.condition(&#39;n&#39;, &#39;m&#39;, &#39;ns&#39;, &#39;ms&#39;, prefix=8)}</span>
+<span class="s2">        {target_syn_crit.condition(&#39;n&#39;, &#39;m&#39;, &#39;ns&#39;, &#39;ms&#39;, prefix=8)}</span>
+<span class="s2">        </span>
+<span class="s2">        RETURN n.bodyId as upstream_bodyId,</span>
+<span class="s2">               m.bodyId as downstream_bodyId,</span>
+<span class="s2">               ns.location.x as ux,</span>
+<span class="s2">               ns.location.y as uy,</span>
+<span class="s2">               ns.location.z as uz,</span>
+<span class="s2">               ms.location.x as dx,</span>
+<span class="s2">               ms.location.y as dy,</span>
+<span class="s2">               ms.location.z as dz,</span>
+<span class="s2">               ns.confidence as up_conf,</span>
+<span class="s2">               ms.confidence as dn_conf,</span>
+<span class="s2">               apoc.map.removeKeys(ns, [&#39;location&#39;, &#39;confidence&#39;, &#39;type&#39;]) as upstream_info,</span>
+<span class="s2">               apoc.map.removeKeys(ms, [&#39;location&#39;, &#39;confidence&#39;, &#39;type&#39;]) as downstream_info</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;json&#39;</span><span class="p">)[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+
+    <span class="c1"># Assemble DataFrame</span>
+    <span class="n">syn_table</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">upstream_body</span><span class="p">,</span> <span class="n">downstream_body</span><span class="p">,</span> <span class="n">ux</span><span class="p">,</span> <span class="n">uy</span><span class="p">,</span> <span class="n">uz</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">up_conf</span><span class="p">,</span> <span class="n">dn_conf</span><span class="p">,</span> <span class="n">upstream_info</span><span class="p">,</span> <span class="n">downstream_info</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="c1"># Exclude non-primary ROIs if necessary</span>
+        <span class="n">up_rois</span> <span class="o">=</span> <span class="n">return_rois</span> <span class="o">&amp;</span> <span class="p">{</span><span class="o">*</span><span class="n">upstream_info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="n">dn_rois</span> <span class="o">=</span> <span class="n">return_rois</span> <span class="o">&amp;</span> <span class="p">{</span><span class="o">*</span><span class="n">downstream_info</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+        <span class="c1"># Intern the ROIs to save RAM</span>
+        <span class="n">up_rois</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">intern</span><span class="p">,</span> <span class="n">up_rois</span><span class="p">))</span>
+        <span class="n">dn_rois</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">intern</span><span class="p">,</span> <span class="n">dn_rois</span><span class="p">))</span>
+
+        <span class="n">up_rois</span> <span class="o">=</span> <span class="n">up_rois</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+        <span class="n">dn_rois</span> <span class="o">=</span> <span class="n">dn_rois</span> <span class="ow">or</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
+
+        <span class="c1"># Should be (at most) one ROI when primary_only=True,</span>
+        <span class="c1"># so only show that one (not a list)</span>
+        <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">primary_only</span><span class="p">:</span>
+            <span class="n">up_rois</span> <span class="o">=</span> <span class="n">up_rois</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dn_rois</span> <span class="o">=</span> <span class="n">dn_rois</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="n">syn_table</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">upstream_body</span><span class="p">,</span> <span class="n">downstream_body</span><span class="p">,</span> <span class="n">up_rois</span><span class="p">,</span> <span class="n">dn_rois</span><span class="p">,</span> <span class="n">ux</span><span class="p">,</span> <span class="n">uy</span><span class="p">,</span> <span class="n">uz</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">up_conf</span><span class="p">,</span> <span class="n">dn_conf</span><span class="p">))</span>
+
+    <span class="n">syn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">syn_table</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;upstream_bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;downstream_bodyId&#39;</span><span class="p">,</span>
+                                              <span class="s1">&#39;upstream_roi&#39;</span><span class="p">,</span> <span class="s1">&#39;downstream_roi&#39;</span><span class="p">,</span>
+                                              <span class="s1">&#39;ux&#39;</span><span class="p">,</span> <span class="s1">&#39;uy&#39;</span><span class="p">,</span> <span class="s1">&#39;uz&#39;</span><span class="p">,</span> <span class="s1">&#39;dx&#39;</span><span class="p">,</span> <span class="s1">&#39;dy&#39;</span><span class="p">,</span> <span class="s1">&#39;dz&#39;</span><span class="p">,</span>
+                                              <span class="s1">&#39;upstream_confidence&#39;</span><span class="p">,</span> <span class="s1">&#39;downstream_confidence&#39;</span><span class="p">])</span>
+
+    <span class="c1"># Save RAM with smaller dtypes</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;ux&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;uy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;uz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;uz&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;dz&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;dz&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;upstream_confidence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;upstream_confidence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;downstream_confidence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;downstream_confidence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">syn_df</span></div>
 </pre></div>
 
            </div>
