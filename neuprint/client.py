@@ -300,6 +300,10 @@ class Client:
             protocol = server.split('://')[0]
             raise RuntimeError(f"Unknown protocol: {protocol}")
 
+        # Remove trailing backslash
+        while server.endswith('/'):
+            server = server[:-1]
+
         self.server = server
 
         self.session = Session()
@@ -340,6 +344,13 @@ class Client:
         self.primary_rois = self.meta['primaryRois']
         self.all_rois = _all_rois_from_meta(self.meta)
 
+
+    def __repr__(self):
+        s = f'Client("{self.server}", "{self.dataset}"'
+        if not self.verify:
+            s += ", verify=False"
+        s += ")"
+        return s
 
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):

@@ -1,13 +1,18 @@
 import os
+import sys
 import copy
+import math
 import collections
 from textwrap import indent, dedent
 
+import numpy as np
 import pandas as pd
-from tqdm import trange
+from tqdm import tqdm
 
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
+from .synapsecriteria import SynapseCriteria
+from .utils import make_args_iterable
 
 # ujson is faster than Python's builtin json module
 import ujson
@@ -503,21 +508,26 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 
 @inject_client
-def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
     `NotPrimary` (which is not currently an ROI name in neuprint itself).
-    
+
     Args:
-        criteria:
-            Limit results to connections between bodies that match this criteria.
-            
+        sources:
+            Limit results to connections from bodies that match this criteria.
+            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
+            will include all bodies upstream of ``targets``.
+        targets:
+            Limit results to connections to bodies that match this criteria.
+            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
+            will include all bodies downstream of ``sources``.
         export_dir:
             Optional. Export CSV files for the neuron table,
             connection table (total weight), and connection table (per ROI).
-            
+
         batch_size:
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
@@ -527,48 +537,109 @@ def fetch_adjacencies(criteria, export_dir=None, batch_size=200, *, client=None)
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
-        Two DataFrames, ``(traced_neurons_df, roi_conn_df, total_conn_df)``,
-        containing the table of neuron IDs and the per-ROI connection table,
-        respectively. See caveat above concerning non-primary ROIs.
+        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing a
+        table of neuron IDs and the per-ROI connection table, respectively.
+        See caveat above concerning non-primary ROIs.
 
     See also:
-        :py:func:`.fetch_traced_adjacecies()`
+        :py:func:`.fetch_traced_adjacencies()`
+
     """
-    if not isinstance(criteria, SegmentCriteria):
-        # A previous version of this function accepted a list of bodyIds.
-        # We still support that for now.
-        assert isinstance(criteria, collections.abc.Iterable), \
-            f"Invalid criteria: {criteria}"
-        criteria = SegmentCriteria(bodyId=criteria)
-    
-    criteria = copy.copy(criteria)
-    criteria.matchvar = 'n'
-    
-    q = f"""\
-        MATCH (n:{criteria.label})
-        {criteria.all_conditions(prefix=8)}
-        RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
-        ORDER BY n.bodyId
-    """
-    neurons_df = client.fetch_custom(q)
-    
+    assert (not isinstance(sources, type(None)) or not isinstance(targets, type(None))), \
+              "Must provide either sources or targets or both."
+
+    neurons_df = []
+    if not isinstance(sources, type(None)):
+        if not isinstance(sources, SegmentCriteria):
+            # A previous version of this function accepted a list of bodyIds.
+            # We still support that for now.
+            assert isinstance(sources, collections.abc.Iterable), \
+                f"Invalid criteria: {sources}"
+            sources = SegmentCriteria(bodyId=sources)
+        else:
+            sources = copy.copy(sources)
+            sources.matchvar = 'n'
+
+        q = f"""\
+            MATCH (n:{sources.label})
+            {sources.all_conditions(prefix=8)}
+            RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
+            ORDER BY n.bodyId
+        """
+        sources_df = client.fetch_custom(q)
+        neurons_df.append(sources_df)
+
+    if not isinstance(targets, type(None)):
+        if not isinstance(targets, SegmentCriteria):
+            # A previous version of this function accepted a list of bodyIds.
+            # We still support that for now.
+            assert isinstance(targets, collections.abc.Iterable), \
+                f"Invalid criteria: {targets}"
+            targets = SegmentCriteria(bodyId=targets)
+        else:
+            targets = copy.copy(targets)
+            targets.matchvar = 'n'
+
+        # Save time in cases where sources = targets
+        if targets == sources:
+            targets_df = sources_df
+        else:
+            q = f"""\
+                MATCH (n:{targets.label})
+                {targets.all_conditions(prefix=8)}
+                RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
+                ORDER BY n.bodyId
+            """
+            targets_df = client.fetch_custom(q)
+            neurons_df.append(targets_df)
+
+    # Merge sources and targets
+    neurons_df = pd.concat(neurons_df, ignore_index=True)
+    neurons_df.drop_duplicates('bodyId', inplace=True)
+    neurons_df.reset_index(drop=True, inplace=True)
+
+    # If either sources or targets is not provided use the others label
+    sources_label = sources.label if sources else targets.label
+    targets_label = targets.label if targets else sources.label
+
     # Fetch connections in batches
     conn_tables = []
-    for start in trange(0, len(neurons_df), batch_size):
-        stop = start + batch_size
-        batch_neurons = neurons_df['bodyId'].iloc[start:stop].tolist()
-        q = f"""\
-            MATCH (n:{criteria.label})-[e:ConnectsTo]->(m:{criteria.label})
-            WHERE n.bodyId in {batch_neurons}
-            RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
-        """
-        conn_tables.append( client.fetch_custom(q) )
-    
+    sources_iter = sources_df.bodyId.values if sources else [None]
+    targets_iter = targets_df.bodyId.values if targets else [None]
+
+    total_chunks = math.ceil(len(sources_iter) / batch_size) * \
+                   math.ceil(len(targets_iter) / batch_size)
+
+    with tqdm(total=total_chunks,
+              disable=total_chunks == 1,
+              leave=False) as pbar:
+        for sources_start in range(0, len(sources_iter), batch_size):
+            sources_stop = sources_start + batch_size
+            sources_batch = sources_iter[sources_start:sources_stop]
+            for targets_start in range(0, len(targets_iter), batch_size):
+                targets_stop = targets_start + batch_size
+                targets_batch = targets_iter[targets_start:targets_stop]
+
+                where = []
+                if any(sources_batch):
+                    where.append(f'n.bodyId in {sources_batch.tolist()}')
+                if any(targets_batch):
+                    where.append(f'm.bodyId in {targets_batch.tolist()}')
+
+                q = f"""\
+                    MATCH (n:{sources_label})-[e:ConnectsTo]->(m:{targets_label})
+                WHERE {' AND '.join(where)}
+                    RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
+                """
+                conn_tables.append(client.fetch_custom(q))
+                pbar.update(1)
+            pbar.update(1)
+
     # Combine batches
     connections_df = pd.concat(conn_tables, ignore_index=True)
-    
+
     # Parse roiInfo json
     connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
 
@@ -665,7 +736,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             4   202916528    264986706       2        
      """
     criteria = SegmentCriteria(status="Traced", cropped=False)
-    return fetch_adjacencies(criteria, export_dir, batch_size, client=client)
+    return fetch_adjacencies(criteria, criteria, export_dir, batch_size, client=client)
 
 
 @inject_client
@@ -753,3 +824,347 @@ def fetch_primary_rois(*, client=None):
     rois = client.fetch_custom(q)['rois'].iloc[0]
     return sorted(rois)
 
+
+@inject_client
+def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
+    """
+    Fetch synapses from neuron or selection of neurons.
+
+    Args:
+    
+        segment_criteria (SegmentCriteria or bodyId list):
+            Can be either a single bodyID, a list-like of multiple body IDs,
+            a DataFrame with a `bodyId` column or a :py:class:`.SegmentCriteria`
+            used to find a set of body IDs.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            See :py:class:`.SynapseCriteria` for details.
+
+            If the criteria specifies ``primary_only=True`` only primary ROIs will be returned in the results.
+            If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.
+            (Since 'primary' ROIs do not overlap, each synapse will be listed only once.)
+            Otherwise, all ROI names will be included in the results.
+            In that case, some synapses will be listed multiple times -- once per intersecting ROI.
+            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+    
+        DataFrame in which each row represent a single synapse.
+        Unless ``primary_only`` was specified, some synapses may be listed more than once,
+        if they reside in more than one overlapping ROI.
+    
+    Example:
+    
+        .. code-block:: ipython
+        
+            In [1]: from neuprint import SegmentCriteria as SC, SynapseCriteria as SynC, fetch_synapses
+               ...: fetch_synapses(SC(type='ADL.*', regex=True, rois=['FB']),
+               ...:                SynC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
+            Out[1]:
+                    bodyId  type     roi      x      y      z  confidence
+            0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            1   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            2   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            3   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            4   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            5   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            6   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            7   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            8   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            9   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            10  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            11  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            12  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            13  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            14  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            15  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            16  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            17  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            18  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            19  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            20  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            21  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            22  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            23  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            24  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            25  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            26  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            27  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            28  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            29   764377593  post   LH(R)   8043  21587  15146    0.804000
+            30   764377593  post   LH(R)   8057  21493  15140    0.906482
+            31   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+            32   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+            33   859152522  post  SIP(R)  13349  25337  13653    0.818386
+            34   859152522  post  SIP(R)  12793  26362  14202    0.926918
+            35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+
+    """
+    if isinstance(segment_criteria, pd.DataFrame):
+        assert 'bodyId' in segment_criteria.columns, \
+            'If passing a DataFrame, it must have "bodyId" column'
+        segment_criteria = SegmentCriteria(bodyId=segment_criteria['bodyId'].values, client=client)
+    elif not isinstance(segment_criteria, SegmentCriteria):
+        segment_criteria = SegmentCriteria(bodyId=segment_criteria, client=client)
+
+    assert isinstance(segment_criteria, SegmentCriteria), \
+        ("Please pass a SegmentCriteria, a list of bodyIds, "
+         f"or a DataFrame with a 'bodyId' column, not {segment_criteria}")
+
+    segment_criteria = copy.copy(segment_criteria)
+    segment_criteria.matchvar = 'n'
+    
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria()
+
+    if synapse_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    # If the user specified rois to filter synapses by, but hasn't specified rois
+    # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
+    if synapse_criteria.rois and not segment_criteria.rois:
+        segment_criteria.rois = {*synapse_criteria.rois}
+        segment_criteria.roi_req = 'any'
+
+    # Fetch results
+    cypher = dedent(f"""\
+        MATCH (n:{segment_criteria.label})-[:Contains]->(ss:SynapseSet),
+              (ss)-[:Contains]->(s:Synapse)
+
+        {segment_criteria.all_conditions(prefix=8)}
+        {synapse_criteria.condition('n', 's', prefix=8)}
+        
+        RETURN n.bodyId as bodyId,
+               s.type as type,
+               s.confidence as confidence,
+               s.location.x as x,
+               s.location.y as y,
+               s.location.z as z,
+               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for body, syn_type, conf, x, y, z, syn_info in data:
+        # Exclude non-primary ROIs if necessary
+        syn_rois = return_rois & {*syn_info.keys()}
+        for roi in syn_rois:
+            syn_table.append((body, syn_type, roi, x, y, z, conf))
+
+        if not syn_rois:
+            syn_table.append((body, syn_type, None, x, y, z, conf))
+
+    syn_df = pd.DataFrame(syn_table, columns=['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence'])
+
+    # Save RAM with smaller dtypes and interned strings
+    syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
+    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['x'] = syn_df['x'].astype(np.int32)
+    syn_df['y'] = syn_df['y'].astype(np.int32)
+    syn_df['z'] = syn_df['z'].astype(np.int32)
+    syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    return syn_df
+
+
+@inject_client
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, *, client=None):
+    """
+    Fetch a table of synapse-synapse connections between source and target neurons.
+    
+    Args:
+    
+        source_criteria (SegmentCriteria or bodyId list):
+            Criteria to by which to filter source (pre-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        target_criteria (SegmentCriteria or bodyId list):
+            Criteria to by which to filter target (post-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            The same criteria is used to filter both ``pre`` and ``post`` sides
+            of the connection.
+            By default, ``SynapseCriteria(primary_only=True)`` is used.
+            
+            If ``primary_only`` is specified in the criteria, then the resulting
+            ``upstream_roi`` and ``downstream_roi`` columns will contain a single
+            string (or ``None``) in every row.
+            
+            Otherwise, the roi columns will contain a list of ROIs for every row.
+            (Primary ROIs do not overlap, so every synapse resides in only one
+            (or zero) primary ROI.)
+            See :py:class:`.SynapseCriteria` for details.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+    
+        DataFrame in which each row represents a single synaptic connection
+        between an upstream and downstream body.
+        Synapse locations are listed in columns ``[ux, uy, uz]`` and ``[dx, dy, dz]``
+        for the upstream and downstream syanpses, respectively.
+        The ``upstream_roi`` and ``downstream_roi`` columns will contain either strings
+        or lists-of-strings, depending on the ``primary_only`` synapse criteria as
+        described above.
+    
+    Example:
+
+        .. code-block:: ipython
+
+            In [1]: from neuprint import fetch_synapse_connections, SegmentCriteria as SC, SynapseCriteria as SynC
+               ...: fetch_synapse_connections(SC(bodyId=792368888), None, SynC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
+            Out[1]:
+                upstream_bodyId  downstream_bodyId upstream_roi downstream_roi     ux     uy     uz     dx     dy     dz  upstream_confidence  downstream_confidence
+            0         792368888          754547386       PED(R)         PED(R)  14013  27747  19307  13992  27720  19313                0.996               0.401035
+            1         792368888          612742248       PED(R)         PED(R)  14049  27681  19417  14044  27662  19408                0.921               0.881487
+            2         792368888         5901225361       PED(R)         PED(R)  14049  27681  19417  14055  27653  19420                0.921               0.436177
+            3         792368888         5813117385       SMP(R)         SMP(R)  23630  29443  16297  23634  29437  16279                0.984               0.970746
+            4         792368888         5813083733       SMP(R)         SMP(R)  23630  29443  16297  23634  29419  16288                0.984               0.933871
+            5         792368888         5813058320       SMP(R)         SMP(R)  18662  34144  12692  18655  34155  12697                0.853               0.995000
+            6         792368888         5812981989       PED(R)         PED(R)  14331  27921  20099  14351  27928  20085                0.904               0.877373
+            7         792368888         5812981381       PED(R)         PED(R)  14331  27921  20099  14301  27919  20109                0.904               0.567321
+            8         792368888         5812981381       PED(R)         PED(R)  14013  27747  19307  14020  27747  19285                0.996               0.697836
+            9         792368888         5812979314       PED(R)         PED(R)  14331  27921  20099  14329  27942  20109                0.904               0.638362
+            10        792368888          424767514       PED(R)         PED(R)  14331  27921  20099  14324  27934  20085                0.904               0.985734
+            11        792368888          424767514       PED(R)         PED(R)  14013  27747  19307  14020  27760  19294                0.996               0.942831
+            12        792368888          424767514       PED(R)         PED(R)  14049  27681  19417  14040  27663  19420                0.921               0.993586
+            13        792368888          331662710       SMP(R)         SMP(R)  23630  29443  16297  23644  29429  16302                0.984               0.996389
+            14        792368888         1196854070       PED(R)         PED(R)  14331  27921  20099  14317  27935  20101                0.904               0.968408
+            15        792368888         1131831702       SMP(R)         SMP(R)  23630  29443  16297  23651  29434  16316                0.984               0.362952
+    """
+    def prepare_sc(sc, matchvar):
+        if sc is None:
+            sc = SegmentCriteria()
+        
+        if isinstance(sc, pd.DataFrame):
+            assert 'bodyId' in sc.columns, \
+                'If passing a DataFrame, it must have "bodyId" column'
+            sc = SegmentCriteria(bodyId=sc['bodyId'].values, client=client)
+        elif not isinstance(sc, SegmentCriteria):
+            sc = SegmentCriteria(bodyId=sc, client=client)
+    
+        assert isinstance(sc, SegmentCriteria), \
+            ("Please pass a SegmentCriteria, a list of bodyIds, "
+             f"or a DataFrame with a 'bodyId' column, not {sc}")
+    
+        sc = copy.copy(sc)
+        sc.matchvar = matchvar
+        
+        # If the user specified rois to filter synapses by, but hasn't specified rois
+        # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
+        if sc.rois and not sc.rois:
+            sc.rois = {*synapse_criteria.rois}
+            sc.roi_req = 'any'
+    
+        return sc
+
+    assert source_criteria is not None or target_criteria is not None, \
+        "Please specify either source or target search criteria (or both)."
+
+    source_criteria = prepare_sc(source_criteria, 'n')
+    target_criteria = prepare_sc(target_criteria, 'm')
+
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria(primary_only=True)
+    
+    if synapse_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    source_syn_crit = copy.copy(synapse_criteria)
+    target_syn_crit = copy.copy(synapse_criteria)
+
+    source_syn_crit.matchvar = 'ns'
+    target_syn_crit.matchvar = 'ms'
+    
+    # Fetch results
+    cypher = dedent(f"""\
+        MATCH (n:{source_criteria.label})-[:ConnectsTo]->(m:{target_criteria.label}),
+              (n)-[:Contains]->(nss:SynapseSet),
+              (m)-[:Contains]->(mss:SynapseSet),
+              (nss)-[:ConnectsTo]->(mss),
+              (nss)-[:Contains]->(ns:Synapse),
+              (mss)-[:Contains]->(ms:Synapse),
+              (ns)-[:SynapsesTo]->(ms)
+
+        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
+
+        {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
+        {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
+        
+        RETURN n.bodyId as upstream_bodyId,
+               m.bodyId as downstream_bodyId,
+               ns.location.x as ux,
+               ns.location.y as uy,
+               ns.location.z as uz,
+               ms.location.x as dx,
+               ms.location.y as dy,
+               ms.location.z as dz,
+               ns.confidence as up_conf,
+               ms.confidence as dn_conf,
+               apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as upstream_info,
+               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as downstream_info
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for upstream_body, downstream_body, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, upstream_info, downstream_info in data:
+        # Exclude non-primary ROIs if necessary
+        up_rois = return_rois & {*upstream_info.keys()}
+        dn_rois = return_rois & {*downstream_info.keys()}
+
+        # Intern the ROIs to save RAM
+        up_rois = sorted(map(sys.intern, up_rois))
+        dn_rois = sorted(map(sys.intern, dn_rois))
+
+        up_rois = up_rois or [None]
+        dn_rois = dn_rois or [None]
+
+        # Should be (at most) one ROI when primary_only=True,
+        # so only show that one (not a list)
+        if synapse_criteria.primary_only:
+            up_rois = up_rois[0]
+            dn_rois = dn_rois[0]
+        
+        syn_table.append((upstream_body, downstream_body, up_rois, dn_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
+
+    syn_df = pd.DataFrame(syn_table, columns=['upstream_bodyId', 'downstream_bodyId',
+                                              'upstream_roi', 'downstream_roi',
+                                              'ux', 'uy', 'uz', 'dx', 'dy', 'dz',
+                                              'upstream_confidence', 'downstream_confidence'])
+
+    # Save RAM with smaller dtypes
+    syn_df['ux'] = syn_df['ux'].astype(np.int32)
+    syn_df['uy'] = syn_df['uy'].astype(np.int32)
+    syn_df['uz'] = syn_df['uz'].astype(np.int32)
+    syn_df['dx'] = syn_df['dx'].astype(np.int32)
+    syn_df['dy'] = syn_df['dy'].astype(np.int32)
+    syn_df['dz'] = syn_df['dz'].astype(np.int32)
+    syn_df['upstream_confidence'] = syn_df['upstream_confidence'].astype(np.float32)
+    syn_df['downstream_confidence'] = syn_df['downstream_confidence'].astype(np.float32)
+
+    return syn_df

@@ -1,7 +1,7 @@
 import os
 
 NEUPRINT_SERVER = 'neuprint.janelia.org'
-DATASET = 'hemibrain:v1.0'
+DATASET = 'hemibrain:v1.0.1'
 
 try:
     TOKEN = os.environ['NEUPRINT_APPLICATION_CREDENTIALS']
