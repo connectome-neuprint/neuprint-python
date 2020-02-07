@@ -356,179 +356,6 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 
 
 @inject_client
-def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
-    """
-    Given a set of neurons that match the given criteria, find neurons
-    that connect to ALL of the neurons in the set, i.e. connections
-    that are common to all neurons in the matched set.
-    
-    This is the Python equivalent to the Neuprint Explorer `Common Connectivity`_ page.
-
-    .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=commonconnectivity&q=1
-    
-    
-    Args:
-        criteria:
-            :py:class:`.SegmentCriteria` used to determine the match set,
-            for which common connections will be found.
-
-        search_direction (``"upstream"`` or ``"downstream"``):
-            Whether or not to search for common connections upstream of
-            the matched neurons or downstream of the matched neurons. 
-        
-        min_weight:
-            Connections below the given strength will not be included in the results.
-
-        properties:
-            Additional columns to include in the results, for both the upstream and downstream body.
-
-        client:
-            If not provided, the global default :py:class:`.Client` will be used.
-    
-    Returns: DataFrame
-        (Same format as returned by :py:func:`fetch_simple_connections()`.)
-        One row per connection, with columns for upstream and downstream properties.
-        For instance, if ``search_direction="upstream"``, then the matched neurons will appear
-        in the ``downstream_`` columns, and the common connections will appear in the ``upstream_``
-        columns.
-    """
-    assert search_direction in ('upstream', 'downstream')
-    if search_direction == "upstream":
-        edges_df = fetch_simple_connections(None, criteria, min_weight, properties, client=client)
-        
-        # How bodies many met primary serach criteria?
-        num_primary = edges_df['downstream_bodyId'].nunique()
-
-        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
-        upstream_counts = edges_df['upstream_bodyId'].value_counts()
-        keep = upstream_counts[upstream_counts == num_primary].index
-        
-        return edges_df.query('upstream_bodyId in @keep')
-
-    if search_direction == "downstream":
-        edges_df = fetch_simple_connections(criteria, None, min_weight, properties, client=client)
-        
-        # How bodies many met primary serach criteria?
-        num_primary = edges_df['upstream_bodyId'].nunique()
-
-        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
-        upstream_counts = edges_df['downstream_bodyId'].value_counts()
-        keep = upstream_counts[upstream_counts == num_primary].index
-        
-        return edges_df.query('downstream_bodyId in @keep')
-
-
-@inject_client
-def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
-                         intermediate_criteria=None,
-                         timeout=5.0, *, client=None):
-    """
-    Find all neurons along the shortest path between two neurons.
-    
-    Args:
-        upstream_bodyId:
-            The starting neuron
-        
-        downstream_bodyId:
-            The destination neuron
-        
-        min_weight:
-            Minimum connection strength for each step in the path.
-        
-        intermediate_criteria (:py:class:`.SegmentCriteria`):
-            Filtering criteria for neurons on path.
-            All intermediate neurons in the path must satisfy this criteria.
-            By default, ``SegmentCriteria(status="Traced")`` is used.
-        
-        timeout:
-            Give up after this many seconds, in which case an **empty DataFrame is returned.**
-            No exception is raised!
-        
-        client:
-            If not provided, the global default :py:class:`.Client` will be used.
-    
-    Returns:
-        All paths are concatenated into a single DataFrame.
-        The `path` column indicates which path that row belongs to.
-        The `weight` column indicates the connection strength to that
-        body from the previous body in the path.
-        
-        Example:
-        
-            .. code-block:: ipython
-            
-                In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
-                Out[1]:
-                      path     bodyId                       type  weight
-                0        0  329566174                    OA-VPM3       0
-                1        0  517169460                 PDL05h_pct      11
-                2        0  297251714                ADM01om_pct      15
-                3        0  294424196                PDL13ob_pct      11
-                4        0  295133927               PDM18a_d_pct      10
-                ...    ...        ...                        ...     ...
-                5773   962  511271574                 ADL24h_pct      43
-                5774   962  480923210                PDL10od_pct      18
-                5775   962  294424196                PDL13ob_pct      21
-                5776   962  295133927               PDM18a_d_pct      10
-                5777   962  294792184  olfactory multi vPN mlALT      10
-                
-                [5778 rows x 4 columns]
-    """
-    if intermediate_criteria is None:
-        intermediate_criteria = SegmentCriteria(status="Traced")
-    
-    assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
-        "This function doesn't support search criteria that specifies inputRois or outputRois. "\
-        "You can specify generic (intersecting) rois, though."
-
-    intermediate_criteria = copy.copy(intermediate_criteria)
-    intermediate_criteria.matchvar = 'n'
-
-    timeout_ms = int(1000*timeout)
-
-    nodes_where = intermediate_criteria.basic_conditions(comments=False)
-    nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
-    nodes_where = nodes_where.replace('\n', '')
-    
-    q = f"""\
-        call apoc.cypher.runTimeboxed(
-            "MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
-                   (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
-                   p = allShortestPaths((src)-[:ConnectsTo*]->(dest))
-
-            WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
-                  AND ALL (n in nodes(p) {nodes_where})
-
-            RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
-                   [x in relationships(p) | x.weight] AS weights",
-            
-            {{}},{timeout_ms}) YIELD value
-            RETURN value.path as path, value.weights AS weights
-    """
-    results_df = fetch_custom(q)
-    
-    table_indexes = []
-    table_bodies = []
-    table_types = []
-    table_weights = []
-
-    for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
-        bodies, types = zip(*path)
-        weights = [0, *weights]
-        
-        table_indexes += len(bodies)*[path_index]
-        table_bodies += bodies
-        table_types += types
-        table_weights += weights
-
-    paths_df = pd.DataFrame({'path': table_indexes,
-                             'bodyId': table_bodies,
-                             'type': table_types,
-                             'weight': table_weights})
-    return paths_df
-
-
-@inject_client
 def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, *, client=None):
     """
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
@@ -816,89 +643,176 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 
 
 @inject_client
-def fetch_meta(*, client=None):
+def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
     """
-    Fetch the dataset metadata, parsing json fields where necessary.
+    Given a set of neurons that match the given criteria, find neurons
+    that connect to ALL of the neurons in the set, i.e. connections
+    that are common to all neurons in the matched set.
+    
+    This is the Python equivalent to the Neuprint Explorer `Common Connectivity`_ page.
+
+    .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=commonconnectivity&q=1
+    
+    
+    Args:
+        criteria:
+            :py:class:`.SegmentCriteria` used to determine the match set,
+            for which common connections will be found.
+
+        search_direction (``"upstream"`` or ``"downstream"``):
+            Whether or not to search for common connections upstream of
+            the matched neurons or downstream of the matched neurons. 
+        
+        min_weight:
+            Connections below the given strength will not be included in the results.
+
+        properties:
+            Additional columns to include in the results, for both the upstream and downstream body.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+    
+    Returns: DataFrame
+        (Same format as returned by :py:func:`fetch_simple_connections()`.)
+        One row per connection, with columns for upstream and downstream properties.
+        For instance, if ``search_direction="upstream"``, then the matched neurons will appear
+        in the ``downstream_`` columns, and the common connections will appear in the ``upstream_``
+        columns.
+    """
+    assert search_direction in ('upstream', 'downstream')
+    if search_direction == "upstream":
+        edges_df = fetch_simple_connections(None, criteria, min_weight, properties, client=client)
+        
+        # How bodies many met primary serach criteria?
+        num_primary = edges_df['downstream_bodyId'].nunique()
+
+        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
+        upstream_counts = edges_df['upstream_bodyId'].value_counts()
+        keep = upstream_counts[upstream_counts == num_primary].index
+        
+        return edges_df.query('upstream_bodyId in @keep')
+
+    if search_direction == "downstream":
+        edges_df = fetch_simple_connections(criteria, None, min_weight, properties, client=client)
+        
+        # How bodies many met primary serach criteria?
+        num_primary = edges_df['upstream_bodyId'].nunique()
+
+        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
+        upstream_counts = edges_df['downstream_bodyId'].value_counts()
+        keep = upstream_counts[upstream_counts == num_primary].index
+        
+        return edges_df.query('downstream_bodyId in @keep')
+
+
+@inject_client
+def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
+                         intermediate_criteria=None,
+                         timeout=5.0, *, client=None):
+    """
+    Find all neurons along the shortest path between two neurons.
+    
+    Args:
+        upstream_bodyId:
+            The starting neuron
+        
+        downstream_bodyId:
+            The destination neuron
+        
+        min_weight:
+            Minimum connection strength for each step in the path.
+        
+        intermediate_criteria (:py:class:`.SegmentCriteria`):
+            Filtering criteria for neurons on path.
+            All intermediate neurons in the path must satisfy this criteria.
+            By default, ``SegmentCriteria(status="Traced")`` is used.
+        
+        timeout:
+            Give up after this many seconds, in which case an **empty DataFrame is returned.**
+            No exception is raised!
+        
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
     
     Returns:
-        dict
+        All paths are concatenated into a single DataFrame.
+        The `path` column indicates which path that row belongs to.
+        The `weight` column indicates the connection strength to that
+        body from the previous body in the path.
+        
+        Example:
+        
+            .. code-block:: ipython
+            
+                In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
+                Out[1]:
+                      path     bodyId                       type  weight
+                0        0  329566174                    OA-VPM3       0
+                1        0  517169460                 PDL05h_pct      11
+                2        0  297251714                ADM01om_pct      15
+                3        0  294424196                PDL13ob_pct      11
+                4        0  295133927               PDM18a_d_pct      10
+                ...    ...        ...                        ...     ...
+                5773   962  511271574                 ADL24h_pct      43
+                5774   962  480923210                PDL10od_pct      18
+                5775   962  294424196                PDL13ob_pct      21
+                5776   962  295133927               PDM18a_d_pct      10
+                5777   962  294792184  olfactory multi vPN mlALT      10
+                
+                [5778 rows x 4 columns]
+    """
+    if intermediate_criteria is None:
+        intermediate_criteria = SegmentCriteria(status="Traced")
     
-    Example
+    assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
+        "This function doesn't support search criteria that specifies inputRois or outputRois. "\
+        "You can specify generic (intersecting) rois, though."
+
+    intermediate_criteria = copy.copy(intermediate_criteria)
+    intermediate_criteria.matchvar = 'n'
+
+    timeout_ms = int(1000*timeout)
+
+    nodes_where = intermediate_criteria.basic_conditions(comments=False)
+    nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
+    nodes_where = nodes_where.replace('\n', '')
     
-    .. code-block:: ipython
+    q = f"""\
+        call apoc.cypher.runTimeboxed(
+            "MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
+                   (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
+                   p = allShortestPaths((src)-[:ConnectsTo*]->(dest))
+
+            WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
+                  AND ALL (n in nodes(p) {nodes_where})
+
+            RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
+                   [x in relationships(p) | x.weight] AS weights",
+            
+            {{}},{timeout_ms}) YIELD value
+            RETURN value.path as path, value.weights AS weights
+    """
+    results_df = fetch_custom(q)
     
-        In [1]: meta = fetch_meta()
-    
-        In [2]: list(meta.keys())
-        Out[2]:
-        ['dataset',
-         'info',
-         'lastDatabaseEdit',
-         'latestMutationId',
-         'logo',
-         'meshHost',
-         'neuroglancerInfo',
-         'neuroglancerMeta',
-         'postHPThreshold',
-         'postHighAccuracyThreshold',
-         'preHPThreshold',
-         'primaryRois',
-         'roiHierarchy',
-         'roiInfo',
-         'statusDefinitions',
-         'superLevelRois',
-         'tag',
-         'totalPostCount',
-         'totalPreCount',
-         'uuid']
-    """
-    q = """\
-        MATCH (m:Meta)
-        WITH m as m,
-             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,
-             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,
-             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,
-             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,
-             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions
-        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions
-    """
-    df = client.fetch_custom(q)
-    meta = df['meta'].iloc[0]
-    meta.update(df.drop(columns='meta').iloc[0].to_dict())
-    return meta
+    table_indexes = []
+    table_bodies = []
+    table_types = []
+    table_weights = []
 
+    for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
+        bodies, types = zip(*path)
+        weights = [0, *weights]
+        
+        table_indexes += len(bodies)*[path_index]
+        table_bodies += bodies
+        table_types += types
+        table_weights += weights
 
-@inject_client
-def fetch_all_rois(*, client=None):
-    """
-    Fetch the list of all ROIs in the dataset,
-    from the dataset metadata.
-    """
-    meta = fetch_meta(client=client)
-    return _all_rois_from_meta(meta)
-
-
-def _all_rois_from_meta(meta):
-    official_rois = {*meta['roiInfo'].keys()}
-
-    # These two ROIs are special:
-    # For historical reasons, they exist as tags,
-    # but are not listed in the Meta roiInfo.
-    hidden_rois = {'FB-column3', 'AL-DC3'}
-
-    return sorted(official_rois | hidden_rois)
-
-
-@inject_client
-def fetch_primary_rois(*, client=None):
-    """
-    Fetch the list of 'primary' ROIs in the dataset,
-    from the dataset metadata.
-    Primary ROIs do not overlap with each other.
-    """
-    q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
-    rois = client.fetch_custom(q)['rois'].iloc[0]
-    return sorted(rois)
+    paths_df = pd.DataFrame({'path': table_indexes,
+                             'bodyId': table_bodies,
+                             'type': table_types,
+                             'weight': table_weights})
+    return paths_df
 
 
 @inject_client
@@ -1244,3 +1158,89 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     syn_df['downstream_confidence'] = syn_df['downstream_confidence'].astype(np.float32)
 
     return syn_df
+
+
+@inject_client
+def fetch_meta(*, client=None):
+    """
+    Fetch the dataset metadata, parsing json fields where necessary.
+    
+    Returns:
+        dict
+    
+    Example
+    
+    .. code-block:: ipython
+    
+        In [1]: meta = fetch_meta()
+    
+        In [2]: list(meta.keys())
+        Out[2]:
+        ['dataset',
+         'info',
+         'lastDatabaseEdit',
+         'latestMutationId',
+         'logo',
+         'meshHost',
+         'neuroglancerInfo',
+         'neuroglancerMeta',
+         'postHPThreshold',
+         'postHighAccuracyThreshold',
+         'preHPThreshold',
+         'primaryRois',
+         'roiHierarchy',
+         'roiInfo',
+         'statusDefinitions',
+         'superLevelRois',
+         'tag',
+         'totalPostCount',
+         'totalPreCount',
+         'uuid']
+    """
+    q = """\
+        MATCH (m:Meta)
+        WITH m as m,
+             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,
+             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,
+             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,
+             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,
+             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions
+        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions
+    """
+    df = client.fetch_custom(q)
+    meta = df['meta'].iloc[0]
+    meta.update(df.drop(columns='meta').iloc[0].to_dict())
+    return meta
+
+
+@inject_client
+def fetch_all_rois(*, client=None):
+    """
+    Fetch the list of all ROIs in the dataset,
+    from the dataset metadata.
+    """
+    meta = fetch_meta(client=client)
+    return _all_rois_from_meta(meta)
+
+
+def _all_rois_from_meta(meta):
+    official_rois = {*meta['roiInfo'].keys()}
+
+    # These two ROIs are special:
+    # For historical reasons, they exist as tags,
+    # but are not listed in the Meta roiInfo.
+    hidden_rois = {'FB-column3', 'AL-DC3'}
+
+    return sorted(official_rois | hidden_rois)
+
+
+@inject_client
+def fetch_primary_rois(*, client=None):
+    """
+    Fetch the list of 'primary' ROIs in the dataset,
+    from the dataset metadata.
+    Primary ROIs do not overlap with each other.
+    """
+    q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
+    rois = client.fetch_custom(q)['rois'].iloc[0]
+    return sorted(rois)
