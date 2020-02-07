@@ -1,12 +1,13 @@
 import os
 import sys
 import copy
+import math
 import collections
 from textwrap import indent, dedent
 
 import numpy as np
 import pandas as pd
-from tqdm import trange
+from tqdm import tqdm
 
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
