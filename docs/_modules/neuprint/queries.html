@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.5 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.5+3.g93b2715 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.5
+                0.3.5+3.g93b2715
               </div>
             
           
@@ -174,6 +174,8 @@
 <div class="viewcode-block" id="fetch_custom"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make a custom cypher query.</span>
+<span class="sd">    </span>
 <span class="sd">    Alternative form of :py:meth:`.Client.fetch_custom()`, as a free function.</span>
 <span class="sd">    That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.</span>
 
@@ -204,10 +206,97 @@
     <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_meta</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch the dataset metadata.</span>
+<span class="sd">    Parses json fields as needed.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        dict</span>
+<span class="sd">    </span>
+<span class="sd">    Example</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: ipython</span>
+<span class="sd">    </span>
+<span class="sd">        In [1]: meta = fetch_meta()</span>
+<span class="sd">    </span>
+<span class="sd">        In [2]: list(meta.keys())</span>
+<span class="sd">        Out[2]:</span>
+<span class="sd">        [&#39;dataset&#39;,</span>
+<span class="sd">         &#39;info&#39;,</span>
+<span class="sd">         &#39;lastDatabaseEdit&#39;,</span>
+<span class="sd">         &#39;latestMutationId&#39;,</span>
+<span class="sd">         &#39;logo&#39;,</span>
+<span class="sd">         &#39;meshHost&#39;,</span>
+<span class="sd">         &#39;neuroglancerInfo&#39;,</span>
+<span class="sd">         &#39;neuroglancerMeta&#39;,</span>
+<span class="sd">         &#39;postHPThreshold&#39;,</span>
+<span class="sd">         &#39;postHighAccuracyThreshold&#39;,</span>
+<span class="sd">         &#39;preHPThreshold&#39;,</span>
+<span class="sd">         &#39;primaryRois&#39;,</span>
+<span class="sd">         &#39;roiHierarchy&#39;,</span>
+<span class="sd">         &#39;roiInfo&#39;,</span>
+<span class="sd">         &#39;statusDefinitions&#39;,</span>
+<span class="sd">         &#39;superLevelRois&#39;,</span>
+<span class="sd">         &#39;tag&#39;,</span>
+<span class="sd">         &#39;totalPostCount&#39;,</span>
+<span class="sd">         &#39;totalPreCount&#39;,</span>
+<span class="sd">         &#39;uuid&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">        MATCH (m:Meta)</span>
+<span class="s2">        WITH m as m,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,</span>
+<span class="s2">             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,</span>
+<span class="s2">             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions</span>
+<span class="s2">        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;meta&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">meta</span></div>
+
+
+<div class="viewcode-block" id="fetch_all_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_all_rois">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List all ROIs in the dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_all_rois_from_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_all_rois_from_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">):</span>
+    <span class="n">official_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+
+    <span class="c1"># These two ROIs are special:</span>
+    <span class="c1"># For historical reasons, they exist as tags,</span>
+    <span class="c1"># but are not listed in the Meta roiInfo.</span>
+    <span class="n">hidden_rois</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FB-column3&#39;</span><span class="p">,</span> <span class="s1">&#39;AL-DC3&#39;</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">official_rois</span> <span class="o">|</span> <span class="n">hidden_rois</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="fetch_primary_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_primary_rois">[docs]</a><span class="nd">@inject_client</span>
+<span class="k">def</span> <span class="nf">fetch_primary_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List &#39;primary&#39; ROIs in the dataset.</span>
+<span class="sd">    Primary ROIs do not overlap with each other.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;MATCH (m:Meta) RETURN m.primaryRois as rois&quot;</span>
+    <span class="n">rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;rois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rois</span><span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="fetch_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_neurons">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_neurons</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Search for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.</span>
+<span class="sd">    Return properties and per-ROI synapse counts for a set of neurons.</span>
+<span class="sd">    </span>
+<span class="sd">    Searches for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.</span>
 <span class="sd">    Returns their properties, including the distibution of their synapses in all brain regions.</span>
 <span class="sd">    </span>
 <span class="sd">    This implements a superset of the features on the Neuprint Explorer `Find Neurons`_ page.</span>
@@ -301,6 +390,9 @@
 <div class="viewcode-block" id="fetch_custom_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_custom_neurons">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_custom_neurons</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return properties and per-ROI synapse counts for a set of neurons,</span>
+<span class="sd">    using your own cypher query.</span>
+<span class="sd">    </span>
 <span class="sd">    Use a custom query to fetch a neuron table, with nicer output</span>
 <span class="sd">    than you would get from a call to :py:func:`.fetch_custom()`.</span>
 <span class="sd">    </span>
@@ -402,7 +494,9 @@
                              <span class="n">properties</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">],</span>
                              <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Find all connections from a set of &quot;upstream&quot; neurons,</span>
+<span class="sd">    Find connections to/from small set(s) of neurons.</span>
+<span class="sd">    </span>
+<span class="sd">    Finds all connections from a set of &quot;upstream&quot; neurons,</span>
 <span class="sd">    or to a set of &quot;downstream&quot; neurons,</span>
 <span class="sd">    or all connections from a set of upstream neurons to a set of downstream neurons.</span>
 
@@ -511,6 +605,8 @@
 <div class="viewcode-block" id="fetch_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_adjacencies">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">sources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find connections to/from large set(s) of neurons, with per-ROI connection strengths.</span>
+<span class="sd">    </span>
 <span class="sd">    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</span>
 <span class="sd">    Only primary ROIs are included in the per-ROI connection table.</span>
 <span class="sd">    Connections outside of the primary ROIs are labeled with the special name</span>
@@ -757,8 +853,8 @@
 <div class="viewcode-block" id="fetch_traced_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_traced_adjacencies">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_traced_adjacencies</span><span class="p">(</span><span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Convenience function for calling :py:func:`.fetch_adjacencies()`</span>
-<span class="sd">    for traced, non-cropped neurons. </span>
+<span class="sd">    Convenience function that calls :py:func:`.fetch_adjacencies()`</span>
+<span class="sd">    for all ``Traced``, non-``cropped`` neurons. </span>
 <span class="sd"> </span>
 <span class="sd">    Note:</span>
 <span class="sd">        On the hemibrain dataset, this function takes a few minutes to run,</span>
@@ -798,6 +894,8 @@
 <div class="viewcode-block" id="fetch_common_connectivity"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_common_connectivity">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_common_connectivity</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">search_direction</span><span class="o">=</span><span class="s1">&#39;upstream&#39;</span><span class="p">,</span> <span class="n">min_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find shared connections among a set of neurons.</span>
+<span class="sd">    </span>
 <span class="sd">    Given a set of neurons that match the given criteria, find neurons</span>
 <span class="sd">    that connect to ALL of the neurons in the set, i.e. connections</span>
 <span class="sd">    that are common to all neurons in the matched set.</span>
@@ -893,26 +991,26 @@
 <span class="sd">        The `weight` column indicates the connection strength to that</span>
 <span class="sd">        body from the previous body in the path.</span>
 <span class="sd">        </span>
-<span class="sd">        Example:</span>
+<span class="sd">    Example:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: ipython</span>
 <span class="sd">        </span>
-<span class="sd">            .. code-block:: ipython</span>
+<span class="sd">            In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)</span>
+<span class="sd">            Out[1]:</span>
+<span class="sd">                  path     bodyId                       type  weight</span>
+<span class="sd">            0        0  329566174                    OA-VPM3       0</span>
+<span class="sd">            1        0  517169460                 PDL05h_pct      11</span>
+<span class="sd">            2        0  297251714                ADM01om_pct      15</span>
+<span class="sd">            3        0  294424196                PDL13ob_pct      11</span>
+<span class="sd">            4        0  295133927               PDM18a_d_pct      10</span>
+<span class="sd">            ...    ...        ...                        ...     ...</span>
+<span class="sd">            5773   962  511271574                 ADL24h_pct      43</span>
+<span class="sd">            5774   962  480923210                PDL10od_pct      18</span>
+<span class="sd">            5775   962  294424196                PDL13ob_pct      21</span>
+<span class="sd">            5776   962  295133927               PDM18a_d_pct      10</span>
+<span class="sd">            5777   962  294792184  olfactory multi vPN mlALT      10</span>
 <span class="sd">            </span>
-<span class="sd">                In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)</span>
-<span class="sd">                Out[1]:</span>
-<span class="sd">                      path     bodyId                       type  weight</span>
-<span class="sd">                0        0  329566174                    OA-VPM3       0</span>
-<span class="sd">                1        0  517169460                 PDL05h_pct      11</span>
-<span class="sd">                2        0  297251714                ADM01om_pct      15</span>
-<span class="sd">                3        0  294424196                PDL13ob_pct      11</span>
-<span class="sd">                4        0  295133927               PDM18a_d_pct      10</span>
-<span class="sd">                ...    ...        ...                        ...     ...</span>
-<span class="sd">                5773   962  511271574                 ADL24h_pct      43</span>
-<span class="sd">                5774   962  480923210                PDL10od_pct      18</span>
-<span class="sd">                5775   962  294424196                PDL13ob_pct      21</span>
-<span class="sd">                5776   962  295133927               PDM18a_d_pct      10</span>
-<span class="sd">                5777   962  294792184  olfactory multi vPN mlALT      10</span>
-<span class="sd">                </span>
-<span class="sd">                [5778 rows x 4 columns]</span>
+<span class="sd">            [5778 rows x 4 columns]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">intermediate_criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">intermediate_criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">)</span>
@@ -971,7 +1069,7 @@
 <div class="viewcode-block" id="fetch_synapses"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_synapses">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_synapses</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch synapses from neuron or selection of neurons.</span>
+<span class="sd">    Fetch synapses from a neuron or selection of neurons.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">    </span>
@@ -1124,7 +1222,7 @@
 <div class="viewcode-block" id="fetch_synapse_connections"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_synapse_connections">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_synapse_connections</span><span class="p">(</span><span class="n">source_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch a table of synapse-synapse connections between source and target neurons.</span>
+<span class="sd">    Fetch synaptic-level connections between source and target neurons.</span>
 <span class="sd">    </span>
 <span class="sd">    Note:</span>
 <span class="sd">        Use this function if you need information about individual synapse connections,</span>
@@ -1319,92 +1417,6 @@
     <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;downstream_confidence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;downstream_confidence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">syn_df</span></div>
-
-
-<div class="viewcode-block" id="fetch_meta"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_meta">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_meta</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the dataset metadata, parsing json fields where necessary.</span>
-<span class="sd">    </span>
-<span class="sd">    Returns:</span>
-<span class="sd">        dict</span>
-<span class="sd">    </span>
-<span class="sd">    Example</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: ipython</span>
-<span class="sd">    </span>
-<span class="sd">        In [1]: meta = fetch_meta()</span>
-<span class="sd">    </span>
-<span class="sd">        In [2]: list(meta.keys())</span>
-<span class="sd">        Out[2]:</span>
-<span class="sd">        [&#39;dataset&#39;,</span>
-<span class="sd">         &#39;info&#39;,</span>
-<span class="sd">         &#39;lastDatabaseEdit&#39;,</span>
-<span class="sd">         &#39;latestMutationId&#39;,</span>
-<span class="sd">         &#39;logo&#39;,</span>
-<span class="sd">         &#39;meshHost&#39;,</span>
-<span class="sd">         &#39;neuroglancerInfo&#39;,</span>
-<span class="sd">         &#39;neuroglancerMeta&#39;,</span>
-<span class="sd">         &#39;postHPThreshold&#39;,</span>
-<span class="sd">         &#39;postHighAccuracyThreshold&#39;,</span>
-<span class="sd">         &#39;preHPThreshold&#39;,</span>
-<span class="sd">         &#39;primaryRois&#39;,</span>
-<span class="sd">         &#39;roiHierarchy&#39;,</span>
-<span class="sd">         &#39;roiInfo&#39;,</span>
-<span class="sd">         &#39;statusDefinitions&#39;,</span>
-<span class="sd">         &#39;superLevelRois&#39;,</span>
-<span class="sd">         &#39;tag&#39;,</span>
-<span class="sd">         &#39;totalPostCount&#39;,</span>
-<span class="sd">         &#39;totalPreCount&#39;,</span>
-<span class="sd">         &#39;uuid&#39;]</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        MATCH (m:Meta)</span>
-<span class="s2">        WITH m as m,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,</span>
-<span class="s2">             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,</span>
-<span class="s2">             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions</span>
-<span class="s2">        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions</span>
-<span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">meta</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;meta&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">meta</span></div>
-
-
-<div class="viewcode-block" id="fetch_all_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_all_rois">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_all_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the list of all ROIs in the dataset,</span>
-<span class="sd">    from the dataset metadata.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_all_rois_from_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">_all_rois_from_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">):</span>
-    <span class="n">official_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
-
-    <span class="c1"># These two ROIs are special:</span>
-    <span class="c1"># For historical reasons, they exist as tags,</span>
-    <span class="c1"># but are not listed in the Meta roiInfo.</span>
-    <span class="n">hidden_rois</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FB-column3&#39;</span><span class="p">,</span> <span class="s1">&#39;AL-DC3&#39;</span><span class="p">}</span>
-
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">official_rois</span> <span class="o">|</span> <span class="n">hidden_rois</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="fetch_primary_rois"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_primary_rois">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_primary_rois</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Fetch the list of &#39;primary&#39; ROIs in the dataset,</span>
-<span class="sd">    from the dataset metadata.</span>
-<span class="sd">    Primary ROIs do not overlap with each other.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;MATCH (m:Meta) RETURN m.primaryRois as rois&quot;</span>
-    <span class="n">rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;rois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rois</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
