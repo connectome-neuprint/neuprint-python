@@ -341,7 +341,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
                              properties=['type', 'instance'],
                              *, client=None):
     """
-    Find connections to, from, or to-and-from small set(s) of neurons.
+    Find connections to/from small set(s) of neurons.
     
     Finds all connections from a set of "upstream" neurons,
     or to a set of "downstream" neurons,
@@ -452,8 +452,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 @inject_client
 def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, *, client=None):
     """
-    Find connections to, from, or to-and-from large set(s) of neurons,
-    with per-ROI connection strengths.
+    Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
     
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Only primary ROIs are included in the per-ROI connection table.
@@ -1070,7 +1069,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 @inject_client
 def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, *, client=None):
     """
-    Fetch a synaptic-level connections between source and target neurons.
+    Fetch synaptic-level connections between source and target neurons.
     
     Note:
         Use this function if you need information about individual synapse connections,

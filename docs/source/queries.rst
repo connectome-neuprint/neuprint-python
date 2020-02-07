@@ -23,8 +23,12 @@ query language, you can write your own queries using
 :py:func:`fetch_custom <fetch_custom>`.
 But the functions in this file offer a convenient API for common queries.
 
-For neuprint's "built-in" (non-cypher) queries, such as skeletons, ROI meshes,
-ROI connectivity, and server metadata, see the :py:class:`.Client` class reference.
+Built-in Queries
+----------------
+
+See the :py:class:`.Client` class reference for neuprint's "built-in"
+(non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
+and server metadata. 
 
 General
 -------
@@ -63,6 +67,9 @@ Synapses
     fetch_synapses
     fetch_synapse_connections
 
+
+Reference
+---------
 
 .. automodule:: neuprint.queries
    :members:
