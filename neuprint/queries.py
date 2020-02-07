@@ -668,6 +668,7 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
     
     # Drop weights other than NotPrimary
     totals_df = totals_df[['bodyId_pre', 'bodyId_post', 'roi', 'weight_notprimary']]
+    totals_df.query('weight_notprimary > 0', inplace=True)
     totals_df = totals_df.rename(columns={'weight_notprimary': 'weight'})
     
     roi_conn_df = pd.concat((roi_conn_df, totals_df), ignore_index=True)
