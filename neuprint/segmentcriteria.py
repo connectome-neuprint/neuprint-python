@@ -207,6 +207,65 @@ class SegmentCriteria:
         # If all comparisons have passed, return True
         return True
 
+    def __repr__(self):
+        # Show all non-default constructor args
+        s = f'SegmentCriteria("{self.matchvar}"'
+        
+        if len(self.bodyId):
+            s += f", bodyId={list(self.bodyId)}"
+        
+        if len(self.instance) == 1:
+            s += f', instance="{self.instance[0]}"'
+        elif len(self.instance) > 1:
+            s += f", instance={list(self.instance)}"
+            
+        if len(self.type) == 1:
+            s += f', type="{self.type[0]}"'
+        elif len(self.instance) > 1:
+            s += f", type={list(self.type)}"
+        
+        if self.regex:
+            s += ", regex=True"
+
+        if len(self.status) == 1:
+            s += f', status="{self.status[0]}"'
+        elif len(self.instance) > 1:
+            s += f", status={list(self.status)}"
+        
+        if self.cropped is not None:
+            s += f", cropped={self.cropped}"
+
+        if self.min_pre != 0:
+            s += f", min_pre={self.min_pre}"
+
+        if self.min_post != 0:
+            s += f", min_post={self.min_post}"
+
+        if self.rois:
+            s += f", rois={list(self.rois)}"
+
+        if self.inputRois:
+            s += f", inputRois={list(self.inputRois)}"
+
+        if self.outputRois:
+            s += f", outputRois={list(self.outputRois)}"
+        
+        if self.min_roi_inputs != 1:
+            s += f", min_roi_inputs={self.min_roi_inputs}"
+                    
+        if self.min_roi_outputs != 1:
+            s += f", min_roi_outputs={self.min_roi_outputs}"
+
+        if self.label != 'Neuron':
+            s += f', label="{self.label}"'
+
+        if self.roi_req != 'all':
+            s += f', roi_req="{self.roi_req}"'
+
+        s += ')'
+        
+        return s
+    
     def basic_exprs(self):
         """
         Return the list of expressions that correspond

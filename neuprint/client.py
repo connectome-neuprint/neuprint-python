@@ -345,6 +345,13 @@ class Client:
         self.all_rois = _all_rois_from_meta(self.meta)
 
 
+    def __repr__(self):
+        s = f'Client("{self.server}", "{self.dataset}"'
+        if not self.verify:
+            s += ", verify=False"
+        s += ")"
+        return s
+
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
         if ispost:
