@@ -21,6 +21,8 @@ import ujson
 @inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
+    Make a custom cypher query.
+    
     Alternative form of :py:meth:`.Client.fetch_custom()`, as a free function.
     That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
 
@@ -54,7 +56,9 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 @inject_client
 def fetch_neurons(criteria, *, client=None):
     """
-    Search for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.
+    Return properties and per-ROI synapse counts for a set of neurons.
+    
+    Searches for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.
     Returns their properties, including the distibution of their synapses in all brain regions.
     
     This implements a superset of the features on the Neuprint Explorer `Find Neurons`_ page.
@@ -148,6 +152,9 @@ def fetch_neurons(criteria, *, client=None):
 @inject_client
 def fetch_custom_neurons(q, *, client=None):
     """
+    Return properties and per-ROI synapse counts for a set of neurons,
+    using your own cypher query.
+    
     Use a custom query to fetch a neuron table, with nicer output
     than you would get from a call to :py:func:`.fetch_custom()`.
     
@@ -249,7 +256,9 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
                              properties=['type', 'instance'],
                              *, client=None):
     """
-    Find all connections from a set of "upstream" neurons,
+    Find connections to, from, or to-and-from small set(s) of neurons.
+    
+    Finds all connections from a set of "upstream" neurons,
     or to a set of "downstream" neurons,
     or all connections from a set of upstream neurons to a set of downstream neurons.
 
@@ -358,6 +367,9 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 @inject_client
 def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, *, client=None):
     """
+    Find connections to, from, or to-and-from large set(s) of neurons,
+    with per-ROI connection strengths.
+    
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
     Only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
@@ -604,8 +616,8 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
 @inject_client
 def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     """
-    Convenience function for calling :py:func:`.fetch_adjacencies()`
-    for traced, non-cropped neurons. 
+    Convenience function that calls :py:func:`.fetch_adjacencies()`
+    for all ``Traced``, non-``cropped`` neurons. 
  
     Note:
         On the hemibrain dataset, this function takes a few minutes to run,
@@ -645,6 +657,8 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 @inject_client
 def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
     """
+    Find shared connections among a set of neurons.
+    
     Given a set of neurons that match the given criteria, find neurons
     that connect to ALL of the neurons in the set, i.e. connections
     that are common to all neurons in the matched set.
@@ -740,26 +754,26 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
         The `weight` column indicates the connection strength to that
         body from the previous body in the path.
         
-        Example:
+    Example:
+    
+        .. code-block:: ipython
         
-            .. code-block:: ipython
+            In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
+            Out[1]:
+                  path     bodyId                       type  weight
+            0        0  329566174                    OA-VPM3       0
+            1        0  517169460                 PDL05h_pct      11
+            2        0  297251714                ADM01om_pct      15
+            3        0  294424196                PDL13ob_pct      11
+            4        0  295133927               PDM18a_d_pct      10
+            ...    ...        ...                        ...     ...
+            5773   962  511271574                 ADL24h_pct      43
+            5774   962  480923210                PDL10od_pct      18
+            5775   962  294424196                PDL13ob_pct      21
+            5776   962  295133927               PDM18a_d_pct      10
+            5777   962  294792184  olfactory multi vPN mlALT      10
             
-                In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
-                Out[1]:
-                      path     bodyId                       type  weight
-                0        0  329566174                    OA-VPM3       0
-                1        0  517169460                 PDL05h_pct      11
-                2        0  297251714                ADM01om_pct      15
-                3        0  294424196                PDL13ob_pct      11
-                4        0  295133927               PDM18a_d_pct      10
-                ...    ...        ...                        ...     ...
-                5773   962  511271574                 ADL24h_pct      43
-                5774   962  480923210                PDL10od_pct      18
-                5775   962  294424196                PDL13ob_pct      21
-                5776   962  295133927               PDM18a_d_pct      10
-                5777   962  294792184  olfactory multi vPN mlALT      10
-                
-                [5778 rows x 4 columns]
+            [5778 rows x 4 columns]
     """
     if intermediate_criteria is None:
         intermediate_criteria = SegmentCriteria(status="Traced")
@@ -818,7 +832,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 @inject_client
 def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
     """
-    Fetch synapses from neuron or selection of neurons.
+    Fetch synapses from a neuron or selection of neurons.
 
     Args:
     
@@ -971,7 +985,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 @inject_client
 def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, *, client=None):
     """
-    Fetch a table of synapse-synapse connections between source and target neurons.
+    Fetch a synaptic-level connections between source and target neurons.
     
     Note:
         Use this function if you need information about individual synapse connections,
@@ -1171,7 +1185,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 @inject_client
 def fetch_meta(*, client=None):
     """
-    Fetch the dataset metadata, parsing json fields where necessary.
+    Fetch the dataset metadata.
+    Parses json fields as needed.
     
     Returns:
         dict
@@ -1224,8 +1239,7 @@ def fetch_meta(*, client=None):
 @inject_client
 def fetch_all_rois(*, client=None):
     """
-    Fetch the list of all ROIs in the dataset,
-    from the dataset metadata.
+    List all ROIs in the dataset.
     """
     meta = fetch_meta(client=client)
     return _all_rois_from_meta(meta)
@@ -1245,8 +1259,7 @@ def _all_rois_from_meta(meta):
 @inject_client
 def fetch_primary_rois(*, client=None):
     """
-    Fetch the list of 'primary' ROIs in the dataset,
-    from the dataset metadata.
+    List 'primary' ROIs in the dataset.
     Primary ROIs do not overlap with each other.
     """
     q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
