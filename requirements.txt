@@ -2,3 +2,4 @@ requests>=2.22
 pandas
 tqdm
 ujson
+asciitree

@@ -26,7 +26,7 @@ But the functions in this file offer a convenient API for common queries.
 Built-in Queries
 ----------------
 
-See the :py:class:`.Client` class reference for neuprint's "built-in"
+See the :ref:`Client` class reference for neuprint's built-in
 (non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
 and server metadata. 
 
@@ -37,8 +37,20 @@ General
 
     fetch_custom
     fetch_meta
+
+ROIs
+----
+
+.. autosummary::
+
     fetch_all_rois
     fetch_primary_rois
+    fetch_roi_hierarchy
+
+.. seealso::
+
+    - :py:meth:`.Client.fetch_roi_completeness()`
+    - :py:meth:`.Client.fetch_roi_connectivity()`
 
 Neurons
 -------
