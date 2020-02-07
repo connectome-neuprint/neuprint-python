@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>SegmentCriteria &mdash; neuprint-python 0.3.4+12.gaaf6aa0 documentation</title>
+  <title>SegmentCriteria &mdash; neuprint-python 0.3.4+16.g34bbf99 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.4+12.gaaf6aa0
+                0.3.4+16.g34bbf99
               </div>
             
           
@@ -193,7 +193,10 @@ one (<code class="docutils literal notranslate"><span class="pre">any</span></co
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>matchvar</strong> (<em>str</em>) – An arbitrary cypher variable name to use when this
-<code class="docutils literal notranslate"><span class="pre">SegmentCriteria</span></code> is used to construct cypher queries.</li>
+<code class="docutils literal notranslate"><span class="pre">SegmentCriteria</span></code> is used to construct cypher queries.
+To help catch errors (such as accidentally passing a <code class="docutils literal notranslate"><span class="pre">type</span></code> or
+<code class="docutils literal notranslate"><span class="pre">instance</span></code> name in the wrong argument position), we require that
+<code class="docutils literal notranslate"><span class="pre">matchvar</span></code> begin with a lowercase letter.</li>
 <li><strong>bodyId</strong> (<em>int</em><em> or </em><em>list of ints</em>) – List of bodyId values.</li>
 <li><strong>instance</strong> (<em>str</em><em> or </em><em>list of str</em>) – If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.
 Otherwise, only exact matches are found.</li>

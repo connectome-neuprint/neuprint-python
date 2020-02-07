@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.4+12.gaaf6aa0 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.4+16.g34bbf99 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.4+12.gaaf6aa0
+                0.3.4+16.g34bbf99
               </div>
             
           
@@ -154,12 +154,13 @@
 <span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 <span class="kn">from</span> <span class="nn">.segmentcriteria</span> <span class="kn">import</span> <span class="n">SegmentCriteria</span>
@@ -760,29 +761,34 @@
     <span class="n">conn_tables</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">sources_iter</span> <span class="o">=</span> <span class="n">sources_df</span><span class="o">.</span><span class="n">bodyId</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
     <span class="n">targets_iter</span> <span class="o">=</span> <span class="n">targets_df</span><span class="o">.</span><span class="n">bodyId</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">targets</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">sources_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span>
-                                <span class="n">disable</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
-                                <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="n">sources_stop</span> <span class="o">=</span> <span class="n">sources_start</span> <span class="o">+</span> <span class="n">batch_size</span>
-        <span class="n">sources_batch</span> <span class="o">=</span> <span class="n">sources_iter</span><span class="p">[</span><span class="n">sources_start</span><span class="p">:</span><span class="n">sources_stop</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">targets_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span>
-                                    <span class="n">disable</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
-                                    <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-            <span class="n">targets_stop</span> <span class="o">=</span> <span class="n">targets_start</span> <span class="o">+</span> <span class="n">batch_size</span>
-            <span class="n">targets_batch</span> <span class="o">=</span> <span class="n">targets_iter</span><span class="p">[</span><span class="n">targets_start</span><span class="p">:</span><span class="n">targets_stop</span><span class="p">]</span>
 
-            <span class="n">where</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">sources_batch</span><span class="p">):</span>
-                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;n.bodyId in {sources_batch.tolist()}&#39;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">targets_batch</span><span class="p">):</span>
-                <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;m.bodyId in {targets_batch.tolist()}&#39;</span><span class="p">)</span>
+    <span class="n">total_chunks</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">*</span> \
+                   <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)</span>
 
-            <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">                MATCH (n:</span><span class="si">{sources_label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{targets_label}</span><span class="s2">)</span>
+    <span class="k">with</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total_chunks</span><span class="p">,</span>
+              <span class="n">disable</span><span class="o">=</span><span class="n">total_chunks</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
+              <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">sources_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+            <span class="n">sources_stop</span> <span class="o">=</span> <span class="n">sources_start</span> <span class="o">+</span> <span class="n">batch_size</span>
+            <span class="n">sources_batch</span> <span class="o">=</span> <span class="n">sources_iter</span><span class="p">[</span><span class="n">sources_start</span><span class="p">:</span><span class="n">sources_stop</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">targets_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+                <span class="n">targets_stop</span> <span class="o">=</span> <span class="n">targets_start</span> <span class="o">+</span> <span class="n">batch_size</span>
+                <span class="n">targets_batch</span> <span class="o">=</span> <span class="n">targets_iter</span><span class="p">[</span><span class="n">targets_start</span><span class="p">:</span><span class="n">targets_stop</span><span class="p">]</span>
+
+                <span class="n">where</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">sources_batch</span><span class="p">):</span>
+                    <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;n.bodyId in {sources_batch.tolist()}&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">targets_batch</span><span class="p">):</span>
+                    <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;m.bodyId in {targets_batch.tolist()}&#39;</span><span class="p">)</span>
+
+                <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">                    MATCH (n:</span><span class="si">{sources_label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{targets_label}</span><span class="s2">)</span>
 <span class="s2">                WHERE {&#39; AND &#39;.join(where)}</span>
-<span class="s2">                RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
-<span class="s2">            &quot;&quot;&quot;</span>
-            <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+<span class="s2">                    RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
+<span class="s2">                &quot;&quot;&quot;</span>
+                <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
+                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># Combine batches</span>
     <span class="n">connections_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">conn_tables</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

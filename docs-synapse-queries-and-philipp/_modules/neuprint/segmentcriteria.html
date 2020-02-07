@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.segmentcriteria &mdash; neuprint-python 0.3.4+12.gaaf6aa0 documentation</title>
+  <title>neuprint.segmentcriteria &mdash; neuprint-python 0.3.4+16.g34bbf99 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.4+12.gaaf6aa0
+                0.3.4+16.g34bbf99
               </div>
             
           
@@ -151,7 +151,8 @@
            <div itemprop="articleBody">
             
   <h1>Source code for neuprint.segmentcriteria</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
 <span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
@@ -199,6 +200,9 @@
 <span class="sd">            matchvar (str):</span>
 <span class="sd">                An arbitrary cypher variable name to use when this</span>
 <span class="sd">                ``SegmentCriteria`` is used to construct cypher queries.</span>
+<span class="sd">                To help catch errors (such as accidentally passing a ``type`` or</span>
+<span class="sd">                ``instance`` name in the wrong argument position), we require that</span>
+<span class="sd">                ``matchvar`` begin with a lowercase letter.</span>
 
 <span class="sd">            bodyId (int or list of ints):</span>
 <span class="sd">                List of bodyId values.</span>
@@ -261,12 +265,27 @@
 <span class="sd">                Used to validate ROI names.</span>
 <span class="sd">                If not provided, the global default ``Client`` will be used.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate that matchvar in various ways, to catch errors in which</span>
+        <span class="c1"># the user has passed a bodyId or type, etc. in the wrong position.</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">matchvar</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> \
+            <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bad matchvar argument (should be str): </span><span class="si">{matchvar}</span><span class="s2">. &quot;</span>
+             <span class="s2">&quot;Did you mean to pass this as bodyId, type, or instance name?&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">matchvar</span><span class="p">,</span> <span class="s2">&quot;matchvar cannot be an empty string&quot;</span>
+        <span class="k">assert</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^[a-z].*$&#39;</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">),</span> \
+            <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;matchvar must begin with a lowercase letter, not &#39;</span><span class="si">{matchvar}</span><span class="s2">&#39;. &quot;</span>
+             <span class="s2">&quot;Did you mean to pass this as a type or instance name?&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^[a-zA-Z0-9]+$&#39;</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">),</span> \
+            <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;matchvar contains invalid characters: &#39;</span><span class="si">{matchvar}</span><span class="s2">&#39;. &quot;</span>
+             <span class="s2">&quot;Did you mean to pass this as a type or instance?&quot;</span><span class="p">)</span>
+        
         <span class="k">assert</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Invalid label: </span><span class="si">{label}</span><span class="s2">&quot;</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">),</span> \
             <span class="s2">&quot;bodyId should be an integer or list of integers&quot;</span>
 
-        <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Please provide only one regex pattern for instance&quot;</span>
-        <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Please provide only one regex pattern for type&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="s2">&quot;Please provide only one regex pattern for instance&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="s2">&quot;Please provide only one regex pattern for type&quot;</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">assert</span> <span class="s1">&#39;.*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">instance</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
@@ -360,6 +379,65 @@
         <span class="c1"># If all comparisons have passed, return True</span>
         <span class="k">return</span> <span class="kc">True</span>
 
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Show all non-default constructor args</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;SegmentCriteria(&quot;</span><span class="si">{self.matchvar}</span><span class="s1">&quot;&#39;</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bodyId</span><span class="p">):</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, bodyId={list(self.bodyId)}&quot;</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, instance=&quot;</span><span class="si">{self.instance[0]}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, instance={list(self.instance)}&quot;</span>
+            
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, type=&quot;</span><span class="si">{self.type[0]}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, type={list(self.type)}&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;, regex=True&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, status=&quot;</span><span class="si">{self.status[0]}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, status={list(self.status)}&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, cropped=</span><span class="si">{self.cropped}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_pre</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_pre=</span><span class="si">{self.min_pre}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_post</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_post=</span><span class="si">{self.min_post}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, rois={list(self.rois)}&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputRois</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, inputRois={list(self.inputRois)}&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputRois</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, outputRois={list(self.outputRois)}&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_roi_inputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_roi_inputs=</span><span class="si">{self.min_roi_inputs}</span><span class="s2">&quot;</span>
+                    
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_roi_outputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_roi_outputs=</span><span class="si">{self.min_roi_outputs}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">!=</span> <span class="s1">&#39;Neuron&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, label=&quot;</span><span class="si">{self.label}</span><span class="s1">&quot;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">!=</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, roi_req=&quot;</span><span class="si">{self.roi_req}</span><span class="s1">&quot;&#39;</span>
+
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;)&#39;</span>
+        
+        <span class="k">return</span> <span class="n">s</span>
+    
     <span class="k">def</span> <span class="nf">basic_exprs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return the list of expressions that correspond</span>
