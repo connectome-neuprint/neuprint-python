@@ -607,29 +607,34 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
     conn_tables = []
     sources_iter = sources_df.bodyId.values if sources else [None]
     targets_iter = targets_df.bodyId.values if targets else [None]
-    for sources_start in trange(0, len(sources_iter), batch_size,
-                                disable=len(sources_iter) == 1,
-                                leave=False):
-        sources_stop = sources_start + batch_size
-        sources_batch = sources_iter[sources_start:sources_stop]
-        for targets_start in trange(0, len(targets_iter), batch_size,
-                                    disable=len(targets_iter) == 1,
-                                    leave=False):
-            targets_stop = targets_start + batch_size
-            targets_batch = targets_iter[targets_start:targets_stop]
 
-            where = []
-            if any(sources_batch):
-                where.append(f'n.bodyId in {sources_batch.tolist()}')
-            if any(targets_batch):
-                where.append(f'm.bodyId in {targets_batch.tolist()}')
+    total_chunks = math.ceil(len(sources_iter) / batch_size) * \
+                   math.ceil(len(targets_iter) / batch_size)
 
-            q = f"""\
-                MATCH (n:{sources_label})-[e:ConnectsTo]->(m:{targets_label})
+    with tqdm(total=total_chunks,
+              disable=total_chunks == 1,
+              leave=False) as pbar:
+        for sources_start in range(0, len(sources_iter), batch_size):
+            sources_stop = sources_start + batch_size
+            sources_batch = sources_iter[sources_start:sources_stop]
+            for targets_start in range(0, len(targets_iter), batch_size):
+                targets_stop = targets_start + batch_size
+                targets_batch = targets_iter[targets_start:targets_stop]
+
+                where = []
+                if any(sources_batch):
+                    where.append(f'n.bodyId in {sources_batch.tolist()}')
+                if any(targets_batch):
+                    where.append(f'm.bodyId in {targets_batch.tolist()}')
+
+                q = f"""\
+                    MATCH (n:{sources_label})-[e:ConnectsTo]->(m:{targets_label})
                 WHERE {' AND '.join(where)}
-                RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
-            """
-            conn_tables.append(client.fetch_custom(q))
+                    RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
+                """
+                conn_tables.append(client.fetch_custom(q))
+                pbar.update(1)
+            pbar.update(1)
 
     # Combine batches
     connections_df = pd.concat(conn_tables, ignore_index=True)
