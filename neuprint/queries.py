@@ -973,6 +973,14 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     """
     Fetch a table of synapse-synapse connections between source and target neurons.
     
+    Note:
+        Use this function if you need information about individual synapse connections,
+        such as their exact positions or confidence scores.
+        If you're just interested in aggregate neuron-to-neuron connection info
+        (including connection strengths and ROI intersections), see
+        :py:func:`fetch_simple_connections()` and :py:func:`fetch_adjacencies()`,
+        which are faster and have more condensed outputs than this function.
+    
     Args:
     
         source_criteria (SegmentCriteria or bodyId list):
