@@ -1,3 +1,4 @@
+import re
 import numpy as np
 
 from textwrap import indent, dedent
@@ -46,6 +47,9 @@ class SegmentCriteria:
             matchvar (str):
                 An arbitrary cypher variable name to use when this
                 ``SegmentCriteria`` is used to construct cypher queries.
+                To help catch errors (such as accidentally passing a ``type`` or
+                ``instance`` name in the wrong argument position), we require that
+                ``matchvar`` begin with a lowercase letter.
 
             bodyId (int or list of ints):
                 List of bodyId values.
@@ -108,12 +112,27 @@ class SegmentCriteria:
                 Used to validate ROI names.
                 If not provided, the global default ``Client`` will be used.
         """
+        # Validate that matchvar in various ways, to catch errors in which
+        # the user has passed a bodyId or type, etc. in the wrong position.
+        assert isinstance(matchvar, str), \
+            (f"Bad matchvar argument (should be str): {matchvar}. "
+             "Did you mean to pass this as bodyId, type, or instance name?")
+        assert matchvar, "matchvar cannot be an empty string"
+        assert re.match('^[a-z].*$', matchvar), \
+            (f"matchvar must begin with a lowercase letter, not '{matchvar}'. "
+             "Did you mean to pass this as a type or instance name?")
+        assert re.match('^[a-zA-Z0-9]+$', matchvar), \
+            (f"matchvar contains invalid characters: '{matchvar}'. "
+             "Did you mean to pass this as a type or instance?")
+        
         assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
         assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
             "bodyId should be an integer or list of integers"
 
-        assert not regex or len(instance) <= 1, "Please provide only one regex pattern for instance"
-        assert not regex or len(type) <= 1, "Please provide only one regex pattern for type"
+        assert not regex or len(instance) <= 1, \
+            "Please provide only one regex pattern for instance"
+        assert not regex or len(type) <= 1, \
+            "Please provide only one regex pattern for type"
 
         if not regex and len(instance) == 1:
             assert '.*' not in instance[0], \
