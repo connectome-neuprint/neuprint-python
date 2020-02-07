@@ -30,15 +30,15 @@ But the functions in this file offer a convenient API for common queries.
     fetch_neurons
     fetch_custom_neurons
     fetch_simple_connections
-    fetch_common_connectivity
-    fetch_shortest_paths
     fetch_adjacencies
     fetch_traced_adjacencies
+    fetch_common_connectivity
+    fetch_shortest_paths
+    fetch_synapses
+    fetch_synapse_connections
     fetch_meta
     fetch_all_rois
     fetch_primary_rois
-    fetch_synapses
-    fetch_synapse_connections
 
 .. automodule:: neuprint.queries
    :members:
