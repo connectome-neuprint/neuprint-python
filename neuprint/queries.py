@@ -54,6 +54,91 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
 
 @inject_client
+def fetch_meta(*, client=None):
+    """
+    Fetch the dataset metadata.
+    Parses json fields as needed.
+    
+    Returns:
+        dict
+    
+    Example
+    
+    .. code-block:: ipython
+    
+        In [1]: meta = fetch_meta()
+    
+        In [2]: list(meta.keys())
+        Out[2]:
+        ['dataset',
+         'info',
+         'lastDatabaseEdit',
+         'latestMutationId',
+         'logo',
+         'meshHost',
+         'neuroglancerInfo',
+         'neuroglancerMeta',
+         'postHPThreshold',
+         'postHighAccuracyThreshold',
+         'preHPThreshold',
+         'primaryRois',
+         'roiHierarchy',
+         'roiInfo',
+         'statusDefinitions',
+         'superLevelRois',
+         'tag',
+         'totalPostCount',
+         'totalPreCount',
+         'uuid']
+    """
+    q = """\
+        MATCH (m:Meta)
+        WITH m as m,
+             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,
+             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,
+             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,
+             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,
+             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions
+        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions
+    """
+    df = client.fetch_custom(q)
+    meta = df['meta'].iloc[0]
+    meta.update(df.drop(columns='meta').iloc[0].to_dict())
+    return meta
+
+
+@inject_client
+def fetch_all_rois(*, client=None):
+    """
+    List all ROIs in the dataset.
+    """
+    meta = fetch_meta(client=client)
+    return _all_rois_from_meta(meta)
+
+
+def _all_rois_from_meta(meta):
+    official_rois = {*meta['roiInfo'].keys()}
+
+    # These two ROIs are special:
+    # For historical reasons, they exist as tags,
+    # but are not listed in the Meta roiInfo.
+    hidden_rois = {'FB-column3', 'AL-DC3'}
+
+    return sorted(official_rois | hidden_rois)
+
+
+@inject_client
+def fetch_primary_rois(*, client=None):
+    """
+    List 'primary' ROIs in the dataset.
+    Primary ROIs do not overlap with each other.
+    """
+    q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
+    rois = client.fetch_custom(q)['rois'].iloc[0]
+    return sorted(rois)
+
+
+@inject_client
 def fetch_neurons(criteria, *, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
@@ -1180,88 +1265,3 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     syn_df['downstream_confidence'] = syn_df['downstream_confidence'].astype(np.float32)
 
     return syn_df
-
-
-@inject_client
-def fetch_meta(*, client=None):
-    """
-    Fetch the dataset metadata.
-    Parses json fields as needed.
-    
-    Returns:
-        dict
-    
-    Example
-    
-    .. code-block:: ipython
-    
-        In [1]: meta = fetch_meta()
-    
-        In [2]: list(meta.keys())
-        Out[2]:
-        ['dataset',
-         'info',
-         'lastDatabaseEdit',
-         'latestMutationId',
-         'logo',
-         'meshHost',
-         'neuroglancerInfo',
-         'neuroglancerMeta',
-         'postHPThreshold',
-         'postHighAccuracyThreshold',
-         'preHPThreshold',
-         'primaryRois',
-         'roiHierarchy',
-         'roiInfo',
-         'statusDefinitions',
-         'superLevelRois',
-         'tag',
-         'totalPostCount',
-         'totalPreCount',
-         'uuid']
-    """
-    q = """\
-        MATCH (m:Meta)
-        WITH m as m,
-             apoc.convert.fromJsonMap(m.roiInfo) as roiInfo,
-             apoc.convert.fromJsonMap(m.roiHierarchy) as roiHierarchy,
-             apoc.convert.fromJsonMap(m.neuroglancerInfo) as neuroglancerInfo,
-             apoc.convert.fromJsonList(m.neuroglancerMeta) as neuroglancerMeta,
-             apoc.convert.fromJsonMap(m.statusDefinitions) as statusDefinitions
-        RETURN m as meta, roiInfo, roiHierarchy, neuroglancerInfo, neuroglancerMeta, statusDefinitions
-    """
-    df = client.fetch_custom(q)
-    meta = df['meta'].iloc[0]
-    meta.update(df.drop(columns='meta').iloc[0].to_dict())
-    return meta
-
-
-@inject_client
-def fetch_all_rois(*, client=None):
-    """
-    List all ROIs in the dataset.
-    """
-    meta = fetch_meta(client=client)
-    return _all_rois_from_meta(meta)
-
-
-def _all_rois_from_meta(meta):
-    official_rois = {*meta['roiInfo'].keys()}
-
-    # These two ROIs are special:
-    # For historical reasons, they exist as tags,
-    # but are not listed in the Meta roiInfo.
-    hidden_rois = {'FB-column3', 'AL-DC3'}
-
-    return sorted(official_rois | hidden_rois)
-
-
-@inject_client
-def fetch_primary_rois(*, client=None):
-    """
-    List 'primary' ROIs in the dataset.
-    Primary ROIs do not overlap with each other.
-    """
-    q = "MATCH (m:Meta) RETURN m.primaryRois as rois"
-    rois = client.fetch_custom(q)['rois'].iloc[0]
-    return sorted(rois)
