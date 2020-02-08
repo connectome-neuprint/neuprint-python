@@ -1,13 +1,12 @@
 import os
 import sys
 import copy
-import math
 import collections
 from textwrap import indent, dedent
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+from tqdm import trange
 from asciitree import LeftAligned
 
 from .client import inject_client
@@ -549,14 +548,14 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 
 
 @inject_client
-def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, include_nonprimary=False, *, client=None):
+def fetch_adjacencies(sources=None, targets=None, include_nonprimary=False, export_dir=None, batch_size=200, *, client=None):
     """
     Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
     
     Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
-    Only primary ROIs are included in the per-ROI connection table.
+    Unless ``include_nonprimary=True``, only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
-    `NotPrimary` (which is not currently an ROI name in neuprint itself).
+    ``"NotPrimary"`` (which is not currently an ROI name in neuprint itself).
 
     Note:
         :py:func:`.fetch_simple_connections()` has similar functionality,
@@ -570,10 +569,12 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
             Limit results to connections from bodies that match this criteria.
             Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
             will include all bodies upstream of ``targets``.
+
         targets:
             Limit results to connections to bodies that match this criteria.
             Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
             will include all bodies downstream of ``sources``.
+
         export_dir:
             Optional. Export CSV files for the neuron table,
             connection table (total weight), and connection table (per ROI).
@@ -582,8 +583,16 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
 
-        label:
-            Either 'Neuron' or 'Segment' (which includes Neurons)
+        include_nonprimary:
+            If True, also list per-ROI totals for non-primary ROIs
+            (i.e. parts of the ROI hierarchy that are sub-primary or super-primary).
+            See :py:func:`fetch_roi_hierarchy` for details.
+
+            Note:
+                Since non-primary ROIs overlap with primary ROIs, then the sum of the
+                ``weight`` column for each body pair will not be equal to the total
+                connection strength between the bodies.
+                (Some connections will be counted twice.)
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -660,95 +669,71 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
         5   424379864    329566174       7
         6   425790257    329566174      12
     """
-    assert (not isinstance(sources, type(None)) or not isinstance(targets, type(None))), \
-              "Must provide either sources or targets or both."
+    assert (sources is not None) or (targets is not None), \
+        "Must provide either sources or targets (or both)."
 
-    neurons_df = []
-    if not isinstance(sources, type(None)):
-        if not isinstance(sources, SegmentCriteria):
-            # A previous version of this function accepted a list of bodyIds.
-            # We still support that for now.
-            assert isinstance(sources, collections.abc.Iterable), \
-                f"Invalid criteria: {sources}"
-            sources = SegmentCriteria(bodyId=sources)
-        else:
-            sources = copy.copy(sources)
-            sources.matchvar = 'n'
+    def _prepare_criteria(criteria, matchvar):
+        if criteria is None:
+            return SegmentCriteria(matchvar)
 
+        # A previous version of fetch_adjacencies() accepted a list of bodyIds.
+        # We still support that for now.
+        if not isinstance(criteria, SegmentCriteria):
+            assert isinstance(criteria, collections.abc.Iterable), \
+                f"Invalid criteria: {criteria}"
+            return SegmentCriteria(matchvar, bodyId=criteria)
+
+        criteria = copy.copy(criteria)
+        criteria.matchvar = matchvar
+        return criteria
+
+    def _fetch_neurons(criteria):
+        matchvar = criteria.matchvar
         q = f"""\
-            MATCH (n:{sources.label})
-            {sources.all_conditions(prefix=8)}
-            RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
-            ORDER BY n.bodyId
+            MATCH ({matchvar}:{criteria.label})
+            {criteria.all_conditions(prefix=12)}
+            RETURN {matchvar}.bodyId as bodyId,
+                   {matchvar}.instance as instance,
+                   {matchvar}.type as type
+            ORDER BY {matchvar}.bodyId
         """
-        sources_df = client.fetch_custom(q)
-        neurons_df.append(sources_df)
+        return client.fetch_custom(q)
 
-    if not isinstance(targets, type(None)):
-        if not isinstance(targets, SegmentCriteria):
-            # A previous version of this function accepted a list of bodyIds.
-            # We still support that for now.
-            assert isinstance(targets, collections.abc.Iterable), \
-                f"Invalid criteria: {targets}"
-            targets = SegmentCriteria(bodyId=targets)
-        else:
-            targets = copy.copy(targets)
-            targets.matchvar = 'n'
+    # Ensure sources/targets are SegmentCriteria
+    sources = _prepare_criteria(sources, 'n')
+    targets = _prepare_criteria(targets, 'm')
 
-        # Save time in cases where sources = targets
-        if targets == sources:
-            targets_df = sources_df
-        else:
-            q = f"""\
-                MATCH (n:{targets.label})
-                {targets.all_conditions(prefix=8)}
-                RETURN n.bodyId as bodyId, n.instance as instance, n.type as type
-                ORDER BY n.bodyId
-            """
-            targets_df = client.fetch_custom(q)
-            neurons_df.append(targets_df)
+    # Fetch neuron lists
+    # (We'll need to filter these below, after we know
+    # which ones are actually involved in connections.)
+    sources_df = _fetch_neurons(sources)
+    targets_df = _fetch_neurons(targets)
 
-    # Merge sources and targets
-    neurons_df = pd.concat(neurons_df, ignore_index=True)
-    neurons_df.drop_duplicates('bodyId', inplace=True)
+    # Concatenate sources and targets
+    neurons_df = pd.concat((sources_df, targets_df), ignore_index=True)
+    neurons_df.drop_duplicates('bodyId', inplace=True)    
     neurons_df.reset_index(drop=True, inplace=True)
 
-    # If either sources or targets is not provided use the others label
-    sources_label = sources.label if sources else targets.label
-    targets_label = targets.label if targets else sources.label
-
-    # Fetch connections in batches
+    # Fetch connections by batching only the source list.
+    # (It turns out that batching across BOTH sources and
+    # targets is much slower than batching across only one.)
     conn_tables = []
-    sources_iter = sources_df.bodyId.values if sources else [None]
-    targets_iter = targets_df.bodyId.values if targets else [None]
-
-    total_chunks = math.ceil(len(sources_iter) / batch_size) * \
-                   math.ceil(len(targets_iter) / batch_size)
-
-    with tqdm(total=total_chunks,
-              disable=total_chunks == 1,
-              leave=False) as pbar:
-        for sources_start in range(0, len(sources_iter), batch_size):
-            sources_stop = sources_start + batch_size
-            sources_batch = sources_iter[sources_start:sources_stop]
-            for targets_start in range(0, len(targets_iter), batch_size):
-                targets_stop = targets_start + batch_size
-                targets_batch = targets_iter[targets_start:targets_stop]
-
-                where = []
-                if any(sources_batch):
-                    where.append(f'n.bodyId in {sources_batch.tolist()}')
-                if any(targets_batch):
-                    where.append(f'm.bodyId in {targets_batch.tolist()}')
-
-                q = f"""\
-                    MATCH (n:{sources_label})-[e:ConnectsTo]->(m:{targets_label})
-                WHERE {' AND '.join(where)}
-                    RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo
-                """
-                conn_tables.append(client.fetch_custom(q))
-                pbar.update(1)
-            pbar.update(1)
+    for batch_start in trange(0, len(sources_df), batch_size):
+        batch_stop = batch_start + batch_size
+        source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+        
+        batch_criteria = copy.copy(sources)
+        batch_criteria.bodyId = source_bodies
+        
+        q = f"""\
+            MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
+            {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+            RETURN n.bodyId as bodyId_pre,
+                   m.bodyId as bodyId_post,
+                   e.weight as weight,
+                   e.roiInfo as roiInfo
+        """
+        conn_tables.append(client.fetch_custom(q))
 
     # Combine batches
     connections_df = pd.concat(conn_tables, ignore_index=True)
@@ -776,7 +761,7 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
 
     totals_df = connections_df.merge(primary_totals, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_all', '_primary'])
     totals_df.fillna(0, inplace=True)
-    totals_df['weight_notprimary'] = totals_df.eval('weight_all - weight_primary')
+    totals_df['weight_notprimary'] = totals_df.eval('weight_all - weight_primary').astype(int)
     totals_df['roi'] = 'NotPrimary'
     
     # Drop weights other than NotPrimary
@@ -787,17 +772,23 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
     if not include_nonprimary:
         roi_conn_df = primary_roi_conn_df
     
+    # Append NotPrimary rows to the connection table.
     roi_conn_df = pd.concat((roi_conn_df, notprimary_totals_df), ignore_index=True)
     roi_conn_df.sort_values(['bodyId_pre', 'bodyId_post', 'weight'], ascending=[True, True, False], inplace=True)
     roi_conn_df.reset_index(drop=True, inplace=True)
     
-    # Double-check our math against the original totals
+    # Consistency check: Double-check our math against the original totals
     summed_roi_weights = (roi_conn_df
-                            .query('roi in @client.primary_rois')
+                            .query('roi in @client.primary_rois or roi == "NotPrimary"')
                             .groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight']
                             .sum())
     compare_df = connections_df.merge(summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
     assert compare_df.fillna(0).eval('weight_orig == weight_summed').all()
+    
+    # Drop neurons that matched sources or targets but aren't mentioned in the connection table.
+    _connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
+    neurons_df.query('bodyId in @_connected_bodies', inplace=True)
+    neurons_df.reset_index(drop=True, inplace=True)
     
     # Export to CSV
     if export_dir:
@@ -856,7 +847,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             4   202916528    264986706       2        
      """
     criteria = SegmentCriteria(status="Traced", cropped=False)
-    return fetch_adjacencies(criteria, criteria, export_dir, batch_size, client=client)
+    return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir, batch_size=batch_size, client=client)
 
 
 @inject_client
