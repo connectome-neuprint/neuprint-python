@@ -549,7 +549,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 
 @inject_client
 @make_args_iterable(['rois'])
-def fetch_adjacencies(sources=None, targets=None, rois=None, include_nonprimary=False, export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1, include_nonprimary=False, export_dir=None, batch_size=200, *, client=None):
     """
     Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
     
@@ -586,6 +586,19 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, include_nonprimary=
 
         rois:
             Limit results to connections within the listed ROIs.
+
+        min_roi_weight:
+            Limit results to connections of at least this strength within any particular ROI.
+        
+        min_total_weight:
+            Limit results to connections that are at least this strong when totaled across all ROIs.
+            
+            Note:
+                Even if ``min_roi_weight`` is also specified, all connections are counted towards satisfying
+                the total weight threshold, even though some ROI entries are filtered out.
+                Therefore, some connections in the results may appear not to satisfy ``min_total_weight``
+                when their per-ROI weights are totaled.  That's just because you filtered out the weak
+                per-ROI entries.
 
         include_nonprimary:
             If True, also list per-ROI totals for non-primary ROIs
@@ -684,6 +697,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, include_nonprimary=
     assert include_nonprimary or not nonprimary_rois, \
         f"Since you listed nonprimary rois ({nonprimary_rois}), please specify include_nonprimary=True"
 
+    assert min_total_weight >= min_roi_weight, \
+        "min_total_weight must be at least as large as min_roi_weight"
+
     def _prepare_criteria(criteria, matchvar):
         if criteria is None:
             criteria = SegmentCriteria(matchvar)
@@ -744,9 +760,23 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, include_nonprimary=
         batch_criteria = copy.copy(sources)
         batch_criteria.bodyId = source_bodies
         
+        if not rois or min_total_weight <= 1:
+            # If rois aren't specified, then we'll include 'NotPrimary' counts,
+            # and that means we can't filter by weight in the query.
+            # We'll filter afterwards.
+            weight_condition = ""
+        else:
+            weight_condition = dedent(f"""\
+                // -- Filter by total connection weight --
+                WITH n,m,e
+                WHERE e.weight >= {min_total_weight}
+            """)
+            weight_condition = indent(weight_condition, prefix=12*' ')[12:]
+        
         q = f"""\
             MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
             {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+            {weight_condition}
             RETURN n.bodyId as bodyId_pre,
                    m.bodyId as bodyId_post,
                    e.weight as weight,
@@ -808,7 +838,15 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, include_nonprimary=
     if rois:
         roi_conn_df.query('roi in @rois and weight > 0', inplace=True)
 
-    # Drop neurons that matched sources or targets but aren't mentioned in the connection table.
+    if min_total_weight > 1:
+        total_weights_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+        keep_conns = total_weights_df.query('weight >= @min_total_weight')[['bodyId_pre', 'bodyId_post']]
+        roi_conn_df = roi_conn_df.merge(keep_conns, 'inner', on=['bodyId_pre', 'bodyId_post'])
+
+    if min_roi_weight > 1:
+        roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
+
+    # Drop neurons that matched sources or targets but aren't mentioned in the final connection table.
     _connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
     neurons_df.query('bodyId in @_connected_bodies', inplace=True)
     neurons_df.reset_index(drop=True, inplace=True)
