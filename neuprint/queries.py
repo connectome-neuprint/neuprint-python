@@ -549,7 +549,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 
 
 @inject_client
-def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=200, include_nonprimary=False, *, client=None):
     """
     Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
     
@@ -643,6 +643,22 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
             19   425790257    329566174   CA(R)       3
             20   425790257    329566174   aL(R)       1
 
+    **Total Connection Strength**
+
+    To aggregate the per-ROI connection weights into total connection weights, use ``groupby(...)['weight'].sum()``
+    
+    .. code-block:: ipython
+
+        In [5]: connection_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+        Out[5]:
+           bodyId_pre  bodyId_post  weight
+        0   329566174    329599710       1
+        1   329566174    420274150       1
+        2   329566174    424379864      37
+        3   329566174    425790257      43
+        4   329599710    329566174       4
+        5   424379864    329566174       7
+        6   425790257    329566174      12
     """
     assert (not isinstance(sources, type(None)) or not isinstance(targets, type(None))), \
               "Must provide either sources or targets or both."
@@ -737,7 +753,7 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
     # Combine batches
     connections_df = pd.concat(conn_tables, ignore_index=True)
 
-    # Parse roiInfo json
+    # Parse roiInfo json (ujson is faster than apoc.convert.fromJsonMap)
     connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
 
     # Extract per-ROI counts from the roiInfo column
@@ -752,11 +768,11 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
                                columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
     
     # Filter out non-primary ROIs
-    roi_conn_df = roi_conn_df.query('roi in @client.primary_rois')
+    primary_roi_conn_df = roi_conn_df.query('roi in @client.primary_rois')
     
     # Add a special roi name "NotPrimary" to account for the
     # difference between total weights and primary-only weights.
-    primary_totals = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+    primary_totals = primary_roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
 
     totals_df = connections_df.merge(primary_totals, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_all', '_primary'])
     totals_df.fillna(0, inplace=True)
@@ -765,15 +781,21 @@ def fetch_adjacencies(sources=None, targets=None, export_dir=None, batch_size=20
     
     # Drop weights other than NotPrimary
     totals_df = totals_df[['bodyId_pre', 'bodyId_post', 'roi', 'weight_notprimary']]
-    totals_df.query('weight_notprimary > 0', inplace=True)
-    totals_df = totals_df.rename(columns={'weight_notprimary': 'weight'})
+    notprimary_totals_df = totals_df.query('weight_notprimary > 0')
+    notprimary_totals_df = notprimary_totals_df.rename(columns={'weight_notprimary': 'weight'})
     
-    roi_conn_df = pd.concat((roi_conn_df, totals_df), ignore_index=True)
+    if not include_nonprimary:
+        roi_conn_df = primary_roi_conn_df
+    
+    roi_conn_df = pd.concat((roi_conn_df, notprimary_totals_df), ignore_index=True)
     roi_conn_df.sort_values(['bodyId_pre', 'bodyId_post', 'weight'], ascending=[True, True, False], inplace=True)
     roi_conn_df.reset_index(drop=True, inplace=True)
     
     # Double-check our math against the original totals
-    summed_roi_weights = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+    summed_roi_weights = (roi_conn_df
+                            .query('roi in @client.primary_rois')
+                            .groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight']
+                            .sum())
     compare_df = connections_df.merge(summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
     assert compare_df.fillna(0).eval('weight_orig == weight_summed').all()
     
