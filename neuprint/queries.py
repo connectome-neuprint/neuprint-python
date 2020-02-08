@@ -435,7 +435,8 @@ def fetch_custom_neurons(q, *, client=None):
 
 
 @inject_client
-def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, min_weight=1,
+@make_args_iterable(['rois'])
+def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1,
                              properties=['type', 'instance'],
                              *, client=None):
     """
@@ -448,7 +449,8 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
     Note:
         This function is not intended to be used with very large neuron sets.
         To fetch all adjacencies between a large set of neurons,
-        set :py:func:`fetch_adjacencies()`, which queries the server in batches.
+        set :py:func:`fetch_adjacencies()`, and additional ROI-filtering options.
+        
         However, this function returns additional information on every row of the
         connection table, such as ``type`` and ``instance``, so it may be more
         convenient for small queries.
@@ -460,8 +462,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
         downstream_criteria:
             SegmentCriteria indicating how to filter for neurons
             on the postsynaptic side of connections.
+        rois:
+            Limit results to neuron pairs that connect in at least one of the given ROIs.
         min_weight:
-            Exclude connections below this weight.
+            Exclude connections whose total weight (across all ROIs) falls below this threshold.
         properties:
             Additional columns to include in the results, for both the upstream and downstream body.
         client:
@@ -480,14 +484,14 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
                ...: fetch_simple_connections(SC(bodyId=sources), SC(bodyId=targets))
             Out[1]:
-               upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance
-            0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R
-            1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R
-            2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R
-            3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R
-            4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R
-            5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R
-            6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R
+               upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance                                       conn_roiInfo
+            0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R  {'MB(R)': {'pre': 39, 'post': 39}, 'b'L(R)': {...
+            1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R  {'SNP(R)': {'pre': 34, 'post': 34}, 'SLP(R)': ...
+            2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {'MB(R)': {'pre': 12, 'post': 12}, 'gL(R)': {'...
+            3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {'SNP(R)': {'pre': 5, 'post': 5}, 'SLP(R)': {'...
+            4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {'SNP(R)': {'pre': 4, 'post': 4}, 'SIP(R)': {'...
+            5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
+            6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
     """
     SC = SegmentCriteria
     up_crit = copy.deepcopy(upstream_criteria)
@@ -516,10 +520,17 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
     else:
         weight_expr = ""
 
+    rois = {*rois}
+    if rois:
+        invalid_rois = {*rois} - {*client.all_rois}
+        assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
+
     return_props = ['upstream.bodyId', 'downstream.bodyId', 'e.weight as weight']
     if properties:
         return_props += [f'upstream.{p}' for p in properties]
         return_props += [f'downstream.{p}' for p in properties]
+    
+    return_props += ['e.roiInfo as conn_roiInfo']
     
     return_props_str = indent(',\n'.join(return_props), prefix=' '*15)[15:]
 
@@ -541,6 +552,13 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
     """
     edges_df = client.fetch_custom(q)
     
+    # Load connection roiInfo with ujson
+    edges_df['conn_roiInfo'] = edges_df['conn_roiInfo'].apply(ujson.loads)
+    
+    if rois:
+        keep = edges_df['conn_roiInfo'].apply(lambda roiInfo: bool(rois & {*roiInfo.keys()}))
+        edges_df = edges_df.loc[keep].reset_index(drop=True)
+
     # Rename columns: Replace '.' with '_'.
     renames = {col: col.replace('.', '_') for col in edges_df.columns}
     edges_df.rename(columns=renames, inplace=True)
