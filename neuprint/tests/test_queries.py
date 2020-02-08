@@ -119,7 +119,7 @@ def test_fetch_traced_adjacencies(client):
 def test_fetch_adjacencies(client):
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
-    neuron_df, roi_conn_df = fetch_adjacencies(SC(bodyId=bodies))
+    neuron_df, roi_conn_df = fetch_adjacencies(SC(bodyId=bodies), SC(bodyId=bodies))
 
     # Should not include non-primary ROIs (except 'NotPrimary')
     assert not ({*roi_conn_df['roi'].unique()} - {*fetch_primary_rois()} - {'NotPrimary'})
@@ -130,12 +130,12 @@ def test_fetch_adjacencies(client):
     #
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
-    neuron_df2, roi_conn_df2 = fetch_adjacencies(bodies)
+    neuron_df2, roi_conn_df2 = fetch_adjacencies(bodies, bodies)
 
     # Should not include non-primary ROIs (except 'NotPrimary')
     assert not ({*roi_conn_df2['roi'].unique()} - {*fetch_primary_rois()} - {'NotPrimary'})
 
-    assert (neuron_df == neuron_df2).all().all()
+    assert (neuron_df.fillna('') == neuron_df2.fillna('')).all().all()
     assert (roi_conn_df == roi_conn_df2).all().all()
 
 def test_fetch_meta(client):
@@ -152,3 +152,7 @@ def test_fetch_primary_rois(client):
     primary_rois = fetch_primary_rois()
     assert isinstance(primary_rois, list)
 
+if __name__ == "__main__":
+    args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
+    #args += ['-k', 'fetch_adjacencies']
+    pytest.main(args)
