@@ -548,7 +548,8 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, m
 
 
 @inject_client
-def fetch_adjacencies(sources=None, targets=None, include_nonprimary=False, export_dir=None, batch_size=200, *, client=None):
+@make_args_iterable(['rois'])
+def fetch_adjacencies(sources=None, targets=None, rois=None, include_nonprimary=False, export_dir=None, batch_size=200, *, client=None):
     """
     Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
     
@@ -582,6 +583,9 @@ def fetch_adjacencies(sources=None, targets=None, include_nonprimary=False, expo
         batch_size:
             For optimal performance, connections will be fetched in batches.
             This parameter specifies the batch size.
+
+        rois:
+            Limit results to connections within the listed ROIs.
 
         include_nonprimary:
             If True, also list per-ROI totals for non-primary ROIs
@@ -671,20 +675,35 @@ def fetch_adjacencies(sources=None, targets=None, include_nonprimary=False, expo
     """
     assert (sources is not None) or (targets is not None), \
         "Must provide either sources or targets (or both)."
+    
+    rois = {*rois}
+    invalid_rois = rois - {*client.all_rois}
+    assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
+    
+    nonprimary_rois = rois - {*client.primary_rois}
+    assert include_nonprimary or not nonprimary_rois, \
+        f"Since you listed nonprimary rois ({nonprimary_rois}), please specify include_nonprimary=True"
 
     def _prepare_criteria(criteria, matchvar):
         if criteria is None:
-            return SegmentCriteria(matchvar)
+            criteria = SegmentCriteria(matchvar)
 
         # A previous version of fetch_adjacencies() accepted a list of bodyIds.
         # We still support that for now.
         if not isinstance(criteria, SegmentCriteria):
             assert isinstance(criteria, collections.abc.Iterable), \
                 f"Invalid criteria: {criteria}"
-            return SegmentCriteria(matchvar, bodyId=criteria)
+            criteria = SegmentCriteria(matchvar, bodyId=criteria)
 
         criteria = copy.copy(criteria)
         criteria.matchvar = matchvar
+        
+        # If the user wants to filter for specific rois,
+        # we can speed up the query by adding them to the SegmentCriteria
+        if rois and not criteria.rois:
+            criteria.rois = rois
+            criteria.roi_req = 'any'
+
         return criteria
 
     def _fetch_neurons(criteria):
@@ -784,7 +803,11 @@ def fetch_adjacencies(sources=None, targets=None, include_nonprimary=False, expo
                             .sum())
     compare_df = connections_df.merge(summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
     assert compare_df.fillna(0).eval('weight_orig == weight_summed').all()
-    
+
+    # Filter for the user's ROIs, if any
+    if rois:
+        roi_conn_df.query('roi in @rois and weight > 0', inplace=True)
+
     # Drop neurons that matched sources or targets but aren't mentioned in the connection table.
     _connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
     neurons_df.query('bodyId in @_connected_bodies', inplace=True)
