@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.3.5+3.g93b2715 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.3.6 documentation</title>
   
 
   
@@ -59,7 +59,7 @@
             
             
               <div class="version">
-                0.3.5+3.g93b2715
+                0.3.6
               </div>
             
           
@@ -154,13 +154,13 @@
 <span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">trange</span>
+<span class="kn">from</span> <span class="nn">asciitree</span> <span class="kn">import</span> <span class="n">LeftAligned</span>
 
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
 <span class="kn">from</span> <span class="nn">.segmentcriteria</span> <span class="kn">import</span> <span class="n">SegmentCriteria</span>
@@ -290,6 +290,104 @@
     <span class="n">rois</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;rois&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rois</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="fetch_roi_hierarchy"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_roi_hierarchy">[docs]</a><span class="k">def</span> <span class="nf">fetch_roi_hierarchy</span><span class="p">(</span><span class="n">include_subprimary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mark_primary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch the ROI hierarchy nesting relationships.</span>
+<span class="sd">    </span>
+<span class="sd">    Most ROIs in neuprint are part of a hierarchy of nested regions.</span>
+<span class="sd">    The structure of the hierarchy is stored in the dataset metadata,</span>
+<span class="sd">    and can be retrieved with this function.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        include_subprimary:</span>
+<span class="sd">            If True, all hierarchy levels are included in the output.</span>
+<span class="sd">            Otherwise, the hierarchy will only go as deep as necessary to</span>
+<span class="sd">            cover all &quot;primary&quot; ROIs, but not any sub-primary ROIs that</span>
+<span class="sd">            are contained within them.</span>
+<span class="sd">        </span>
+<span class="sd">        mark_primary:</span>
+<span class="sd">            If True, append an asterisk (``*``) to the names of</span>
+<span class="sd">            &quot;primary&quot; ROIs in the hierarchy.</span>
+<span class="sd">            Primary ROIs do not overlap with each other.</span>
+<span class="sd">            </span>
+<span class="sd">        format:</span>
+<span class="sd">            Either ``&quot;dict&quot;``, ``&quot;text&quot;``, or ``nx``.</span>
+<span class="sd">            Specifies whether to return the hierarchy as a `dict`, or as</span>
+<span class="sd">            a printable text-based tree, or as a ``networkx.DiGraph``</span>
+<span class="sd">            (requires ``networkx``).</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Either ``dict``, ``str``, or ``nx.DiGraph``,</span>
+<span class="sd">        depending on your chosen ``format``.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: ipython</span>
+<span class="sd">        </span>
+<span class="sd">            In [1]: from neuprint.queries import fetch_roi_hierarchy</span>
+<span class="sd">               ...:</span>
+<span class="sd">               ...: # Print the first few nodes of the tree -- you get the idea</span>
+<span class="sd">               ...: roi_tree_text = fetch_roi_hierarchy(False, True, &#39;text&#39;)</span>
+<span class="sd">               ...: print(roi_tree_text[:180])</span>
+<span class="sd">            hemibrain</span>
+<span class="sd">             +-- AL(L)*</span>
+<span class="sd">             +-- AL(R)*</span>
+<span class="sd">             +-- AOT(R)</span>
+<span class="sd">             +-- CX</span>
+<span class="sd">             |   +-- AB(L)*</span>
+<span class="sd">             |   +-- AB(R)*</span>
+<span class="sd">             |   +-- EB*</span>
+<span class="sd">             |   +-- FB*</span>
+<span class="sd">             |   +-- NO*</span>
+<span class="sd">             |   +-- PB*</span>
+<span class="sd">             +-- GC</span>
+<span class="sd">             +-- GF(R)</span>
+<span class="sd">             +-- GNG*</span>
+<span class="sd">             +-- INP</span>
+<span class="sd">             |</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;dict&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="s1">&#39;nx&#39;</span><span class="p">)</span>
+    <span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    <span class="n">hierarchy</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;roiHierarchy&#39;</span><span class="p">]</span>
+    <span class="n">primary_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;primaryRois&#39;</span><span class="p">]}</span>
+
+    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">h</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="n">is_primary</span> <span class="o">=</span> <span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">primary_rois</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">mark_primary</span> <span class="ow">and</span> <span class="n">is_primary</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot;*&quot;</span>
+        
+        <span class="n">d</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="k">if</span> <span class="s1">&#39;children&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">h</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">is_primary</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">include_subprimary</span><span class="p">:</span>
+            <span class="k">return</span>
+        
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="s1">&#39;children&#39;</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]):</span>
+            <span class="n">insert</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">insert</span><span class="p">(</span><span class="n">hierarchy</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;dict&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">d</span>
+    
+    <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;text&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LeftAligned</span><span class="p">()(</span><span class="n">d</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;nx&#39;</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
+        <span class="k">def</span> <span class="nf">add_nodes</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">g</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+                <span class="n">add_nodes</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">add_nodes</span><span class="p">(</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">g</span></div>
+        
 
 <div class="viewcode-block" id="fetch_neurons"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_neurons">[docs]</a><span class="nd">@inject_client</span>
 <span class="k">def</span> <span class="nf">fetch_neurons</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -490,7 +588,8 @@
 
 
 <div class="viewcode-block" id="fetch_simple_connections"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_simple_connections">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_simple_connections</span><span class="p">(</span><span class="n">upstream_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">downstream_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="nd">@make_args_iterable</span><span class="p">([</span><span class="s1">&#39;rois&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">fetch_simple_connections</span><span class="p">(</span><span class="n">upstream_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">downstream_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                              <span class="n">properties</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">],</span>
                              <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -503,7 +602,8 @@
 <span class="sd">    Note:</span>
 <span class="sd">        This function is not intended to be used with very large neuron sets.</span>
 <span class="sd">        To fetch all adjacencies between a large set of neurons,</span>
-<span class="sd">        set :py:func:`fetch_adjacencies()`, which queries the server in batches.</span>
+<span class="sd">        set :py:func:`fetch_adjacencies()`, and additional ROI-filtering options.</span>
+<span class="sd">        </span>
 <span class="sd">        However, this function returns additional information on every row of the</span>
 <span class="sd">        connection table, such as ``type`` and ``instance``, so it may be more</span>
 <span class="sd">        convenient for small queries.</span>
@@ -515,8 +615,10 @@
 <span class="sd">        downstream_criteria:</span>
 <span class="sd">            SegmentCriteria indicating how to filter for neurons</span>
 <span class="sd">            on the postsynaptic side of connections.</span>
+<span class="sd">        rois:</span>
+<span class="sd">            Limit results to neuron pairs that connect in at least one of the given ROIs.</span>
 <span class="sd">        min_weight:</span>
-<span class="sd">            Exclude connections below this weight.</span>
+<span class="sd">            Exclude connections whose total weight (across all ROIs) falls below this threshold.</span>
 <span class="sd">        properties:</span>
 <span class="sd">            Additional columns to include in the results, for both the upstream and downstream body.</span>
 <span class="sd">        client:</span>
@@ -535,14 +637,14 @@
 <span class="sd">               ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]</span>
 <span class="sd">               ...: fetch_simple_connections(SC(bodyId=sources), SC(bodyId=targets))</span>
 <span class="sd">            Out[1]:</span>
-<span class="sd">               upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance</span>
-<span class="sd">            0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R</span>
-<span class="sd">            1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R</span>
-<span class="sd">            2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R</span>
-<span class="sd">            3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R</span>
-<span class="sd">            4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R</span>
-<span class="sd">            5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R</span>
-<span class="sd">            6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R</span>
+<span class="sd">               upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance                                       conn_roiInfo</span>
+<span class="sd">            0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 39, &#39;post&#39;: 39}, &#39;b&#39;L(R)&#39;: {...</span>
+<span class="sd">            1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 34, &#39;post&#39;: 34}, &#39;SLP(R)&#39;: ...</span>
+<span class="sd">            2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 12, &#39;post&#39;: 12}, &#39;gL(R)&#39;: {&#39;...</span>
+<span class="sd">            3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 5, &#39;post&#39;: 5}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="sd">            4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 4, &#39;post&#39;: 4}, &#39;SIP(R)&#39;: {&#39;...</span>
+<span class="sd">            5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="sd">            6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">SC</span> <span class="o">=</span> <span class="n">SegmentCriteria</span>
     <span class="n">up_crit</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">upstream_criteria</span><span class="p">)</span>
@@ -571,10 +673,17 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">weight_expr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
+    <span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">rois</span><span class="p">:</span>
+        <span class="n">invalid_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">all_rois</span><span class="p">}</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">invalid_rois</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unrecognized ROIs: </span><span class="si">{invalid_rois}</span><span class="s2">&quot;</span>
+
     <span class="n">return_props</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;upstream.bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;downstream.bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;e.weight as weight&#39;</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">properties</span><span class="p">:</span>
         <span class="n">return_props</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;upstream.</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">]</span>
         <span class="n">return_props</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;downstream.</span><span class="si">{p}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">]</span>
+    
+    <span class="n">return_props</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;e.roiInfo as conn_roiInfo&#39;</span><span class="p">]</span>
     
     <span class="n">return_props_str</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">return_props</span><span class="p">),</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="o">*</span><span class="mi">15</span><span class="p">)[</span><span class="mi">15</span><span class="p">:]</span>
 
@@ -596,6 +705,13 @@
 <span class="s2">    &quot;&quot;&quot;</span>
     <span class="n">edges_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
     
+    <span class="c1"># Load connection roiInfo with ujson</span>
+    <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;conn_roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;conn_roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">rois</span><span class="p">:</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">edges_df</span><span class="p">[</span><span class="s1">&#39;conn_roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">roiInfo</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">rois</span> <span class="o">&amp;</span> <span class="p">{</span><span class="o">*</span><span class="n">roiInfo</span><span class="o">.</span><span class="n">keys</span><span class="p">()}))</span>
+        <span class="n">edges_df</span> <span class="o">=</span> <span class="n">edges_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
     <span class="c1"># Rename columns: Replace &#39;.&#39; with &#39;_&#39;.</span>
     <span class="n">renames</span> <span class="o">=</span> <span class="p">{</span><span class="n">col</span><span class="p">:</span> <span class="n">col</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">edges_df</span><span class="o">.</span><span class="n">columns</span><span class="p">}</span>
     <span class="n">edges_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">renames</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -603,14 +719,15 @@
 
 
 <div class="viewcode-block" id="fetch_adjacencies"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_adjacencies">[docs]</a><span class="nd">@inject_client</span>
-<span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">sources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="nd">@make_args_iterable</span><span class="p">([</span><span class="s1">&#39;rois&#39;</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">fetch_adjacencies</span><span class="p">(</span><span class="n">sources</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_roi_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_total_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">include_nonprimary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Find connections to/from large set(s) of neurons, with per-ROI connection strengths.</span>
 <span class="sd">    </span>
 <span class="sd">    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.</span>
-<span class="sd">    Only primary ROIs are included in the per-ROI connection table.</span>
+<span class="sd">    Unless ``include_nonprimary=True``, only primary ROIs are included in the per-ROI connection table.</span>
 <span class="sd">    Connections outside of the primary ROIs are labeled with the special name</span>
-<span class="sd">    `NotPrimary` (which is not currently an ROI name in neuprint itself).</span>
+<span class="sd">    ``&quot;NotPrimary&quot;`` (which is not currently an ROI name in neuprint itself).</span>
 
 <span class="sd">    Note:</span>
 <span class="sd">        :py:func:`.fetch_simple_connections()` has similar functionality,</span>
@@ -624,10 +741,12 @@
 <span class="sd">            Limit results to connections from bodies that match this criteria.</span>
 <span class="sd">            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None</span>
 <span class="sd">            will include all bodies upstream of ``targets``.</span>
+
 <span class="sd">        targets:</span>
 <span class="sd">            Limit results to connections to bodies that match this criteria.</span>
 <span class="sd">            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None</span>
 <span class="sd">            will include all bodies downstream of ``sources``.</span>
+
 <span class="sd">        export_dir:</span>
 <span class="sd">            Optional. Export CSV files for the neuron table,</span>
 <span class="sd">            connection table (total weight), and connection table (per ROI).</span>
@@ -636,8 +755,32 @@
 <span class="sd">            For optimal performance, connections will be fetched in batches.</span>
 <span class="sd">            This parameter specifies the batch size.</span>
 
-<span class="sd">        label:</span>
-<span class="sd">            Either &#39;Neuron&#39; or &#39;Segment&#39; (which includes Neurons)</span>
+<span class="sd">        rois:</span>
+<span class="sd">            Limit results to connections within the listed ROIs.</span>
+
+<span class="sd">        min_roi_weight:</span>
+<span class="sd">            Limit results to connections of at least this strength within any particular ROI.</span>
+<span class="sd">        </span>
+<span class="sd">        min_total_weight:</span>
+<span class="sd">            Limit results to connections that are at least this strong when totaled across all ROIs.</span>
+<span class="sd">            </span>
+<span class="sd">            Note:</span>
+<span class="sd">                Even if ``min_roi_weight`` is also specified, all connections are counted towards satisfying</span>
+<span class="sd">                the total weight threshold, even though some ROI entries are filtered out.</span>
+<span class="sd">                Therefore, some connections in the results may appear not to satisfy ``min_total_weight``</span>
+<span class="sd">                when their per-ROI weights are totaled.  That&#39;s just because you filtered out the weak</span>
+<span class="sd">                per-ROI entries.</span>
+
+<span class="sd">        include_nonprimary:</span>
+<span class="sd">            If True, also list per-ROI totals for non-primary ROIs</span>
+<span class="sd">            (i.e. parts of the ROI hierarchy that are sub-primary or super-primary).</span>
+<span class="sd">            See :py:func:`fetch_roi_hierarchy` for details.</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                Since non-primary ROIs overlap with primary ROIs, then the sum of the</span>
+<span class="sd">                ``weight`` column for each body pair will not be equal to the total</span>
+<span class="sd">                connection strength between the bodies.</span>
+<span class="sd">                (Some connections will be counted twice.)</span>
 
 <span class="sd">        client:</span>
 <span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
@@ -697,101 +840,125 @@
 <span class="sd">            19   425790257    329566174   CA(R)       3</span>
 <span class="sd">            20   425790257    329566174   aL(R)       1</span>
 
+<span class="sd">    **Total Connection Strength**</span>
+
+<span class="sd">    To aggregate the per-ROI connection weights into total connection weights, use ``groupby(...)[&#39;weight&#39;].sum()``</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: ipython</span>
+
+<span class="sd">        In [5]: connection_df.groupby([&#39;bodyId_pre&#39;, &#39;bodyId_post&#39;], as_index=False)[&#39;weight&#39;].sum()</span>
+<span class="sd">        Out[5]:</span>
+<span class="sd">           bodyId_pre  bodyId_post  weight</span>
+<span class="sd">        0   329566174    329599710       1</span>
+<span class="sd">        1   329566174    420274150       1</span>
+<span class="sd">        2   329566174    424379864      37</span>
+<span class="sd">        3   329566174    425790257      43</span>
+<span class="sd">        4   329599710    329566174       4</span>
+<span class="sd">        5   424379864    329566174       7</span>
+<span class="sd">        6   425790257    329566174      12</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))),</span> \
-              <span class="s2">&quot;Must provide either sources or targets or both.&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">sources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">),</span> \
+        <span class="s2">&quot;Must provide either sources or targets (or both).&quot;</span>
+    
+    <span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}</span>
+    <span class="n">invalid_rois</span> <span class="o">=</span> <span class="n">rois</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">all_rois</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">invalid_rois</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Unrecognized ROIs: </span><span class="si">{invalid_rois}</span><span class="s2">&quot;</span>
+    
+    <span class="n">nonprimary_rois</span> <span class="o">=</span> <span class="n">rois</span> <span class="o">-</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">primary_rois</span><span class="p">}</span>
+    <span class="k">assert</span> <span class="n">include_nonprimary</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">nonprimary_rois</span><span class="p">,</span> \
+        <span class="sa">f</span><span class="s2">&quot;Since you listed nonprimary rois (</span><span class="si">{nonprimary_rois}</span><span class="s2">), please specify include_nonprimary=True&quot;</span>
 
-    <span class="n">neurons_df</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
-            <span class="c1"># A previous version of this function accepted a list of bodyIds.</span>
-            <span class="c1"># We still support that for now.</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
-                <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{sources}</span><span class="s2">&quot;</span>
-            <span class="n">sources</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sources</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sources</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
-            <span class="n">sources</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+    <span class="k">assert</span> <span class="n">min_total_weight</span> <span class="o">&gt;=</span> <span class="n">min_roi_weight</span><span class="p">,</span> \
+        <span class="s2">&quot;min_total_weight must be at least as large as min_roi_weight&quot;</span>
 
+    <span class="k">def</span> <span class="nf">_prepare_criteria</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">matchvar</span><span class="p">)</span>
+
+        <span class="c1"># A previous version of fetch_adjacencies() accepted a list of bodyIds.</span>
+        <span class="c1"># We still support that for now.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
+                <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{criteria}</span><span class="s2">&quot;</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">matchvar</span><span class="p">,</span> <span class="n">bodyId</span><span class="o">=</span><span class="n">criteria</span><span class="p">)</span>
+
+        <span class="n">criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
+        <span class="n">criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
+        
+        <span class="c1"># If the user wants to filter for specific rois,</span>
+        <span class="c1"># we can speed up the query by adding them to the SegmentCriteria</span>
+        <span class="k">if</span> <span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="n">rois</span>
+            <span class="n">criteria</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
+
+        <span class="k">return</span> <span class="n">criteria</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_neurons</span><span class="p">(</span><span class="n">criteria</span><span class="p">):</span>
+        <span class="n">matchvar</span> <span class="o">=</span> <span class="n">criteria</span><span class="o">.</span><span class="n">matchvar</span>
         <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">            MATCH (n:</span><span class="si">{sources.label}</span><span class="s2">)</span>
-<span class="s2">            {sources.all_conditions(prefix=8)}</span>
-<span class="s2">            RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
-<span class="s2">            ORDER BY n.bodyId</span>
+<span class="s2">            MATCH (</span><span class="si">{matchvar}</span><span class="s2">:</span><span class="si">{criteria.label}</span><span class="s2">)</span>
+<span class="s2">            {criteria.all_conditions(prefix=12)}</span>
+<span class="s2">            RETURN </span><span class="si">{matchvar}</span><span class="s2">.bodyId as bodyId,</span>
+<span class="s2">                   </span><span class="si">{matchvar}</span><span class="s2">.instance as instance,</span>
+<span class="s2">                   </span><span class="si">{matchvar}</span><span class="s2">.type as type</span>
+<span class="s2">            ORDER BY </span><span class="si">{matchvar}</span><span class="s2">.bodyId</span>
 <span class="s2">        &quot;&quot;&quot;</span>
-        <span class="n">sources_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-        <span class="n">neurons_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sources_df</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
-            <span class="c1"># A previous version of this function accepted a list of bodyIds.</span>
-            <span class="c1"># We still support that for now.</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
-                <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{targets}</span><span class="s2">&quot;</span>
-            <span class="n">targets</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">targets</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">targets</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
-            <span class="n">targets</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+    <span class="c1"># Ensure sources/targets are SegmentCriteria</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="n">_prepare_criteria</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">)</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">_prepare_criteria</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
 
-        <span class="c1"># Save time in cases where sources = targets</span>
-        <span class="k">if</span> <span class="n">targets</span> <span class="o">==</span> <span class="n">sources</span><span class="p">:</span>
-            <span class="n">targets_df</span> <span class="o">=</span> <span class="n">sources_df</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">                MATCH (n:</span><span class="si">{targets.label}</span><span class="s2">)</span>
-<span class="s2">                {targets.all_conditions(prefix=8)}</span>
-<span class="s2">                RETURN n.bodyId as bodyId, n.instance as instance, n.type as type</span>
-<span class="s2">                ORDER BY n.bodyId</span>
-<span class="s2">            &quot;&quot;&quot;</span>
-            <span class="n">targets_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-            <span class="n">neurons_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">targets_df</span><span class="p">)</span>
+    <span class="c1"># Fetch neuron lists</span>
+    <span class="c1"># (We&#39;ll need to filter these below, after we know</span>
+    <span class="c1"># which ones are actually involved in connections.)</span>
+    <span class="n">sources_df</span> <span class="o">=</span> <span class="n">_fetch_neurons</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
+    <span class="n">targets_df</span> <span class="o">=</span> <span class="n">_fetch_neurons</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span>
 
-    <span class="c1"># Merge sources and targets</span>
-    <span class="n">neurons_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">neurons_df</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">neurons_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Concatenate sources and targets</span>
+    <span class="n">neurons_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">sources_df</span><span class="p">,</span> <span class="n">targets_df</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">neurons_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    
     <span class="n">neurons_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># If either sources or targets is not provided use the others label</span>
-    <span class="n">sources_label</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">label</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="n">targets</span><span class="o">.</span><span class="n">label</span>
-    <span class="n">targets_label</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">label</span> <span class="k">if</span> <span class="n">targets</span> <span class="k">else</span> <span class="n">sources</span><span class="o">.</span><span class="n">label</span>
-
-    <span class="c1"># Fetch connections in batches</span>
+    <span class="c1"># Fetch connections by batching only the source list.</span>
+    <span class="c1"># (It turns out that batching across BOTH sources and</span>
+    <span class="c1"># targets is much slower than batching across only one.)</span>
     <span class="n">conn_tables</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">sources_iter</span> <span class="o">=</span> <span class="n">sources_df</span><span class="o">.</span><span class="n">bodyId</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
-    <span class="n">targets_iter</span> <span class="o">=</span> <span class="n">targets_df</span><span class="o">.</span><span class="n">bodyId</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">targets</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span>
-
-    <span class="n">total_chunks</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)</span> <span class="o">*</span> \
-                   <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span><span class="p">)</span>
-
-    <span class="k">with</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="n">total_chunks</span><span class="p">,</span>
-              <span class="n">disable</span><span class="o">=</span><span class="n">total_chunks</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span>
-              <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">sources_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
-            <span class="n">sources_stop</span> <span class="o">=</span> <span class="n">sources_start</span> <span class="o">+</span> <span class="n">batch_size</span>
-            <span class="n">sources_batch</span> <span class="o">=</span> <span class="n">sources_iter</span><span class="p">[</span><span class="n">sources_start</span><span class="p">:</span><span class="n">sources_stop</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">targets_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets_iter</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
-                <span class="n">targets_stop</span> <span class="o">=</span> <span class="n">targets_start</span> <span class="o">+</span> <span class="n">batch_size</span>
-                <span class="n">targets_batch</span> <span class="o">=</span> <span class="n">targets_iter</span><span class="p">[</span><span class="n">targets_start</span><span class="p">:</span><span class="n">targets_stop</span><span class="p">]</span>
-
-                <span class="n">where</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">sources_batch</span><span class="p">):</span>
-                    <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;n.bodyId in {sources_batch.tolist()}&#39;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">targets_batch</span><span class="p">):</span>
-                    <span class="n">where</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;m.bodyId in {targets_batch.tolist()}&#39;</span><span class="p">)</span>
-
-                <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">                    MATCH (n:</span><span class="si">{sources_label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{targets_label}</span><span class="s2">)</span>
-<span class="s2">                WHERE {&#39; AND &#39;.join(where)}</span>
-<span class="s2">                    RETURN n.bodyId as bodyId_pre, m.bodyId as bodyId_post, e.weight as weight, e.roiInfo as roiInfo</span>
-<span class="s2">                &quot;&quot;&quot;</span>
-                <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
-                <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+        <span class="n">batch_stop</span> <span class="o">=</span> <span class="n">batch_start</span> <span class="o">+</span> <span class="n">batch_size</span>
+        <span class="n">source_bodies</span> <span class="o">=</span> <span class="n">sources_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        
+        <span class="n">batch_criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">sources</span><span class="p">)</span>
+        <span class="n">batch_criteria</span><span class="o">.</span><span class="n">bodyId</span> <span class="o">=</span> <span class="n">source_bodies</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">rois</span> <span class="ow">or</span> <span class="n">min_total_weight</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># If rois aren&#39;t specified, then we&#39;ll include &#39;NotPrimary&#39; counts,</span>
+            <span class="c1"># and that means we can&#39;t filter by weight in the query.</span>
+            <span class="c1"># We&#39;ll filter afterwards.</span>
+            <span class="n">weight_condition</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weight_condition</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">                // -- Filter by total connection weight --</span>
+<span class="s2">                WITH n,m,e</span>
+<span class="s2">                WHERE e.weight &gt;= </span><span class="si">{min_total_weight}</span><span class="s2"></span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+            <span class="n">weight_condition</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="n">weight_condition</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">12</span><span class="o">*</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">12</span><span class="p">:]</span>
+        
+        <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">            MATCH (n:</span><span class="si">{sources.label}</span><span class="s2">)-[e:ConnectsTo]-&gt;(m:</span><span class="si">{targets.label}</span><span class="s2">)</span>
+<span class="s2">            {SegmentCriteria.combined_conditions((batch_criteria, targets), (&#39;n&#39;, &#39;m&#39;, &#39;e&#39;), prefix=12)}</span>
+<span class="s2">            </span><span class="si">{weight_condition}</span><span class="s2"></span>
+<span class="s2">            RETURN n.bodyId as bodyId_pre,</span>
+<span class="s2">                   m.bodyId as bodyId_post,</span>
+<span class="s2">                   e.weight as weight,</span>
+<span class="s2">                   e.roiInfo as roiInfo</span>
+<span class="s2">        &quot;&quot;&quot;</span>
+        <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
 
     <span class="c1"># Combine batches</span>
     <span class="n">connections_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">conn_tables</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="c1"># Parse roiInfo json</span>
+    <span class="c1"># Parse roiInfo json (ujson is faster than apoc.convert.fromJsonMap)</span>
     <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">connections_df</span><span class="p">[</span><span class="s1">&#39;roiInfo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
 
     <span class="c1"># Extract per-ROI counts from the roiInfo column</span>
@@ -806,30 +973,54 @@
                                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">])</span>
     
     <span class="c1"># Filter out non-primary ROIs</span>
-    <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @client.primary_rois&#39;</span><span class="p">)</span>
+    <span class="n">primary_roi_conn_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @client.primary_rois&#39;</span><span class="p">)</span>
     
     <span class="c1"># Add a special roi name &quot;NotPrimary&quot; to account for the</span>
     <span class="c1"># difference between total weights and primary-only weights.</span>
-    <span class="n">primary_totals</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">primary_totals</span> <span class="o">=</span> <span class="n">primary_roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
     <span class="n">totals_df</span> <span class="o">=</span> <span class="n">connections_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">primary_totals</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_all&#39;</span><span class="p">,</span> <span class="s1">&#39;_primary&#39;</span><span class="p">])</span>
     <span class="n">totals_df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">totals_df</span><span class="p">[</span><span class="s1">&#39;weight_notprimary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">totals_df</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;weight_all - weight_primary&#39;</span><span class="p">)</span>
+    <span class="n">totals_df</span><span class="p">[</span><span class="s1">&#39;weight_notprimary&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">totals_df</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;weight_all - weight_primary&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
     <span class="n">totals_df</span><span class="p">[</span><span class="s1">&#39;roi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;NotPrimary&#39;</span>
     
     <span class="c1"># Drop weights other than NotPrimary</span>
     <span class="n">totals_df</span> <span class="o">=</span> <span class="n">totals_df</span><span class="p">[[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">,</span> <span class="s1">&#39;roi&#39;</span><span class="p">,</span> <span class="s1">&#39;weight_notprimary&#39;</span><span class="p">]]</span>
-    <span class="n">totals_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;weight_notprimary &gt; 0&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">totals_df</span> <span class="o">=</span> <span class="n">totals_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;weight_notprimary&#39;</span><span class="p">:</span> <span class="s1">&#39;weight&#39;</span><span class="p">})</span>
+    <span class="n">notprimary_totals_df</span> <span class="o">=</span> <span class="n">totals_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;weight_notprimary &gt; 0&#39;</span><span class="p">)</span>
+    <span class="n">notprimary_totals_df</span> <span class="o">=</span> <span class="n">notprimary_totals_df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;weight_notprimary&#39;</span><span class="p">:</span> <span class="s1">&#39;weight&#39;</span><span class="p">})</span>
     
-    <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">roi_conn_df</span><span class="p">,</span> <span class="n">totals_df</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">include_nonprimary</span><span class="p">:</span>
+        <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">primary_roi_conn_df</span>
+    
+    <span class="c1"># Append NotPrimary rows to the connection table.</span>
+    <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">((</span><span class="n">roi_conn_df</span><span class="p">,</span> <span class="n">notprimary_totals_df</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     
-    <span class="c1"># Double-check our math against the original totals</span>
-    <span class="n">summed_roi_weights</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="c1"># Consistency check: Double-check our math against the original totals</span>
+    <span class="n">summed_roi_weights</span> <span class="o">=</span> <span class="p">(</span><span class="n">roi_conn_df</span>
+                            <span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @client.primary_rois or roi == &quot;NotPrimary&quot;&#39;</span><span class="p">)</span>
+                            <span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span>
+                            <span class="o">.</span><span class="n">sum</span><span class="p">())</span>
     <span class="n">compare_df</span> <span class="o">=</span> <span class="n">connections_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">summed_roi_weights</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;_orig&#39;</span><span class="p">,</span> <span class="s1">&#39;_summed&#39;</span><span class="p">])</span>
     <span class="k">assert</span> <span class="n">compare_df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="s1">&#39;weight_orig == weight_summed&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="c1"># Filter for the user&#39;s ROIs, if any</span>
+    <span class="k">if</span> <span class="n">rois</span><span class="p">:</span>
+        <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;roi in @rois and weight &gt; 0&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">min_total_weight</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">total_weights_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">keep_conns</span> <span class="o">=</span> <span class="n">total_weights_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;weight &gt;= @min_total_weight&#39;</span><span class="p">)[[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">]]</span>
+        <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">keep_conns</span><span class="p">,</span> <span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">min_roi_weight</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;weight &gt;= @min_roi_weight&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Drop neurons that matched sources or targets but aren&#39;t mentioned in the final connection table.</span>
+    <span class="n">_connected_bodies</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">roi_conn_df</span><span class="p">[[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">neurons_df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;bodyId in @_connected_bodies&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">neurons_df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     
     <span class="c1"># Export to CSV</span>
     <span class="k">if</span> <span class="n">export_dir</span><span class="p">:</span>
@@ -888,7 +1079,7 @@
 <span class="sd">            4   202916528    264986706       2        </span>
 <span class="sd">     &quot;&quot;&quot;</span>
     <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">criteria</span><span class="p">,</span> <span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">criteria</span><span class="p">,</span> <span class="n">include_nonprimary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fetch_common_connectivity"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_common_connectivity">[docs]</a><span class="nd">@inject_client</span>

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.3.5+3.g93b2715 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.3.6 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.3.5+3.g93b2715
+                0.3.6
               </div>
             
           
@@ -92,6 +92,7 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Common Queries</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#built-in-queries">Built-in Queries</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rois">ROIs</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#neurons">Neurons</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#connectivity">Connectivity</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#synapses">Synapses</a></li>
@@ -182,7 +183,7 @@ query language, you can write your own queries using
 But the functions in this file offer a convenient API for common queries.</p>
 <div class="section" id="built-in-queries">
 <h2>Built-in Queries<a class="headerlink" href="#built-in-queries" title="Permalink to this headline">¶</a></h2>
-<p>See the <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> class reference for neuprint’s “built-in”
+<p>See the <a class="reference internal" href="client.html#client"><span class="std std-ref">Client</span></a> class reference for neuprint’s built-in
 (non-cypher) queries, such as <strong>skeletons</strong>, <strong>ROI meshes</strong>, <strong>ROI connectivity</strong>,
 and server metadata.</p>
 </div>
@@ -200,14 +201,35 @@ and server metadata.</p>
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_meta" title="neuprint.queries.fetch_meta"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_meta</span></code></a>(*[,&nbsp;client])</td>
 <td>Fetch the dataset metadata.</td>
 </tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="rois">
+<h2>ROIs<a class="headerlink" href="#rois" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_all_rois" title="neuprint.queries.fetch_all_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_all_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>List all ROIs in the dataset.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_primary_rois" title="neuprint.queries.fetch_primary_rois"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_primary_rois</span></code></a>(*[,&nbsp;client])</td>
 <td>List ‘primary’ ROIs in the dataset.</td>
 </tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_roi_hierarchy" title="neuprint.queries.fetch_roi_hierarchy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_roi_hierarchy</span></code></a>([include_subprimary,&nbsp;…])</td>
+<td>Fetch the ROI hierarchy nesting relationships.</td>
+</tr>
 </tbody>
 </table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<ul class="last simple">
+<li><a class="reference internal" href="client.html#neuprint.client.Client.fetch_roi_completeness" title="neuprint.client.Client.fetch_roi_completeness"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_roi_completeness()</span></code></a></li>
+<li><a class="reference internal" href="client.html#neuprint.client.Client.fetch_roi_connectivity" title="neuprint.client.Client.fetch_roi_connectivity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_roi_connectivity()</span></code></a></li>
+</ul>
+</div>
 </div>
 <div class="section" id="neurons">
 <h2>Neurons<a class="headerlink" href="#neurons" title="Permalink to this headline">¶</a></h2>
@@ -237,7 +259,7 @@ and server metadata.</p>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_simple_connections" title="neuprint.queries.fetch_simple_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_simple_connections</span></code></a>([…])</td>
 <td>Find connections to/from small set(s) of neurons.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>([sources,&nbsp;targets,&nbsp;…])</td>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_adjacencies</span></code></a>([sources,&nbsp;targets,&nbsp;rois,&nbsp;…])</td>
 <td>Find connections to/from large set(s) of neurons, with per-ROI connection strengths.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_traced_adjacencies" title="neuprint.queries.fetch_traced_adjacencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_traced_adjacencies</span></code></a>([export_dir,&nbsp;…])</td>
@@ -356,6 +378,64 @@ Parses json fields as needed.</p>
 <code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_primary_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>List ‘primary’ ROIs in the dataset.
 Primary ROIs do not overlap with each other.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.queries.fetch_roi_hierarchy">
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_roi_hierarchy</code><span class="sig-paren">(</span><em>include_subprimary=True</em>, <em>mark_primary=True</em>, <em>format='dict'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_roi_hierarchy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_roi_hierarchy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the ROI hierarchy nesting relationships.</p>
+<p>Most ROIs in neuprint are part of a hierarchy of nested regions.
+The structure of the hierarchy is stored in the dataset metadata,
+and can be retrieved with this function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>include_subprimary</strong> – If True, all hierarchy levels are included in the output.
+Otherwise, the hierarchy will only go as deep as necessary to
+cover all “primary” ROIs, but not any sub-primary ROIs that
+are contained within them.</li>
+<li><strong>mark_primary</strong> – If True, append an asterisk (<code class="docutils literal notranslate"><span class="pre">*</span></code>) to the names of
+“primary” ROIs in the hierarchy.
+Primary ROIs do not overlap with each other.</li>
+<li><strong>format</strong> – Either <code class="docutils literal notranslate"><span class="pre">&quot;dict&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;text&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">nx</span></code>.
+Specifies whether to return the hierarchy as a <cite>dict</cite>, or as
+a printable text-based tree, or as a <code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>
+(requires <code class="docutils literal notranslate"><span class="pre">networkx</span></code>).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Either <code class="docutils literal notranslate"><span class="pre">dict</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code>, or <code class="docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>,
+depending on your chosen <code class="docutils literal notranslate"><span class="pre">format</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint.queries</span> <span class="kn">import</span> <span class="n">fetch_roi_hierarchy</span>
+<span class="gp">   ...:</span>
+<span class="gp">   ...: </span><span class="c1"># Print the first few nodes of the tree -- you get the idea</span>
+<span class="gp">   ...: </span><span class="n">roi_tree_text</span> <span class="o">=</span> <span class="n">fetch_roi_hierarchy</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="nb">print</span><span class="p">(</span><span class="n">roi_tree_text</span><span class="p">[:</span><span class="mi">180</span><span class="p">])</span>
+<span class="go">hemibrain</span>
+<span class="go"> +-- AL(L)*</span>
+<span class="go"> +-- AL(R)*</span>
+<span class="go"> +-- AOT(R)</span>
+<span class="go"> +-- CX</span>
+<span class="go"> |   +-- AB(L)*</span>
+<span class="go"> |   +-- AB(R)*</span>
+<span class="go"> |   +-- EB*</span>
+<span class="go"> |   +-- FB*</span>
+<span class="go"> |   +-- NO*</span>
+<span class="go"> |   +-- PB*</span>
+<span class="go"> +-- GC</span>
+<span class="go"> +-- GF(R)</span>
+<span class="go"> +-- GNG*</span>
+<span class="go"> +-- INP</span>
+<span class="go"> |</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -489,17 +569,17 @@ for <code class="docutils literal notranslate"><span class="pre">pre</span></cod
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_simple_connections">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_simple_connections</code><span class="sig-paren">(</span><em>upstream_criteria=None, downstream_criteria=None, min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_simple_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_simple_connections" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_simple_connections</code><span class="sig-paren">(</span><em>upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_simple_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_simple_connections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find connections to/from small set(s) of neurons.</p>
 <p>Finds all connections from a set of “upstream” neurons,
 or to a set of “downstream” neurons,
 or all connections from a set of upstream neurons to a set of downstream neurons.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">This function is not intended to be used with very large neuron sets.
+<p>This function is not intended to be used with very large neuron sets.
 To fetch all adjacencies between a large set of neurons,
-set <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>, which queries the server in batches.
-However, this function returns additional information on every row of the
+set <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>, and additional ROI-filtering options.</p>
+<p class="last">However, this function returns additional information on every row of the
 connection table, such as <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code>, so it may be more
 convenient for small queries.</p>
 </div>
@@ -512,7 +592,8 @@ convenient for small queries.</p>
 on the presynaptic side of connections.</li>
 <li><strong>downstream_criteria</strong> – SegmentCriteria indicating how to filter for neurons
 on the postsynaptic side of connections.</li>
-<li><strong>min_weight</strong> – Exclude connections below this weight.</li>
+<li><strong>rois</strong> – Limit results to neuron pairs that connect in at least one of the given ROIs.</li>
+<li><strong>min_weight</strong> – Exclude connections whose total weight (across all ROIs) falls below this threshold.</li>
 <li><strong>properties</strong> – Additional columns to include in the results, for both the upstream and downstream body.</li>
 <li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
@@ -530,26 +611,26 @@ One row per connection, with columns for upstream and downstream properties.</p>
 <span class="gp">   ...: </span><span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="mi">425790257</span><span class="p">,</span> <span class="mi">424379864</span><span class="p">,</span> <span class="mi">329566174</span><span class="p">,</span> <span class="mi">329599710</span><span class="p">,</span> <span class="mi">420274150</span><span class="p">]</span>
 <span class="gp">   ...: </span><span class="n">fetch_simple_connections</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sources</span><span class="p">),</span> <span class="n">SC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">targets</span><span class="p">))</span>
 <span class="gh">Out[1]:</span>
-<span class="go">   upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance</span>
-<span class="go">0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R</span>
-<span class="go">1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R</span>
-<span class="go">2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R</span>
-<span class="go">3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R</span>
-<span class="go">4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R</span>
-<span class="go">5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R</span>
-<span class="go">6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R</span>
+<span class="go">   upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance                                       conn_roiInfo</span>
+<span class="go">0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 39, &#39;post&#39;: 39}, &#39;b&#39;L(R)&#39;: {...</span>
+<span class="go">1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 34, &#39;post&#39;: 34}, &#39;SLP(R)&#39;: ...</span>
+<span class="go">2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 12, &#39;post&#39;: 12}, &#39;gL(R)&#39;: {&#39;...</span>
+<span class="go">3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 5, &#39;post&#39;: 5}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="go">4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 4, &#39;post&#39;: 4}, &#39;SIP(R)&#39;: {&#39;...</span>
+<span class="go">5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="go">6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
 </pre></div>
 </div>
 </dd></dl>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_adjacencies">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>sources=None</em>, <em>targets=None</em>, <em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>sources=None</em>, <em>targets=None</em>, <em>rois=None</em>, <em>min_roi_weight=1</em>, <em>min_total_weight=1</em>, <em>include_nonprimary=False</em>, <em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_adjacencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find connections to/from large set(s) of neurons, with per-ROI connection strengths.</p>
 <p>Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
-Only primary ROIs are included in the per-ROI connection table.
+Unless <code class="docutils literal notranslate"><span class="pre">include_nonprimary=True</span></code>, only primary ROIs are included in the per-ROI connection table.
 Connections outside of the primary ROIs are labeled with the special name
-<cite>NotPrimary</cite> (which is not currently an ROI name in neuprint itself).</p>
+<code class="docutils literal notranslate"><span class="pre">&quot;NotPrimary&quot;</span></code> (which is not currently an ROI name in neuprint itself).</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last"><a class="reference internal" href="#neuprint.queries.fetch_simple_connections" title="neuprint.queries.fetch_simple_connections"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_simple_connections()</span></code></a> has similar functionality,
@@ -573,7 +654,29 @@ Can be list of body IDs or <a class="reference internal" href="segmentcriteria.h
 connection table (total weight), and connection table (per ROI).</li>
 <li><strong>batch_size</strong> – For optimal performance, connections will be fetched in batches.
 This parameter specifies the batch size.</li>
-<li><strong>label</strong> – Either ‘Neuron’ or ‘Segment’ (which includes Neurons)</li>
+<li><strong>rois</strong> – Limit results to connections within the listed ROIs.</li>
+<li><strong>min_roi_weight</strong> – Limit results to connections of at least this strength within any particular ROI.</li>
+<li><strong>min_total_weight</strong> – <p>Limit results to connections that are at least this strong when totaled across all ROIs.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Even if <code class="docutils literal notranslate"><span class="pre">min_roi_weight</span></code> is also specified, all connections are counted towards satisfying
+the total weight threshold, even though some ROI entries are filtered out.
+Therefore, some connections in the results may appear not to satisfy <code class="docutils literal notranslate"><span class="pre">min_total_weight</span></code>
+when their per-ROI weights are totaled.  That’s just because you filtered out the weak
+per-ROI entries.</p>
+</div>
+</li>
+<li><strong>include_nonprimary</strong> – <p>If True, also list per-ROI totals for non-primary ROIs
+(i.e. parts of the ROI hierarchy that are sub-primary or super-primary).
+See <a class="reference internal" href="#neuprint.queries.fetch_roi_hierarchy" title="neuprint.queries.fetch_roi_hierarchy"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_roi_hierarchy()</span></code></a> for details.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Since non-primary ROIs overlap with primary ROIs, then the sum of the
+<code class="docutils literal notranslate"><span class="pre">weight</span></code> column for each body pair will not be equal to the total
+connection strength between the bodies.
+(Some connections will be counted twice.)</p>
+</div>
+</li>
 <li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
@@ -632,6 +735,20 @@ See caveat above concerning non-primary ROIs.</p>
 <span class="go">18   425790257    329566174   gL(R)       8</span>
 <span class="go">19   425790257    329566174   CA(R)       3</span>
 <span class="go">20   425790257    329566174   aL(R)       1</span>
+</pre></div>
+</div>
+<p><strong>Total Connection Strength</strong></p>
+<p>To aggregate the per-ROI connection weights into total connection weights, use <code class="docutils literal notranslate"><span class="pre">groupby(...)['weight'].sum()</span></code></p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [5]: </span><span class="n">connection_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="gh">Out[5]:</span>
+<span class="go">   bodyId_pre  bodyId_post  weight</span>
+<span class="go">0   329566174    329599710       1</span>
+<span class="go">1   329566174    420274150       1</span>
+<span class="go">2   329566174    424379864      37</span>
+<span class="go">3   329566174    425790257      43</span>
+<span class="go">4   329599710    329566174       4</span>
+<span class="go">5   424379864    329566174       7</span>
+<span class="go">6   425790257    329566174      12</span>
 </pre></div>
 </div>
 </dd></dl>
