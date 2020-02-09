@@ -38,27 +38,3 @@ def make_args_iterable(argnames):
     return decorator
 
 
-def where_expr(field, values, regex=False, matchvar='n'):
-    """
-    Return an expression to match a particular
-    field against a list of values, to be used
-    within the WHERE clause.
-    """
-    assert not regex or len(values) <= 1, \
-        f"Can't use regex mode with more than one value: {values}"
-
-    if len(values) == 0:
-        return ""
-
-    if len(values) > 1:
-        return f"{matchvar}.{field} in {[*values]}"
-
-    if regex:
-        return f"{matchvar}.{field} =~ '{values[0]}'"
-
-    if isinstance(values[0], str):
-        return f"{matchvar}.{field} = '{values[0]}'"
-
-    return f"{matchvar}.{field} = {values[0]}"
-
-

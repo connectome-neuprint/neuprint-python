@@ -1,6 +1,6 @@
 import pytest
-from neuprint import Client, default_client, set_default_client
-from neuprint import SegmentCriteria as SC
+from neuprint import Client, default_client, set_default_client, SegmentCriteria as SC
+from neuprint.segmentcriteria import  where_expr
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 
@@ -48,3 +48,8 @@ def test_SegmentsCriteria(client):
     assert SC(min_post=5).basic_exprs() == ["n.post >= 5"]
 
 
+def test_where_expr():
+    assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
+    assert where_expr('bodyId', [1,2], matchvar='m') == 'm.bodyId in [1, 2]'
+    assert where_expr('bodyId', []) == ""
+    assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"

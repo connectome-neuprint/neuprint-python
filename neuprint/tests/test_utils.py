@@ -1,6 +1,6 @@
 import inspect
 import numpy as np
-from neuprint.utils import make_iterable, make_args_iterable, where_expr
+from neuprint.utils import make_iterable, make_args_iterable
 
 
 def test_make_iterable():
@@ -28,10 +28,3 @@ def test_make_args_iterable():
     
     # Check results
     assert f('a', 'b', 'c', 'd') == (['a'], 'b', ['c'], ['d'], None)
-
-
-def test_where_expr():
-    assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
-    assert where_expr('bodyId', [1,2], matchvar='m') == 'm.bodyId in [1, 2]'
-    assert where_expr('bodyId', []) == ""
-    assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"
