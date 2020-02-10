@@ -17,6 +17,11 @@ from .utils import make_args_iterable
 # ujson is faster than Python's builtin json module
 import ujson
 
+NEURON_COLS = ['bodyId', 'instance', 'type', 'cellBodyFiber',
+               'pre', 'post', 'size',
+               'status', 'cropped', 'statusLabel',
+               'somaRadius', 'somaLocation',
+               'inputRois', 'outputRois', 'roiInfo']
 
 @inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
@@ -321,15 +326,27 @@ def fetch_neurons(criteria, *, client=None):
     criteria = copy.copy(criteria)
     criteria.matchvar = 'n'
 
+    # Unlike in fetch_custom_neurons() below, here we specify the
+    # return properties individually to avoid a large JSON payload.
+    # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
+    props = list(NEURON_COLS)
+    props.remove('somaLocation')
+    return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
+    return_exprs = indent(return_exprs, ' '*15)[15:]
+    
     q = f"""\
         MATCH (n :{criteria.label})
         {criteria.all_conditions(prefix=8)}
-        RETURN n
+        RETURN {return_exprs},
+               CASE
+                 WHEN n.somaLocation IS NULL
+                 THEN NULL ELSE [n.somaLocation.x, n.somaLocation.y, n.somaLocation.z]
+               END as somaLocation
         ORDER BY n.bodyId
     """
-    
-    return fetch_custom_neurons(q, client=client)
-
+    neuron_df = fetch_custom(q, client=client)
+    neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
+    return neuron_df, roi_counts_df
 
 
 @inject_client
@@ -387,32 +404,44 @@ def fetch_custom_neurons(q, *, client=None):
     """
     results = client.fetch_custom(q)
     
-    neuron_cols = ['bodyId', 'instance', 'type', 'cellBodyFiber',
-                   'pre', 'post', 'size',
-                   'status', 'cropped', 'statusLabel',
-                   'somaRadius', 'somaLocation',
-                   'inputRois', 'outputRois', 'roiInfo']
-    
     if len(results) == 0:
-        neuron_df = pd.DataFrame([], columns=neuron_cols, dtype=object)
+        neuron_df = pd.DataFrame([], columns=NEURON_COLS, dtype=object)
         roi_counts_df = pd.DataFrame([], columns=['bodyId', 'roi', 'pre', 'post'])
         return neuron_df, roi_counts_df
     
     neuron_df = pd.DataFrame(results['n'].tolist())
+
+    # If somaLocation is already provided as a top-level column in the query results,
+    # we assume the user's cypher query already converted it to [x,y,z] form.
+    if 'somaLocation' in results:
+        neuron_df['somaLocation'] = results['somaLocation']
+    elif 'somaLocation' in neuron_df:
+        no_soma = neuron_df['somaLocation'].isnull()
+        neuron_df.loc[no_soma, 'somaLocation'] = None
+        neuron_df.loc[~no_soma, 'somaLocation'] = neuron_df.loc[~no_soma, 'somaLocation'].apply(lambda sl: sl.get('coordinates'))
+
+    neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
+    return neuron_df, roi_counts_df
+
+
+def _process_neuron_df(neuron_df, client):
+    """
+    Given a DataFrame of neuron properties, parse the roiInfo into
+    inputRois and outputRois, and a secondary DataFrame for per-ROI
+    synapse counts.
     
+    Returns:
+        neuron_df, roi_counts_df
+    
+    Warning: destructively modifies the input DataFrame.
+    """
     # Drop roi columns
     columns = {*neuron_df.columns} - {*client.all_rois}
     neuron_df = neuron_df[[*columns]]
 
-    # Extract somaLocation
-    if 'somaLocation' in neuron_df:
-        no_soma = neuron_df['somaLocation'].isnull()
-        neuron_df.loc[no_soma, 'somaLocation'] = None
-        neuron_df.loc[~no_soma, 'somaLocation'] = neuron_df.loc[~no_soma, 'somaLocation'].apply(lambda sl: sl.get('coordinates'))
-    
     # Specify column order:
     # Standard columns first, than any extra columns in the results (if any).
-    neuron_cols = [*filter(lambda c: c in neuron_df.columns, neuron_cols)]
+    neuron_cols = [*filter(lambda c: c in neuron_df.columns, NEURON_COLS)]
     extra_cols = {*neuron_df.columns} - {*neuron_cols}
     neuron_cols += [*extra_cols]
     neuron_df = neuron_df[[*neuron_cols]]
