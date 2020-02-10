@@ -68,37 +68,37 @@ def test_fetch_simple_connections(client):
               424379864, 425790257, 451982486, 480927537, 481268653]
 
     conn_df = fetch_simple_connections(SC(bodyId=bodyId))
-    assert set(conn_df['upstream_bodyId'].unique()) == set(bodyId)
+    assert set(conn_df['bodyId_pre'].unique()) == set(bodyId)
 
     conn_df = fetch_simple_connections(None, SC(bodyId=bodyId))
-    assert set(conn_df['downstream_bodyId'].unique()) == set(bodyId)
+    assert set(conn_df['bodyId_post'].unique()) == set(bodyId)
     
     APL_R = 425790257
 
     conn_df = fetch_simple_connections(SC(instance='APL_R'))
-    assert (conn_df['upstream_bodyId'] == APL_R).all()
+    assert (conn_df['bodyId_pre'] == APL_R).all()
 
     conn_df = fetch_simple_connections(SC(type='APL'))
-    assert (conn_df['upstream_bodyId'] == APL_R).all()
+    assert (conn_df['bodyId_pre'] == APL_R).all()
 
     conn_df = fetch_simple_connections(None, SC(instance='APL_R'))
-    assert (conn_df['downstream_bodyId'] == APL_R).all()
+    assert (conn_df['bodyId_post'] == APL_R).all()
 
     conn_df = fetch_simple_connections(None, SC(type='APL'))
-    assert (conn_df['downstream_bodyId'] == APL_R).all()
+    assert (conn_df['bodyId_post'] == APL_R).all()
 
     conn_df = fetch_simple_connections(SC(bodyId=APL_R), min_weight=10)
-    assert (conn_df['upstream_bodyId'] == APL_R).all()
+    assert (conn_df['bodyId_pre'] == APL_R).all()
     assert (conn_df['weight'] >= 10).all()
     
     conn_df = fetch_simple_connections(SC(bodyId=APL_R), min_weight=10, properties=['somaLocation'])
-    assert 'upstream_somaLocation' in conn_df
-    assert 'downstream_somaLocation' in conn_df
+    assert 'somaLocation_pre' in conn_df
+    assert 'somaLocation_post' in conn_df
 
     conn_df = fetch_simple_connections(SC(bodyId=APL_R), min_weight=10, properties=['roiInfo'])
-    assert 'upstream_roiInfo' in conn_df
-    assert 'downstream_roiInfo' in conn_df
-    assert isinstance(conn_df['upstream_roiInfo'].iloc[0], dict)
+    assert 'roiInfo_pre' in conn_df
+    assert 'roiInfo_post' in conn_df
+    assert isinstance(conn_df['roiInfo_pre'].iloc[0], dict)
 
 
 def test_fetch_shortest_paths(client):

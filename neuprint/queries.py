@@ -502,7 +502,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
     Returns:
         DataFrame
-        One row per connection, with columns for upstream and downstream properties.
+        One row per connection, with columns for upstream (pre-synaptic) and downstream (post-synaptic) properties.
     
     Example:
     
@@ -513,14 +513,14 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
                ...: fetch_simple_connections(SC(bodyId=sources), SC(bodyId=targets))
             Out[1]:
-               upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance                                       conn_roiInfo
-            0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R  {'MB(R)': {'pre': 39, 'post': 39}, 'b'L(R)': {...
-            1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R  {'SNP(R)': {'pre': 34, 'post': 34}, 'SLP(R)': ...
-            2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {'MB(R)': {'pre': 12, 'post': 12}, 'gL(R)': {'...
-            3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {'SNP(R)': {'pre': 5, 'post': 5}, 'SLP(R)': {'...
-            4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {'SNP(R)': {'pre': 4, 'post': 4}, 'SIP(R)': {'...
-            5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
-            6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
+               bodyId_pre  bodyId_post  weight                   type_pre                  type_post         instance_pre        instance_post                                       conn_roiInfo
+            0   329566174    425790257      43                    OA-VPM3                        APL   OA-VPM3(NO2/NO3)_R                APL_R  {'MB(R)': {'pre': 39, 'post': 39}, 'b'L(R)': {...
+            1   329566174    424379864      37                    OA-VPM3                 AVM03e_pct   OA-VPM3(NO2/NO3)_R  AVM03e_pct(AVM03)_R  {'SNP(R)': {'pre': 34, 'post': 34}, 'SLP(R)': ...
+            2   425790257    329566174      12                        APL                    OA-VPM3                APL_R   OA-VPM3(NO2/NO3)_R  {'MB(R)': {'pre': 12, 'post': 12}, 'gL(R)': {'...
+            3   424379864    329566174       7                 AVM03e_pct                    OA-VPM3  AVM03e_pct(AVM03)_R   OA-VPM3(NO2/NO3)_R  {'SNP(R)': {'pre': 5, 'post': 5}, 'SLP(R)': {'...
+            4   329599710    329566174       4  olfactory multi lvPN mALT                    OA-VPM3        mPNX(AVM06)_R   OA-VPM3(NO2/NO3)_R  {'SNP(R)': {'pre': 4, 'post': 4}, 'SIP(R)': {'...
+            5   329566174    329599710       1                    OA-VPM3  olfactory multi lvPN mALT   OA-VPM3(NO2/NO3)_R        mPNX(AVM06)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
+            6   329566174    420274150       1                    OA-VPM3                 AVM03m_pct   OA-VPM3(NO2/NO3)_R  AVM03m_pct(AVM03)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
     """
     SC = SegmentCriteria
     up_crit = copy.deepcopy(upstream_criteria)
@@ -531,18 +531,16 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     if down_crit is None:
         down_crit = SC(label='Neuron')
 
-    up_crit.matchvar = 'upstream'
-    down_crit.matchvar = 'downstream'
+    up_crit.matchvar = 'n'
+    down_crit.matchvar = 'm'
     
     assert up_crit is not None or down_crit is not None, "No criteria specified"
 
-    combined_conditions = SC.combined_conditions([up_crit, down_crit],
-                                                 ('upstream', 'downstream', 'e'),
-                                                 prefix=8)
+    combined_conditions = SC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
 
     if min_weight > 1:
         weight_expr = dedent(f"""\
-            WITH upstream, downstream, e
+            WITH n, m, e
             WHERE e.weight >= {min_weight}\
             """)
         weight_expr = indent(weight_expr, ' '*8)[8:] 
@@ -554,30 +552,31 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         invalid_rois = {*rois} - {*client.all_rois}
         assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
 
-    return_props = ['upstream.bodyId', 'downstream.bodyId', 'e.weight as weight']
-    if properties:
-        return_props += [f'upstream.{p}' for p in properties]
-        return_props += [f'downstream.{p}' for p in properties]
+    return_props = ['n.bodyId as bodyId_pre',
+                    'm.bodyId as bodyId_post',
+                    'e.weight as weight']
+    
+    for p in properties:
+        if p == 'roiInfo':
+            return_props.append('apoc.convert.fromJsonMap(n.roiInfo) as roiInfo_pre')
+            return_props.append('apoc.convert.fromJsonMap(m.roiInfo) as roiInfo_post')
+        else:
+            return_props.append(f'n.{p} as {p}_pre')
+            return_props.append(f'm.{p} as {p}_post')
     
     return_props += ['e.roiInfo as conn_roiInfo']
     
     return_props_str = indent(',\n'.join(return_props), prefix=' '*15)[15:]
 
-    # If roiInfo is requested, convert from json
-    return_props_str = return_props_str.replace('upstream.roiInfo',
-                            'apoc.convert.fromJsonMap(upstream.roiInfo) as upstream_roiInfo')
-    return_props_str = return_props_str.replace('downstream.roiInfo',
-                            'apoc.convert.fromJsonMap(downstream.roiInfo) as downstream_roiInfo')
-
     q = f"""\
-        MATCH (upstream:{up_crit.label})-[e:ConnectsTo]->(downstream:{down_crit.label})
+        MATCH (n:{up_crit.label})-[e:ConnectsTo]->(m:{down_crit.label})
 
         {combined_conditions}
         {weight_expr}
         RETURN {return_props_str}
         ORDER BY e.weight DESC,
-                 upstream.bodyId,
-                 downstream.bodyId
+                 n.bodyId,
+                 m.bodyId
     """
     edges_df = client.fetch_custom(q)
     
@@ -588,9 +587,6 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         keep = edges_df['conn_roiInfo'].apply(lambda roiInfo: bool(rois & {*roiInfo.keys()}))
         edges_df = edges_df.loc[keep].reset_index(drop=True)
 
-    # Rename columns: Replace '.' with '_'.
-    renames = {col: col.replace('.', '_') for col in edges_df.columns}
-    edges_df.rename(columns=renames, inplace=True)
     return edges_df
 
 
@@ -1001,26 +997,24 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
     if search_direction == "upstream":
         edges_df = fetch_simple_connections(None, criteria, min_weight, properties, client=client)
         
-        # How bodies many met primary serach criteria?
-        num_primary = edges_df['downstream_bodyId'].nunique()
+        # How bodies many met main search criteria?
+        num_primary = edges_df['bodyId_post'].nunique()
 
-        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
-        upstream_counts = edges_df['upstream_bodyId'].value_counts()
-        keep = upstream_counts[upstream_counts == num_primary].index
-        
-        return edges_df.query('upstream_bodyId in @keep')
+        # upstream bodies that connect to ALL of the main bodies are the 'common' bodies.
+        upstream_counts = edges_df['bodyId_pre'].value_counts()
+        _keep = upstream_counts[upstream_counts == num_primary].index
+        return edges_df.query('bodyId_pre in @_keep')
 
     if search_direction == "downstream":
         edges_df = fetch_simple_connections(criteria, None, min_weight, properties, client=client)
         
-        # How bodies many met primary serach criteria?
-        num_primary = edges_df['upstream_bodyId'].nunique()
+        # How bodies many met main search criteria?
+        num_primary = edges_df['bodyId_pre'].nunique()
 
-        # upstream bodies that connect to ALL of the primary are the 'common' bodies.
-        upstream_counts = edges_df['downstream_bodyId'].value_counts()
-        keep = upstream_counts[upstream_counts == num_primary].index
-        
-        return edges_df.query('downstream_bodyId in @keep')
+        # upstream bodies that connect to ALL of the main are the 'common' bodies.
+        upstream_counts = edges_df['bodyId_post'].value_counts()
+        _keep = upstream_counts[upstream_counts == num_primary].index
+        return edges_df.query('bodyId_post in @_keep')
 
 
 @inject_client
@@ -1324,7 +1318,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             By default, ``SynapseCriteria(primary_only=True)`` is used.
             
             If ``primary_only`` is specified in the criteria, then the resulting
-            ``upstream_roi`` and ``downstream_roi`` columns will contain a single
+            ``roi_pre`` and ``roi_post`` columns will contain a single
             string (or ``None``) in every row.
             
             Otherwise, the roi columns will contain a list of ROIs for every row.
@@ -1338,10 +1332,13 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     Returns:
     
         DataFrame in which each row represents a single synaptic connection
-        between an upstream and downstream body.
-        Synapse locations are listed in columns ``[ux, uy, uz]`` and ``[dx, dy, dz]``
-        for the upstream and downstream syanpses, respectively.
-        The ``upstream_roi`` and ``downstream_roi`` columns will contain either strings
+        between an upstream (pre-synaptic) body and downstream (post-synaptic) body.
+
+        Synapse locations are listed in columns ``[x_pre, y_pre, z_pre]`` and
+        ``[x_post, y_post, z_post]`` for the upstream and downstream synapses,
+        respectively.
+
+        The ``roi_pre`` and ``roi_post`` columns will contain either strings
         or lists-of-strings, depending on the ``primary_only`` synapse criteria as
         described above.
     
@@ -1352,23 +1349,23 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             In [1]: from neuprint import fetch_synapse_connections, SegmentCriteria as SC, SynapseCriteria as SynC
                ...: fetch_synapse_connections(SC(bodyId=792368888), None, SynC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
             Out[1]:
-                upstream_bodyId  downstream_bodyId upstream_roi downstream_roi     ux     uy     uz     dx     dy     dz  upstream_confidence  downstream_confidence
-            0         792368888          754547386       PED(R)         PED(R)  14013  27747  19307  13992  27720  19313                0.996               0.401035
-            1         792368888          612742248       PED(R)         PED(R)  14049  27681  19417  14044  27662  19408                0.921               0.881487
-            2         792368888         5901225361       PED(R)         PED(R)  14049  27681  19417  14055  27653  19420                0.921               0.436177
-            3         792368888         5813117385       SMP(R)         SMP(R)  23630  29443  16297  23634  29437  16279                0.984               0.970746
-            4         792368888         5813083733       SMP(R)         SMP(R)  23630  29443  16297  23634  29419  16288                0.984               0.933871
-            5         792368888         5813058320       SMP(R)         SMP(R)  18662  34144  12692  18655  34155  12697                0.853               0.995000
-            6         792368888         5812981989       PED(R)         PED(R)  14331  27921  20099  14351  27928  20085                0.904               0.877373
-            7         792368888         5812981381       PED(R)         PED(R)  14331  27921  20099  14301  27919  20109                0.904               0.567321
-            8         792368888         5812981381       PED(R)         PED(R)  14013  27747  19307  14020  27747  19285                0.996               0.697836
-            9         792368888         5812979314       PED(R)         PED(R)  14331  27921  20099  14329  27942  20109                0.904               0.638362
-            10        792368888          424767514       PED(R)         PED(R)  14331  27921  20099  14324  27934  20085                0.904               0.985734
-            11        792368888          424767514       PED(R)         PED(R)  14013  27747  19307  14020  27760  19294                0.996               0.942831
-            12        792368888          424767514       PED(R)         PED(R)  14049  27681  19417  14040  27663  19420                0.921               0.993586
-            13        792368888          331662710       SMP(R)         SMP(R)  23630  29443  16297  23644  29429  16302                0.984               0.996389
-            14        792368888         1196854070       PED(R)         PED(R)  14331  27921  20099  14317  27935  20101                0.904               0.968408
-            15        792368888         1131831702       SMP(R)         SMP(R)  23630  29443  16297  23651  29434  16316                0.984               0.362952
+                bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post
+            0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035
+            1    792368888    612742248  PED(R)   PED(R)  14049  27681  19417   14044   27662   19408           0.921         0.881487
+            2    792368888   5901225361  PED(R)   PED(R)  14049  27681  19417   14055   27653   19420           0.921         0.436177
+            3    792368888   5813117385  SMP(R)   SMP(R)  23630  29443  16297   23634   29437   16279           0.984         0.970746
+            4    792368888   5813083733  SMP(R)   SMP(R)  23630  29443  16297   23634   29419   16288           0.984         0.933871
+            5    792368888   5813058320  SMP(R)   SMP(R)  18662  34144  12692   18655   34155   12697           0.853         0.995000
+            6    792368888   5812981989  PED(R)   PED(R)  14331  27921  20099   14351   27928   20085           0.904         0.877373
+            7    792368888   5812981381  PED(R)   PED(R)  14331  27921  20099   14301   27919   20109           0.904         0.567321
+            8    792368888   5812981381  PED(R)   PED(R)  14013  27747  19307   14020   27747   19285           0.996         0.697836
+            9    792368888   5812979314  PED(R)   PED(R)  14331  27921  20099   14329   27942   20109           0.904         0.638362
+            10   792368888    424767514  PED(R)   PED(R)  14331  27921  20099   14324   27934   20085           0.904         0.985734
+            11   792368888    424767514  PED(R)   PED(R)  14013  27747  19307   14020   27760   19294           0.996         0.942831
+            12   792368888    424767514  PED(R)   PED(R)  14049  27681  19417   14040   27663   19420           0.921         0.993586
+            13   792368888    331662710  SMP(R)   SMP(R)  23630  29443  16297   23644   29429   16302           0.984         0.996389
+            14   792368888   1196854070  PED(R)   PED(R)  14331  27921  20099   14317   27935   20101           0.904         0.968408
+            15   792368888   1131831702  SMP(R)   SMP(R)  23630  29443  16297   23651   29434   16316           0.984         0.362952
     """
     def prepare_sc(sc, matchvar):
         if sc is None:
@@ -1431,56 +1428,56 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         
-        RETURN n.bodyId as upstream_bodyId,
-               m.bodyId as downstream_bodyId,
+        RETURN n.bodyId as bodyId_pre,
+               m.bodyId as bodyId_post,
                ns.location.x as ux,
                ns.location.y as uy,
                ns.location.z as uz,
                ms.location.x as dx,
                ms.location.y as dy,
                ms.location.z as dz,
-               ns.confidence as up_conf,
-               ms.confidence as dn_conf,
-               apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as upstream_info,
-               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as downstream_info
+               ns.confidence as confidence_pre,
+               ms.confidence as confidence_post,
+               apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as info_pre,
+               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as info_post
     """)
     data = client.fetch_custom(cypher, format='json')['data']
 
     # Assemble DataFrame
     syn_table = []
-    for upstream_body, downstream_body, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, upstream_info, downstream_info in data:
+    for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post in data:
         # Exclude non-primary ROIs if necessary
-        up_rois = return_rois & {*upstream_info.keys()}
-        dn_rois = return_rois & {*downstream_info.keys()}
+        pre_rois = return_rois & {*info_pre.keys()}
+        post_rois = return_rois & {*info_post.keys()}
 
         # Intern the ROIs to save RAM
-        up_rois = sorted(map(sys.intern, up_rois))
-        dn_rois = sorted(map(sys.intern, dn_rois))
+        pre_rois = sorted(map(sys.intern, pre_rois))
+        post_rois = sorted(map(sys.intern, post_rois))
 
-        up_rois = up_rois or [None]
-        dn_rois = dn_rois or [None]
+        pre_rois = pre_rois or [None]
+        post_rois = post_rois or [None]
 
         # Should be (at most) one ROI when primary_only=True,
         # so only show that one (not a list)
         if synapse_criteria.primary_only:
-            up_rois = up_rois[0]
-            dn_rois = dn_rois[0]
+            pre_rois = pre_rois[0]
+            post_rois = post_rois[0]
         
-        syn_table.append((upstream_body, downstream_body, up_rois, dn_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
+        syn_table.append((bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
 
-    syn_df = pd.DataFrame(syn_table, columns=['upstream_bodyId', 'downstream_bodyId',
-                                              'upstream_roi', 'downstream_roi',
-                                              'ux', 'uy', 'uz', 'dx', 'dy', 'dz',
-                                              'upstream_confidence', 'downstream_confidence'])
+    syn_df = pd.DataFrame(syn_table, columns=['bodyId_pre', 'bodyId_post',
+                                              'roi_pre', 'roi_post',
+                                              'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post',
+                                              'confidence_pre', 'confidence_post'])
 
     # Save RAM with smaller dtypes
-    syn_df['ux'] = syn_df['ux'].astype(np.int32)
-    syn_df['uy'] = syn_df['uy'].astype(np.int32)
-    syn_df['uz'] = syn_df['uz'].astype(np.int32)
-    syn_df['dx'] = syn_df['dx'].astype(np.int32)
-    syn_df['dy'] = syn_df['dy'].astype(np.int32)
-    syn_df['dz'] = syn_df['dz'].astype(np.int32)
-    syn_df['upstream_confidence'] = syn_df['upstream_confidence'].astype(np.float32)
-    syn_df['downstream_confidence'] = syn_df['downstream_confidence'].astype(np.float32)
+    syn_df['x_pre'] = syn_df['x_pre'].astype(np.int32)
+    syn_df['y_pre'] = syn_df['y_pre'].astype(np.int32)
+    syn_df['z_pre'] = syn_df['z_pre'].astype(np.int32)
+    syn_df['x_post'] = syn_df['x_post'].astype(np.int32)
+    syn_df['y_post'] = syn_df['y_post'].astype(np.int32)
+    syn_df['z_post'] = syn_df['z_post'].astype(np.int32)
+    syn_df['confidence_pre'] = syn_df['confidence_pre'].astype(np.float32)
+    syn_df['confidence_post'] = syn_df['confidence_post'].astype(np.float32)
 
     return syn_df
