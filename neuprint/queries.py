@@ -728,10 +728,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         4   329599710    329566174       4
         5   424379864    329566174       7
         6   425790257    329566174      12
-    """
-    assert (sources is not None) or (targets is not None), \
-        "Must provide either sources or targets (or both)."
-    
+    """    
     rois = {*rois}
     invalid_rois = rois - {*client.all_rois}
     assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
@@ -740,8 +737,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     assert include_nonprimary or not nonprimary_rois, \
         f"Since you listed nonprimary rois ({nonprimary_rois}), please specify include_nonprimary=True"
 
-    assert min_total_weight >= min_roi_weight, \
-        "min_total_weight must be at least as large as min_roi_weight"
+    min_total_weight = max(min_total_weight, min_roi_weight)
 
     def _prepare_criteria(criteria, matchvar):
         if criteria is None:
