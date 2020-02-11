@@ -1,19 +1,24 @@
+#
+# Environment details for binder deployment.
+# Note: These versions are for a linux build.
+#
 name: neuprint-python
 channels:
   - flyem-forge
   - conda-forge
   - defaults
 dependencies:
-  - appnope=0.1.0=py37_1000
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=0_gnu
   - asciitree=0.3.3=py_2
   - attrs=19.3.0=py_0
   - backcall=0.1.0=py_0
   - bleach=3.1.0=py_0
   - ca-certificates=2019.11.28=hecc5488_0
   - certifi=2019.11.28=py37_0
-  - cffi=1.13.2=py37h33e799b_0
+  - cffi=1.13.2=py37h8022711_0
   - chardet=3.0.4=py37_1003
-  - cryptography=2.8=py37hafa8578_1
+  - cryptography=2.8=py37h72c5cf5_1
   - decorator=4.4.1=py_0
   - defusedxml=0.6.0=py_0
   - entrypoints=0.3=py37_1000
@@ -31,25 +36,27 @@ dependencies:
   - jupyter_core=4.6.2=py37_0
   - jupyterlab=1.2.6=py_0
   - jupyterlab_server=1.0.6=py_0
+  - ld_impl_linux-64=2.33.1=h53a641e_8
   - libblas=3.8.0=14_openblas
   - libcblas=3.8.0=14_openblas
-  - libcxx=9.0.1=1
-  - libffi=3.2.1=h6de7cb9_1006
-  - libgfortran=4.0.0=2
+  - libffi=3.2.1=he1b5a44_1006
+  - libgcc-ng=9.2.0=h24d8f2e_2
+  - libgfortran-ng=7.3.0=hdf63c60_5
+  - libgomp=9.2.0=h24d8f2e_2
   - liblapack=3.8.0=14_openblas
-  - libopenblas=0.3.7=h3d69b6c_7
-  - libsodium=1.0.17=h01d97ff_0
-  - llvm-openmp=9.0.1=h28b9765_2
-  - markupsafe=1.1.1=py37h0b31af3_0
-  - mistune=0.8.4=py37h0b31af3_1000
+  - libopenblas=0.3.7=h5ec1e0e_6
+  - libsodium=1.0.17=h516909a_0
+  - libstdcxx-ng=9.2.0=hdf63c60_2
+  - markupsafe=1.1.1=py37h516909a_0
+  - mistune=0.8.4=py37h516909a_1000
   - nbconvert=5.6.1=py37_0
   - nbformat=5.0.4=py_0
-  - ncurses=6.1=h0a44026_1002
+  - ncurses=6.1=hf484d3e_1002
   - neuprint-python=0.3.6=py_0
   - notebook=6.0.3=py37_0
-  - numpy=1.18.1=py37hde6bac1_0
-  - openssl=1.1.1d=h0b31af3_0
-  - pandas=1.0.1=py37h4f17bb1_0
+  - numpy=1.18.1=py37h95a1406_0
+  - openssl=1.1.1d=h516909a_0
+  - pandas=1.0.1=py37hb3f55d8_0
   - pandoc=2.9.1.1=0
   - pandocfilters=1.4.2=py_1
   - parso=0.6.1=py_0
@@ -62,33 +69,33 @@ dependencies:
   - pycparser=2.19=py37_1
   - pygments=2.5.2=py_0
   - pyopenssl=19.1.0=py37_0
-  - pyrsistent=0.15.7=py37h0b31af3_0
+  - pyrsistent=0.15.7=py37h516909a_0
   - pysocks=1.7.1=py37_0
-  - python=3.7.6=h5c2c468_2
+  - python=3.7.6=h357f687_2
   - python-dateutil=2.8.1=py_0
   - pytz=2019.3=py_0
-  - pyzmq=18.1.1=py37h4bf09a9_0
-  - readline=8.0=hcfe32e1_0
+  - pyzmq=18.1.1=py37h1768529_0
+  - readline=8.0=hf8c457e_0
   - requests=2.22.0=py37_1
   - send2trash=1.5.0=py_0
   - setuptools=45.2.0=py37_0
   - six=1.14.0=py37_0
-  - sqlite=3.30.1=h93121df_0
+  - sqlite=3.30.1=hcee41ef_0
   - terminado=0.8.3=py37_0
   - testpath=0.4.4=py_0
-  - tk=8.6.10=hbbe82c9_0
-  - tornado=6.0.3=py37h0b31af3_3
+  - tk=8.6.10=hed695b0_0
+  - tornado=6.0.3=py37h516909a_3
   - tqdm=4.42.1=py_0
   - traitlets=4.3.3=py37_0
-  - ujson=1.35=py37h0b31af3_1001
+  - ujson=1.35=py37h516909a_1001
   - urllib3=1.25.7=py37_0
   - wcwidth=0.1.8=py_0
   - webencodings=0.5.1=py_1
   - wheel=0.34.2=py_1
   - widgetsnbextension=3.5.1=py37_0
-  - xz=5.2.4=h1de35cc_1001
-  - zeromq=4.3.2=h6de7cb9_2
+  - xz=5.2.4=h14c3975_1001
+  - zeromq=4.3.2=he1b5a44_2
   - zipp=2.2.0=py_0
-  - zlib=1.2.11=h0b31af3_1006
-prefix: /opt/miniconda/envs/neuprint-python
+  - zlib=1.2.11=h516909a_1006
+prefix: /opt/conda/envs/neuprint-python
 
