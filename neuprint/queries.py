@@ -1433,6 +1433,9 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
     source_syn_crit.matchvar = 'ns'
     target_syn_crit.matchvar = 'ms'
+
+    source_syn_crit.type = 'pre'
+    target_syn_crit.type = 'post'
     
     # Fetch results
     cypher = dedent(f"""\
