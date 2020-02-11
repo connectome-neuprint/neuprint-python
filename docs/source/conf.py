@@ -63,9 +63,12 @@ nbsphinx_prolog = """
 .. note::
 
     This page corresponds to a Jupyter notebook you can
-    `try out yourself <https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/binder?filepath=docs%2Fsource%2F{{ env.doc2path(env.docname, base=None) }}>`_.
-    The original version is
-    `here <https://github.com/connectome-neuprint/neuprint-python/tree/master/docs/source/{{ env.doc2path(env.docname, base=None) }}>`_.
+    `try out yourself <https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2F{{ env.doc2path(env.docname, base=None) }}>`_.
+    (The original version is
+    `here <https://github.com/connectome-neuprint/neuprint-python/tree/master/docs/source/{{ env.doc2path(env.docname, base=None) }}>`_.)
+
+    .. image:: https://mybinder.org/badge_logo.svg
+     :target: https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2F{{ env.doc2path(env.docname, base=None) }}
 
 ----
 """
