@@ -41,7 +41,7 @@ install:
   - conda install -y conda-build
   - conda install -c conda-forge codecov
   - conda info -a
-  - conda install -y --file requirements.txt
+  - conda install -y --file dependencies.txt
   - conda install -y --file docs/requirements.txt
   - conda install -y doctr
 
@@ -50,6 +50,7 @@ script:
 
 after_success:
   - set -e
+  - export PYTHONPATH=$(pwd)
   - cd docs && make html && cd -
   - if [[ "${TRAVIS_BRANCH}" == "master" ]]; then
       doctr deploy --no-require-master --built-docs docs/build/html docs;

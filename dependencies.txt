@@ -1,0 +1,8 @@
+# This file is named 'dependencies.txt' instead of 'requirements.txt'
+# to prevent binder from detecting it.
+# (We want binder to use environment.yml)
+requests>=2.22
+pandas
+tqdm
+ujson
+asciitree

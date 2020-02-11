@@ -2,7 +2,7 @@ from setuptools import setup
 
 import versioneer
 
-with open('requirements.txt') as f:
+with open('dependencies.txt') as f:
     requirements = f.read().splitlines()
     requirements = [l for l in requirements if not l.strip().startswith('#')]
 
