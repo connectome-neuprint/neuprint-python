@@ -906,7 +906,8 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         keep_conns = total_weights_df.query('weight >= @min_total_weight')[['bodyId_pre', 'bodyId_post']]
         roi_conn_df = roi_conn_df.merge(keep_conns, 'inner', on=['bodyId_pre', 'bodyId_post'])
 
-    # This is necessary
+    # This is necessary, even if min_roi_weight == 1, to filter out zeros
+    # that can occur in the case of weak inter-ROI connnections.
     roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
 
     # Drop neurons that matched sources or targets but aren't mentioned in the final connection table.
