@@ -109,7 +109,7 @@ def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance'])
     return conn_df
 
 
-def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'):
+def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight', sort_by=None):
     """
     Given a weighted connection table, produce a weighted adjacency matrix.
     
@@ -131,7 +131,12 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
             output matrix.
         
         weight_col:
-            Which column holds the connection weight, to be aggrega
+            Which column holds the connection weight, to be aggregated for each unique pre/post pair.
+            
+        sort_by:
+            How to sort the rows and columns of the result.
+            Can be two strings, e.g. ``("type_pre", "type_post")``,
+            or a single string, e.g. ``"type"`` in which case the suffixes are assumed.
             
     Returns:
         DataFrame, shape NxM, where N is the number of unique values in
@@ -139,31 +144,34 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
         the 'post' group column.
     
     Example:
-        In [1]: from neuprint import fetch_simple_connections, SegmentCriteria as SC  
-           ...: kc_criteria = SC(type='KC.*', regex=True)
-           ...: conn_df = fetch_simple_connections(kc_criteria, kc_criteria)
-        In [1]: conn_df.head()
-        Out[1]:
-           bodyId_pre  bodyId_post  weight type_pre type_post instance_pre instance_post                                       conn_roiInfo
-        0  1224137495   5813032771      29      KCg       KCg          KCg    KCg(super)  {'MB(R)': {'pre': 26, 'post': 26}, 'gL(R)': {'...
-        1  1172713521   5813067826      27      KCg       KCg   KCg(super)         KCg-d  {'MB(R)': {'pre': 26, 'post': 26}, 'PED(R)': {...
-        2   517858947   5813032943      26   KCab-p    KCab-p       KCab-p        KCab-p  {'MB(R)': {'pre': 25, 'post': 25}, 'PED(R)': {...
-        3   642680826   5812980940      25   KCab-p    KCab-p       KCab-p        KCab-p  {'MB(R)': {'pre': 25, 'post': 25}, 'PED(R)': {...
-        4  5813067826   1172713521      24      KCg       KCg        KCg-d    KCg(super)  {'MB(R)': {'pre': 23, 'post': 23}, 'gL(R)': {'...
-
-        In [2]: from neuprint.utils import connection_table_to_matrix
-           ...: connection_table_to_matrix(conn_df, 'type')
-        Out[2]:
-        type_post   KC  KCa'b'  KCab-p  KCab-sc     KCg
-        type_pre
-        KC           3     139       6        5     365
-        KCa'b'     154  102337     245      997    1977
-        KCab-p       7     310   17899     3029     127
-        KCab-sc      4    2591    3975   247038    3419
-        KCg        380    1969      79     1526  250351
+    
+        .. code-block:: ipython
+        
+            In [1]: from neuprint import fetch_simple_connections, SegmentCriteria as SC  
+               ...: kc_criteria = SC(type='KC.*', regex=True)
+               ...: conn_df = fetch_simple_connections(kc_criteria, kc_criteria)
+            In [1]: conn_df.head()
+            Out[1]:
+               bodyId_pre  bodyId_post  weight type_pre type_post instance_pre instance_post                                       conn_roiInfo
+            0  1224137495   5813032771      29      KCg       KCg          KCg    KCg(super)  {'MB(R)': {'pre': 26, 'post': 26}, 'gL(R)': {'...
+            1  1172713521   5813067826      27      KCg       KCg   KCg(super)         KCg-d  {'MB(R)': {'pre': 26, 'post': 26}, 'PED(R)': {...
+            2   517858947   5813032943      26   KCab-p    KCab-p       KCab-p        KCab-p  {'MB(R)': {'pre': 25, 'post': 25}, 'PED(R)': {...
+            3   642680826   5812980940      25   KCab-p    KCab-p       KCab-p        KCab-p  {'MB(R)': {'pre': 25, 'post': 25}, 'PED(R)': {...
+            4  5813067826   1172713521      24      KCg       KCg        KCg-d    KCg(super)  {'MB(R)': {'pre': 23, 'post': 23}, 'gL(R)': {'...
+    
+            In [2]: from neuprint.utils import connection_table_to_matrix
+               ...: connection_table_to_matrix(conn_df, 'type')
+            Out[2]:
+            type_post   KC  KCa'b'  KCab-p  KCab-sc     KCg
+            type_pre
+            KC           3     139       6        5     365
+            KCa'b'     154  102337     245      997    1977
+            KCab-p       7     310   17899     3029     127
+            KCab-sc      4    2591    3975   247038    3419
+            KCg        380    1969      79     1526  250351
     """
     if isinstance(group_cols, str):
-        group_cols = (f"{group_cols}_pre", f"{group_cols}_post")
+        group_cols = (f"{group_cols}_pre", f"{group_cols}_post") 
     
     assert len(group_cols) == 2, \
         "Please provide two group_cols (e.g. 'bodyId_pre', 'bodyId_post')"
@@ -177,10 +185,28 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
     assert weight_col in conn_df, \
         f"Column missing: {weight_col}"
     
-    dtype = conn_df[weight_col].dtype
-    
     col_pre, col_post = group_cols
-    grouped = conn_df.groupby([col_pre, col_post], as_index=False)
+    dtype = conn_df[weight_col].dtype
+
+    grouped = conn_df.groupby([col_pre, col_post], as_index=False, sort=False)
     agg_weights_df = grouped[weight_col].sum()
     matrix = agg_weights_df.pivot(col_pre, col_post, weight_col)
-    return matrix.fillna(0).astype(dtype)
+    matrix = matrix.fillna(0).astype(dtype)
+    
+    if sort_by:
+        if isinstance(sort_by, str):
+            sort_by = (f"{sort_by}_pre", f"{sort_by}_post") 
+
+        assert len(sort_by) == 2, \
+            "Please provide two sort_by column names (e.g. 'type_pre', 'type_post')"
+        
+        pre_order = conn_df.sort_values(sort_by[0])[col_pre].unique()
+        post_order = conn_df.sort_values(sort_by[1])[col_post].unique()
+        matrix = matrix.reindex(index=pre_order, columns=post_order)
+    else:
+        # No sort: Keep the order as close to the input order as possible.
+        pre_order = conn_df[col_pre].unique()
+        post_order = conn_df[col_post].unique()
+        matrix = matrix.reindex(index=pre_order, columns=post_order)
+
+    return matrix
