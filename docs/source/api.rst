@@ -12,4 +12,3 @@ API
    synapsecriteria
    admin
    utils
-   deprecated
