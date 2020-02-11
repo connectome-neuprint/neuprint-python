@@ -1,0 +1,910 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neuprint.client &mdash; neuprint-python 0.3.6+18.g57afd44 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.6+18.g57afd44
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>neuprint.client</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for neuprint.client</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">The ``client`` module contains the ``Client`` object and related utility functions.</span>
+
+<span class="sd">All communication to the neuPrint server is peformed using a ``Client`` object.</span>
+<span class="sd">Holds your authorization credentials, the dataset name to use,</span>
+<span class="sd">and other connection settings.</span>
+
+<span class="sd">Most ``neuprint-python`` functions do not require you to explicitly</span>
+<span class="sd">provide a Client object to use. Instead, the first ``Client`` you</span>
+<span class="sd">create will be stored as the default ``Client`` to be used with all</span>
+<span class="sd">``neuprint-python`` functions if you don&#39;t explicitly specify one.</span>
+
+<span class="sd">Example:</span>
+
+<span class="sd">    .. code-block:: ipython</span>
+<span class="sd">    </span>
+<span class="sd">        In [1]: from neuprint import Client, fetch_custom, fetch_neurons</span>
+
+<span class="sd">        In [2]: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0&#39;)</span>
+
+<span class="sd">        In [3]: fetch_custom(&quot;&quot;&quot;\\</span>
+<span class="sd">           ...:     MATCH (n: Neuron)</span>
+<span class="sd">           ...:     WHERE n.status = &quot;Traced&quot; AND NOT n.cropped</span>
+<span class="sd">           ...:     RETURN n.bodyId as bodyId, n.type as type, n.instance as instance</span>
+<span class="sd">           ...:     ORDER BY n.type, n.instance</span>
+<span class="sd">           ...: &quot;&quot;&quot;)</span>
+<span class="sd">        Out[3]:</span>
+<span class="sd">                   bodyId        type             instance</span>
+<span class="sd">        0       511051477   5th s-LNv            5th s-LNv</span>
+<span class="sd">        1       947590512  ADL01a_pct  ADL01a_pct(ADL01)_R</span>
+<span class="sd">        2      1100952886  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
+<span class="sd">        3      1228484534  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
+<span class="sd">        4      1290563000  ADL01b_pct  ADL01b_pct(ADL01)_R</span>
+<span class="sd">        ...           ...         ...                  ...</span>
+<span class="sd">        21658  2346523421        None                 None</span>
+<span class="sd">        21659  2397377415        None                 None</span>
+<span class="sd">        21660  2429314661        None                 None</span>
+<span class="sd">        21661  2464541644        None                 None</span>
+<span class="sd">        21662  2404203061        None                 None</span>
+<span class="sd">        </span>
+<span class="sd">        [21663 rows x 3 columns]</span>
+
+<span class="sd">Tip:</span>
+<span class="sd">    </span>
+<span class="sd">    All cypher queries are logged, but the messages are not</span>
+<span class="sd">    shown in the console by default.  To display them, see</span>
+<span class="sd">    :py:func:`setup_debug_logging()`.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">dedent</span><span class="p">,</span> <span class="n">indent</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">urllib3</span>
+<span class="kn">from</span> <span class="nn">urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
+<span class="kn">from</span> <span class="nn">urllib3.exceptions</span> <span class="kn">import</span> <span class="n">InsecureRequestWarning</span>
+
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">Session</span><span class="p">,</span> <span class="n">RequestException</span><span class="p">,</span> <span class="n">HTTPError</span>
+<span class="kn">from</span> <span class="nn">requests.adapters</span> <span class="kn">import</span> <span class="n">HTTPAdapter</span>
+
+<span class="c1"># ujson is faster than Python&#39;s builtin json module</span>
+<span class="kn">import</span> <span class="nn">ujson</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">NEUPRINT_CLIENTS</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<div class="viewcode-block" id="setup_debug_logging"><a class="viewcode-back" href="../../client.html#neuprint.client.setup_debug_logging">[docs]</a><span class="k">def</span> <span class="nf">setup_debug_logging</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple debug logging configuration.</span>
+<span class="sd">    Useful for interactive terminal sessions.</span>
+<span class="sd">    </span>
+<span class="sd">    Warning:</span>
+<span class="sd">        Replaces your current logging setup.</span>
+<span class="sd">        If you&#39;ve already set up logging for your app,</span>
+<span class="sd">        don&#39;t call this function.</span>
+<span class="sd">        Enable neuprint debug logging via:</span>
+<span class="sd">        </span>
+<span class="sd">        .. code-block:: python</span>
+<span class="sd">        </span>
+<span class="sd">            import logging</span>
+<span class="sd">            logging.getLogger(&#39;neuprint.client&#39;).setLevel(logging.DEBUG)</span>
+
+<span class="sd">    To disable cypher logging again, increase the logging severity threshold:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: python</span>
+<span class="sd">        </span>
+<span class="sd">            import logging</span>
+<span class="sd">            logging.getLogger(&#39;neuprint.client&#39;).setLevel(logging.INFO)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    </span>
+<span class="sd">        .. code-block:: ipython</span>
+<span class="sd">        </span>
+<span class="sd">            In [1]: from neuprint.client import setup_debug_logging</span>
+<span class="sd">               ...: from neuprint import fetch_neurons</span>
+<span class="sd">               ...:</span>
+<span class="sd">               ...: setup_debug_logging()</span>
+<span class="sd">               ...: neuron_df, roi_df = fetch_neurons(SC(type=&#39;MBON.*&#39;, rois=[&#39;MB(R)&#39;], regex=True))</span>
+<span class="sd">            [2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset &#39;hemibrain:v1.0&#39;:</span>
+<span class="sd">                MATCH (n :Neuron)</span>
+<span class="sd">                // -- Basic conditions for segment &#39;n&#39; --</span>
+<span class="sd">                WHERE</span>
+<span class="sd">                  n.type =~ &#39;MBON.*&#39;</span>
+<span class="sd">                  AND (n.`MB(R)`)</span>
+<span class="sd">                RETURN n</span>
+<span class="sd">                ORDER BY n.bodyId</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;[</span><span class="si">%(asctime)s</span><span class="s1">] </span><span class="si">%(levelname)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">handler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+    <span class="n">handler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+
+    <span class="n">root_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+    <span class="n">root_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+    
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="default_client"><a class="viewcode-back" href="../../client.html#neuprint.client.default_client">[docs]</a><span class="k">def</span> <span class="nf">default_client</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Obtain the default Client object to use.</span>
+<span class="sd">    This function returns a separate copy of the</span>
+<span class="sd">    default client for each thread (and process).</span>
+<span class="sd">    </span>
+<span class="sd">    There&#39;s usually no need to call this function.</span>
+<span class="sd">    It is automatically called by all query functions if</span>
+<span class="sd">    you haven&#39;t passed in an explict `client` argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span>
+
+    <span class="n">thread_id</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span><span class="o">.</span><span class="n">ident</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">NEUPRINT_CLIENTS</span><span class="p">[(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">pid</span><span class="p">)]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;No default Client has been set yet. &quot;</span>
+                    <span class="s2">&quot;Please create a Client object to serve as the default&quot;</span><span class="p">)</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">DEFAULT_NEUPRINT_CLIENT</span><span class="p">)</span>
+        <span class="n">NEUPRINT_CLIENTS</span><span class="p">[(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">pid</span><span class="p">)]</span> <span class="o">=</span> <span class="n">c</span>
+
+    <span class="k">return</span> <span class="n">c</span></div>
+
+
+<div class="viewcode-block" id="set_default_client"><a class="viewcode-back" href="../../client.html#neuprint.client.set_default_client">[docs]</a><span class="k">def</span> <span class="nf">set_default_client</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set (or overwrite) the default Client.</span>
+<span class="sd">    </span>
+<span class="sd">    There&#39;s usually no need to call this function.</span>
+<span class="sd">    It&#39;s is automatically called when your first</span>
+<span class="sd">    ``Client`` is created, but you can call it again</span>
+<span class="sd">    to replace the default.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">NEUPRINT_CLIENTS</span>
+    <span class="k">global</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span>
+
+    <span class="n">thread_id</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span><span class="o">.</span><span class="n">ident</span>
+    <span class="n">pid</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getpid</span><span class="p">()</span>
+
+    <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="o">=</span> <span class="n">client</span>
+    <span class="n">NEUPRINT_CLIENTS</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="n">NEUPRINT_CLIENTS</span><span class="p">[(</span><span class="n">thread_id</span><span class="p">,</span> <span class="n">pid</span><span class="p">)]</span> <span class="o">=</span> <span class="n">client</span></div>
+
+
+<span class="k">def</span> <span class="nf">inject_client</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator.</span>
+<span class="sd">    Injects the default &#39;client&#39; as a keyword argument</span>
+<span class="sd">    onto the decorated function, if the user hasn&#39;t supplied</span>
+<span class="sd">    one herself.</span>
+
+<span class="sd">    In typical usage the user will create one Client object,</span>
+<span class="sd">    and use it with every neuprint function.</span>
+<span class="sd">    Rather than requiring the user to pass the the client</span>
+<span class="sd">    to every neuprint call, this decorator automatically</span>
+<span class="sd">    passes the default (global) Client.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">argspec</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">&#39;client&#39;</span> <span class="ow">in</span> <span class="n">argspec</span><span class="o">.</span><span class="n">kwonlyargs</span><span class="p">,</span> \
+        <span class="sa">f</span><span class="s2">&quot;Cannot wrap </span><span class="si">{f.__name__}</span><span class="s2">: neuprint API wrappers must accept &#39;client&#39; as a keyword-only argument.&quot;</span>
+    
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="n">default_client</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+
+    <span class="n">wrapper</span><span class="o">.</span><span class="n">__signature__</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="k">def</span> <span class="nf">verbose_errors</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator to be used with functions that directly fetch from neuprint.</span>
+<span class="sd">    If the decorated function fails due to a RequestException,</span>
+<span class="sd">    extra information is added to the exception text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">RequestException</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="c1"># If the error response body is non-empty, show that in the traceback, too.</span>
+            <span class="c1"># neuprint-http error messages are often helpful -- show them!</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="s1">&#39;response_content_appended&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">response</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">ex</span><span class="o">.</span><span class="n">request</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="c1"># Nothing to add to the exception.</span>
+
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="c1"># Show the endpoint</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">request</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Error accessing </span><span class="si">{ex.request.method}</span><span class="s2"> </span><span class="si">{ex.request.url}</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span> <span class="n">HTTPError</span><span class="p">):</span>
+                <span class="c1"># If the user&#39;s arguments included a &#39;json&#39; argument</span>
+                <span class="c1"># containing a &#39;cypher&#39; key query, show it.</span>
+                <span class="n">callargs</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getcallargs</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="s1">&#39;json&#39;</span> <span class="ow">in</span> <span class="n">callargs</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callargs</span><span class="p">[</span><span class="s1">&#39;json&#39;</span><span class="p">],</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
+                    <span class="n">cypher</span> <span class="o">=</span> <span class="n">callargs</span><span class="p">[</span><span class="s1">&#39;json&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;cypher&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">cypher</span><span class="p">:</span>
+                        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Cypher was:</span><span class="se">\n\n</span><span class="si">{cypher}</span><span class="se">\n</span><span class="s2">&quot;</span>
+
+            <span class="c1"># Show the server&#39;s error message</span>
+            <span class="k">if</span> <span class="n">ex</span><span class="o">.</span><span class="n">response</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Returned Error&quot;</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">response</span><span class="p">,</span> <span class="s1">&#39;status_code&#39;</span><span class="p">):</span>
+                    <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{ex.response.status_code}</span><span class="s2">)&quot;</span>
+                <span class="k">if</span> <span class="n">ex</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">err</span> <span class="o">=</span> <span class="n">ex</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;error&#39;</span><span class="p">]</span>
+                        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="se">\n\n</span><span class="si">{err}</span><span class="s2">&quot;</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="k">pass</span>
+            
+            <span class="n">new_ex</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+            <span class="n">new_ex</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">ex</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            
+            <span class="c1"># In case this decorator is used twice in a nested call,</span>
+            <span class="c1"># mark it as already modified it doesn&#39;t get modified twice.</span>
+            <span class="n">new_ex</span><span class="o">.</span><span class="n">response_content_appended</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">raise</span> <span class="n">new_ex</span> <span class="kn">from</span> <span class="nn">ex</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<div class="viewcode-block" id="Client"><a class="viewcode-back" href="../../client.html#neuprint.client.Client">[docs]</a><span class="k">class</span> <span class="nc">Client</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Client constructor.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            server:</span>
+<span class="sd">                URL of neuprintHttp server</span>
+
+<span class="sd">            token:</span>
+<span class="sd">                neuPrint token. Either pass explitily as an argument or set</span>
+<span class="sd">                as ``NEUPRINT_APPLICATION_CREDENTIALS`` environment variable.</span>
+<span class="sd">                Your token can be retrieved by clicking on your account in</span>
+<span class="sd">                the NeuPrint web interface.</span>
+
+<span class="sd">            verify:</span>
+<span class="sd">                If ``True`` (default), enforce signed credentials.</span>
+
+<span class="sd">            dataset:</span>
+<span class="sd">                The dataset to run all queries against, e.g. &#39;hemibrain&#39;.</span>
+<span class="sd">                If not provided, the server will use a default dataset for</span>
+<span class="sd">                all queries.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NEUPRINT_APPLICATION_CREDENTIALS&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No token provided. Please provide one or set NEUPRINT_APPLICATION_CREDENTIALS&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">token</span><span class="p">)[</span><span class="s1">&#39;token&#39;</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Did not understand token. Please provide the entire JSON document or (only) the complete token string&quot;</span><span class="p">)</span>
+
+        <span class="n">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;://&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">server</span><span class="p">:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="s1">&#39;https://&#39;</span> <span class="o">+</span> <span class="n">server</span>
+        <span class="k">elif</span> <span class="n">server</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Server must be https, not http&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">server</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">):</span>
+            <span class="n">protocol</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;://&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown protocol: </span><span class="si">{protocol}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Remove trailing backslash</span>
+        <span class="k">while</span> <span class="n">server</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="n">server</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">server</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="s2">&quot;Bearer &quot;</span> <span class="o">+</span> <span class="n">token</span><span class="p">,</span>
+                                     <span class="s2">&quot;Content-type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">})</span>
+
+        <span class="c1"># If the connection fails, retry a couple times.</span>
+        <span class="n">retries</span> <span class="o">=</span> <span class="n">Retry</span><span class="p">(</span><span class="n">connect</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">backoff_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">,</span> <span class="n">HTTPAdapter</span><span class="p">(</span><span class="n">max_retries</span><span class="o">=</span><span class="n">retries</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">verify</span> <span class="o">=</span> <span class="n">verify</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">verify</span><span class="p">:</span>
+            <span class="n">urllib3</span><span class="o">.</span><span class="n">disable_warnings</span><span class="p">(</span><span class="n">InsecureRequestWarning</span><span class="p">)</span>
+
+        <span class="n">all_datasets</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fetch_datasets</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The neuprint server </span><span class="si">{self.server}</span><span class="s2"> has no datasets!&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_datasets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">all_datasets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Initializing neuprint.Client with dataset: </span><span class="si">{self.dataset}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">all_datasets</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39; does not exist on&quot;</span>
+                               <span class="sa">f</span><span class="s2">&quot; the neuprint server (</span><span class="si">{self.server}</span><span class="s2">).</span><span class="se">\n</span><span class="s2">&quot;</span>
+                               <span class="sa">f</span><span class="s2">&quot;Available datasets: </span><span class="si">{all_datasets}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set this as the default client if there isn&#39;t one already</span>
+        <span class="k">global</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span>
+        <span class="k">if</span> <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">set_default_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">.queries</span> <span class="kn">import</span> <span class="n">fetch_meta</span><span class="p">,</span> <span class="n">_all_rois_from_meta</span>
+        <span class="c1"># Pre-cache these metadata fields,</span>
+        <span class="c1"># to avoid re-fetching them for many queries that need them.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="n">fetch_meta</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">primary_rois</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;primaryRois&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_rois</span> <span class="o">=</span> <span class="n">_all_rois_from_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Client(&quot;</span><span class="si">{self.server}</span><span class="s1">&quot;, &quot;</span><span class="si">{self.dataset}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;, verify=False&quot;</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;)&quot;</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="nd">@verbose_errors</span>
+    <span class="k">def</span> <span class="nf">_fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ispost</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">json</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">json</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Can&#39;t provide a body via GET method&quot;</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+
+    <span class="k">def</span> <span class="nf">_fetch_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">json</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="n">ispost</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+
+
+    <span class="k">def</span> <span class="nf">_fetch_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">json</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="n">ispost</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ujson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## CUSTOM QUERIES</span>
+    <span class="c1">##</span>
+    <span class="c1">## Note: Transaction queries are not implemented here.  See admin.py</span>
+
+<div class="viewcode-block" id="Client.fetch_custom"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_custom">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_custom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Query the neuprint server with a custom Cypher query.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            cypher:</span>
+<span class="sd">                A cypher query string</span>
+
+<span class="sd">            dataset:</span>
+<span class="sd">                *Deprecated. Please provide your dataset as a Client constructor argument.*</span>
+<span class="sd">                </span>
+<span class="sd">                Which neuprint dataset to query against.</span>
+<span class="sd">                If None provided, the client&#39;s default dataset is used.</span>
+
+<span class="sd">            format:</span>
+<span class="sd">                Either ``&#39;pandas&#39;`` or ``&#39;json&#39;``.</span>
+<span class="sd">                Whether to load the results into a ``pandas.DataFrame``,</span>
+<span class="sd">                or return the server&#39;s raw JSON response as a Python ``dict``.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Either json or DataFrame, depending on ``format``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/custom/custom&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_cypher</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="nb">format</span><span class="p">)</span></div>
+    
+
+    <span class="k">def</span> <span class="nf">_fetch_cypher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">cypher</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch cypher from an endpoint.</span>
+<span class="sd">        Called by fetch_custom and by Transaction queries.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="s2">&quot;‘’“”&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">cypher</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Your cypher query contains &#39;smart quotes&#39; (e.g. ‘foo’ or “foo”),&quot;</span>
+                   <span class="s2">&quot; which are not valid characters in cypher.&quot;</span>
+                   <span class="s2">&quot; Please replace them with ordinary quotes (e.g. &#39;foo&#39; or </span><span class="se">\&quot;</span><span class="s2">foo</span><span class="se">\&quot;</span><span class="s2">).</span><span class="se">\n</span><span class="s2">&quot;</span>
+                   <span class="s2">&quot;Your query was:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                   <span class="o">+</span> <span class="n">cypher</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span>
+        
+        <span class="n">cypher</span> <span class="o">=</span> <span class="n">indent</span><span class="p">(</span><span class="n">dedent</span><span class="p">(</span><span class="n">cypher</span><span class="p">),</span> <span class="s1">&#39;    &#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Performing cypher query against dataset &#39;</span><span class="si">{dataset}</span><span class="s2">&#39;:</span><span class="se">\n</span><span class="si">{cypher}</span><span class="s2">&quot;</span><span class="p">)</span>
+        
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span>
+                                  <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;cypher&quot;</span><span class="p">:</span> <span class="n">cypher</span><span class="p">,</span> <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">},</span>
+                                  <span class="n">ispost</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## API-META</span>
+    <span class="c1">##</span>
+
+<div class="viewcode-block" id="Client.fetch_available"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_available">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_available</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the list of REST API endpoints supported by the server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/available&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_help"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_help">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_help</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch auto-generated REST API documentation, as YAML text.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/help/swagger.yaml&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_server_info"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_server_info">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_server_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns whether or not the server is public.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/serverinfo&quot;</span><span class="p">)[</span><span class="s1">&#39;IsPublic&#39;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_version"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_version">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the version of the ``neuPrintHTTP`` server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/version&quot;</span><span class="p">)[</span><span class="s1">&#39;Version&#39;</span><span class="p">]</span></div>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## DB-META</span>
+    <span class="c1">##</span>
+
+<div class="viewcode-block" id="Client.fetch_database"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_database">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the address of the neo4j database that the neuprint server is using.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/dbmeta/database&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_datasets"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_datasets">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch basic information about the available datasets on the server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/dbmeta/datasets&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_instances"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_instances">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_instances</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch secondary data instances avaiable through neupint http</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/dbmeta/instances&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Client.fetch_db_version"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_db_version">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_db_version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the database version</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/dbmeta/version&quot;</span><span class="p">)[</span><span class="s1">&#39;Version&#39;</span><span class="p">]</span></div>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## USER</span>
+    <span class="c1">##</span>
+
+<div class="viewcode-block" id="Client.fetch_profile"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_profile">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch basic information about your user profile,</span>
+<span class="sd">        including your access level.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/profile&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_token"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_token">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch your user authentication token.</span>
+<span class="sd">        </span>
+<span class="sd">        Note:</span>
+<span class="sd">            This method just echoes the token back to you for debug purposes.</span>
+<span class="sd">            To obtain your token for the first time, use the neuprint explorer</span>
+<span class="sd">            web UI to login and obtain your token as explained elsewhere in</span>
+<span class="sd">            this documentation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/token&quot;</span><span class="p">)[</span><span class="s1">&#39;token&#39;</span><span class="p">]</span></div>
+
+    
+    <span class="c1">##</span>
+    <span class="c1">## Cached</span>
+    <span class="c1">##</span>
+    
+<div class="viewcode-block" id="Client.fetch_daily_type"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_daily_type">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_daily_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return information about today&#39;s cell type of the day.</span>
+<span class="sd">        </span>
+<span class="sd">        The server updates the completeness numbers each day. A different</span>
+<span class="sd">        cell type is randomly picked and an exemplar is chosen</span>
+<span class="sd">        from this type.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            If ``format=&#39;json&#39;``, a dictionary is returned with keys</span>
+<span class="sd">            ``[&#39;info&#39;, &#39;connectivity&#39;, &#39;skeleton&#39;]``.</span>
+<span class="sd">            If ``format=&#39;pandas&#39;``, three values are returned:</span>
+<span class="sd">            ``(info, connectivity, skeleton)``, where ``connectivity``</span>
+<span class="sd">            and ``skeleton`` are DataFrames.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/cached/dailytype?dataset=</span><span class="si">{self.dataset}</span><span class="s2">&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        
+        <span class="n">conn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;connectivity&#39;</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">],</span>
+                               <span class="n">columns</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;connectivity&#39;</span><span class="p">][</span><span class="s1">&#39;columns&#39;</span><span class="p">])</span> 
+        <span class="n">skel_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;skeleton&#39;</span><span class="p">][</span><span class="s1">&#39;data&#39;</span><span class="p">],</span>
+                               <span class="n">columns</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;skeleton&#39;</span><span class="p">][</span><span class="s1">&#39;columns&#39;</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;info&#39;</span><span class="p">],</span> <span class="n">conn_df</span><span class="p">,</span> <span class="n">skel_df</span></div>
+
+    
+<div class="viewcode-block" id="Client.fetch_roi_completeness"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_roi_completeness">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_roi_completeness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the pre-computed traced &quot;completeness&quot; statistics</span>
+<span class="sd">        for each primary ROI in the dataset.</span>
+<span class="sd">        </span>
+<span class="sd">        The completeness statistics indicate how many synapses</span>
+<span class="sd">        belong to Traced neurons.</span>
+<span class="sd">        </span>
+<span class="sd">        Note:</span>
+<span class="sd">            These results are not computed on-the-fly.</span>
+<span class="sd">            They are computed periodically and cached.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/cached/roicompleteness?dataset=</span><span class="si">{self.dataset}</span><span class="s2">&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="Client.fetch_roi_connectivity"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_roi_connectivity">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_roi_connectivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;pandas&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the pre-computed connectivity statistics</span>
+<span class="sd">        between primary ROIs in the dataset.</span>
+<span class="sd">        </span>
+<span class="sd">        Note:</span>
+<span class="sd">            These results are not computed on-the-fly.</span>
+<span class="sd">            They are computed periodically and cached.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/cached/roiconnectivity?dataset=</span><span class="si">{self.dataset}</span><span class="s2">&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+        
+        <span class="c1"># Example result:</span>
+        <span class="c1"># {</span>
+        <span class="c1">#    &quot;roi_names&quot;: [[&#39;ME(R)&#39;, &quot;a&#39;L(L)&quot;, &#39;aL(L)&#39;, ...]],</span>
+        <span class="c1">#    &quot;weights&quot;: {</span>
+        <span class="c1">#       &#39;EPA(R)=&gt;gL(L)&#39;: {&#39;count&#39;: 7, &#39;weight&#39;: 1.253483174941712},</span>
+        <span class="c1">#       &#39;EPA(R)=&gt;gL(R)&#39;: {&#39;count&#39;: 29, &#39;weight&#39;: 2.112117795621343},</span>
+        <span class="c1">#       &#39;FB=&gt;AB(L)&#39;: {&#39;count&#39;: 62, &#39;weight&#39;: 230.11732347331355},</span>
+        <span class="c1">#       &#39;FB=&gt;AB(R)&#39;: {&#39;count&#39;: 110, &#39;weight&#39;: 496.733276906109},</span>
+        <span class="c1">#       ...</span>
+        <span class="c1">#    }</span>
+        <span class="c1"># }</span>
+        
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[(</span><span class="o">*</span><span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&gt;&#39;</span><span class="p">),</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;count&#39;</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;weights&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;from_roi&#39;</span><span class="p">,</span> <span class="s1">&#39;to_roi&#39;</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="s1">&#39;weight&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## ROI MESHES</span>
+    <span class="c1">##</span>
+<div class="viewcode-block" id="Client.fetch_roi_mesh"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_roi_mesh">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_roi_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">export_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch a mesh for the given ROI, in ``.obj`` format.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            roi:</span>
+<span class="sd">                Name of an ROI</span>
+<span class="sd">            export_path:</span>
+<span class="sd">                Optional. Writes the ``.obj`` file to the given path.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bytes</span>
+<span class="sd">            The contents of the fetched ``.obj`` mesh file.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            ROI meshes are intended for visualization only.</span>
+<span class="sd">            (They are not suitable for quantitative analysis.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/roimeshes/mesh/</span><span class="si">{self.dataset}</span><span class="s2">/</span><span class="si">{roi}</span><span class="s2">&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">export_path</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">export_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+        
+    
+    <span class="c1">##</span>
+    <span class="c1">## SKELETONS</span>
+    <span class="c1">##</span>
+<div class="viewcode-block" id="Client.fetch_skeleton"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_skeleton">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_skeleton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;swc&#39;</span><span class="p">,</span> <span class="n">export_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch the skeleton for a neuron or segment.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            body:</span>
+<span class="sd">                int. A neuron or segment ID</span>
+<span class="sd">            </span>
+<span class="sd">            format:</span>
+<span class="sd">                Either &#39;swc&#39; (a text format), &#39;json&#39;, or &#39;pandas&#39;.</span>
+<span class="sd">            </span>
+<span class="sd">            export_path:</span>
+<span class="sd">                Optional. Writes the ``.swc`` file to disk.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Either a string (swc), dict (json), or a DataFrame (pandas). </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;swc&#39;</span><span class="p">,</span> <span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">),</span> \
+            <span class="sa">f</span><span class="s1">&#39;Invalid format: </span><span class="si">{format}</span><span class="s1">&#39;</span>
+        
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">export_path</span> <span class="ow">or</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;swc&#39;</span><span class="p">,</span> \
+            <span class="s2">&quot;Only the swc format can be exported to disk.&quot;</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Please pass an integer body ID, not &#39;</span><span class="si">{body}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/skeletons/skeleton/</span><span class="si">{self.dataset}</span><span class="s2">/</span><span class="si">{body}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;swc&#39;</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">+=</span> <span class="s1">&#39;?format=swc&#39;</span>
+            <span class="n">swc_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">export_path</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">export_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">swc_text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">swc_text</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;columns&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+
+    <span class="c1">##</span>
+    <span class="c1">## RAW KEY-VALUE</span>
+    <span class="c1">##</span>
+<div class="viewcode-block" id="Client.fetch_raw_keyvalue"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_raw_keyvalue">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_raw_keyvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fetch a value from the ``neuprintHTTP`` server.</span>
+<span class="sd">        The data address is given by both the instance name and key.</span>
+<span class="sd">        (For admins and experts only.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/raw/keyvalue/key/</span><span class="si">{instance}</span><span class="s2">/</span><span class="si">{key}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        
+
+<div class="viewcode-block" id="Client.post_raw_keyvalue"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.post_raw_keyvalue">[docs]</a>    <span class="k">def</span> <span class="nf">post_raw_keyvalue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Post a value from the ``neuprintHTTP`` server.</span>
+<span class="sd">        The data address is given by both the instance name and key.</span>
+<span class="sd">        (For admins and experts only.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/raw/keyvalue/key/</span><span class="si">{instance}</span><span class="s2">/</span><span class="si">{key}</span><span class="s2">&quot;</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verify</span><span class="p">)</span>
+        <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

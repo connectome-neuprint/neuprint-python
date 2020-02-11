@@ -1,0 +1,712 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>neuprint.segmentcriteria &mdash; neuprint-python 0.3.6+18.g57afd44 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.6+18.g57afd44
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>neuprint.segmentcriteria</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for neuprint.segmentcriteria</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_args_iterable</span>
+<span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span>
+
+<div class="viewcode-block" id="SegmentCriteria"><a class="viewcode-back" href="../../segmentcriteria.html#neuprint.SegmentCriteria">[docs]</a><span class="k">class</span> <span class="nc">SegmentCriteria</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specifies which fields to filter by when searching for a Segment (or Neuron).</span>
+<span class="sd">    This class does not send queries itself, but you use it to specify search</span>
+<span class="sd">    criteria for various query functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@inject_client</span>
+    <span class="nd">@make_args_iterable</span><span class="p">([</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="s1">&#39;rois&#39;</span><span class="p">,</span> <span class="s1">&#39;inputRois&#39;</span><span class="p">,</span> <span class="s1">&#39;outputRois&#39;</span><span class="p">])</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span> <span class="bp">self</span><span class="p">,</span> <span class="n">matchvar</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                  <span class="n">bodyId</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">min_pre</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">min_post</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                  <span class="n">rois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inputRois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">outputRois</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_roi_inputs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_roi_outputs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                  <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="n">roi_req</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span>
+                  <span class="n">client</span><span class="o">=</span><span class="kc">None</span> <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Except for ``matchvar``, all parameters must be passed as keyword arguments.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            **Options for specifying ROI criteria**</span>
+
+<span class="sd">            The ``rois`` argument merely matches neurons that intersect the given ROIs at all</span>
+<span class="sd">            (without distinguishing between inputs and outputs).</span>
+
+<span class="sd">            The ``inputRois`` and ``outputRois`` arguments allow you to put requirements</span>
+<span class="sd">            on whether or not neurons have inputs or outputs in the listed ROIs.</span>
+<span class="sd">            It results a more expensive query, but its more powerful.</span>
+<span class="sd">            It also enables you to require a minimum number of connections in the given</span>
+<span class="sd">            ``inputRois`` or ``outputRois`` using the ``min_roi_inputs`` and ``min_roi_outputs``</span>
+<span class="sd">            criteria.</span>
+
+<span class="sd">            In either case, use use ``roi_req`` to specify whether a neuron must match just</span>
+<span class="sd">            one (``any``) of the listed ROIs, or ``all`` of them.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            matchvar (str):</span>
+<span class="sd">                An arbitrary cypher variable name to use when this</span>
+<span class="sd">                ``SegmentCriteria`` is used to construct cypher queries.</span>
+<span class="sd">                To help catch errors (such as accidentally passing a ``type`` or</span>
+<span class="sd">                ``instance`` name in the wrong argument position), we require that</span>
+<span class="sd">                ``matchvar`` begin with a lowercase letter.</span>
+
+<span class="sd">            bodyId (int or list of ints):</span>
+<span class="sd">                List of bodyId values.</span>
+
+<span class="sd">            instance (str or list of str):</span>
+<span class="sd">                If ``regex=True``, then the instance will be matched as a regular expression.</span>
+<span class="sd">                Otherwise, only exact matches are found.</span>
+
+<span class="sd">            type (str or list of str):</span>
+<span class="sd">                If ``regex=True``, then the type will be matched as a regular expression.</span>
+<span class="sd">                Otherwise, only exact matches are found.</span>
+
+<span class="sd">            regex (bool):</span>
+<span class="sd">                If ``True``, the ``instance`` and ``type`` arguments will be interpreted as</span>
+<span class="sd">                regular expressions, rather than exact match strings.</span>
+
+<span class="sd">            status (str or list of str):</span>
+
+<span class="sd">            cropped (bool):</span>
+<span class="sd">                If given, restrict results to neurons that are cropped or not.</span>
+
+<span class="sd">            min_pre (int):</span>
+<span class="sd">                Exclude neurons that don&#39;t have at least this many t-bars (outputs) overall,</span>
+<span class="sd">                regardless of how many t-bars exist in any particular ROI.</span>
+
+<span class="sd">            min_post (int):</span>
+<span class="sd">                Exclude neurons that don&#39;t have at least this many PSDs (inputs) overall,</span>
+<span class="sd">                regardless of how many PSDs exist in any particular ROI.</span>
+
+<span class="sd">            rois (str or list of str):</span>
+<span class="sd">                ROIs that merely intersect the neuron, without specifying whether</span>
+<span class="sd">                they&#39;re intersected by input or output synapses.</span>
+<span class="sd">                If not provided, will be auto-set from ``inputRois`` and ``outputRois``.</span>
+
+<span class="sd">            inputRois (str or list of str):</span>
+<span class="sd">                Only Neurons which have inputs in EVERY one of the given ROIs will be matched.</span>
+<span class="sd">                ``regex`` does not apply to this parameter.</span>
+
+<span class="sd">            outputRois (str or list of str):</span>
+<span class="sd">                Only Neurons which have outputs in EVERY one of the given ROIs will be matched.</span>
+<span class="sd">                ``regex`` does not apply to this parameter.</span>
+
+<span class="sd">            min_roi_inputs (int):</span>
+<span class="sd">                How many input (post) synapses a neuron must have in each ROI to satisfy the</span>
+<span class="sd">                ``inputRois`` criteria.  Can only be used if you provided ``inputRois``.</span>
+
+<span class="sd">            min_roi_outputs (int):</span>
+<span class="sd">                How many output (pre) synapses a neuron must have in each ROI to satisfy the</span>
+<span class="sd">                ``outputRois`` criteria.   Can only be used if you provided ``outputRois``.</span>
+
+<span class="sd">            roi_req (Either ``&#39;any&#39;`` or ``&#39;all&#39;``):</span>
+<span class="sd">                Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.</span>
+<span class="sd">                When using &#39;any&#39;, each neuron must still match at least one input AND at least one output ROI.</span>
+
+<span class="sd">            label (Either ``&#39;Neuron&#39;`` or ``&#39;Segment&#39;``):</span>
+<span class="sd">                Which node label to match with.</span>
+<span class="sd">                (In neuprint, all ``Neuron`` nodes are also ``Segment`` nodes.)</span>
+
+<span class="sd">            client (:py:class:`neuprint.client.Client`):</span>
+<span class="sd">                Used to validate ROI names.</span>
+<span class="sd">                If not provided, the global default ``Client`` will be used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate that matchvar in various ways, to catch errors in which</span>
+        <span class="c1"># the user has passed a bodyId or type, etc. in the wrong position.</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">matchvar</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> \
+            <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bad matchvar argument (should be str): </span><span class="si">{matchvar}</span><span class="s2">. &quot;</span>
+             <span class="s2">&quot;Did you mean to pass this as bodyId, type, or instance name?&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">matchvar</span><span class="p">,</span> <span class="s2">&quot;matchvar cannot be an empty string&quot;</span>
+        <span class="k">assert</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^[a-z].*$&#39;</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">),</span> \
+            <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;matchvar must begin with a lowercase letter, not &#39;</span><span class="si">{matchvar}</span><span class="s2">&#39;. &quot;</span>
+             <span class="s2">&quot;Did you mean to pass this as a type or instance name?&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="s1">&#39;^[a-zA-Z0-9]+$&#39;</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">),</span> \
+            <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;matchvar contains invalid characters: &#39;</span><span class="si">{matchvar}</span><span class="s2">&#39;. &quot;</span>
+             <span class="s2">&quot;Did you mean to pass this as a type or instance?&quot;</span><span class="p">)</span>
+        
+        <span class="k">assert</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Neuron&#39;</span><span class="p">,</span> <span class="s1">&#39;Segment&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Invalid label: </span><span class="si">{label}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bodyId</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">),</span> \
+            <span class="s2">&quot;bodyId should be an integer or list of integers&quot;</span>
+
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="s2">&quot;Please provide only one regex pattern for instance&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+            <span class="s2">&quot;Please provide only one regex pattern for type&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">instance</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s1">&#39;.*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">instance</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                <span class="sa">f</span><span class="s2">&quot;instance appears to be a regular expression (&#39;</span><span class="si">{instance[0]}</span><span class="s2">&#39;), but you didn&#39;t pass regex=True&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="nb">type</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s1">&#39;.*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> \
+                <span class="sa">f</span><span class="s2">&quot;type appears to be a regular expression (&#39;</span><span class="si">{type[0]}</span><span class="s2">&#39;), but you didn&#39;t pass regex=True&quot;</span>
+
+        <span class="k">assert</span> <span class="n">roi_req</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;any&#39;</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">)</span>
+
+        <span class="k">assert</span> <span class="n">min_roi_inputs</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">inputRois</span><span class="p">,</span> \
+            <span class="s2">&quot;Can&#39;t stipulate min_roi_inputs without a list of inputRois&quot;</span>
+        <span class="k">assert</span> <span class="n">min_roi_outputs</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">outputRois</span><span class="p">,</span> \
+            <span class="s2">&quot;Can&#39;t stipulate min_roi_outputs without a list of outputRois&quot;</span>
+
+        <span class="c1"># If the user provided both intersecting rois and input/output rois,</span>
+        <span class="c1"># force them to make the intersecting set a superset of the others.</span>
+        <span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">rois</span><span class="p">}</span>
+        <span class="n">inputRois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">inputRois</span><span class="p">}</span>
+        <span class="n">outputRois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">outputRois</span><span class="p">}</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">rois</span> <span class="ow">or</span> <span class="n">rois</span> <span class="o">&gt;=</span> <span class="p">{</span><span class="o">*</span><span class="n">inputRois</span><span class="p">},</span> <span class="s2">&quot;Queried intersecting rois must be a superset of the inputRois&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">rois</span> <span class="ow">or</span> <span class="n">rois</span> <span class="o">&gt;=</span> <span class="p">{</span><span class="o">*</span><span class="n">outputRois</span><span class="p">},</span> <span class="s2">&quot;Queried intersecting rois must be a superset of the outputRois&quot;</span>
+
+        <span class="c1"># Make sure intersecting is a superset of inputRois and outputRois</span>
+        <span class="n">rois</span> <span class="o">|=</span> <span class="p">{</span><span class="o">*</span><span class="n">inputRois</span><span class="p">,</span> <span class="o">*</span><span class="n">outputRois</span><span class="p">}</span>
+
+        <span class="c1"># Verify ROI names against known ROIs.</span>
+        <span class="n">neuprint_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">all_rois</span><span class="p">}</span>
+        <span class="n">unknown_input_rois</span> <span class="o">=</span> <span class="n">inputRois</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
+        <span class="k">if</span> <span class="n">unknown_input_rois</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized input ROIs: </span><span class="si">{unknown_input_rois}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">unknown_output_rois</span> <span class="o">=</span> <span class="n">outputRois</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
+        <span class="k">if</span> <span class="n">unknown_output_rois</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized output ROIs: </span><span class="si">{unknown_output_rois}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">unknown_generic_rois</span> <span class="o">=</span> <span class="n">rois</span> <span class="o">-</span> <span class="n">neuprint_rois</span>
+        <span class="k">if</span> <span class="n">unknown_generic_rois</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized output ROIs: </span><span class="si">{unknown_generic_rois}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bodyId</span> <span class="o">=</span> <span class="n">bodyId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="nb">type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cropped</span> <span class="o">=</span> <span class="n">cropped</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_pre</span> <span class="o">=</span> <span class="n">min_pre</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_post</span> <span class="o">=</span> <span class="n">min_post</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="n">rois</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputRois</span> <span class="o">=</span> <span class="n">inputRois</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputRois</span> <span class="o">=</span> <span class="n">outputRois</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_roi_inputs</span> <span class="o">=</span> <span class="n">min_roi_inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_roi_outputs</span> <span class="o">=</span> <span class="n">min_roi_outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">regex</span> <span class="o">=</span> <span class="n">regex</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="n">roi_req</span>
+
+        <span class="c1"># Keep track of parameters for comparisons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__params</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;matchvar&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;status&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;cropped&#39;</span><span class="p">,</span> <span class="s1">&#39;min_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;min_post&#39;</span><span class="p">,</span> <span class="s1">&#39;rois&#39;</span><span class="p">,</span> <span class="s1">&#39;inputRois&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;outputRois&#39;</span><span class="p">,</span> <span class="s1">&#39;min_roi_inputs&#39;</span><span class="p">,</span> <span class="s1">&#39;min_roi_outputs&#39;</span><span class="p">,</span>
+                         <span class="s1">&#39;regex&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="s1">&#39;roi_req&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implement comparison between criteria.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+
+        <span class="c1"># Return True if it&#39;s the exact same object</span>
+        <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># Compare attributes one by one</span>
+        <span class="k">for</span> <span class="n">at</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__params</span><span class="p">:</span>
+            <span class="n">me</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">at</span><span class="p">)</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">at</span><span class="p">)</span>
+
+            <span class="c1"># If not the same type, return False</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">me</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># If iterable (e.g. ROIs or body IDs) we don&#39;t care about order</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">me</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="n">v</span> <span class="ow">in</span> <span class="n">other</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">me</span><span class="p">]):</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">me</span> <span class="o">!=</span> <span class="n">other</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="c1"># If all comparisons have passed, return True</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Show all non-default constructor args</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;SegmentCriteria(&quot;</span><span class="si">{self.matchvar}</span><span class="s1">&quot;&#39;</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bodyId</span><span class="p">):</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, bodyId={list(self.bodyId)}&quot;</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, instance=&quot;</span><span class="si">{self.instance[0]}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, instance={list(self.instance)}&quot;</span>
+            
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, type=&quot;</span><span class="si">{self.type[0]}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, type={list(self.type)}&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="s2">&quot;, regex=True&quot;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, status=&quot;</span><span class="si">{self.status[0]}</span><span class="s1">&quot;&#39;</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, status={list(self.status)}&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, cropped=</span><span class="si">{self.cropped}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_pre</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_pre=</span><span class="si">{self.min_pre}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_post</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_post=</span><span class="si">{self.min_post}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, rois={list(self.rois)}&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputRois</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, inputRois={list(self.inputRois)}&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputRois</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, outputRois={list(self.outputRois)}&quot;</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_roi_inputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_roi_inputs=</span><span class="si">{self.min_roi_inputs}</span><span class="s2">&quot;</span>
+                    
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_roi_outputs</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;, min_roi_outputs=</span><span class="si">{self.min_roi_outputs}</span><span class="s2">&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">!=</span> <span class="s1">&#39;Neuron&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, label=&quot;</span><span class="si">{self.label}</span><span class="s1">&quot;&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">!=</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;, roi_req=&quot;</span><span class="si">{self.roi_req}</span><span class="s1">&quot;&#39;</span>
+
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;)&#39;</span>
+        
+        <span class="k">return</span> <span class="n">s</span>
+    
+    <span class="k">def</span> <span class="nf">basic_exprs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the list of expressions that correspond</span>
+<span class="sd">        to the members in this SegmentCriteria object.</span>
+<span class="sd">        They&#39;re intended be combined (via &#39;AND&#39;) in</span>
+<span class="sd">        the WHERE clause of a cypher query.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">bodyId_expr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance_expr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_expr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">status_expr</span><span class="p">(),</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">cropped_expr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">rois_expr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_expr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_expr</span><span class="p">()]</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">exprs</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">exprs</span>
+
+
+    <span class="k">def</span> <span class="nf">bodyId_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bodyId</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">instance_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">instance</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">type_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">status_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">where_expr</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">cropped_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropped</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cropped</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.matchvar}</span><span class="s2">.cropped&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Not all neurons have the &#39;cropped&#39; tag,</span>
+            <span class="c1"># so simply checking for False values isn&#39;t enough.</span>
+            <span class="c1"># Must check exists().</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;(NOT </span><span class="si">{self.matchvar}</span><span class="s2">.cropped OR NOT exists(</span><span class="si">{self.matchvar}</span><span class="s2">.cropped))&quot;</span>
+
+    <span class="k">def</span> <span class="nf">rois_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+        
+        <span class="n">rois</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rois</span><span class="p">)</span>
+        <span class="n">roi_logic</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;any&#39;</span><span class="p">:</span> <span class="s1">&#39;OR&#39;</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span> <span class="s1">&#39;AND&#39;</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span><span class="p">]</span>
+        <span class="k">return</span> <span class="s2">&quot;(&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{roi_logic}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.matchvar}</span><span class="s2">.`</span><span class="si">{roi}</span><span class="s2">`&quot;</span> <span class="k">for</span> <span class="n">roi</span> <span class="ow">in</span> <span class="n">rois</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;)&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">pre_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_pre</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.matchvar}</span><span class="s2">.pre &gt;= </span><span class="si">{self.min_pre}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">post_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_post</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.matchvar}</span><span class="s2">.post &gt;= </span><span class="si">{self.min_post}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+
+    <span class="k">def</span> <span class="nf">all_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">*</span><span class="n">prefix</span>
+        
+        <span class="n">basic_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span>
+        <span class="n">roi_cond</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">directed_rois_condition</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">roi_cond</span><span class="p">:</span>
+            <span class="n">combined</span> <span class="o">=</span> <span class="n">basic_cond</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">roi_cond</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">combined</span> <span class="o">=</span> <span class="n">basic_cond</span>
+
+        <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span>
+        
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">combined_conditions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">segment_conditions</span><span class="p">,</span> <span class="nb">vars</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Combine the conditions from multiple SegmentCriteria into a single string,</span>
+<span class="sd">        putting the &quot;cheap&quot; conditions first and the &quot;expensive&quot; conditions last.</span>
+<span class="sd">        (That is, basic conditions first and the directed ROI conditions last.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">*</span><span class="n">prefix</span>
+            
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">vars</span><span class="p">:</span>
+            <span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">matchvar</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
+        
+        <span class="n">basic_conds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">basic_conditions</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
+        <span class="n">basic_conds</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">basic_conds</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">basic_conds</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+        
+        <span class="n">basic_conds</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">basic_conds</span><span class="p">)</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">basic_conds</span>
+        
+        <span class="n">roi_conds</span> <span class="o">=</span> <span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">directed_rois_condition</span><span class="p">(</span><span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">)</span> <span class="k">for</span> <span class="n">sc</span> <span class="ow">in</span> <span class="n">segment_conditions</span><span class="p">]</span>
+        <span class="n">roi_conds</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">roi_conds</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">roi_conds</span><span class="p">:</span>
+            <span class="n">roi_conds</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">roi_conds</span><span class="p">)</span>
+            <span class="n">combined</span> <span class="o">=</span> <span class="n">basic_conds</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">roi_conds</span>
+        
+        <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">combined</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span>
+        
+
+    <span class="k">def</span> <span class="nf">basic_conditions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct a WHERE clause based on the basic conditions</span>
+<span class="sd">        in this criteria (i.e. everything except for the &quot;directed ROI&quot; conditions.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basic_exprs</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exprs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="o">*</span><span class="s1">&#39; &#39;</span>
+            
+        <span class="c1"># Build WHERE clause by combining exprs for each field</span>
+        <span class="n">clauses</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="n">clauses</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;// -- Basic conditions for segment &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39; --</span><span class="se">\n</span><span class="s2">&quot;</span>
+            
+        <span class="k">if</span> <span class="nb">vars</span><span class="p">:</span>
+            <span class="n">clauses</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;WITH {&#39;, &#39;.join(vars)}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        
+        <span class="n">clauses</span> <span class="o">+=</span> <span class="s2">&quot;WHERE</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">clauses</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;  &quot;</span>
+        <span class="n">clauses</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">  AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">exprs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">clauses</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span>
+
+
+    <span class="k">def</span> <span class="nf">directed_rois_condition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="nb">vars</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct the ```WITH...WHERE``` statements that apply the &quot;directed ROI&quot;</span>
+<span class="sd">        conditions specified by this criteria&#39;s ``inputRois`` and ``outputRois``</span>
+<span class="sd">        members.</span>
+<span class="sd">        </span>
+<span class="sd">        These conditions are expensive to evaluate, so it&#39;s usually a good</span>
+<span class="sd">        idea to position them LAST in your cypher query, once the result set</span>
+<span class="sd">        has already been narrowed down by eariler filters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputRois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputRois</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span><span class="o">*</span><span class="s1">&#39; &#39;</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputRois</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">min_input_matches</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">==</span> <span class="s1">&#39;any&#39;</span><span class="p">:</span>
+            <span class="n">min_input_matches</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">min_input_matches</span> <span class="o">=</span> <span class="s1">&#39;size(inputRois)&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputRois</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">min_output_matches</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">==</span> <span class="s1">&#39;any&#39;</span><span class="p">:</span>
+            <span class="n">min_output_matches</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">min_output_matches</span> <span class="o">=</span> <span class="s1">&#39;size(outputRois)&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="nb">vars</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">,</span> <span class="s2">&quot;Pass all match vars, including the one that belongs to this criteria&quot;</span>
+            <span class="nb">vars</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matchvar</span>
+         
+        <span class="n">conditions</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">            // -- Directed ROI conditions for segment &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39; --</span>
+<span class="s2">            WITH </span><span class="si">{vars}</span><span class="s2">,</span>
+<span class="s2">                 {[*self.inputRois]} as inputRois,</span>
+<span class="s2">                 {[*self.outputRois]} as outputRois,</span>
+<span class="s2">                 apoc.convert.fromJsonMap(</span><span class="si">{self.matchvar}</span><span class="s2">.roiInfo) as roiInfo</span>
+<span class="s2">    </span>
+<span class="s2">            // Check input ROIs (segment &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39;)</span>
+<span class="s2">            UNWIND keys(roiInfo) as roi</span>
+<span class="s2">            WITH </span><span class="si">{vars}</span><span class="s2">, roi, roiInfo, inputRois, outputRois, roiInfo[roi][&#39;post&#39;] as roi_post</span>
+<span class="s2">            ORDER BY roi</span>
+<span class="s2">            // No filter if no input ROIs were specified, otherwise select the ones that meet the reqs</span>
+<span class="s2">            WHERE </span><span class="si">{min_input_matches}</span><span class="s2"> = 0 OR (roi in inputRois AND roi_post &gt;= </span><span class="si">{self.min_roi_inputs}</span><span class="s2">)</span>
+<span class="s2">            WITH </span><span class="si">{vars}</span><span class="s2">, roiInfo, inputRois, outputRois, collect(roi) as matchingInputRois, size(collect(roi)) as numMatchingInputRois</span>
+<span class="s2">            WHERE numMatchingInputRois &gt;= </span><span class="si">{min_input_matches}</span><span class="s2"></span>
+<span class="s2">    </span>
+<span class="s2">            // Check output ROIs (segment &#39;</span><span class="si">{self.matchvar}</span><span class="s2">&#39;)</span>
+<span class="s2">            UNWIND keys(roiInfo) as roi</span>
+<span class="s2">            WITH </span><span class="si">{vars}</span><span class="s2">, roi, roiInfo, inputRois, outputRois, matchingInputRois, roiInfo[roi][&#39;pre&#39;] as roi_pre</span>
+<span class="s2">            ORDER BY roi</span>
+<span class="s2">            // No filter if no output ROIs were specified, otherwise select the ones that meet the reqs</span>
+<span class="s2">            WHERE </span><span class="si">{min_output_matches}</span><span class="s2"> = 0 OR (roi in outputRois AND roi_pre &gt;= </span><span class="si">{self.min_roi_outputs}</span><span class="s2">)</span>
+<span class="s2">            WITH </span><span class="si">{vars}</span><span class="s2">, inputRois, outputRois, matchingInputRois, collect(roi) as matchingOutputRois, size(collect(roi)) as numMatchingOutputRois</span>
+<span class="s2">            WHERE numMatchingOutputRois &gt;= </span><span class="si">{min_output_matches}</span><span class="s2"></span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+            <span class="c1">#RETURN n, matchingInputRois, matchingOutputRois</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">comments</span><span class="p">:</span>
+            <span class="n">conditions</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="s1">&#39;//&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">s</span><span class="p">,</span> <span class="n">conditions</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">indent</span><span class="p">(</span><span class="n">conditions</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):]</span></div>
+
+
+<span class="k">def</span> <span class="nf">where_expr</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">matchvar</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return an expression to match a particular</span>
+<span class="sd">    field against a list of values, to be used</span>
+<span class="sd">    within the WHERE clause.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">regex</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> \
+        <span class="sa">f</span><span class="s2">&quot;Can&#39;t use regex mode with more than one value: </span><span class="si">{values}</span><span class="s2">&quot;</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{matchvar}</span><span class="s2">.</span><span class="si">{field}</span><span class="s2"> in {[*values]}&quot;</span>
+
+    <span class="k">if</span> <span class="n">regex</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{matchvar}</span><span class="s2">.</span><span class="si">{field}</span><span class="s2"> =~ &#39;</span><span class="si">{values[0]}</span><span class="s2">&#39;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{matchvar}</span><span class="s2">.</span><span class="si">{field}</span><span class="s2"> = &#39;</span><span class="si">{values[0]}</span><span class="s2">&#39;&quot;</span>
+
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{matchvar}</span><span class="s2">.</span><span class="si">{field}</span><span class="s2"> = </span><span class="si">{values[0]}</span><span class="s2">&quot;</span>
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
