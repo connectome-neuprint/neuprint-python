@@ -737,6 +737,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     assert include_nonprimary or not nonprimary_rois, \
         f"Since you listed nonprimary rois ({nonprimary_rois}), please specify include_nonprimary=True"
 
+    min_roi_weight = max(min_roi_weight, 1)
     min_total_weight = max(min_total_weight, min_roi_weight)
 
     def _prepare_criteria(criteria, matchvar):
@@ -882,8 +883,8 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         keep_conns = total_weights_df.query('weight >= @min_total_weight')[['bodyId_pre', 'bodyId_post']]
         roi_conn_df = roi_conn_df.merge(keep_conns, 'inner', on=['bodyId_pre', 'bodyId_post'])
 
-    if min_roi_weight > 1:
-        roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
+    # This is necessary
+    roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
 
     # Drop neurons that matched sources or targets but aren't mentioned in the final connection table.
     _connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
