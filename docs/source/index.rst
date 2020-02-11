@@ -50,4 +50,5 @@ Contents
    notebooks/Tutorial
    api
    development
+   related
    faq
