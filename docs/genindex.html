@@ -9,7 +9,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Index &mdash; neuprint-python 0.3.6 documentation</title>
+  <title>Index &mdash; neuprint-python 0.4 documentation</title>
   
 
   
@@ -26,6 +26,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -60,7 +61,7 @@
             
             
               <div class="version">
-                0.3.6
+                0.4
               </div>
             
           
@@ -86,8 +87,10 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
@@ -159,6 +162,7 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#K"><strong>K</strong></a>
+ | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#Q"><strong>Q</strong></a>
@@ -173,7 +177,7 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.custom_search">custom_search() (in module neuprint.deprecated.fetch)</a>
+      <li><a href="utils.html#neuprint.utils.connection_table_to_matrix">connection_table_to_matrix() (in module neuprint.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -197,10 +201,6 @@
 </li>
       <li><a href="queries.html#neuprint.queries.fetch_common_connectivity">fetch_common_connectivity() (in module neuprint.queries)</a>
 </li>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.fetch_connectivity">fetch_connectivity() (in module neuprint.deprecated.fetch)</a>
-</li>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.fetch_connectivity_in_roi">fetch_connectivity_in_roi() (in module neuprint.deprecated.fetch)</a>
-</li>
       <li><a href="queries.html#neuprint.queries.fetch_custom">fetch_custom() (in module neuprint.queries)</a>
 
       <ul>
@@ -217,8 +217,6 @@
 </li>
       <li><a href="client.html#neuprint.client.Client.fetch_db_version">fetch_db_version() (neuprint.client.Client method)</a>
 </li>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.fetch_edges">fetch_edges() (in module neuprint.deprecated.fetch)</a>
-</li>
       <li><a href="client.html#neuprint.client.Client.fetch_help">fetch_help() (neuprint.client.Client method)</a>
 </li>
       <li><a href="client.html#neuprint.client.Client.fetch_instances">fetch_instances() (neuprint.client.Client method)</a>
@@ -229,8 +227,6 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.fetch_neurons_in_roi">fetch_neurons_in_roi() (in module neuprint.deprecated.fetch)</a>
-</li>
       <li><a href="queries.html#neuprint.queries.fetch_primary_rois">fetch_primary_rois() (in module neuprint.queries)</a>
 </li>
       <li><a href="client.html#neuprint.client.Client.fetch_profile">fetch_profile() (neuprint.client.Client method)</a>
@@ -255,19 +251,13 @@
 </li>
       <li><a href="queries.html#neuprint.queries.fetch_synapse_connections">fetch_synapse_connections() (in module neuprint.queries)</a>
 </li>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.fetch_synapses">fetch_synapses() (in module neuprint.deprecated.fetch)</a>
-
-      <ul>
-        <li><a href="queries.html#neuprint.queries.fetch_synapses">(in module neuprint.queries)</a>
+      <li><a href="queries.html#neuprint.queries.fetch_synapses">fetch_synapses() (in module neuprint.queries)</a>
 </li>
-      </ul></li>
       <li><a href="client.html#neuprint.client.Client.fetch_token">fetch_token() (neuprint.client.Client method)</a>
 </li>
       <li><a href="queries.html#neuprint.queries.fetch_traced_adjacencies">fetch_traced_adjacencies() (in module neuprint.queries)</a>
 </li>
       <li><a href="client.html#neuprint.client.Client.fetch_version">fetch_version() (neuprint.client.Client method)</a>
-</li>
-      <li><a href="deprecated.html#neuprint.deprecated.fetch.find_neurons">find_neurons() (in module neuprint.deprecated.fetch)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -276,6 +266,14 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="admin.html#neuprint.admin.Transaction.kill">kill() (neuprint.admin.Transaction method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils.html#neuprint.utils.merge_neuron_properties">merge_neuron_properties() (in module neuprint.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -289,9 +287,9 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="deprecated.html#module-neuprint.deprecated.fetch">neuprint.deprecated.fetch (module)</a>
-</li>
       <li><a href="queries.html#module-neuprint.queries">neuprint.queries (module)</a>
+</li>
+      <li><a href="utils.html#module-neuprint.utils">neuprint.utils (module)</a>
 </li>
   </ul></td>
 </tr></table>

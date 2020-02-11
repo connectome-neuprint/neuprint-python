@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint-python &mdash; neuprint-python 0.3.6 documentation</title>
+  <title>neuprint-python &mdash; neuprint-python 0.4 documentation</title>
   
 
   
@@ -25,6 +25,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -60,7 +61,7 @@
             
             
               <div class="version">
-                0.3.6
+                0.4
               </div>
             
           
@@ -86,8 +87,10 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
@@ -153,7 +156,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="neuprint-python">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="neuprint-python">
 <h1>neuprint-python<a class="headerlink" href="#neuprint-python" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="introduction-to-neuprint-and-neuprint-python">
 <span id="intro"></span><h2>Introduction to neuPrint and <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code><a class="headerlink" href="#introduction-to-neuprint-and-neuprint-python" title="Permalink to this headline">¶</a></h2>
@@ -186,6 +213,19 @@ Python scripts to query the database programmatically with
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#client-and-authorization-token">Client and Authorization Token</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#create-the-client">Create the Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#execute-a-query">Execute a query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Create-a-Client">Create a Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#ROIs">ROIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Neuron-Search-Criteria">Neuron Search Criteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Fetch-neuron-properties">Fetch neuron properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Fetch-connections">Fetch connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Connection-Matrix">Connection Matrix</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Synapses">Synapses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Synapse-Connections">Synapse Connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="notebooks/Tutorial.html#Skeletons">Skeletons</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
@@ -194,13 +234,20 @@ Python scripts to query the database programmatically with
 <li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="development.html#packaging">Packaging</a></li>
 <li class="toctree-l2"><a class="reference internal" href="development.html#documentation">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="development.html#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="related.html#neuprint-on-github">NeuPrint on github</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#dvid">DVID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#neuprintr">neuprintr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="related.html#navis">NAVis</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a><ul>

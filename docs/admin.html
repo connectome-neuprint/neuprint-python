@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Admin Tools &mdash; neuprint-python 0.3.6 documentation</title>
+  <title>Admin Tools &mdash; neuprint-python 0.4 documentation</title>
   
 
   
@@ -25,6 +25,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -36,7 +37,7 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Deprecated API" href="deprecated.html" />
+    <link rel="next" title="Utilities" href="utils.html" />
     <link rel="prev" title="SynapseCriteria" href="synapsecriteria.html" /> 
 </head>
 
@@ -61,7 +62,7 @@
             
             
               <div class="version">
-                0.3.6
+                0.4
               </div>
             
           
@@ -87,16 +88,18 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Admin Tools</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
@@ -164,7 +167,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="module-neuprint.admin">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-neuprint.admin">
 <span id="admin-tools"></span><span id="admin"></span><h1>Admin Tools<a class="headerlink" href="#module-neuprint.admin" title="Permalink to this headline">¶</a></h1>
 <p>Administration utilities for managing a neuprint server.
 Using these tools requires admin privileges on the neuPrintHttp server.</p>
@@ -217,7 +244,7 @@ of this transaction (allows writes).</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="deprecated.html" class="btn btn-neutral float-right" title="Deprecated API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

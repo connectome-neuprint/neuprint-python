@@ -1,0 +1,386 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Utilities &mdash; neuprint-python 0.4 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Development Notes" href="development.html" />
+    <link rel="prev" title="Admin Tools" href="admin.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reference">Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="api.html">API</a> &raquo;</li>
+        
+      <li>Utilities</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-neuprint.utils">
+<span id="utilities"></span><span id="utils"></span><h1>Utilities<a class="headerlink" href="#module-neuprint.utils" title="Permalink to this headline">¶</a></h1>
+<p>Utility functions for manipulating neuprint-python output.</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.utils.merge_neuron_properties" title="neuprint.utils.merge_neuron_properties"><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_neuron_properties</span></code></a>(neuron_df,&nbsp;conn_df)</td>
+<td>Merge neuron properties to a connection table.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.utils.connection_table_to_matrix" title="neuprint.utils.connection_table_to_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connection_table_to_matrix</span></code></a>(conn_df[,&nbsp;…])</td>
+<td>Given a weighted connection table, produce a weighted adjacency matrix.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="neuprint.utils.merge_neuron_properties">
+<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/utils.html#merge_neuron_properties"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge neuron properties to a connection table.</p>
+<p>Given a table of neuron properties and a connection table, append
+<code class="docutils literal notranslate"><span class="pre">_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">_post</span></code> columns to the connection table for each of
+the given properties via the appropriate merge operations.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>neuron_df</strong> – DataFrame with columns for ‘bodyId’ and any properties you want to merge</li>
+<li><strong>conn_df</strong> – DataFrame with columns <code class="docutils literal notranslate"><span class="pre">bodyId_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">bodyId_post</span></code></li>
+<li><strong>properties</strong> – Column names from <code class="docutils literal notranslate"><span class="pre">neuron_df</span></code> to merge onto <code class="docutils literal notranslate"><span class="pre">conn_df</span></code>.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Updated <code class="docutils literal notranslate"><span class="pre">conn_df</span></code> with new columns.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_adjacencies</span><span class="p">,</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span><span class="p">,</span> <span class="n">merge_neuron_properties</span>
+<span class="gp">   ...: </span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">conn_df</span> <span class="o">=</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="s1">&#39;PB&#39;</span><span class="p">,</span> <span class="n">min_roi_weight</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="nb">print</span><span class="p">(</span><span class="n">conn_df</span><span class="p">)</span>
+<span class="go">   bodyId_pre  bodyId_post roi  weight</span>
+<span class="go">0   880875736   1631450739  PB     123</span>
+<span class="go">1   880880259    849421763  PB     141</span>
+<span class="go">2   910442723    849421763  PB     139</span>
+<span class="go">3   910783961   5813070465  PB     184</span>
+<span class="go">4   911129204    724280817  PB     127</span>
+<span class="go">5   911134009    849421763  PB     125</span>
+<span class="go">6   911565419   5813070465  PB     141</span>
+<span class="go">7   911911004   1062526223  PB     125</span>
+<span class="go">8   911919044    973566036  PB     122</span>
+<span class="go">9  5813080838    974239375  PB     136</span>
+
+<span class="gp">In [2]: </span><span class="n">merge_neuron_properties</span><span class="p">(</span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">conn_df</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">)</span>
+<span class="gh">Out[2]:</span>
+<span class="go">   bodyId_pre  bodyId_post roi  weight  type_pre    type_post</span>
+<span class="go">0   880875736   1631450739  PB     123  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">1   880880259    849421763  PB     141  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">2   910442723    849421763  PB     139  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">3   910783961   5813070465  PB     184  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">4   911129204    724280817  PB     127  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">5   911134009    849421763  PB     125  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">6   911565419   5813070465  PB     141  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">7   911911004   1062526223  PB     125  Delta7_b  PEN_b(PEN2)</span>
+<span class="go">8   911919044    973566036  PB     122  Delta7_a  PEN_b(PEN2)</span>
+<span class="go">9  5813080838    974239375  PB     136       EPG          PEG</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.utils.connection_table_to_matrix">
+<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/utils.html#connection_table_to_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a weighted connection table, produce a weighted adjacency matrix.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>conn_df</strong> – A DataFrame with columns for pre- and post- identifiers
+(e.g. bodyId, type or instance), and a column for the
+weight of the connection.</li>
+<li><strong>group_cols</strong> – <p>Which two columns to use as the row index and column index
+of the returned matrix, respetively.
+Or give a single string (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;body&quot;</span></code>, in which case the
+two column names are chosen by appending the suffixes
+<code class="docutils literal notranslate"><span class="pre">_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">_post</span></code> to your string.</p>
+<p>If a pair of pre/post values occurs more than once in the
+connection table, all of its weights will be summed in the
+output matrix.</p>
+</li>
+<li><strong>weight_col</strong> – Which column holds the connection weight, to be aggregated for each unique pre/post pair.</li>
+<li><strong>sort_by</strong> – How to sort the rows and columns of the result.
+Can be two strings, e.g. <code class="docutils literal notranslate"><span class="pre">(&quot;type_pre&quot;,</span> <span class="pre">&quot;type_post&quot;)</span></code>,
+or a single string, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;type&quot;</span></code> in which case the suffixes are assumed.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame, shape NxM, where N is the number of unique values in
+the ‘pre’ group column, and M is the number of unique values in
+the ‘post’ group column.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_simple_connections</span><span class="p">,</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span>
+<span class="gp">   ...: </span><span class="n">kc_criteria</span> <span class="o">=</span> <span class="n">SC</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;KC.*&#39;</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">conn_df</span> <span class="o">=</span> <span class="n">fetch_simple_connections</span><span class="p">(</span><span class="n">kc_criteria</span><span class="p">,</span> <span class="n">kc_criteria</span><span class="p">)</span>
+<span class="gp">In [1]: </span><span class="n">conn_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="gh">Out[1]:</span>
+<span class="go">   bodyId_pre  bodyId_post  weight type_pre type_post instance_pre instance_post                                       conn_roiInfo</span>
+<span class="go">0  1224137495   5813032771      29      KCg       KCg          KCg    KCg(super)  {&#39;MB(R)&#39;: {&#39;pre&#39;: 26, &#39;post&#39;: 26}, &#39;gL(R)&#39;: {&#39;...</span>
+<span class="go">1  1172713521   5813067826      27      KCg       KCg   KCg(super)         KCg-d  {&#39;MB(R)&#39;: {&#39;pre&#39;: 26, &#39;post&#39;: 26}, &#39;PED(R)&#39;: {...</span>
+<span class="go">2   517858947   5813032943      26   KCab-p    KCab-p       KCab-p        KCab-p  {&#39;MB(R)&#39;: {&#39;pre&#39;: 25, &#39;post&#39;: 25}, &#39;PED(R)&#39;: {...</span>
+<span class="go">3   642680826   5812980940      25   KCab-p    KCab-p       KCab-p        KCab-p  {&#39;MB(R)&#39;: {&#39;pre&#39;: 25, &#39;post&#39;: 25}, &#39;PED(R)&#39;: {...</span>
+<span class="go">4  5813067826   1172713521      24      KCg       KCg        KCg-d    KCg(super)  {&#39;MB(R)&#39;: {&#39;pre&#39;: 23, &#39;post&#39;: 23}, &#39;gL(R)&#39;: {&#39;...</span>
+
+<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">neuprint.utils</span> <span class="kn">import</span> <span class="n">connection_table_to_matrix</span>
+<span class="gp">   ...: </span><span class="n">connection_table_to_matrix</span><span class="p">(</span><span class="n">conn_df</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">)</span>
+<span class="gh">Out[2]:</span>
+<span class="go">type_post   KC  KCa&#39;b&#39;  KCab-p  KCab-sc     KCg</span>
+<span class="go">type_pre</span>
+<span class="go">KC           3     139       6        5     365</span>
+<span class="go">KCa&#39;b&#39;     154  102337     245      997    1977</span>
+<span class="go">KCab-p       7     310   17899     3029     127</span>
+<span class="go">KCab-sc      4    2591    3975   247038    3419</span>
+<span class="go">KCg        380    1969      79     1526  250351</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="development.html" class="btn btn-neutral float-right" title="Development Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="admin.html" class="btn btn-neutral float-left" title="Admin Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

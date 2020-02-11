@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.3.6 documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.4 documentation</title>
   
 
   
@@ -25,6 +25,7 @@
         <script type="text/javascript" src="../../_static/underscore.js"></script>
         <script type="text/javascript" src="../../_static/doctools.js"></script>
         <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -59,7 +60,7 @@
             
             
               <div class="version">
-                0.3.6
+                0.4
               </div>
             
           
@@ -85,8 +86,10 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../notebooks/Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../faq.html">FAQ</a></li>
 </ul>
 
@@ -431,10 +434,10 @@
 <span class="sd">                If not provided, the server will use a default dataset for</span>
 <span class="sd">                all queries.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span><span class="p">:</span>
             <span class="n">token</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;NEUPRINT_APPLICATION_CREDENTIALS&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">token</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No token provided. Please provide one or set NEUPRINT_APPLICATION_CREDENTIALS&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
@@ -796,7 +799,7 @@
     <span class="c1">##</span>
     <span class="c1">## SKELETONS</span>
     <span class="c1">##</span>
-<div class="viewcode-block" id="Client.fetch_skeleton"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_skeleton">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_skeleton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;swc&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Client.fetch_skeleton"><a class="viewcode-back" href="../../client.html#neuprint.client.Client.fetch_skeleton">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_skeleton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;swc&#39;</span><span class="p">,</span> <span class="n">export_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fetch the skeleton for a neuron or segment.</span>
 <span class="sd">        </span>
@@ -806,12 +809,18 @@
 <span class="sd">            </span>
 <span class="sd">            format:</span>
 <span class="sd">                Either &#39;swc&#39; (a text format), &#39;json&#39;, or &#39;pandas&#39;.</span>
+<span class="sd">            </span>
+<span class="sd">            export_path:</span>
+<span class="sd">                Optional. Writes the ``.swc`` file to disk.</span>
 <span class="sd">        </span>
 <span class="sd">        Returns:</span>
 <span class="sd">            Either a string (swc), dict (json), or a DataFrame (pandas). </span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">format</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;swc&#39;</span><span class="p">,</span> <span class="s1">&#39;json&#39;</span><span class="p">,</span> <span class="s1">&#39;pandas&#39;</span><span class="p">),</span> \
             <span class="sa">f</span><span class="s1">&#39;Invalid format: </span><span class="si">{format}</span><span class="s1">&#39;</span>
+        
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">export_path</span> <span class="ow">or</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;swc&#39;</span><span class="p">,</span> \
+            <span class="s2">&quot;Only the swc format can be exported to disk.&quot;</span>
         
         <span class="k">try</span><span class="p">:</span>
             <span class="n">body</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
@@ -821,7 +830,11 @@
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{self.server}</span><span class="s2">/api/skeletons/skeleton/</span><span class="si">{self.dataset}</span><span class="s2">/</span><span class="si">{body}</span><span class="s2">&quot;</span>
         <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;swc&#39;</span><span class="p">:</span>
             <span class="n">url</span> <span class="o">+=</span> <span class="s1">&#39;?format=swc&#39;</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="n">swc_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_raw</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">export_path</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">export_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">swc_text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">swc_text</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_json</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">ispost</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;json&#39;</span><span class="p">:</span>

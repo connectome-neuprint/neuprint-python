@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.3.6 documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.4 documentation</title>
   
 
   
@@ -25,6 +25,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -61,7 +62,7 @@
             
             
               <div class="version">
-                0.3.6
+                0.4
               </div>
             
           
@@ -87,6 +88,7 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Common Queries</a><ul>
@@ -102,10 +104,11 @@
 <li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deprecated.html">Deprecated API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 
@@ -173,7 +176,31 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="common-queries">
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="common-queries">
 <span id="queries"></span><h1>Common Queries<a class="headerlink" href="#common-queries" title="Permalink to this headline">¶</a></h1>
 <p>Convenience functions for common queries.</p>
 <p>If you are familiar with the neuPrint data model and the
@@ -600,7 +627,7 @@ on the postsynaptic side of connections.</li>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame
-One row per connection, with columns for upstream and downstream properties.</p>
+One row per connection, with columns for upstream (pre-synaptic) and downstream (post-synaptic) properties.</p>
 </td>
 </tr>
 </tbody>
@@ -611,14 +638,14 @@ One row per connection, with columns for upstream and downstream properties.</p>
 <span class="gp">   ...: </span><span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="mi">425790257</span><span class="p">,</span> <span class="mi">424379864</span><span class="p">,</span> <span class="mi">329566174</span><span class="p">,</span> <span class="mi">329599710</span><span class="p">,</span> <span class="mi">420274150</span><span class="p">]</span>
 <span class="gp">   ...: </span><span class="n">fetch_simple_connections</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sources</span><span class="p">),</span> <span class="n">SC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">targets</span><span class="p">))</span>
 <span class="gh">Out[1]:</span>
-<span class="go">   upstream_bodyId  downstream_bodyId  weight              upstream_type    upstream_instance            downstream_type  downstream_instance                                       conn_roiInfo</span>
-<span class="go">0        329566174          425790257      43                    OA-VPM3   OA-VPM3(NO2/NO3)_R                        APL                APL_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 39, &#39;post&#39;: 39}, &#39;b&#39;L(R)&#39;: {...</span>
-<span class="go">1        329566174          424379864      37                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03e_pct  AVM03e_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 34, &#39;post&#39;: 34}, &#39;SLP(R)&#39;: ...</span>
-<span class="go">2        425790257          329566174      12                        APL                APL_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 12, &#39;post&#39;: 12}, &#39;gL(R)&#39;: {&#39;...</span>
-<span class="go">3        424379864          329566174       7                 AVM03e_pct  AVM03e_pct(AVM03)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 5, &#39;post&#39;: 5}, &#39;SLP(R)&#39;: {&#39;...</span>
-<span class="go">4        329599710          329566174       4  olfactory multi lvPN mALT        mPNX(AVM06)_R                    OA-VPM3   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 4, &#39;post&#39;: 4}, &#39;SIP(R)&#39;: {&#39;...</span>
-<span class="go">5        329566174          329599710       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R  olfactory multi lvPN mALT        mPNX(AVM06)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
-<span class="go">6        329566174          420274150       1                    OA-VPM3   OA-VPM3(NO2/NO3)_R                 AVM03m_pct  AVM03m_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="go">   bodyId_pre  bodyId_post  weight                   type_pre                  type_post         instance_pre        instance_post                                       conn_roiInfo</span>
+<span class="go">0   329566174    425790257      43                    OA-VPM3                        APL   OA-VPM3(NO2/NO3)_R                APL_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 39, &#39;post&#39;: 39}, &#39;b&#39;L(R)&#39;: {...</span>
+<span class="go">1   329566174    424379864      37                    OA-VPM3                 AVM03e_pct   OA-VPM3(NO2/NO3)_R  AVM03e_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 34, &#39;post&#39;: 34}, &#39;SLP(R)&#39;: ...</span>
+<span class="go">2   425790257    329566174      12                        APL                    OA-VPM3                APL_R   OA-VPM3(NO2/NO3)_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 12, &#39;post&#39;: 12}, &#39;gL(R)&#39;: {&#39;...</span>
+<span class="go">3   424379864    329566174       7                 AVM03e_pct                    OA-VPM3  AVM03e_pct(AVM03)_R   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 5, &#39;post&#39;: 5}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="go">4   329599710    329566174       4  olfactory multi lvPN mALT                    OA-VPM3        mPNX(AVM06)_R   OA-VPM3(NO2/NO3)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 4, &#39;post&#39;: 4}, &#39;SIP(R)&#39;: {&#39;...</span>
+<span class="go">5   329566174    329599710       1                    OA-VPM3  olfactory multi lvPN mALT   OA-VPM3(NO2/NO3)_R        mPNX(AVM06)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
+<span class="go">6   329566174    420274150       1                    OA-VPM3                 AVM03m_pct   OA-VPM3(NO2/NO3)_R  AVM03m_pct(AVM03)_R  {&#39;SNP(R)&#39;: {&#39;pre&#39;: 1, &#39;post&#39;: 1}, &#39;SLP(R)&#39;: {&#39;...</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -998,7 +1025,7 @@ The same criteria is used to filter both <code class="docutils literal notransla
 of the connection.
 By default, <code class="docutils literal notranslate"><span class="pre">SynapseCriteria(primary_only=True)</span></code> is used.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">primary_only</span></code> is specified in the criteria, then the resulting
-<code class="docutils literal notranslate"><span class="pre">upstream_roi</span></code> and <code class="docutils literal notranslate"><span class="pre">downstream_roi</span></code> columns will contain a single
+<code class="docutils literal notranslate"><span class="pre">roi_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">roi_post</span></code> columns will contain a single
 string (or <code class="docutils literal notranslate"><span class="pre">None</span></code>) in every row.</p>
 <p>Otherwise, the roi columns will contain a list of ROIs for every row.
 (Primary ROIs do not overlap, so every synapse resides in only one
@@ -1009,13 +1036,15 @@ See <a class="reference internal" href="synapsecriteria.html#neuprint.SynapseCri
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame in which each row represents a single synaptic connection
-between an upstream and downstream body.
-Synapse locations are listed in columns <code class="docutils literal notranslate"><span class="pre">[ux,</span> <span class="pre">uy,</span> <span class="pre">uz]</span></code> and <code class="docutils literal notranslate"><span class="pre">[dx,</span> <span class="pre">dy,</span> <span class="pre">dz]</span></code>
-for the upstream and downstream syanpses, respectively.
-The <code class="docutils literal notranslate"><span class="pre">upstream_roi</span></code> and <code class="docutils literal notranslate"><span class="pre">downstream_roi</span></code> columns will contain either strings
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p>DataFrame in which each row represents a single synaptic connection
+between an upstream (pre-synaptic) body and downstream (post-synaptic) body.</p>
+<p>Synapse locations are listed in columns <code class="docutils literal notranslate"><span class="pre">[x_pre,</span> <span class="pre">y_pre,</span> <span class="pre">z_pre]</span></code> and
+<code class="docutils literal notranslate"><span class="pre">[x_post,</span> <span class="pre">y_post,</span> <span class="pre">z_post]</span></code> for the upstream and downstream synapses,
+respectively.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">roi_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">roi_post</span></code> columns will contain either strings
 or lists-of-strings, depending on the <code class="docutils literal notranslate"><span class="pre">primary_only</span></code> synapse criteria as
 described above.</p>
+</p>
 </td>
 </tr>
 </tbody>
@@ -1024,23 +1053,23 @@ described above.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_synapse_connections</span><span class="p">,</span> <span class="n">SegmentCriteria</span> <span class="k">as</span> <span class="n">SC</span><span class="p">,</span> <span class="n">SynapseCriteria</span> <span class="k">as</span> <span class="n">SynC</span>
 <span class="gp">   ...: </span><span class="n">fetch_synapse_connections</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="mi">792368888</span><span class="p">),</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SynC</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PED(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;SMP(R)&#39;</span><span class="p">],</span> <span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 <span class="gh">Out[1]:</span>
-<span class="go">    upstream_bodyId  downstream_bodyId upstream_roi downstream_roi     ux     uy     uz     dx     dy     dz  upstream_confidence  downstream_confidence</span>
-<span class="go">0         792368888          754547386       PED(R)         PED(R)  14013  27747  19307  13992  27720  19313                0.996               0.401035</span>
-<span class="go">1         792368888          612742248       PED(R)         PED(R)  14049  27681  19417  14044  27662  19408                0.921               0.881487</span>
-<span class="go">2         792368888         5901225361       PED(R)         PED(R)  14049  27681  19417  14055  27653  19420                0.921               0.436177</span>
-<span class="go">3         792368888         5813117385       SMP(R)         SMP(R)  23630  29443  16297  23634  29437  16279                0.984               0.970746</span>
-<span class="go">4         792368888         5813083733       SMP(R)         SMP(R)  23630  29443  16297  23634  29419  16288                0.984               0.933871</span>
-<span class="go">5         792368888         5813058320       SMP(R)         SMP(R)  18662  34144  12692  18655  34155  12697                0.853               0.995000</span>
-<span class="go">6         792368888         5812981989       PED(R)         PED(R)  14331  27921  20099  14351  27928  20085                0.904               0.877373</span>
-<span class="go">7         792368888         5812981381       PED(R)         PED(R)  14331  27921  20099  14301  27919  20109                0.904               0.567321</span>
-<span class="go">8         792368888         5812981381       PED(R)         PED(R)  14013  27747  19307  14020  27747  19285                0.996               0.697836</span>
-<span class="go">9         792368888         5812979314       PED(R)         PED(R)  14331  27921  20099  14329  27942  20109                0.904               0.638362</span>
-<span class="go">10        792368888          424767514       PED(R)         PED(R)  14331  27921  20099  14324  27934  20085                0.904               0.985734</span>
-<span class="go">11        792368888          424767514       PED(R)         PED(R)  14013  27747  19307  14020  27760  19294                0.996               0.942831</span>
-<span class="go">12        792368888          424767514       PED(R)         PED(R)  14049  27681  19417  14040  27663  19420                0.921               0.993586</span>
-<span class="go">13        792368888          331662710       SMP(R)         SMP(R)  23630  29443  16297  23644  29429  16302                0.984               0.996389</span>
-<span class="go">14        792368888         1196854070       PED(R)         PED(R)  14331  27921  20099  14317  27935  20101                0.904               0.968408</span>
-<span class="go">15        792368888         1131831702       SMP(R)         SMP(R)  23630  29443  16297  23651  29434  16316                0.984               0.362952</span>
+<span class="go">    bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post</span>
+<span class="go">0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035</span>
+<span class="go">1    792368888    612742248  PED(R)   PED(R)  14049  27681  19417   14044   27662   19408           0.921         0.881487</span>
+<span class="go">2    792368888   5901225361  PED(R)   PED(R)  14049  27681  19417   14055   27653   19420           0.921         0.436177</span>
+<span class="go">3    792368888   5813117385  SMP(R)   SMP(R)  23630  29443  16297   23634   29437   16279           0.984         0.970746</span>
+<span class="go">4    792368888   5813083733  SMP(R)   SMP(R)  23630  29443  16297   23634   29419   16288           0.984         0.933871</span>
+<span class="go">5    792368888   5813058320  SMP(R)   SMP(R)  18662  34144  12692   18655   34155   12697           0.853         0.995000</span>
+<span class="go">6    792368888   5812981989  PED(R)   PED(R)  14331  27921  20099   14351   27928   20085           0.904         0.877373</span>
+<span class="go">7    792368888   5812981381  PED(R)   PED(R)  14331  27921  20099   14301   27919   20109           0.904         0.567321</span>
+<span class="go">8    792368888   5812981381  PED(R)   PED(R)  14013  27747  19307   14020   27747   19285           0.996         0.697836</span>
+<span class="go">9    792368888   5812979314  PED(R)   PED(R)  14331  27921  20099   14329   27942   20109           0.904         0.638362</span>
+<span class="go">10   792368888    424767514  PED(R)   PED(R)  14331  27921  20099   14324   27934   20085           0.904         0.985734</span>
+<span class="go">11   792368888    424767514  PED(R)   PED(R)  14013  27747  19307   14020   27760   19294           0.996         0.942831</span>
+<span class="go">12   792368888    424767514  PED(R)   PED(R)  14049  27681  19417   14040   27663   19420           0.921         0.993586</span>
+<span class="go">13   792368888    331662710  SMP(R)   SMP(R)  23630  29443  16297   23644   29429   16302           0.984         0.996389</span>
+<span class="go">14   792368888   1196854070  PED(R)   PED(R)  14331  27921  20099   14317   27935   20101           0.904         0.968408</span>
+<span class="go">15   792368888   1131831702  SMP(R)   SMP(R)  23630  29443  16297   23651   29434   16316           0.984         0.362952</span>
 </pre></div>
 </div>
 </dd></dl>
