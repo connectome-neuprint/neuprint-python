@@ -6,13 +6,12 @@ from textwrap import indent, dedent
 
 import numpy as np
 import pandas as pd
-from tqdm import trange
 from asciitree import LeftAligned
 
 from .client import inject_client
 from .segmentcriteria import SegmentCriteria
 from .synapsecriteria import SynapseCriteria
-from .utils import make_args_iterable
+from .utils import make_args_iterable, trange
 
 # ujson is faster than Python's builtin json module
 import ujson

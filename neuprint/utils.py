@@ -1,6 +1,23 @@
+"""
+Utility functions for manipulating neuprint-python output.
+"""
+import sys
 import inspect
 import functools
 from collections.abc import Iterable
+
+#
+# Import the notebook-aware version of tqdm if
+# we appear to be running within a notebook context.
+#
+try:
+    import ipykernel.iostream
+    if isinstance(sys.stdout, ipykernel.iostream.OutStream):
+        from tqdm.notebook import tqdm, trange
+    else:
+        from tqdm import tqdm, trange
+except ImportError:
+    from tqdm import tqdm, trange
 
 
 def make_iterable(x):
