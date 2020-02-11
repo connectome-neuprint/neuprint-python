@@ -643,7 +643,7 @@ class Client:
     ##
     ## SKELETONS
     ##
-    def fetch_skeleton(self, body, format='swc'):
+    def fetch_skeleton(self, body, format='swc', export_path=None):
         """
         Fetch the skeleton for a neuron or segment.
         
@@ -653,12 +653,18 @@ class Client:
             
             format:
                 Either 'swc' (a text format), 'json', or 'pandas'.
+            
+            export_path:
+                Optional. Writes the ``.swc`` file to disk.
         
         Returns:
             Either a string (swc), dict (json), or a DataFrame (pandas). 
         """
         assert format in ('swc', 'json', 'pandas'), \
             f'Invalid format: {format}'
+        
+        assert not export_path or format == 'swc', \
+            "Only the swc format can be exported to disk."
         
         try:
             body = int(body)
@@ -668,7 +674,11 @@ class Client:
         url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}"
         if format == 'swc':
             url += '?format=swc'
-            return self._fetch_raw(url, ispost=False).decode('utf-8')
+            swc_text = self._fetch_raw(url, ispost=False).decode('utf-8')
+            if export_path:
+                with open(export_path, 'w') as f:
+                    f.write(swc_text)
+            return swc_text
 
         result = self._fetch_json(url, ispost=False)
         if format == 'json':
