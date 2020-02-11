@@ -84,3 +84,9 @@ Also, ``neuprint-python`` comes with convenience functions to implement common q
         3  5813057274  None    2001     5094
         4  1131827390  None    2614     4421
 
+Next Steps
+----------
+
+Try the `interactive tutorial`_ for a tour of basic features in ``neuprint-python``.
+
+.. _interactive tutorial: notebooks/Tutorial.ipynb
