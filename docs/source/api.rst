@@ -11,4 +11,5 @@ API
    segmentcriteria
    synapsecriteria
    admin
+   utils
    deprecated
