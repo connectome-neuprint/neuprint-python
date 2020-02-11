@@ -147,7 +147,7 @@ class SegmentCriteria:
         assert min_roi_inputs <= 1 or inputRois, \
             "Can't stipulate min_roi_inputs without a list of inputRois"
         assert min_roi_outputs <= 1 or outputRois, \
-            "Can't stipulate min_roi_inputs without a list of outputRois"
+            "Can't stipulate min_roi_outputs without a list of outputRois"
 
         # If the user provided both intersecting rois and input/output rois,
         # force them to make the intersecting set a superset of the others.
