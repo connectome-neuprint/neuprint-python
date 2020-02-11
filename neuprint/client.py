@@ -278,10 +278,10 @@ class Client:
                 If not provided, the server will use a default dataset for
                 all queries.
         """
-        if token is None:
+        if not token:
             token = os.environ.get('NEUPRINT_APPLICATION_CREDENTIALS')
 
-        if token is None:
+        if not token:
             raise RuntimeError("No token provided. Please provide one or set NEUPRINT_APPLICATION_CREDENTIALS")
 
         if ':' in token:

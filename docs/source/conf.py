@@ -51,8 +51,22 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'IPython.sphinxext.ipython_console_highlighting',
-    'IPython.sphinxext.ipython_directive'
+    'IPython.sphinxext.ipython_directive',
+    'nbsphinx'
 ]
+
+nbsphinx_execute = 'always'
+os.environ['RUNNING_IN_SPHINX'] = '1'
+
+nbsphinx_prolog = """
+
+.. note::
+
+    This page corresponds to a Jupyter notebook you can try out yourself.  The original version is
+    `here <https://github.com/connectome-neuprint/neuprint-python/tree/master/docs/source/{{ env.doc2path(env.docname, base=None) }}>`_.
+
+----
+"""
 
 # generate autosummary pages
 autosummary_generate = True
@@ -83,7 +97,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None

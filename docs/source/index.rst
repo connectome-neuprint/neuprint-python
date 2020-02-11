@@ -47,6 +47,7 @@ Contents
    :maxdepth: 2
 
    quickstart
+   notebooks/Tutorial
    api
    development
    faq
