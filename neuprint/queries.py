@@ -542,7 +542,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     if min_weight > 1:
         weight_expr = dedent(f"""\
             WITH n, m, e
-            WHERE e.weight >= {min_weight}\
+            WHERE e.weight >= {min_weight}
             """)
         weight_expr = indent(weight_expr, ' '*8)[8:] 
     else:
@@ -790,40 +790,63 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     neurons_df.drop_duplicates('bodyId', inplace=True)    
     neurons_df.reset_index(drop=True, inplace=True)
 
-    # Fetch connections by batching only the source list.
+    if not rois or min_total_weight <= 1:
+        # If rois aren't specified, then we'll include 'NotPrimary' counts,
+        # and that means we can't filter by weight in the query.
+        # We'll filter afterwards.
+        weight_condition = ""
+    else:
+        weight_condition = dedent(f"""\
+            // -- Filter by total connection weight --
+            WITH n,m,e
+            WHERE e.weight >= {min_total_weight}
+        """)
+        weight_condition = indent(weight_condition, prefix=12*' ')[12:]
+    
+    # Fetch connections by batching either the source list
+    # or the target list, not both.
     # (It turns out that batching across BOTH sources and
     # targets is much slower than batching across only one.)
     conn_tables = []
-    for batch_start in trange(0, len(sources_df), batch_size):
-        batch_stop = batch_start + batch_size
-        source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
-        
-        batch_criteria = copy.copy(sources)
-        batch_criteria.bodyId = source_bodies
-        
-        if not rois or min_total_weight <= 1:
-            # If rois aren't specified, then we'll include 'NotPrimary' counts,
-            # and that means we can't filter by weight in the query.
-            # We'll filter afterwards.
-            weight_condition = ""
-        else:
-            weight_condition = dedent(f"""\
-                // -- Filter by total connection weight --
-                WITH n,m,e
-                WHERE e.weight >= {min_total_weight}
-            """)
-            weight_condition = indent(weight_condition, prefix=12*' ')[12:]
-        
-        q = f"""\
-            MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-            {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
-            {weight_condition}
-            RETURN n.bodyId as bodyId_pre,
-                   m.bodyId as bodyId_post,
-                   e.weight as weight,
-                   e.roiInfo as roiInfo
-        """
-        conn_tables.append(client.fetch_custom(q))
+    
+    if len(sources_df) <= len(targets_df):
+        # Break sources into batches
+        for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0)):
+            batch_stop = batch_start + batch_size
+            source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+            
+            batch_criteria = copy.copy(sources)
+            batch_criteria.bodyId = source_bodies
+            
+            q = f"""\
+                MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
+                {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+                {weight_condition}
+                RETURN n.bodyId as bodyId_pre,
+                       m.bodyId as bodyId_post,
+                       e.weight as weight,
+                       e.roiInfo as roiInfo
+            """
+            conn_tables.append(client.fetch_custom(q))
+    else:
+        # Break targets into batches
+        for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0)):
+            batch_stop = batch_start + batch_size
+            target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+            
+            batch_criteria = copy.copy(targets)
+            batch_criteria.bodyId = target_bodies
+            
+            q = f"""\
+                MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
+                {SegmentCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
+                {weight_condition}
+                RETURN n.bodyId as bodyId_pre,
+                       m.bodyId as bodyId_post,
+                       e.weight as weight,
+                       e.roiInfo as roiInfo
+            """
+            conn_tables.append(client.fetch_custom(q))
 
     # Combine batches
     connections_df = pd.concat(conn_tables, ignore_index=True)
