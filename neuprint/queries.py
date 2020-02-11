@@ -1264,7 +1264,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
         MATCH (n:{segment_criteria.label})-[:Contains]->(ss:SynapseSet),
               (ss)-[:Contains]->(s:Synapse)
 
-        {segment_criteria.all_conditions(prefix=8)}
+        {segment_criteria.all_conditions('n', 's', prefix=8)}
         {synapse_criteria.condition('n', 's', prefix=8)}
         
         RETURN n.bodyId as bodyId,
