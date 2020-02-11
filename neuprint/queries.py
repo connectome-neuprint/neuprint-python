@@ -17,9 +17,10 @@ from .utils import make_args_iterable
 # ujson is faster than Python's builtin json module
 import ujson
 
-NEURON_COLS = ['bodyId', 'instance', 'type', 'cellBodyFiber',
+NEURON_COLS = ['bodyId', 'instance', 'type',
                'pre', 'post', 'size',
                'status', 'cropped', 'statusLabel',
+               'cellBodyFiber',
                'somaRadius', 'somaLocation',
                'inputRois', 'outputRois', 'roiInfo']
 
