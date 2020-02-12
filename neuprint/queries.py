@@ -1268,7 +1268,6 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
               (ss)-[:Contains]->(s:Synapse)
 
         {synapse_criteria.condition('n', 's', prefix=8)}
-
         // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
         WITH DISTINCT n, s
         
