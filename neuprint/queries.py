@@ -1412,7 +1412,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         
         # If the user specified rois to filter synapses by, but hasn't specified rois
         # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
-        if sc.rois and not sc.rois:
+        if synapse_criteria.rois and not sc.rois:
             sc.rois = {*synapse_criteria.rois}
             sc.roi_req = 'any'
     
