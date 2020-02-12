@@ -14,20 +14,47 @@ and ``pip`` (on `PyPI <https://pypi.org/project/neuprint-python/>`_.
 The package version is automatically inferred from the git tag.
 To prepare a release, follow these steps:
 
-    .. code-block:: bash
-    
-        cd neuprint-python
-    
-        # Tag the git repo with the new version
-        git tag -a 0.3.1 -m 0.3.1
-        git push --tags origin
-        
-        # Build and upload the conda package
-        conda build conda-recipe
-        anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-0.3.1-py_0.tar.bz2
+.. code-block:: bash
 
-        # Build and upload the PyPI package
-        ./upload-to-pypi.sh        
+    cd neuprint-python
+
+    # Tag the git repo with the new version
+    git tag -a 0.3.1 -m 0.3.1
+    git push --tags origin
+    
+    # Build and upload the conda package
+    conda build conda-recipe
+    anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-0.3.1-py_0.tar.bz2
+
+    # Build and upload the PyPI package
+    ./upload-to-pypi.sh        
+
+
+Dependencies
+------------
+
+If you need to add dependencies to ``neuprint-python``, edit ``dependencies.txt`` (which is used by the conda recipe).
+You should also update ``environment.yml`` so that our binder container will acquire the new dependencies
+when users try out the interactive `tutorial`_.  After publishing a new conda package with the updated dependencies,
+follow these steps **on a Linux machine**:
+
+.. code-block:: bash
+
+    cd neuprint-python
+    
+    # Create an environment with the binder dependencies
+    BINDER_DEPS="neuprint-python jupyterlab ipywidgets bokeh holoviews hvplot"
+    conda create -n neuprint-python -c flyem-forge -c conda-forge ${BINDER_DEPS}
+
+    # Export to environment.yml, but relax the neuprint-python version requirement
+    conda env export -n neuprint-python > environment.yml
+    sed --in-place 's/neuprint-python=.*/neuprint-python/g'
+    
+    git commit -m "Updated environment.yml for binder" environment.yml
+    git push origin master
+
+
+.. _tutorial: notebooks/Tutorial.ipynb
 
 Documentation
 -------------
@@ -35,33 +62,45 @@ Documentation
 The docs are built with Sphinx.  See ``docs/requirements.txt`` for the docs dependencies.
 To build the docs locally:
 
-    .. code-block:: bash
-    
-        cd neuprint-python/docs
-        make html
-        open build/html/index.html
+.. code-block:: bash
+
+    cd neuprint-python/docs
+    make html
+    open build/html/index.html
 
 The Travis-CI build will automatically deploy the docs to github pages using `doctr <https://github.com/drdoctr/doctr/>`_,
 every time you push to the the master branch.
 The docs are also built for development branches, but they're deployed to a special location:
 ``https://connectome-neuprint.github.io/neuprint-python/docs-<BRANCH_NAME>``
 
-    .. warning::
-    
-        The docs are rebuilt and published every time you push to the master branch.
-        If you push (and document) API-breaking changes without publishing new packages,
-        the documentation will not correspond to the ``conda`` and ``pip`` packages!
-        Only push to master when you're ready to deploy new packages.
+.. warning::
+
+    The docs are rebuilt and published every time you push to the master branch.
+    If you push (and document) API-breaking changes without publishing new packages,
+    the documentation will not correspond to the ``conda`` and ``pip`` packages!
+    Only push to master when you're ready to deploy new packages.
+
+
+Interactive Tutorial
+--------------------
+
+The documentation contains a `tutorial`_ which can be launched interactively via binder.
+To update the tutorial contents, simply edit the ``.ipynb`` file and re-build the docs.
+
+If the binder setup is broken, make sure the dependencies are configured properly as described above.
+
+It takes a few minutes to initialize the binder container for the first time after a new release.
+Consider sparing your users from that by clicking the binder button yourself after each release.
 
 Tests
 -----
 
-The tests require ``pytest``, and they rely on the public ``hemibrain:v1.0`` dataset on ``neuprint.janelia.org``,
+The tests require ``pytest``, and they rely on the public ``hemibrain:v1.0.1`` dataset on ``neuprint.janelia.org``,
 which means you must define ``NEUPRINT_APPLICATION_CREDENTIALS`` in your environment before running them.
 
 To run the tests:
 
-    .. code-block:: bash
-    
-        cd neuprint-python
-        PYTHONPATH=. pytest neuprint/tests
+.. code-block:: bash
+
+    cd neuprint-python
+    PYTHONPATH=. pytest neuprint/tests

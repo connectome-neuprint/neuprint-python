@@ -11,13 +11,13 @@ repositories, including `neuprint-python <https://github.com/connectome-neuprint
 
 - `CBLAST <https://github.com/connectome-neuprint/CBLAST>`_ clusters neurons by cell type according to their common connectivity.
 - `neuVid <https://github.com/connectome-neuprint/neuVid>`_ is a collection of scripts to generate animations of neuron meshes using Blender.
-- `react-skeleton <https://github.com/connectome-neuprint/react-skeleton>`_ is a `react` component to display
+- `react-skeleton <https://github.com/connectome-neuprint/react-skeleton>`_ is a ``React`` component to display
   neurons skeletons in 3D using `SharkViewer <https://github.com/JaneliaSciComp/SharkViewer>`_.
 
 DVID
 ----
 
-`DVID <https://dvid.io>`_ supports a versioned storage service for image volumes.
+`DVID <https://dvid.io>`_ provides a versioned storage service for image volumes.
 It serves as the primary storage engine for FlyEM's reconstruction efforts.
 
 
