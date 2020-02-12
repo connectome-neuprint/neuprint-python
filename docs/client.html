@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Client &mdash; neuprint-python 0.4.2+3.gd0fb2ea documentation</title>
+  <title>Client &mdash; neuprint-python 0.4.3 documentation</title>
   
 
   
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.2+3.gd0fb2ea
+                0.4.3
               </div>
             
           
@@ -193,18 +193,17 @@
 </style>
 <div class="section" id="client">
 <span id="id1"></span><h1>Client<a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h1>
-<span class="target" id="module-neuprint.client"></span><p>The <code class="docutils literal notranslate"><span class="pre">client</span></code> module contains the <code class="docutils literal notranslate"><span class="pre">Client</span></code> object and related utility functions.</p>
-<p>All communication to the neuPrint server is peformed using a <code class="docutils literal notranslate"><span class="pre">Client</span></code> object.
-Holds your authorization credentials, the dataset name to use,
-and other connection settings.</p>
-<p>Most <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> functions do not require you to explicitly
-provide a Client object to use. Instead, the first <code class="docutils literal notranslate"><span class="pre">Client</span></code> you
-create will be stored as the default <code class="docutils literal notranslate"><span class="pre">Client</span></code> to be used with all
-<code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> functions if you don’t explicitly specify one.</p>
+<span class="target" id="module-neuprint.client"></span><p>All communication to the neuPrint server is peformed using a
+<a class="reference internal" href="#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> object, which holds your authorization
+credentials, the dataset name to use, and other connection settings.
+(To obtain your authorization credentials, see the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.)</p>
+<p>For commonly used queries, see <a class="reference internal" href="queries.html#queries"><span class="std std-ref">Common Queries</span></a>.
+Or you can implement your own cypher queries using <a class="reference internal" href="queries.html#neuprint.queries.fetch_custom" title="neuprint.queries.fetch_custom"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom()</span></code></a>.s</p>
 <p class="rubric">Example</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">fetch_custom</span><span class="p">,</span> <span class="n">fetch_neurons</span>
 
-<span class="gp">In [2]: </span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain:v1.0&#39;</span><span class="p">)</span>
+<span class="gp">In [2]: </span><span class="c1"># Create a default client. Will be implicitly used for all subsequent queries.</span>
+<span class="gp">   ...: </span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain:v1.0&#39;</span><span class="p">)</span>
 
 <span class="gp">In [3]: </span><span class="n">fetch_custom</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="gp">   ...: </span><span class="s2">    MATCH (n: Neuron)</span>
@@ -252,6 +251,8 @@ shown in the console by default.  To display them, see
 </tr>
 </tbody>
 </table>
+<p><a class="reference internal" href="#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> methods correspond directly to built-in
+<a class="reference external" href="https://neuprint.janelia.org/help/api?dataset=hemibrain%3Av1.0.1&amp;qt=findneurons&amp;q=1">neuprintHTTP API endpoints</a>.</p>
 <table border="1" class="longtable docutils">
 <colgroup>
 <col width="10%" />
@@ -321,6 +322,9 @@ shown in the console by default.  To display them, see
 <dt id="neuprint.client.Client">
 <em class="property">class </em><code class="descclassname">neuprint.client.</code><code class="descname">Client</code><span class="sig-paren">(</span><em>server</em>, <em>dataset=None</em>, <em>token=None</em>, <em>verify=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/client.html#Client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.client.Client" title="Permalink to this definition">¶</a></dt>
 <dd><p>Client constructor.</p>
+<p>The first <code class="docutils literal notranslate"><span class="pre">Client</span></code> you create will be stored as the default
+<code class="docutils literal notranslate"><span class="pre">Client</span></code> to be used with all <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> functions
+if you don’t explicitly specify one.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

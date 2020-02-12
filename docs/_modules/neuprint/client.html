@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.4.2+3.gd0fb2ea documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.4.3 documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.4.2+3.gd0fb2ea
+                0.4.3
               </div>
             
           
@@ -155,16 +155,14 @@
             
   <h1>Source code for neuprint.client</h1><div class="highlight"><pre>
 <span></span><span class="sd">&#39;&#39;&#39;</span>
-<span class="sd">The ``client`` module contains the ``Client`` object and related utility functions.</span>
+<span class="sd">All communication to the neuPrint server is peformed using a</span>
+<span class="sd">:py:class:`Client` object, which holds your authorization</span>
+<span class="sd">credentials, the dataset name to use, and other connection settings.</span>
+<span class="sd">(To obtain your authorization credentials, see the :ref:`quickstart`.)</span>
 
-<span class="sd">All communication to the neuPrint server is peformed using a ``Client`` object.</span>
-<span class="sd">Holds your authorization credentials, the dataset name to use,</span>
-<span class="sd">and other connection settings.</span>
 
-<span class="sd">Most ``neuprint-python`` functions do not require you to explicitly</span>
-<span class="sd">provide a Client object to use. Instead, the first ``Client`` you</span>
-<span class="sd">create will be stored as the default ``Client`` to be used with all</span>
-<span class="sd">``neuprint-python`` functions if you don&#39;t explicitly specify one.</span>
+<span class="sd">For commonly used queries, see :ref:`queries`.</span>
+<span class="sd">Or you can implement your own cypher queries using :py:func:`.fetch_custom()`.s</span>
 
 <span class="sd">Example:</span>
 
@@ -172,7 +170,8 @@
 <span class="sd">    </span>
 <span class="sd">        In [1]: from neuprint import Client, fetch_custom, fetch_neurons</span>
 
-<span class="sd">        In [2]: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0&#39;)</span>
+<span class="sd">        In [2]: # Create a default client. Will be implicitly used for all subsequent queries.</span>
+<span class="sd">           ...: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0&#39;)</span>
 
 <span class="sd">        In [3]: fetch_custom(&quot;&quot;&quot;\\</span>
 <span class="sd">           ...:     MATCH (n: Neuron)</span>
@@ -416,6 +415,10 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Client constructor.</span>
 <span class="sd">        </span>
+<span class="sd">        The first ``Client`` you create will be stored as the default</span>
+<span class="sd">        ``Client`` to be used with all ``neuprint-python`` functions</span>
+<span class="sd">        if you don&#39;t explicitly specify one.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            server:</span>
 <span class="sd">                URL of neuprintHttp server</span>

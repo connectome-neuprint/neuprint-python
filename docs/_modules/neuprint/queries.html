@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.4.2+3.gd0fb2ea documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.4.3 documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.4.2+3.gd0fb2ea
+                0.4.3
               </div>
             
           
@@ -500,7 +500,7 @@
 <span class="s2">               END as somaLocation</span>
 <span class="s2">        ORDER BY n.bodyId</span>
 <span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
+    <span class="n">neuron_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
     <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span> <span class="o">=</span> <span class="n">_process_neuron_df</span><span class="p">(</span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_counts_df</span></div>
 
@@ -898,14 +898,14 @@
 
     <span class="k">def</span> <span class="nf">_prepare_criteria</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">matchvar</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">matchvar</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
 
         <span class="c1"># A previous version of fetch_adjacencies() accepted a list of bodyIds.</span>
         <span class="c1"># We still support that for now.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">SegmentCriteria</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">),</span> \
                 <span class="sa">f</span><span class="s2">&quot;Invalid criteria: </span><span class="si">{criteria}</span><span class="s2">&quot;</span>
-            <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">matchvar</span><span class="p">,</span> <span class="n">bodyId</span><span class="o">=</span><span class="n">criteria</span><span class="p">)</span>
+            <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">matchvar</span><span class="p">,</span> <span class="n">bodyId</span><span class="o">=</span><span class="n">criteria</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
 
         <span class="n">criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">criteria</span><span class="p">)</span>
         <span class="n">criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
@@ -1127,7 +1127,7 @@
 <span class="sd">            3   202916528    234292899       4</span>
 <span class="sd">            4   202916528    264986706       2        </span>
 <span class="sd">     &quot;&quot;&quot;</span>
-    <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">criteria</span><span class="p">,</span> <span class="n">criteria</span><span class="p">,</span> <span class="n">include_nonprimary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">export_dir</span><span class="o">=</span><span class="n">export_dir</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span></div>
 
 
@@ -1251,7 +1251,7 @@
 <span class="sd">            [5778 rows x 4 columns]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">intermediate_criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">intermediate_criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">)</span>
+        <span class="n">intermediate_criteria</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">&quot;Traced&quot;</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
     
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">intermediate_criteria</span><span class="o">.</span><span class="n">inputRois</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">intermediate_criteria</span><span class="o">.</span><span class="n">outputRois</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> \
         <span class="s2">&quot;This function doesn&#39;t support search criteria that specifies inputRois or outputRois. &quot;</span>\
@@ -1281,7 +1281,7 @@
 <span class="s2">            {{}},</span><span class="si">{timeout_ms}</span><span class="s2">) YIELD value</span>
 <span class="s2">            RETURN value.path as path, value.weights AS weights</span>
 <span class="s2">    &quot;&quot;&quot;</span>
-    <span class="n">results_df</span> <span class="o">=</span> <span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+    <span class="n">results_df</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
     
     <span class="n">table_indexes</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">table_bodies</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1550,7 +1550,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">prepare_sc</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">sc</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">()</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="n">SegmentCriteria</span><span class="p">(</span><span class="n">client</span><span class="o">=</span><span class="n">client</span><span class="p">)</span>
         
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
             <span class="k">assert</span> <span class="s1">&#39;bodyId&#39;</span> <span class="ow">in</span> <span class="n">sc</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> \
