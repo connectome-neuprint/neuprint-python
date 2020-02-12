@@ -1452,7 +1452,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
               (mss)-[:Contains]->(ms:Synapse),
               (ns)-[:SynapsesTo]->(ms)
 
-        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm'), prefix=8)}
+        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
