@@ -1261,11 +1261,16 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
     # Fetch results
     cypher = dedent(f"""\
-        MATCH (n:{segment_criteria.label})-[:Contains]->(ss:SynapseSet),
+        MATCH (n:{segment_criteria.label})
+        {segment_criteria.all_conditions('n', prefix=8)}
+
+        MATCH (n)-[:Contains]->(ss:SynapseSet),
               (ss)-[:Contains]->(s:Synapse)
 
-        {segment_criteria.all_conditions('n', 's', prefix=8)}
         {synapse_criteria.condition('n', 's', prefix=8)}
+
+        // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
+        WITH DISTINCT n, s
         
         RETURN n.bodyId as bodyId,
                s.type as type,
@@ -1447,7 +1452,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
               (mss)-[:Contains]->(ms:Synapse),
               (ns)-[:SynapsesTo]->(ms)
 
-        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
+        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm'), prefix=8)}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
