@@ -344,7 +344,7 @@ def fetch_neurons(criteria, *, client=None):
                END as somaLocation
         ORDER BY n.bodyId
     """
-    neuron_df = fetch_custom(q, client=client)
+    neuron_df = client.fetch_custom(q)
     neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
     return neuron_df, roi_counts_df
 
@@ -742,14 +742,14 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
     def _prepare_criteria(criteria, matchvar):
         if criteria is None:
-            criteria = SegmentCriteria(matchvar)
+            criteria = SegmentCriteria(matchvar, client=client)
 
         # A previous version of fetch_adjacencies() accepted a list of bodyIds.
         # We still support that for now.
         if not isinstance(criteria, SegmentCriteria):
             assert isinstance(criteria, collections.abc.Iterable), \
                 f"Invalid criteria: {criteria}"
-            criteria = SegmentCriteria(matchvar, bodyId=criteria)
+            criteria = SegmentCriteria(matchvar, bodyId=criteria, client=client)
 
         criteria = copy.copy(criteria)
         criteria.matchvar = matchvar
@@ -971,7 +971,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             3   202916528    234292899       4
             4   202916528    264986706       2        
      """
-    criteria = SegmentCriteria(status="Traced", cropped=False)
+    criteria = SegmentCriteria(status="Traced", cropped=False, client=client)
     return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir, batch_size=batch_size, client=client)
 
 
@@ -1095,7 +1095,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
             [5778 rows x 4 columns]
     """
     if intermediate_criteria is None:
-        intermediate_criteria = SegmentCriteria(status="Traced")
+        intermediate_criteria = SegmentCriteria(status="Traced", client=client)
     
     assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
         "This function doesn't support search criteria that specifies inputRois or outputRois. "\
@@ -1125,7 +1125,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
             {{}},{timeout_ms}) YIELD value
             RETURN value.path as path, value.weights AS weights
     """
-    results_df = fetch_custom(q)
+    results_df = client.fetch_custom(q)
     
     table_indexes = []
     table_bodies = []
@@ -1394,7 +1394,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     """
     def prepare_sc(sc, matchvar):
         if sc is None:
-            sc = SegmentCriteria()
+            sc = SegmentCriteria(client=client)
         
         if isinstance(sc, pd.DataFrame):
             assert 'bodyId' in sc.columns, \
