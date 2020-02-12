@@ -631,7 +631,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             Limit results to connections within the listed ROIs.
 
         min_roi_weight:
-            Limit results to connections of at least this strength within any particular ROI.
+            Limit results to connections of at least this strength within at least one of the returned ROIs.
         
         min_total_weight:
             Limit results to connections that are at least this strong when totaled across all ROIs.
@@ -1306,7 +1306,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
 
 @inject_client
-def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, *, client=None):
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, *, client=None):
     """
     Fetch synaptic-level connections between source and target neurons.
     
@@ -1350,6 +1350,18 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             (Primary ROIs do not overlap, so every synapse resides in only one
             (or zero) primary ROI.)
             See :py:class:`.SynapseCriteria` for details.
+
+        min_total_weight:
+            If the total weight of the connection between two bodies is not at least
+            this strong, don't include the synapses for that connection in the results.
+            
+            Note:
+                This filters for total connection weight, regardless of the weight
+                within any particular ROI.  So, if your ``SynapseCriteria`` limits
+                results to a particular ROI, but two bodies connect in multiple ROIs,
+                then the number of synapses returned for the two bodies may appear to
+                be less than ``min_total_weight``. That's because you filtered out
+                the synapses in other ROIs.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -1443,7 +1455,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     
     # Fetch results
     cypher = dedent(f"""\
-        MATCH (n:{source_criteria.label})-[:ConnectsTo]->(m:{target_criteria.label}),
+        MATCH (n:{source_criteria.label})-[e:ConnectsTo]->(m:{target_criteria.label}),
               (n)-[:Contains]->(nss:SynapseSet),
               (m)-[:Contains]->(mss:SynapseSet),
               (nss)-[:ConnectsTo]->(mss),
@@ -1451,6 +1463,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
               (mss)-[:Contains]->(ms:Synapse),
               (ns)-[:SynapsesTo]->(ms)
 
+        WHERE e.weight >= {min_total_weight}
+        
         {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
