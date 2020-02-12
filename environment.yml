@@ -61,7 +61,7 @@ dependencies:
   - nbconvert=5.6.1=py37_0
   - nbformat=5.0.4=py_0
   - ncurses=6.1=hf484d3e_1002
-  - neuprint-python=0.3.6=py_0
+  - neuprint-python
   - notebook=6.0.3=py37_0
   - numpy=1.18.1=py37h95a1406_0
   - olefile=0.46=py_0
