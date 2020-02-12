@@ -1,14 +1,12 @@
 '''
-The ``client`` module contains the ``Client`` object and related utility functions.
+All communication to the neuPrint server is peformed using a
+:py:class:`Client` object, which holds your authorization
+credentials, the dataset name to use, and other connection settings.
+(To obtain your authorization credentials, see the :ref:`quickstart`.)
 
-All communication to the neuPrint server is peformed using a ``Client`` object.
-Holds your authorization credentials, the dataset name to use,
-and other connection settings.
 
-Most ``neuprint-python`` functions do not require you to explicitly
-provide a Client object to use. Instead, the first ``Client`` you
-create will be stored as the default ``Client`` to be used with all
-``neuprint-python`` functions if you don't explicitly specify one.
+For commonly used queries, see :ref:`queries`.
+Or you can implement your own cypher queries using :py:func:`.fetch_custom()`.s
 
 Example:
 
@@ -16,7 +14,8 @@ Example:
     
         In [1]: from neuprint import Client, fetch_custom, fetch_neurons
 
-        In [2]: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
+        In [2]: # Create a default client. Will be implicitly used for all subsequent queries.
+           ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
 
         In [3]: fetch_custom("""\\
            ...:     MATCH (n: Neuron)
@@ -260,6 +259,10 @@ class Client:
         """
         Client constructor.
         
+        The first ``Client`` you create will be stored as the default
+        ``Client`` to be used with all ``neuprint-python`` functions
+        if you don't explicitly specify one.
+
         Args:
             server:
                 URL of neuprintHttp server

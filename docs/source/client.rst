@@ -14,6 +14,11 @@ Client
     set_default_client
     setup_debug_logging
 
+
+:py:class:`Client` methods correspond directly to built-in
+`neuprintHTTP API endpoints <https://neuprint.janelia.org/help/api?dataset=hemibrain%3Av1.0.1&qt=findneurons&q=1>`_.
+
+
 .. autosummary::
 
     Client
