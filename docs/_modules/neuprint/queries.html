@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.4+1.g275cb67 documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.4.2 documentation</title>
   
 
   
@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.4+1.g275cb67
+                0.4.2
               </div>
             
           
@@ -1417,11 +1417,16 @@
 
     <span class="c1"># Fetch results</span>
     <span class="n">cypher</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        MATCH (n:</span><span class="si">{segment_criteria.label}</span><span class="s2">)-[:Contains]-&gt;(ss:SynapseSet),</span>
+<span class="s2">        MATCH (n:</span><span class="si">{segment_criteria.label}</span><span class="s2">)</span>
+<span class="s2">        {segment_criteria.all_conditions(&#39;n&#39;, prefix=8)}</span>
+
+<span class="s2">        MATCH (n)-[:Contains]-&gt;(ss:SynapseSet),</span>
 <span class="s2">              (ss)-[:Contains]-&gt;(s:Synapse)</span>
 
-<span class="s2">        {segment_criteria.all_conditions(&#39;n&#39;, &#39;s&#39;, prefix=8)}</span>
 <span class="s2">        {synapse_criteria.condition(&#39;n&#39;, &#39;s&#39;, prefix=8)}</span>
+
+<span class="s2">        // De-duplicate &#39;s&#39; because &#39;pre&#39; synapses can appear in more than one SynapseSet</span>
+<span class="s2">        WITH DISTINCT n, s</span>
 <span class="s2">        </span>
 <span class="s2">        RETURN n.bodyId as bodyId,</span>
 <span class="s2">               s.type as type,</span>
