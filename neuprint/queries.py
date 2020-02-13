@@ -8,13 +8,13 @@ import numpy as np
 import pandas as pd
 from asciitree import LeftAligned
 
-from .client import inject_client
+# ujson is faster than Python's builtin json module
+import ujson
+
+from .client import inject_client, NeuprintTimeoutError
 from .segmentcriteria import SegmentCriteria
 from .synapsecriteria import SynapseCriteria
 from .utils import make_args_iterable, trange
-
-# ujson is faster than Python's builtin json module
-import ujson
 
 NEURON_COLS = ['bodyId', 'instance', 'type',
                'pre', 'post', 'size',
@@ -762,32 +762,50 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
         return criteria
 
-    def _fetch_neurons(criteria):
+    def _fetch_neurons(criteria, timeout):
         matchvar = criteria.matchvar
         q = f"""\
-            MATCH ({matchvar}:{criteria.label})
-            {criteria.all_conditions(prefix=12)}
-            RETURN {matchvar}.bodyId as bodyId,
-                   {matchvar}.instance as instance,
-                   {matchvar}.type as type
-            ORDER BY {matchvar}.bodyId
+            CALL apoc.cypher.runTimeboxed("
+                MATCH ({matchvar}:{criteria.label})
+                {criteria.all_conditions(prefix=16)}
+                // count() is used here just to force an empty
+                // result if the whole list can'e be fetched.
+                // Otherwise, runTimeBoxed() will return a partial list.
+                WITH {matchvar}, count({matchvar}) as c
+                RETURN {matchvar}.bodyId as bodyId,
+                       {matchvar}.instance as instance,
+                       {matchvar}.type as type
+            ", {{}}, {timeout*1000}) YIELD value
+            RETURN value.bodyId as bodyId,
+                   value.instance as instance,
+                   value.type as type
+            ORDER BY bodyId
         """
-        return client.fetch_custom(q)
+        try:
+            return client.fetch_custom(q)
+        except NeuprintTimeoutError:
+            return []
 
     # Ensure sources/targets are SegmentCriteria
     sources = _prepare_criteria(sources, 'n')
     targets = _prepare_criteria(targets, 'm')
 
-    # Fetch neuron lists
-    # (We'll need to filter these below, after we know
-    # which ones are actually involved in connections.)
-    sources_df = _fetch_neurons(sources)
-    targets_df = _fetch_neurons(targets)
+    # Fetch source/target neuron lists.
+    # We'll batch our queries across the shorter of the two.
+    # If one list is too long to actually fetch without timing out
+    # (e.g. if the user asks for all segments),
+    # then we'll defer fetching it until after we've fetched the connections.
+    # See creation of neurons_df, below.
+    sources_df = _fetch_neurons(sources, timeout=5)
+    targets_df = _fetch_neurons(targets, timeout=5)
 
-    # Concatenate sources and targets
-    neurons_df = pd.concat((sources_df, targets_df), ignore_index=True)
-    neurons_df.drop_duplicates('bodyId', inplace=True)    
-    neurons_df.reset_index(drop=True, inplace=True)
+    if len(sources_df) == 0 and len(targets_df) == 0:
+        sources_df = _fetch_neurons(sources, timeout=120)
+        targets_df = _fetch_neurons(targets, timeout=120)
+
+    if len(sources_df) == 0 and len(targets_df) == 0:
+        raise RuntimeError("Couldn't fetch either source list or target "
+                           "list within a reasonable timeout.")
 
     if not rois or min_total_weight <= 1:
         # If rois aren't specified, then we'll include 'NotPrimary' counts,
@@ -808,7 +826,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     # targets is much slower than batching across only one.)
     conn_tables = []
     
-    if len(sources_df) <= len(targets_df):
+    if len(targets_df) == 0 or len(sources_df) <= len(targets_df):
         # Break sources into batches
         for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0)):
             batch_stop = batch_start + batch_size
@@ -910,12 +928,55 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     # that can occur in the case of weak inter-ROI connnections.
     roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
 
-    # Drop neurons that matched sources or targets but aren't mentioned in the final connection table.
+    ##
+    ## Construct neurons_df
+    ##
+
+    # Below, drop neurons that matched sources or targets
+    # but aren't mentioned in the final connection table.
     _connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
-    neurons_df.query('bodyId in @_connected_bodies', inplace=True)
-    neurons_df.reset_index(drop=True, inplace=True)
-    
-    # Export to CSV
+
+    if len(sources_df) and len(targets_df):
+        # Concatenate sources and targets
+        neurons_df = pd.concat((sources_df, targets_df), ignore_index=True)
+        neurons_df.query('bodyId in @_connected_bodies', inplace=True)
+        neurons_df.drop_duplicates('bodyId', inplace=True)
+        neurons_df.reset_index(drop=True, inplace=True)
+    else:
+        # Since fetching either the source list or target list timed out above,
+        # we need to fetch the missing info based on the adjacencies we
+        # actually found, and fetch it in batches.
+        if len(sources_df) == 0:
+            missing_bodies = roi_conn_df['bodyId_pre'].unique()
+            missing_label = sources.label
+            neurons_df = targets_df.query('bodyId in @_connected_bodies')
+        else:
+            missing_bodies = roi_conn_df['bodyId_post'].unique()
+            missing_label = targets.label
+            neurons_df = sources_df.query('bodyId in @_connected_bodies')
+
+        batches = []
+        for start in trange(0, len(missing_bodies), 10_000):
+            batch_bodies = missing_bodies[start:start+10_000]
+            q = f"""\
+                WITH {[*batch_bodies]} as bodies
+                MATCH (n:{missing_label})
+                WHERE n.bodyId in bodies
+                RETURN n.bodyId as bodyId,
+                       n.instance as instance,
+                       n.type as type
+                ORDER BY n.bodyId
+            """
+            batches.append( fetch_custom(q) )
+
+        neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
+        neurons_df.query('bodyId in @_connected_bodies', inplace=True)
+        neurons_df.drop_duplicates('bodyId', inplace=True)
+        neurons_df.reset_index(drop=True, inplace=True)
+
+    ##
+    ## Export to CSV
+    ##
     if export_dir:
         os.makedirs(export_dir, exist_ok=True)
 
