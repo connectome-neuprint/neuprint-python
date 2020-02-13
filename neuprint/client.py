@@ -71,6 +71,8 @@ logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
 NEUPRINT_CLIENTS = {}
 
+class NeuprintTimeoutError(HTTPError):
+    pass
 
 def setup_debug_logging():
     """
@@ -122,7 +124,15 @@ def setup_debug_logging():
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
     
+    enable_debug_logging()
+
+
+def enable_debug_logging():
     logger.setLevel(logging.DEBUG)
+
+
+def disable_debug_logging():
+    logger.setLevel(logging.INFO)
 
 
 def default_client():
@@ -244,8 +254,11 @@ def verbose_errors(f):
                     except Exception:
                         pass
             
-            new_ex = copy.copy(ex)
-            new_ex.args = (msg, *ex.args[1:])
+            if ex.response and 'timeout' in ex.response.content.decode('utf-8').lower():
+                new_ex = NeuprintTimeoutError(msg, *ex.args[1:], response=ex.response, request=ex.request)
+            else:
+                new_ex = copy.copy(ex)
+                new_ex.args = (msg, *ex.args[1:])
             
             # In case this decorator is used twice in a nested call,
             # mark it as already modified it doesn't get modified twice.
