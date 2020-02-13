@@ -1619,3 +1619,62 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     syn_df['confidence_post'] = syn_df['confidence_post'].astype(np.float32)
 
     return syn_df
+
+
+@inject_client
+def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
+    """
+    Compute an estimate of "output completeness" for a set of neurons.
+    Output completeness is defined as the fraction of post-synaptic
+    connections which belong to Traced neurons.
+    
+    Args:
+        criteria (:py:class:`.SegmentCriteria`):
+            Defines the set of neurons for which output completeness should be computed.
+    Returns:
+        DataFrame with columns ``["traced_weight", "untraced_weight", "total_weight", "completeness"]``
+    """
+    assert isinstance(criteria, SegmentCriteria)
+    if batch_size is None:
+        return _fetch_output_completeness(criteria, client)
+    
+    q = f"""\
+        MATCH ({criteria.matchvar}:{criteria.label})
+        {criteria.all_conditions(prefix=12)}
+        RETURN n.bodyId as bodyId
+    """
+    bodies = fetch_custom(q)['bodyId']
+    
+    batch_results = []
+    for start in trange(0, len(bodies), batch_size):
+        criteria = copy.copy(criteria)
+        criteria.bodyId = bodies[start:start+batch_size]
+        batch_results.append( _fetch_output_completeness(criteria, client) )
+    return pd.concat( batch_results, ignore_index=True )
+    
+
+def _fetch_output_completeness(criteria, client):
+    # Fetch all downstream connections.
+    downstream_criteria = SegmentCriteria(label='Segment')
+    neuron_df, conn_df = fetch_adjacencies(criteria, downstream_criteria, batch_size=100,
+                                           properties=['status'], client=client)
+
+    neuron_df['status'].fillna('None', inplace=True)
+
+    # Convert to total connnections (not per-ROI connections)
+    conn_df = conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+    
+    # Append downstream status
+    conn_df = conn_df.merge(neuron_df[['bodyId', 'status']], 'left', left_on='bodyId_post', right_on='bodyId')
+    
+    traced_weights = conn_df.query('status == "Traced"').groupby('bodyId_pre')['weight'].sum().rename('traced_weight')
+    untraced_weights = conn_df.query('status != "Traced" or status.isnull()').groupby('bodyId_pre')['weight'].sum().rename('untraced_weight')
+
+    # Calculate completion stats (traced/untraced/total)
+    completion_stats_df = pd.DataFrame(traced_weights).merge(untraced_weights, 'outer', left_index=True, right_index=True)
+    completion_stats_df = completion_stats_df.fillna(0)
+    completion_stats_df['total_weight'] = completion_stats_df.eval('traced_weight + untraced_weight')
+    completion_stats_df['completeness'] = completion_stats_df.eval('traced_weight / total_weight')
+
+    completion_stats_df = completion_stats_df.reset_index().rename(columns={'bodyId_pre': 'bodyId'})
+    return completion_stats_df[['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']]
