@@ -56,17 +56,21 @@ class SegmentCriteria:
 
             instance (str or list of str):
                 If ``regex=True``, then the instance will be matched as a regular expression.
-                Otherwise, only exact matches are found.
+                Otherwise, only exact matches are found. To search for neurons with no instance
+                at all, use ``instance=[None]``.
 
             type (str or list of str):
                 If ``regex=True``, then the type will be matched as a regular expression.
-                Otherwise, only exact matches are found.
+                Otherwise, only exact matches are found. To search for neurons with no type
+                at all, use ``type=[None]``.
 
             regex (bool):
                 If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
                 regular expressions, rather than exact match strings.
 
             status (str or list of str):
+                Matches for the neuron ``status`` field.  To search for neurons with no status
+                at all, use ``status=[None]``.
 
             cropped (bool):
                 If given, restrict results to neurons that are cropped or not.
@@ -509,15 +513,23 @@ def where_expr(field, values, regex=False, matchvar='n'):
     if len(values) == 0:
         return ""
 
-    if len(values) > 1:
+    if len(values) == 1:
+        if values[0] is None:
+            return f"NOT exists({matchvar}.{field})"
+    
+        if regex:
+            return f"{matchvar}.{field} =~ '{values[0]}'"
+    
+        if isinstance(values[0], str):
+            return f"{matchvar}.{field} = '{values[0]}'"
+    
+        return f"{matchvar}.{field} = {values[0]}"
+
+    # list of values
+
+    if None not in values:
         return f"{matchvar}.{field} in {[*values]}"
 
-    if regex:
-        return f"{matchvar}.{field} =~ '{values[0]}'"
-
-    if isinstance(values[0], str):
-        return f"{matchvar}.{field} = '{values[0]}'"
-
-    return f"{matchvar}.{field} = {values[0]}"
-
-
+    # ['some_val', None, 'some_other']
+    values = [*filter(lambda v: v is not None, values)]
+    return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"
