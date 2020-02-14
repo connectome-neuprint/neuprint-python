@@ -1632,14 +1632,17 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
         criteria (:py:class:`.SegmentCriteria`):
             Defines the set of neurons for which output completeness should be computed.
     Returns:
-        DataFrame with columns ``["traced_weight", "untraced_weight", "total_weight", "completeness"]``
+        DataFrame with columns ``['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']``
     """
     assert isinstance(criteria, SegmentCriteria)
+    criteria = copy.copy(criteria)
+    criteria.matchvar = 'n'
+
     if batch_size is None:
         return _fetch_output_completeness(criteria, client)
     
     q = f"""\
-        MATCH ({criteria.matchvar}:{criteria.label})
+        MATCH (n:{criteria.label})
         {criteria.all_conditions(prefix=12)}
         RETURN n.bodyId as bodyId
     """
@@ -1651,30 +1654,29 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
         criteria.bodyId = bodies[start:start+batch_size]
         batch_results.append( _fetch_output_completeness(criteria, client) )
     return pd.concat( batch_results, ignore_index=True )
-    
 
-def _fetch_output_completeness(criteria, client):
-    # Fetch all downstream connections.
-    downstream_criteria = SegmentCriteria(label='Segment')
-    neuron_df, conn_df = fetch_adjacencies(criteria, downstream_criteria, batch_size=100,
-                                           properties=['status'], client=client)
 
-    neuron_df['status'].fillna('None', inplace=True)
+def _fetch_output_completeness(criteria, client=None):
+    q = f"""\
+        MATCH (n:{criteria.label})
+        {criteria.all_conditions(prefix=8)}
 
-    # Convert to total connnections (not per-ROI connections)
-    conn_df = conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
-    
-    # Append downstream status
-    conn_df = conn_df.merge(neuron_df[['bodyId', 'status']], 'left', left_on='bodyId_post', right_on='bodyId')
-    
-    traced_weights = conn_df.query('status == "Traced"').groupby('bodyId_pre')['weight'].sum().rename('traced_weight')
-    untraced_weights = conn_df.query('status != "Traced" or status.isnull()').groupby('bodyId_pre')['weight'].sum().rename('untraced_weight')
+        // Total connection weights
+        MATCH (n)-[e:ConnectsTo]->(:Segment)
+        WITH n, sum(e.weight) as total_weight
 
-    # Calculate completion stats (traced/untraced/total)
-    completion_stats_df = pd.DataFrame(traced_weights).merge(untraced_weights, 'outer', left_index=True, right_index=True)
-    completion_stats_df = completion_stats_df.fillna(0)
-    completion_stats_df['total_weight'] = completion_stats_df.eval('traced_weight + untraced_weight')
+        // Traced connection weights
+        MATCH (n)-[e2:ConnectsTo]->(m:Segment)
+        WHERE m.status = 'Traced'
+
+        RETURN n.bodyId as bodyId,
+               total_weight,
+               sum(e2.weight) as traced_weight
+    """
+    completion_stats_df = client.fetch_custom(q)
+    completion_stats_df['untraced_weight'] = completion_stats_df.eval('total_weight - traced_weight')
     completion_stats_df['completeness'] = completion_stats_df.eval('traced_weight / total_weight')
-
-    completion_stats_df = completion_stats_df.reset_index().rename(columns={'bodyId_pre': 'bodyId'})
+    
     return completion_stats_df[['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']]
+
+
