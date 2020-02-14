@@ -733,7 +733,11 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         4   329599710    329566174       4
         5   424379864    329566174       7
         6   425790257    329566174      12
-    """    
+    """
+    ##
+    ## Preprocess arguments
+    ##
+
     rois = {*rois}
     invalid_rois = rois - {*client.all_rois}
     assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
@@ -770,7 +774,12 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
         return criteria
 
-    def _fetch_neurons(criteria, timeout):
+    # Ensure sources/targets are SegmentCriteria
+    sources = _prepare_criteria(sources, 'n')
+    targets = _prepare_criteria(targets, 'm')
+
+
+    def _fetch_neurons(criteria):
         matchvar = criteria.matchvar
 
         return_props = [f'{matchvar}.{prop} as {prop}' for prop in properties]
@@ -780,136 +789,149 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         value_props = indent(',\n'.join(value_props), ' '*19)[19:]
         
         q = f"""\
-            CALL apoc.cypher.runTimeboxed("
-                MATCH ({matchvar}:{criteria.label})
-                {criteria.all_conditions(prefix=16)}
-                // count() is used here just to force an empty
-                // result if the whole list can'e be fetched.
-                // Otherwise, runTimeBoxed() will return a partial list.
-                WITH {matchvar}, count({matchvar}) as c
-                RETURN {return_props}
-            ", {{}}, {timeout*1000}) YIELD value
-            RETURN {value_props}
+            MATCH ({matchvar}:{criteria.label})
+            {criteria.all_conditions(prefix=16)}
+            WITH {matchvar}
+            RETURN {return_props}
             ORDER BY bodyId
         """
-        try:
-            return client.fetch_custom(q)
-        except NeuprintTimeoutError:
-            return []
+        return client.fetch_custom(q)
 
-    # Ensure sources/targets are SegmentCriteria
-    sources = _prepare_criteria(sources, 'n')
-    targets = _prepare_criteria(targets, 'm')
+    ##
+    ## Pre-fetch either source list or target list (whichever is shorter)
+    ##
 
-    def _prefetch_neurons():    
-        # Fetch source/target neuron lists.
-        # We'll batch our queries across the shorter of the two.
-        # If one list is too long to actually fetch without timing out
-        # (e.g. if the user asks for all segments),
-        # then we'll defer fetching it until after we've fetched the connections.
-        # See creation of neurons_df, below.
-        sources_df = targets_df = []
+    def _prefetch_batchlist():
+        """
+        Figure out whether 'sources' or 'targets' shorter,
+        and fetch those bodies and return them.
+        Return 'None' for the other list.
+        """
+        def _fetch_count(criteria, timeout):
+            matchvar = criteria.matchvar
+            q = f"""\
+                CALL apoc.cypher.runTimeboxed("
+                    MATCH ({matchvar}:{criteria.label})
+                    {criteria.all_conditions(prefix=16)}
+                    RETURN count({matchvar}) as c
+                ", {{}}, {timeout*1000}) YIELD value
+                RETURN value.c as count
+            """
+            try:
+                result = client.fetch_custom(q)['count']
+            except NeuprintTimeoutError:
+                return None
     
-        # Don't even try to fetch sources/targets if the user is not narrowing the criteria at all.
-        broad_criteria = [SegmentCriteria(label='Neuron'),
-                          SegmentCriteria(label='Segment'),
-                          SegmentCriteria(label='Neuron', min_pre=1),
-                          SegmentCriteria(label='Segment', min_pre=1),
-                          SegmentCriteria(label='Neuron', min_post=1),
-                          SegmentCriteria(label='Segment', min_post=1)]
-        prefetch_sources = (sources not in broad_criteria)
-        prefetch_targets = (targets not in broad_criteria)
-        
-        # Need to fetch at least one
-        if not prefetch_sources and not prefetch_targets:
-            if sources.label == 'Neuron':
-                prefetch_sources = True
+            if len(result) == 0:
+                return None
+    
+            return result.iloc[0]
+    
+        num_sources = _fetch_count(sources, 5)
+        num_targets = _fetch_count(targets, 5)
+    
+        if num_sources is None and num_targets is None:
+            num_sources = _fetch_count(sources, 120)
+            num_targets = _fetch_count(targets, 120)
+    
+        if num_sources is None and num_targets is None:
+            raise RuntimeError("Both source and target list are too large to pre-fetch without timing out. "
+                               "This query is too big to process.")
+    
+        if num_sources == 0:
+            raise RuntimeError("No neurons match your source criteria")
+    
+        if num_targets == 0:
+            raise RuntimeError("No neurons match your target criteria")
+    
+        sources_df = targets_df = None
+        if (num_sources is not None) and (num_targets is not None):
+            if num_sources <= num_targets:
+                sources_df = _fetch_neurons(sources)
             else:
-                prefetch_targets = True
-
-        # See if we can get at least one list quickly.
-        if prefetch_sources:
-            sources_df = _fetch_neurons(sources, timeout=5)
-        if prefetch_targets:
-            targets_df = _fetch_neurons(targets, timeout=5)
+                targets_df = _fetch_neurons(targets)
+        elif num_sources is not None:
+            sources_df = _fetch_neurons(sources)
+        elif num_targets is not None:
+            targets_df = _fetch_neurons(targets)
     
-        if len(sources_df) or len(targets_df):
-            return sources_df, targets_df
+        assert (sources_df is None) != (targets_df is None)
+        return sources_df, targets_df
 
-        # Increase timeout and try again    
-        if prefetch_sources:
-            sources_df = _fetch_neurons(sources, timeout=120)
-        if prefetch_targets:
-            targets_df = _fetch_neurons(targets, timeout=120)
+    sources_df, targets_df = _prefetch_batchlist()
+
+    ##
+    ## Fetch connections in batches
+    ##
+
+    def _fetch_connections():
+        if not rois or min_total_weight <= 1:
+            # If rois aren't specified, then we'll include 'NotPrimary' counts,
+            # and that means we can't filter by weight in the query.
+            # We'll filter afterwards.
+            weight_condition = ""
+        else:
+            weight_condition = dedent(f"""\
+                // -- Filter by total connection weight --
+                WITH n,m,e
+                WHERE e.weight >= {min_total_weight}
+            """)
+            weight_condition = indent(weight_condition, prefix=12*' ')[12:]
+        
+        # Fetch connections by batching either the source list
+        # or the target list, not both.
+        # (It turns out that batching across BOTH sources and
+        # targets is much slower than batching across only one.)
+        conn_tables = []
+        
+        if sources_df is not None:
+            # Break sources into batches
+            for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0), leave=False):
+                batch_stop = batch_start + batch_size
+                source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+                
+                batch_criteria = copy.copy(sources)
+                batch_criteria.bodyId = source_bodies
+                
+                q = f"""\
+                    MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
+                    {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+                    {weight_condition}
+                    RETURN n.bodyId as bodyId_pre,
+                           m.bodyId as bodyId_post,
+                           e.weight as weight,
+                           e.roiInfo as roiInfo
+                """
+                conn_tables.append(client.fetch_custom(q))
+        else:
+            # Break targets into batches
+            for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0), leave=False):
+                batch_stop = batch_start + batch_size
+                target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+                
+                batch_criteria = copy.copy(targets)
+                batch_criteria.bodyId = target_bodies
+                
+                q = f"""\
+                    MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
+                    {SegmentCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
+                    {weight_condition}
+                    RETURN n.bodyId as bodyId_pre,
+                           m.bodyId as bodyId_post,
+                           e.weight as weight,
+                           e.roiInfo as roiInfo
+                """
+                conn_tables.append(client.fetch_custom(q))
     
-        if len(sources_df) or len(targets_df):
-            return sources_df, targets_df
+        # Combine batches
+        connections_df = pd.concat(conn_tables, ignore_index=True)
+        return connections_df
 
-        raise RuntimeError("Couldn't fetch either source list or target "
-                           "list within a reasonable timeout.")
+    connections_df = _fetch_connections()
 
-    sources_df, targets_df = _prefetch_neurons()
-
-    if not rois or min_total_weight <= 1:
-        # If rois aren't specified, then we'll include 'NotPrimary' counts,
-        # and that means we can't filter by weight in the query.
-        # We'll filter afterwards.
-        weight_condition = ""
-    else:
-        weight_condition = dedent(f"""\
-            // -- Filter by total connection weight --
-            WITH n,m,e
-            WHERE e.weight >= {min_total_weight}
-        """)
-        weight_condition = indent(weight_condition, prefix=12*' ')[12:]
-    
-    # Fetch connections by batching either the source list
-    # or the target list, not both.
-    # (It turns out that batching across BOTH sources and
-    # targets is much slower than batching across only one.)
-    conn_tables = []
-    
-    if len(targets_df) == 0 or len(sources_df) <= len(targets_df):
-        # Break sources into batches
-        for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0), leave=False):
-            batch_stop = batch_start + batch_size
-            source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
-            
-            batch_criteria = copy.copy(sources)
-            batch_criteria.bodyId = source_bodies
-            
-            q = f"""\
-                MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
-                {weight_condition}
-                RETURN n.bodyId as bodyId_pre,
-                       m.bodyId as bodyId_post,
-                       e.weight as weight,
-                       e.roiInfo as roiInfo
-            """
-            conn_tables.append(client.fetch_custom(q))
-    else:
-        # Break targets into batches
-        for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0), leave=False):
-            batch_stop = batch_start + batch_size
-            target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
-            
-            batch_criteria = copy.copy(targets)
-            batch_criteria.bodyId = target_bodies
-            
-            q = f"""\
-                MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                {SegmentCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
-                {weight_condition}
-                RETURN n.bodyId as bodyId_pre,
-                       m.bodyId as bodyId_post,
-                       e.weight as weight,
-                       e.roiInfo as roiInfo
-            """
-            conn_tables.append(client.fetch_custom(q))
-
-    # Combine batches
-    connections_df = pd.concat(conn_tables, ignore_index=True)
+    ##
+    ## Post-process connections, construct roi_conn_df
+    ##
 
     # Parse roiInfo json (ujson is faster than apoc.convert.fromJsonMap)
     connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
@@ -975,39 +997,28 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     ## Construct neurons_df
     ##
 
-    # Below, drop neurons that matched sources or targets
-    # but aren't mentioned in the final connection table.
-    _connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
+    connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
 
-    if len(sources_df) and len(targets_df):
-        # Concatenate sources and targets
-        neurons_df = pd.concat((sources_df, targets_df), ignore_index=True)
-        neurons_df.query('bodyId in @_connected_bodies', inplace=True)
-        neurons_df.drop_duplicates('bodyId', inplace=True)
-        neurons_df.reset_index(drop=True, inplace=True)
+    # We only fetched either the source list or the target list.
+    # we need to fetch the missing info based on the adjacencies we
+    # actually found, and fetch it in batches.
+    if sources_df is None:
+        neurons_df = targets_df.query('bodyId in @connected_bodies')
+        missing_label = sources.label
     else:
-        # Since fetching either the source list or target list timed out above,
-        # we need to fetch the missing info based on the adjacencies we
-        # actually found, and fetch it in batches.
-        if len(sources_df) == 0:
-            neurons_df = targets_df.query('bodyId in @_connected_bodies')
-            missing_bodies = roi_conn_df['bodyId_pre'].unique()
-            missing_label = sources.label
-        else:
-            neurons_df = sources_df.query('bodyId in @_connected_bodies')
-            missing_bodies = roi_conn_df['bodyId_post'].unique()
-            missing_label = targets.label
+        neurons_df = sources_df.query('bodyId in @connected_bodies')
+        missing_label = targets.label
 
-        batches = []
-        for start in trange(0, len(missing_bodies), 10_000, leave=False):
-            batch_bodies = missing_bodies[start:start+10_000]
-            batch_df = _fetch_neurons(SegmentCriteria(bodyId=batch_bodies, label=missing_label), 60)
-            batches.append( batch_df )
+    missing_bodies = [*set(connected_bodies) - set(neurons_df['bodyId'])]
 
-        neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
-        neurons_df.query('bodyId in @_connected_bodies', inplace=True)
-        neurons_df.drop_duplicates('bodyId', inplace=True)
-        neurons_df.reset_index(drop=True, inplace=True)
+    batches = []
+    for start in trange(0, len(missing_bodies), 10_000, leave=False):
+        batch_bodies = missing_bodies[start:start+10_000]
+        batch_df = _fetch_neurons(SegmentCriteria(bodyId=batch_bodies, label=missing_label))
+        batches.append( batch_df )
+
+    neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
+    neurons_df.reset_index(drop=True, inplace=True)
 
     ##
     ## Export to CSV
