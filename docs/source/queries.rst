@@ -80,6 +80,15 @@ Synapses
     fetch_synapse_connections
 
 
+Reconstruction Tools
+--------------------
+
+.. autosummary::
+
+    fetch_output_completeness
+    fetch_downstream_orphan_tasks
+    
+
 Reference
 ---------
 

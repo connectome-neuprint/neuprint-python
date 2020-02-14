@@ -1688,6 +1688,61 @@ def _fetch_output_completeness(criteria, client=None):
     completion_stats_df['untraced_weight'] = completion_stats_df.eval('total_weight - traced_weight')
     completion_stats_df['completeness'] = completion_stats_df.eval('traced_weight / total_weight')
     
-    return completion_stats_df[['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']]
+    return completion_stats_df[['bodyId', 'total_weight', 'traced_weight', 'untraced_weight', 'completeness']]
 
 
+@inject_client
+def fetch_downstream_orphan_tasks(criteria, *, client=None):
+    """
+    Fetch the set of "downstream orphans" for a given set of neurons.
+    
+    Returns a single DataFrame, where the downstream orphans have
+    been sorted by the weight of the connection, and their cumulative
+    contributions to the overall output-completeness of the upstream
+    neuron is also given.
+    
+    That is, if you started tracing orphans from this DataFrame in
+    order, then the ``cum_completeness`` column indicates how complete
+    the upstream body is after each orphan becomes traced.
+    
+    Example:
+    
+        .. code-block:: ipython
+        
+            In [1]: orphan_tasks = fetch_downstream_orphan_tasks(SC(status='Traced', cropped=False, rois=['PB']))
+
+            In [1]: orphan_tasks.query('cum_completeness < 0.2').head(10)
+            Out[1]:
+                   bodyId_pre  bodyId_post  orphan_weight status_post  total_weight  orig_traced_weight  orig_untraced_weight  orig_completeness  cum_orphan_weight  cum_completeness
+            6478    759685279    759676733              2      Assign          7757                1427                  6330           0.183963                  2          0.184221
+            8932    759685279    913193340              1        None          7757                1427                  6330           0.183963                  3          0.184350
+            8943    759685279    913529796              1        None          7757                1427                  6330           0.183963                  4          0.184479
+            8950    759685279    913534416              1        None          7757                1427                  6330           0.183963                  5          0.184607
+            12121  1002507170   1387701052              1        None           522                 102                   420           0.195402                  1          0.197318
+            35764   759685279    790382544              1        None          7757                1427                  6330           0.183963                  6          0.184736
+            36052   759685279    851023555              1      Assign          7757                1427                  6330           0.183963                  7          0.184865
+            36355   759685279    974908767              2        None          7757                1427                  6330           0.183963                  9          0.185123
+            36673   759685279   1252526211              1        None          7757                1427                  6330           0.183963                 10          0.185252
+            44840   759685279   1129418900              1        None          7757                1427                  6330           0.183963                 11          0.185381
+
+    """
+    status_df, roi_conn_df = fetch_adjacencies(criteria, SegmentCriteria(label='Segment'), properties=['status'], client=client)
+
+    conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+    conn_df.sort_values(['bodyId_pre', 'weight', 'bodyId_post'], ascending=[True, False, True], inplace=True)
+    conn_df.reset_index(drop=True, inplace=True)
+
+    conn_df = conn_df.merge(status_df, left_on='bodyId_post', right_on='bodyId').drop(columns={'bodyId'})
+    conn_df.query('status != "Traced"', inplace=True)
+    conn_df.rename(columns={'status': 'status_post', 'weight': 'orphan_weight'}, inplace=True)
+
+    completeness_df = fetch_output_completeness(criteria, client=client)
+    completeness_df = completeness_df.rename(columns={'completeness': 'orig_completeness',
+                                                      'traced_weight': 'orig_traced_weight',
+                                                      'untraced_weight': 'orig_untraced_weight'})
+
+    conn_df = conn_df.merge(completeness_df, 'left', left_on='bodyId_pre', right_on='bodyId').drop(columns=['bodyId'])
+    conn_df['cum_orphan_weight'] = conn_df.groupby('bodyId_pre')['orphan_weight'].cumsum()
+    conn_df['cum_completeness'] = conn_df.eval('(orig_traced_weight + cum_orphan_weight) / total_weight')
+
+    return conn_df
