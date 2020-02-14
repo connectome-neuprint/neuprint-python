@@ -191,25 +191,28 @@ class SegmentCriteria:
         self.label = label
         self.roi_req = roi_req
 
-        # Keep track of parameters for comparisons
-        self.__params = ['matchvar', 'bodyId', 'instance', 'type', 'status',
-                         'cropped', 'min_pre', 'min_post', 'rois', 'inputRois',
-                         'outputRois', 'min_roi_inputs', 'min_roi_outputs',
-                         'regex', 'label', 'roi_req']
 
     def __eq__(self, value):
         """
         Implement comparison between criteria.
+        Note: 'matchvar' is not considered during the comparison.
         """
         if not isinstance(value, SegmentCriteria):
             return NotImplemented
 
         # Return True if it's the exact same object
-        if id(self) == id(value):
+        if self is value:
             return True
 
         # Compare attributes one by one
-        for at in self.__params:
+        # But don't count 'matchvar' as a parameter'.
+        params = [#'matchvar',
+                 'bodyId', 'instance', 'type', 'status',
+                 'cropped', 'min_pre', 'min_post', 'rois', 'inputRois',
+                 'outputRois', 'min_roi_inputs', 'min_roi_outputs',
+                 'regex', 'label', 'roi_req']
+
+        for at in params:
             me = getattr(self, at)
             other = getattr(value, at)
 
