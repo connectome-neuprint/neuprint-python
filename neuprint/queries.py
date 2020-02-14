@@ -12,9 +12,10 @@ from asciitree import LeftAligned
 import ujson
 
 from .client import inject_client, NeuprintTimeoutError
-from .neuroncriteria import NeuronCriteria
+from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 from .synapsecriteria import SynapseCriteria
 from .utils import make_args_iterable, trange
+
 
 NEURON_COLS = ['bodyId', 'instance', 'type',
                'pre', 'post', 'size',
@@ -22,6 +23,7 @@ NEURON_COLS = ['bodyId', 'instance', 'type',
                'cellBodyFiber',
                'somaRadius', 'somaLocation',
                'inputRois', 'outputRois', 'roiInfo']
+
 
 @inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
@@ -242,6 +244,7 @@ def fetch_roi_hierarchy(include_subprimary=True, mark_primary=True, format='dict
         
 
 @inject_client
+@neuroncriteria_args('criteria')
 def fetch_neurons(criteria, *, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
@@ -323,7 +326,6 @@ def fetch_neurons(criteria, *, client=None):
             3  300972942  MB(+ACA)(R)   17  13295
             4  300972942       SNP(R)  526    336
     """
-    criteria = copy.copy(criteria)
     criteria.matchvar = 'n'
 
     # Unlike in fetch_custom_neurons() below, here we specify the
@@ -465,6 +467,7 @@ def _process_neuron_df(neuron_df, client):
 
 @inject_client
 @make_args_iterable(['rois'])
+@neuroncriteria_args('upstream_criteria', 'downstream_criteria')
 def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1,
                              properties=['type', 'instance'],
                              *, client=None):
@@ -592,6 +595,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
 @inject_client
 @make_args_iterable(['rois'])
+@neuroncriteria_args('sources', 'targets')
 def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1,
                       include_nonprimary=False, export_dir=None, batch_size=200,
                       properties=['type', 'instance'], *, client=None):
@@ -753,17 +757,6 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         properties = ['bodyId'] + properties
 
     def _prepare_criteria(criteria, matchvar):
-        if criteria is None:
-            criteria = NeuronCriteria(matchvar, client=client)
-
-        # A previous version of fetch_adjacencies() accepted a list of bodyIds.
-        # We still support that for now.
-        if not isinstance(criteria, NeuronCriteria):
-            assert isinstance(criteria, collections.abc.Iterable), \
-                f"Invalid criteria: {criteria}"
-            criteria = NeuronCriteria(matchvar, bodyId=criteria, client=client)
-
-        criteria = copy.copy(criteria)
         criteria.matchvar = matchvar
         
         # If the user wants to filter for specific rois,
@@ -1083,6 +1076,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 
 
 @inject_client
+@neuroncriteria_args('criteria')
 def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
     """
     Find shared connections among a set of neurons.
@@ -1203,12 +1197,13 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
     """
     if intermediate_criteria is None:
         intermediate_criteria = NeuronCriteria(status="Traced", client=client)
+    else:
+        intermediate_criteria = copy_as_neuroncriteria(intermediate_criteria)
     
     assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
         "This function doesn't support search criteria that specifies inputRois or outputRois. "\
         "You can specify generic (intersecting) rois, though."
 
-    intermediate_criteria = copy.copy(intermediate_criteria)
     intermediate_criteria.matchvar = 'n'
 
     timeout_ms = int(1000*timeout)
@@ -1256,6 +1251,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 
 @inject_client
+@neuroncriteria_args('segment_criteria')
 def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
     """
     Fetch synapses from a neuron or selection of neurons.
@@ -1338,18 +1334,6 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
             35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
 
     """
-    if isinstance(segment_criteria, pd.DataFrame):
-        assert 'bodyId' in segment_criteria.columns, \
-            'If passing a DataFrame, it must have "bodyId" column'
-        segment_criteria = NeuronCriteria(bodyId=segment_criteria['bodyId'].values, client=client)
-    elif not isinstance(segment_criteria, NeuronCriteria):
-        segment_criteria = NeuronCriteria(bodyId=segment_criteria, client=client)
-
-    assert isinstance(segment_criteria, NeuronCriteria), \
-        ("Please pass a NeuronCriteria, a list of bodyIds, "
-         f"or a DataFrame with a 'bodyId' column, not {segment_criteria}")
-
-    segment_criteria = copy.copy(segment_criteria)
     segment_criteria.matchvar = 'n'
     
     if synapse_criteria is None:
@@ -1413,6 +1397,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
 
 @inject_client
+@neuroncriteria_args('source_criteria', 'target_criteria')
 def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, *, client=None):
     """
     Fetch synaptic-level connections between source and target neurons.
@@ -1512,21 +1497,6 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             15   792368888   1131831702  SMP(R)   SMP(R)  23630  29443  16297   23651   29434   16316           0.984         0.362952
     """
     def prepare_sc(sc, matchvar):
-        if sc is None:
-            sc = NeuronCriteria(client=client)
-        
-        if isinstance(sc, pd.DataFrame):
-            assert 'bodyId' in sc.columns, \
-                'If passing a DataFrame, it must have "bodyId" column'
-            sc = NeuronCriteria(bodyId=sc['bodyId'].values, client=client)
-        elif not isinstance(sc, NeuronCriteria):
-            sc = NeuronCriteria(bodyId=sc, client=client)
-    
-        assert isinstance(sc, NeuronCriteria), \
-            ("Please pass a NeuronCriteria, a list of bodyIds, "
-             f"or a DataFrame with a 'bodyId' column, not {sc}")
-    
-        sc = copy.copy(sc)
         sc.matchvar = matchvar
         
         # If the user specified rois to filter synapses by, but hasn't specified rois
@@ -1633,6 +1603,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
 
 @inject_client
+@neuroncriteria_args('criteria')
 def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     """
     Compute an estimate of "output completeness" for a set of neurons.
@@ -1646,7 +1617,6 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
         DataFrame with columns ``['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']``
     """
     assert isinstance(criteria, NeuronCriteria)
-    criteria = copy.copy(criteria)
     criteria.matchvar = 'n'
 
     if batch_size is None:
@@ -1661,7 +1631,6 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     
     batch_results = []
     for start in trange(0, len(bodies), batch_size):
-        criteria = copy.copy(criteria)
         criteria.bodyId = bodies[start:start+batch_size]
         batch_results.append( _fetch_output_completeness(criteria, client) )
     return pd.concat( batch_results, ignore_index=True )
@@ -1692,6 +1661,7 @@ def _fetch_output_completeness(criteria, client=None):
 
 
 @inject_client
+@neuroncriteria_args('criteria')
 def fetch_downstream_orphan_tasks(criteria, *, client=None):
     """
     Fetch the set of "downstream orphans" for a given set of neurons.
