@@ -105,7 +105,7 @@ def setup_debug_logging():
                ...: from neuprint import fetch_neurons
                ...:
                ...: setup_debug_logging()
-               ...: neuron_df, roi_df = fetch_neurons(SC(type='MBON.*', rois=['MB(R)'], regex=True))
+               ...: neuron_df, roi_df = fetch_neurons(NC(type='MBON.*', rois=['MB(R)'], regex=True))
             [2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset 'hemibrain:v1.0':
                 MATCH (n :Neuron)
                 // -- Basic conditions for segment 'n' --

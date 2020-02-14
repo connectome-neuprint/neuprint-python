@@ -81,7 +81,7 @@ def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance'])
     
         .. code-block:: ipython
     
-            In [1]: from neuprint import fetch_adjacencies, SegmentCriteria as SC, merge_neuron_properties
+            In [1]: from neuprint import fetch_adjacencies, NeuronCriteria as NC, merge_neuron_properties
                ...: neuron_df, conn_df = fetch_adjacencies(rois='PB', min_roi_weight=120)
                ...: print(conn_df)
                bodyId_pre  bodyId_post roi  weight
@@ -164,8 +164,8 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
     
         .. code-block:: ipython
         
-            In [1]: from neuprint import fetch_simple_connections, SegmentCriteria as SC  
-               ...: kc_criteria = SC(type='KC.*', regex=True)
+            In [1]: from neuprint import fetch_simple_connections, NeuronCriteria as NC  
+               ...: kc_criteria = NC(type='KC.*', regex=True)
                ...: conn_df = fetch_simple_connections(kc_criteria, kc_criteria)
             In [1]: conn_df.head()
             Out[1]:

@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 
 from neuprint import Client, default_client, set_default_client
-from neuprint import (fetch_custom, SegmentCriteria as SC, fetch_neurons, fetch_meta,
+from neuprint import (fetch_custom, NeuronCriteria as NC, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
                       fetch_adjacencies, fetch_shortest_paths)
 from neuprint.tests import NEUPRINT_SERVER, DATASET
@@ -28,38 +28,38 @@ def test_fetch_neurons(client):
               424379864, 425790257, 451982486, 480927537, 481268653]
 
     # This works but takes a long time.
-    #neurons, roi_counts = fetch_neurons(SC())
+    #neurons, roi_counts = fetch_neurons(NC())
 
-    neurons, roi_counts = fetch_neurons(SC(bodyId=bodyId))
+    neurons, roi_counts = fetch_neurons(NC(bodyId=bodyId))
     assert len(neurons) == len(bodyId)
     assert set(roi_counts['bodyId']) == set(bodyId)
     
-    neurons, roi_counts = fetch_neurons(SC(instance='APL_R'))
+    neurons, roi_counts = fetch_neurons(NC(instance='APL_R'))
     assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
     assert neurons.loc[0, 'type'] == "APL"
     assert neurons.loc[0, 'instance'] == "APL_R"
 
-    neurons, roi_counts = fetch_neurons(SC(instance='APL[^ ]*', regex=True))
+    neurons, roi_counts = fetch_neurons(NC(instance='APL[^ ]*', regex=True))
     assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
     assert neurons.loc[0, 'type'] == "APL"
     assert neurons.loc[0, 'instance'] == "APL_R"
 
-    neurons, roi_counts = fetch_neurons(SC(type='APL.*', regex=True))
+    neurons, roi_counts = fetch_neurons(NC(type='APL.*', regex=True))
     assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
     assert neurons.loc[0, 'type'] == "APL"
     assert neurons.loc[0, 'instance'] == "APL_R"
 
-    neurons, roi_counts = fetch_neurons(SC(status=['Traced', 'Orphan'], cropped=False))
+    neurons, roi_counts = fetch_neurons(NC(status=['Traced', 'Orphan'], cropped=False))
     assert neurons.eval('status == "Traced" or status == "Orphan"').all()
     assert not neurons['cropped'].any() 
     
-    neurons, roi_counts = fetch_neurons(SC(inputRois='AL(R)', outputRois='SNP(R)'))
+    neurons, roi_counts = fetch_neurons(NC(inputRois='AL(R)', outputRois='SNP(R)'))
     assert all(['AL(R)' in rois for rois in neurons['inputRois']])
     assert all(['SNP(R)' in rois for rois in neurons['outputRois']])
     assert sorted(roi_counts.query('roi == "AL(R)" and post > 0')['bodyId']) == sorted(neurons['bodyId'])
     assert sorted(roi_counts.query('roi == "SNP(R)" and pre > 0')['bodyId']) == sorted(neurons['bodyId'])
 
-    neurons, roi_counts = fetch_neurons(SC(min_pre=1000, min_post=2000))
+    neurons, roi_counts = fetch_neurons(NC(min_pre=1000, min_post=2000))
     assert neurons.eval('pre >= 1000 and post >= 2000').all()
 
 
@@ -67,35 +67,35 @@ def test_fetch_simple_connections(client):
     bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
 
-    conn_df = fetch_simple_connections(SC(bodyId=bodyId))
+    conn_df = fetch_simple_connections(NC(bodyId=bodyId))
     assert set(conn_df['bodyId_pre'].unique()) == set(bodyId)
 
-    conn_df = fetch_simple_connections(None, SC(bodyId=bodyId))
+    conn_df = fetch_simple_connections(None, NC(bodyId=bodyId))
     assert set(conn_df['bodyId_post'].unique()) == set(bodyId)
     
     APL_R = 425790257
 
-    conn_df = fetch_simple_connections(SC(instance='APL_R'))
+    conn_df = fetch_simple_connections(NC(instance='APL_R'))
     assert (conn_df['bodyId_pre'] == APL_R).all()
 
-    conn_df = fetch_simple_connections(SC(type='APL'))
+    conn_df = fetch_simple_connections(NC(type='APL'))
     assert (conn_df['bodyId_pre'] == APL_R).all()
 
-    conn_df = fetch_simple_connections(None, SC(instance='APL_R'))
+    conn_df = fetch_simple_connections(None, NC(instance='APL_R'))
     assert (conn_df['bodyId_post'] == APL_R).all()
 
-    conn_df = fetch_simple_connections(None, SC(type='APL'))
+    conn_df = fetch_simple_connections(None, NC(type='APL'))
     assert (conn_df['bodyId_post'] == APL_R).all()
 
-    conn_df = fetch_simple_connections(SC(bodyId=APL_R), min_weight=10)
+    conn_df = fetch_simple_connections(NC(bodyId=APL_R), min_weight=10)
     assert (conn_df['bodyId_pre'] == APL_R).all()
     assert (conn_df['weight'] >= 10).all()
     
-    conn_df = fetch_simple_connections(SC(bodyId=APL_R), min_weight=10, properties=['somaLocation'])
+    conn_df = fetch_simple_connections(NC(bodyId=APL_R), min_weight=10, properties=['somaLocation'])
     assert 'somaLocation_pre' in conn_df
     assert 'somaLocation_post' in conn_df
 
-    conn_df = fetch_simple_connections(SC(bodyId=APL_R), min_weight=10, properties=['roiInfo'])
+    conn_df = fetch_simple_connections(NC(bodyId=APL_R), min_weight=10, properties=['roiInfo'])
     assert 'roiInfo_pre' in conn_df
     assert 'roiInfo_post' in conn_df
     assert isinstance(conn_df['roiInfo_pre'].iloc[0], dict)
@@ -119,14 +119,14 @@ def test_fetch_traced_adjacencies(client):
 def test_fetch_adjacencies(client):
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
-    neuron_df, roi_conn_df = fetch_adjacencies(SC(bodyId=bodies), SC(bodyId=bodies))
+    neuron_df, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies))
 
     # Should not include non-primary ROIs (except 'NotPrimary')
     assert not ({*roi_conn_df['roi'].unique()} - {*fetch_primary_rois()} - {'NotPrimary'})
 
     #
     # For backwards compatibility with the previous API,
-    # You can also pass a list of bodyIds to this function (instead of SegmentCriteria).
+    # You can also pass a list of bodyIds to this function (instead of NeuronCriteria).
     #
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]

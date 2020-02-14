@@ -12,7 +12,7 @@ from asciitree import LeftAligned
 import ujson
 
 from .client import inject_client, NeuprintTimeoutError
-from .segmentcriteria import SegmentCriteria
+from .neuroncriteria import NeuronCriteria
 from .synapsecriteria import SynapseCriteria
 from .utils import make_args_iterable, trange
 
@@ -246,7 +246,7 @@ def fetch_neurons(criteria, *, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
     
-    Searches for a set of Neurons (or Segments) that match the given :py:class:`.SegmentCriteria`.
+    Searches for a set of Neurons (or Segments) that match the given :py:class:`.NeuronCriteria`.
     Returns their properties, including the distibution of their synapses in all brain regions.
     
     This implements a superset of the features on the Neuprint Explorer `Find Neurons`_ page.
@@ -257,7 +257,7 @@ def fetch_neurons(criteria, *, client=None):
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
     
     Args:
-        criteria (:py:class:`.SegmentCriteria`):
+        criteria (:py:class:`.NeuronCriteria`):
             Only Neurons which satisfy all components of the given criteria are returned.
 
         client:
@@ -288,10 +288,10 @@ def fetch_neurons(criteria, *, client=None):
     
         .. code-block:: ipython
         
-            In [1]: from neuprint import fetch_neurons, SegmentCriteria as SC
+            In [1]: from neuprint import fetch_neurons, NeuronCriteria as NC
 
             In [2]: neurons_df, roi_counts_df = fetch_neurons(
-               ...:     SC(inputRois=['SIP(R)', 'aL(R)'],
+               ...:     NC(inputRois=['SIP(R)', 'aL(R)'],
                ...:        status='Traced',
                ...:        type='MBON.*',
                ...:        regex=True))
@@ -486,10 +486,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
     Args:
         upstream_criteria:
-            SegmentCriteria indicating how to filter for neurons
+            NeuronCriteria indicating how to filter for neurons
             on the presynaptic side of connections.
         downstream_criteria:
-            SegmentCriteria indicating how to filter for neurons
+            NeuronCriteria indicating how to filter for neurons
             on the postsynaptic side of connections.
         rois:
             Limit results to neuron pairs that connect in at least one of the given ROIs.
@@ -508,10 +508,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
         .. code-block:: ipython
         
-            In [1]: from neuprint import SegmentCriteria as SC, fetch_simple_connections
+            In [1]: from neuprint import NeuronCriteria as NC, fetch_simple_connections
                ...: sources = [329566174, 425790257, 424379864, 329599710]
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
-               ...: fetch_simple_connections(SC(bodyId=sources), SC(bodyId=targets))
+               ...: fetch_simple_connections(NC(bodyId=sources), NC(bodyId=targets))
             Out[1]:
                bodyId_pre  bodyId_post  weight                   type_pre                  type_post         instance_pre        instance_post                                       conn_roiInfo
             0   329566174    425790257      43                    OA-VPM3                        APL   OA-VPM3(NO2/NO3)_R                APL_R  {'MB(R)': {'pre': 39, 'post': 39}, 'b'L(R)': {...
@@ -522,21 +522,21 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             5   329566174    329599710       1                    OA-VPM3  olfactory multi lvPN mALT   OA-VPM3(NO2/NO3)_R        mPNX(AVM06)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
             6   329566174    420274150       1                    OA-VPM3                 AVM03m_pct   OA-VPM3(NO2/NO3)_R  AVM03m_pct(AVM03)_R  {'SNP(R)': {'pre': 1, 'post': 1}, 'SLP(R)': {'...
     """
-    SC = SegmentCriteria
+    NC = NeuronCriteria
     up_crit = copy.deepcopy(upstream_criteria)
     down_crit = copy.deepcopy(downstream_criteria)
 
     if up_crit is None:
-        up_crit = SC(label='Neuron')
+        up_crit = NC(label='Neuron')
     if down_crit is None:
-        down_crit = SC(label='Neuron')
+        down_crit = NC(label='Neuron')
 
     up_crit.matchvar = 'n'
     down_crit.matchvar = 'm'
     
     assert up_crit is not None or down_crit is not None, "No criteria specified"
 
-    combined_conditions = SC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
+    combined_conditions = NC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
 
     if min_weight > 1:
         weight_expr = dedent(f"""\
@@ -613,12 +613,12 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     Args:
         sources:
             Limit results to connections from bodies that match this criteria.
-            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
+            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
             will include all bodies upstream of ``targets``.
 
         targets:
             Limit results to connections to bodies that match this criteria.
-            Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
+            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
             will include all bodies downstream of ``sources``.
 
         rois:
@@ -678,10 +678,10 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             In [1]: from neuprint import Client
                ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0.1')
             
-            In [2]: from neuprint import SegmentCriteria as SC, fetch_adjacencies
+            In [2]: from neuprint import NeuronCriteria as NC, fetch_adjacencies
                ...: sources = [329566174, 425790257, 424379864, 329599710]
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
-               ...: neuron_df, connection_df = fetch_adjacencies(SC(bodyId=sources), SC(bodyId=targets))
+               ...: neuron_df, connection_df = fetch_adjacencies(NC(bodyId=sources), NC(bodyId=targets))
             
             In [3]: neuron_df
             Out[3]:
@@ -754,27 +754,27 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
     def _prepare_criteria(criteria, matchvar):
         if criteria is None:
-            criteria = SegmentCriteria(matchvar, client=client)
+            criteria = NeuronCriteria(matchvar, client=client)
 
         # A previous version of fetch_adjacencies() accepted a list of bodyIds.
         # We still support that for now.
-        if not isinstance(criteria, SegmentCriteria):
+        if not isinstance(criteria, NeuronCriteria):
             assert isinstance(criteria, collections.abc.Iterable), \
                 f"Invalid criteria: {criteria}"
-            criteria = SegmentCriteria(matchvar, bodyId=criteria, client=client)
+            criteria = NeuronCriteria(matchvar, bodyId=criteria, client=client)
 
         criteria = copy.copy(criteria)
         criteria.matchvar = matchvar
         
         # If the user wants to filter for specific rois,
-        # we can speed up the query by adding them to the SegmentCriteria
+        # we can speed up the query by adding them to the NeuronCriteria
         if rois and not criteria.rois:
             criteria.rois = rois
             criteria.roi_req = 'any'
 
         return criteria
 
-    # Ensure sources/targets are SegmentCriteria
+    # Ensure sources/targets are NeuronCriteria
     sources = _prepare_criteria(sources, 'n')
     targets = _prepare_criteria(targets, 'm')
 
@@ -895,7 +895,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 
                 q = f"""\
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {SegmentCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+                    {NeuronCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
                     {weight_condition}
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -914,7 +914,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 
                 q = f"""\
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {SegmentCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
+                    {NeuronCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
                     {weight_condition}
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -1014,7 +1014,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     batches = []
     for start in trange(0, len(missing_bodies), 10_000, leave=False):
         batch_bodies = missing_bodies[start:start+10_000]
-        batch_df = _fetch_neurons(SegmentCriteria(bodyId=batch_bodies, label=missing_label))
+        batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label))
         batches.append( batch_df )
 
     neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
@@ -1078,7 +1078,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             3   202916528    234292899       4
             4   202916528    264986706       2        
      """
-    criteria = SegmentCriteria(status="Traced", cropped=False, client=client)
+    criteria = NeuronCriteria(status="Traced", cropped=False, client=client)
     return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir, batch_size=batch_size, client=client)
 
 
@@ -1098,7 +1098,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
     
     Args:
         criteria:
-            :py:class:`.SegmentCriteria` used to determine the match set,
+            :py:class:`.NeuronCriteria` used to determine the match set,
             for which common connections will be found.
 
         search_direction (``"upstream"`` or ``"downstream"``):
@@ -1162,10 +1162,10 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
         min_weight:
             Minimum connection strength for each step in the path.
         
-        intermediate_criteria (:py:class:`.SegmentCriteria`):
+        intermediate_criteria (:py:class:`.NeuronCriteria`):
             Filtering criteria for neurons on path.
             All intermediate neurons in the path must satisfy this criteria.
-            By default, ``SegmentCriteria(status="Traced")`` is used.
+            By default, ``NeuronCriteria(status="Traced")`` is used.
         
         timeout:
             Give up after this many seconds, in which case an **empty DataFrame is returned.**
@@ -1202,7 +1202,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
             [5778 rows x 4 columns]
     """
     if intermediate_criteria is None:
-        intermediate_criteria = SegmentCriteria(status="Traced", client=client)
+        intermediate_criteria = NeuronCriteria(status="Traced", client=client)
     
     assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
         "This function doesn't support search criteria that specifies inputRois or outputRois. "\
@@ -1262,9 +1262,9 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
     Args:
     
-        segment_criteria (SegmentCriteria or bodyId list):
+        segment_criteria (NeuronCriteria or bodyId list):
             Can be either a single bodyID, a list-like of multiple body IDs,
-            a DataFrame with a `bodyId` column or a :py:class:`.SegmentCriteria`
+            a DataFrame with a `bodyId` column or a :py:class:`.NeuronCriteria`
             used to find a set of body IDs.
 
             Note:
@@ -1295,9 +1295,9 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
     
         .. code-block:: ipython
         
-            In [1]: from neuprint import SegmentCriteria as SC, SynapseCriteria as SynC, fetch_synapses
-               ...: fetch_synapses(SC(type='ADL.*', regex=True, rois=['FB']),
-               ...:                SynC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
+            In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_synapses
+               ...: fetch_synapses(NC(type='ADL.*', regex=True, rois=['FB']),
+               ...:                SC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
             Out[1]:
                     bodyId  type     roi      x      y      z  confidence
             0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
@@ -1341,12 +1341,12 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
     if isinstance(segment_criteria, pd.DataFrame):
         assert 'bodyId' in segment_criteria.columns, \
             'If passing a DataFrame, it must have "bodyId" column'
-        segment_criteria = SegmentCriteria(bodyId=segment_criteria['bodyId'].values, client=client)
-    elif not isinstance(segment_criteria, SegmentCriteria):
-        segment_criteria = SegmentCriteria(bodyId=segment_criteria, client=client)
+        segment_criteria = NeuronCriteria(bodyId=segment_criteria['bodyId'].values, client=client)
+    elif not isinstance(segment_criteria, NeuronCriteria):
+        segment_criteria = NeuronCriteria(bodyId=segment_criteria, client=client)
 
-    assert isinstance(segment_criteria, SegmentCriteria), \
-        ("Please pass a SegmentCriteria, a list of bodyIds, "
+    assert isinstance(segment_criteria, NeuronCriteria), \
+        ("Please pass a NeuronCriteria, a list of bodyIds, "
          f"or a DataFrame with a 'bodyId' column, not {segment_criteria}")
 
     segment_criteria = copy.copy(segment_criteria)
@@ -1361,7 +1361,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
         return_rois = {*client.all_rois}
 
     # If the user specified rois to filter synapses by, but hasn't specified rois
-    # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
+    # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
     if synapse_criteria.rois and not segment_criteria.rois:
         segment_criteria.rois = {*synapse_criteria.rois}
         segment_criteria.roi_req = 'any'
@@ -1427,7 +1427,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     
     Args:
     
-        source_criteria (SegmentCriteria or bodyId list):
+        source_criteria (NeuronCriteria or bodyId list):
             Criteria to by which to filter source (pre-synaptic) neurons.
             If omitted, all Neurons will be considered as possible sources.
 
@@ -1435,7 +1435,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                 Any ROI criteria specified in this argument does not affect
                 which synapses are returned, only which bodies are inspected.
 
-        target_criteria (SegmentCriteria or bodyId list):
+        target_criteria (NeuronCriteria or bodyId list):
             Criteria to by which to filter target (post-synaptic) neurons.
             If omitted, all Neurons will be considered as possible sources.
 
@@ -1490,8 +1490,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         .. code-block:: ipython
 
-            In [1]: from neuprint import fetch_synapse_connections, SegmentCriteria as SC, SynapseCriteria as SynC
-               ...: fetch_synapse_connections(SC(bodyId=792368888), None, SynC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
+            In [1]: from neuprint import fetch_synapse_connections, NeuronCriteria as NC, SynapseCriteria as SC
+               ...: fetch_synapse_connections(NC(bodyId=792368888), None, SC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
             Out[1]:
                 bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post
             0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035
@@ -1513,24 +1513,24 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     """
     def prepare_sc(sc, matchvar):
         if sc is None:
-            sc = SegmentCriteria(client=client)
+            sc = NeuronCriteria(client=client)
         
         if isinstance(sc, pd.DataFrame):
             assert 'bodyId' in sc.columns, \
                 'If passing a DataFrame, it must have "bodyId" column'
-            sc = SegmentCriteria(bodyId=sc['bodyId'].values, client=client)
-        elif not isinstance(sc, SegmentCriteria):
-            sc = SegmentCriteria(bodyId=sc, client=client)
+            sc = NeuronCriteria(bodyId=sc['bodyId'].values, client=client)
+        elif not isinstance(sc, NeuronCriteria):
+            sc = NeuronCriteria(bodyId=sc, client=client)
     
-        assert isinstance(sc, SegmentCriteria), \
-            ("Please pass a SegmentCriteria, a list of bodyIds, "
+        assert isinstance(sc, NeuronCriteria), \
+            ("Please pass a NeuronCriteria, a list of bodyIds, "
              f"or a DataFrame with a 'bodyId' column, not {sc}")
     
         sc = copy.copy(sc)
         sc.matchvar = matchvar
         
         # If the user specified rois to filter synapses by, but hasn't specified rois
-        # in the SegmentCriteria, add them to the SegmentCriteria to speed up the query.
+        # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
         if synapse_criteria.rois and not sc.rois:
             sc.rois = {*synapse_criteria.rois}
             sc.roi_req = 'any'
@@ -1572,7 +1572,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         WHERE e.weight >= {min_total_weight}
         
-        {SegmentCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
+        {NeuronCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
@@ -1640,12 +1640,12 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     connections which belong to Traced neurons.
     
     Args:
-        criteria (:py:class:`.SegmentCriteria`):
+        criteria (:py:class:`.NeuronCriteria`):
             Defines the set of neurons for which output completeness should be computed.
     Returns:
         DataFrame with columns ``['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']``
     """
-    assert isinstance(criteria, SegmentCriteria)
+    assert isinstance(criteria, NeuronCriteria)
     criteria = copy.copy(criteria)
     criteria.matchvar = 'n'
 
@@ -1709,7 +1709,7 @@ def fetch_downstream_orphan_tasks(criteria, *, client=None):
     
         .. code-block:: ipython
         
-            In [1]: orphan_tasks = fetch_downstream_orphan_tasks(SC(status='Traced', cropped=False, rois=['PB']))
+            In [1]: orphan_tasks = fetch_downstream_orphan_tasks(NC(status='Traced', cropped=False, rois=['PB']))
 
             In [1]: orphan_tasks.query('cum_completeness < 0.2').head(10)
             Out[1]:
@@ -1726,7 +1726,7 @@ def fetch_downstream_orphan_tasks(criteria, *, client=None):
             44840   759685279   1129418900              1        None          7757                1427                  6330           0.183963                 11          0.185381
 
     """
-    status_df, roi_conn_df = fetch_adjacencies(criteria, SegmentCriteria(label='Segment'), properties=['status'], client=client)
+    status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment'), properties=['status'], client=client)
 
     conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
     conn_df.sort_values(['bodyId_pre', 'weight', 'bodyId_post'], ascending=[True, False, True], inplace=True)
