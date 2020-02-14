@@ -229,6 +229,7 @@ class SegmentCriteria:
         # If all comparisons have passed, return True
         return True
 
+
     def __repr__(self):
         # Show all non-default constructor args
         s = f'SegmentCriteria("{self.matchvar}"'
@@ -288,6 +289,7 @@ class SegmentCriteria:
         
         return s
     
+
     def basic_exprs(self):
         """
         Return the list of expressions that correspond
@@ -350,6 +352,9 @@ class SegmentCriteria:
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
             prefix = ' '*prefix
+        
+        if not vars:
+            vars = (self.matchvar,)
         
         basic_cond = self.basic_conditions(*vars, comments=comments)
         roi_cond = self.directed_rois_condition(*vars, comments=comments)
