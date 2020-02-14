@@ -801,22 +801,54 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     sources = _prepare_criteria(sources, 'n')
     targets = _prepare_criteria(targets, 'm')
 
-    # Fetch source/target neuron lists.
-    # We'll batch our queries across the shorter of the two.
-    # If one list is too long to actually fetch without timing out
-    # (e.g. if the user asks for all segments),
-    # then we'll defer fetching it until after we've fetched the connections.
-    # See creation of neurons_df, below.
-    sources_df = _fetch_neurons(sources, timeout=5)
-    targets_df = _fetch_neurons(targets, timeout=5)
+    def _prefetch_neurons():    
+        # Fetch source/target neuron lists.
+        # We'll batch our queries across the shorter of the two.
+        # If one list is too long to actually fetch without timing out
+        # (e.g. if the user asks for all segments),
+        # then we'll defer fetching it until after we've fetched the connections.
+        # See creation of neurons_df, below.
+        sources_df = targets_df = []
+    
+        # Don't even try to fetch sources/targets if the user is not narrowing the criteria at all.
+        broad_criteria = [SegmentCriteria(label='Neuron'),
+                          SegmentCriteria(label='Segment'),
+                          SegmentCriteria(label='Neuron', min_pre=1),
+                          SegmentCriteria(label='Segment', min_pre=1),
+                          SegmentCriteria(label='Neuron', min_post=1),
+                          SegmentCriteria(label='Segment', min_post=1)]
+        prefetch_sources = (sources not in broad_criteria)
+        prefetch_targets = (targets not in broad_criteria)
+        
+        # Need to fetch at least one
+        if not prefetch_sources and not prefetch_targets:
+            if sources.label == 'Neuron':
+                prefetch_sources = True
+            else:
+                prefetch_targets = True
 
-    if len(sources_df) == 0 and len(targets_df) == 0:
-        sources_df = _fetch_neurons(sources, timeout=120)
-        targets_df = _fetch_neurons(targets, timeout=120)
+        # See if we can get at least one list quickly.
+        if prefetch_sources:
+            sources_df = _fetch_neurons(sources, timeout=5)
+        if prefetch_targets:
+            targets_df = _fetch_neurons(targets, timeout=5)
+    
+        if len(sources_df) or len(targets_df):
+            return sources_df, targets_df
 
-    if len(sources_df) == 0 and len(targets_df) == 0:
+        # Increase timeout and try again    
+        if prefetch_sources:
+            sources_df = _fetch_neurons(sources, timeout=120)
+        if prefetch_targets:
+            targets_df = _fetch_neurons(targets, timeout=120)
+    
+        if len(sources_df) or len(targets_df):
+            return sources_df, targets_df
+
         raise RuntimeError("Couldn't fetch either source list or target "
                            "list within a reasonable timeout.")
+
+    sources_df, targets_df = _prefetch_neurons()
 
     if not rois or min_total_weight <= 1:
         # If rois aren't specified, then we'll include 'NotPrimary' counts,
@@ -839,7 +871,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     
     if len(targets_df) == 0 or len(sources_df) <= len(targets_df):
         # Break sources into batches
-        for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0)):
+        for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0), leave=False):
             batch_stop = batch_start + batch_size
             source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
             
@@ -858,7 +890,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             conn_tables.append(client.fetch_custom(q))
     else:
         # Break targets into batches
-        for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0)):
+        for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0), leave=False):
             batch_stop = batch_start + batch_size
             target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
             
