@@ -57,12 +57,14 @@ class NeuronCriteria:
             instance (str or list of str):
                 If ``regex=True``, then the instance will be matched as a regular expression.
                 Otherwise, only exact matches are found. To search for neurons with no instance
-                at all, use ``instance=[None]``.
+                at all, use ``instance=[None]``. If both ``type`` and ``instance`` criteria are
+                supplied, any neuron that matches EITHER criteria will match the overall criteria.
 
             type (str or list of str):
                 If ``regex=True``, then the type will be matched as a regular expression.
                 Otherwise, only exact matches are found. To search for neurons with no type
-                at all, use ``type=[None]``.
+                at all, use ``type=[None]``. If both ``type`` and ``instance`` criteria are
+                supplied, any neuron that matches EITHER criteria will match the overall criteria.
 
             regex (bool):
                 If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
@@ -138,11 +140,11 @@ class NeuronCriteria:
         assert not regex or len(type) <= 1, \
             "Please provide only one regex pattern for type"
 
-        if not regex and len(instance) == 1:
+        if not regex and isinstance(instance, str) and len(instance) == 1:
             assert '.*' not in instance[0], \
                 f"instance appears to be a regular expression ('{instance[0]}'), but you didn't pass regex=True"
 
-        if not regex and len(type) == 1:
+        if not regex and isinstance(type, str) and len(type) == 1:
             assert '.*' not in type[0], \
                 f"type appears to be a regular expression ('{type[0]}'), but you didn't pass regex=True"
 
@@ -301,7 +303,7 @@ class NeuronCriteria:
         They're intended be combined (via 'AND') in
         the WHERE clause of a cypher query.
         """
-        exprs = [self.bodyId_expr(), self.instance_expr(), self.type_expr(), self.status_expr(),
+        exprs = [self.bodyId_expr(), self.typeinst_expr(), self.status_expr(),
                  self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr()]
         exprs = [*filter(None, exprs)]
         return exprs
@@ -309,6 +311,22 @@ class NeuronCriteria:
 
     def bodyId_expr(self):
         return where_expr('bodyId', self.bodyId, False, self.matchvar)
+
+    def typeinst_expr(self):
+        """
+        Unlike all other fields, type and instance OR'd together.
+        Either match satisfies the criteria.
+        """
+        t = self.type_expr()
+        i = self.instance_expr()
+        
+        if t and i:
+            return f"({t} OR {i})"
+        if t:
+            return t
+        if i:
+            return i
+        return ""
 
     def instance_expr(self):
         return where_expr('instance', self.instance, self.regex, self.matchvar)
