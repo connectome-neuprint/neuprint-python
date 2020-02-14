@@ -592,7 +592,9 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
 @inject_client
 @make_args_iterable(['rois'])
-def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1, include_nonprimary=False, export_dir=None, batch_size=200, *, client=None):
+def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1,
+                      include_nonprimary=False, export_dir=None, batch_size=200,
+                      properties=['type', 'instance'], *, client=None):
     """
     Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
     
@@ -618,14 +620,6 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             Limit results to connections to bodies that match this criteria.
             Can be list of body IDs or :py:class:`.SegmentCriteria`. If ``None
             will include all bodies downstream of ``sources``.
-
-        export_dir:
-            Optional. Export CSV files for the neuron table,
-            connection table (total weight), and connection table (per ROI).
-
-        batch_size:
-            For optimal performance, connections will be fetched in batches.
-            This parameter specifies the batch size.
 
         rois:
             Limit results to connections within the listed ROIs.
@@ -653,6 +647,17 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 ``weight`` column for each body pair will not be equal to the total
                 connection strength between the bodies.
                 (Some connections will be counted twice.)
+
+        export_dir:
+            Optional. Export CSV files for the neuron table,
+            connection table (total weight), and connection table (per ROI).
+
+        batch_size:
+            For optimal performance, connections will be fetched in batches.
+            This parameter specifies the batch size.
+
+        properties:
+            Which Neuron properties to include in the output table.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -740,6 +745,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     min_roi_weight = max(min_roi_weight, 1)
     min_total_weight = max(min_total_weight, min_roi_weight)
 
+    if 'bodyId' not in properties:
+        properties = ['bodyId'] + properties
+
     def _prepare_criteria(criteria, matchvar):
         if criteria is None:
             criteria = SegmentCriteria(matchvar, client=client)
@@ -764,6 +772,13 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
     def _fetch_neurons(criteria, timeout):
         matchvar = criteria.matchvar
+
+        return_props = [f'{matchvar}.{prop} as {prop}' for prop in properties]
+        return_props = indent(',\n'.join(return_props), ' '*23)[23:]
+
+        value_props = [f'value.{prop} as {prop}' for prop in properties]
+        value_props = indent(',\n'.join(value_props), ' '*19)[19:]
+        
         q = f"""\
             CALL apoc.cypher.runTimeboxed("
                 MATCH ({matchvar}:{criteria.label})
@@ -772,13 +787,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 // result if the whole list can'e be fetched.
                 // Otherwise, runTimeBoxed() will return a partial list.
                 WITH {matchvar}, count({matchvar}) as c
-                RETURN {matchvar}.bodyId as bodyId,
-                       {matchvar}.instance as instance,
-                       {matchvar}.type as type
+                RETURN {return_props}
             ", {{}}, {timeout*1000}) YIELD value
-            RETURN value.bodyId as bodyId,
-                   value.instance as instance,
-                   value.type as type
+            RETURN {value_props}
             ORDER BY bodyId
         """
         try:
@@ -947,27 +958,19 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         # we need to fetch the missing info based on the adjacencies we
         # actually found, and fetch it in batches.
         if len(sources_df) == 0:
+            neurons_df = targets_df.query('bodyId in @_connected_bodies')
             missing_bodies = roi_conn_df['bodyId_pre'].unique()
             missing_label = sources.label
-            neurons_df = targets_df.query('bodyId in @_connected_bodies')
         else:
+            neurons_df = sources_df.query('bodyId in @_connected_bodies')
             missing_bodies = roi_conn_df['bodyId_post'].unique()
             missing_label = targets.label
-            neurons_df = sources_df.query('bodyId in @_connected_bodies')
 
         batches = []
-        for start in trange(0, len(missing_bodies), 10_000):
+        for start in trange(0, len(missing_bodies), 10_000, leave=False):
             batch_bodies = missing_bodies[start:start+10_000]
-            q = f"""\
-                WITH {[*batch_bodies]} as bodies
-                MATCH (n:{missing_label})
-                WHERE n.bodyId in bodies
-                RETURN n.bodyId as bodyId,
-                       n.instance as instance,
-                       n.type as type
-                ORDER BY n.bodyId
-            """
-            batches.append( fetch_custom(q) )
+            batch_df = _fetch_neurons(SegmentCriteria(bodyId=batch_bodies, label=missing_label), 60)
+            batches.append( batch_df )
 
         neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
         neurons_df.query('bodyId in @_connected_bodies', inplace=True)
