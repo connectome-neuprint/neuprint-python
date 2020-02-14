@@ -8,7 +8,7 @@ API
 
    client
    queries
-   segmentcriteria
+   neuroncriteria
    synapsecriteria
    admin
    utils

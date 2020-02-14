@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.client &mdash; neuprint-python 0.4.3 documentation</title>
+  <title>neuprint.client &mdash; neuprint-python 0.4.4+2.gb5ab1ad documentation</title>
   
 
   
@@ -26,6 +26,7 @@
         <script type="text/javascript" src="../../_static/doctools.js"></script>
         <script type="text/javascript" src="../../_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     
     <script type="text/javascript" src="../../_static/js/theme.js"></script>
 
@@ -60,7 +61,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.4.4+2.gb5ab1ad
               </div>
             
           
@@ -227,6 +228,8 @@
 <span class="n">DEFAULT_NEUPRINT_CLIENT</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="n">NEUPRINT_CLIENTS</span> <span class="o">=</span> <span class="p">{}</span>
 
+<span class="k">class</span> <span class="nc">NeuprintTimeoutError</span><span class="p">(</span><span class="n">HTTPError</span><span class="p">):</span>
+    <span class="k">pass</span>
 
 <div class="viewcode-block" id="setup_debug_logging"><a class="viewcode-back" href="../../client.html#neuprint.client.setup_debug_logging">[docs]</a><span class="k">def</span> <span class="nf">setup_debug_logging</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -259,7 +262,7 @@
 <span class="sd">               ...: from neuprint import fetch_neurons</span>
 <span class="sd">               ...:</span>
 <span class="sd">               ...: setup_debug_logging()</span>
-<span class="sd">               ...: neuron_df, roi_df = fetch_neurons(SC(type=&#39;MBON.*&#39;, rois=[&#39;MB(R)&#39;], regex=True))</span>
+<span class="sd">               ...: neuron_df, roi_df = fetch_neurons(NC(type=&#39;MBON.*&#39;, rois=[&#39;MB(R)&#39;], regex=True))</span>
 <span class="sd">            [2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset &#39;hemibrain:v1.0&#39;:</span>
 <span class="sd">                MATCH (n :Neuron)</span>
 <span class="sd">                // -- Basic conditions for segment &#39;n&#39; --</span>
@@ -278,7 +281,15 @@
     <span class="n">root_logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
     <span class="n">root_logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
     
-    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span></div>
+    <span class="n">enable_debug_logging</span><span class="p">()</span></div>
+
+
+<span class="k">def</span> <span class="nf">enable_debug_logging</span><span class="p">():</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">disable_debug_logging</span><span class="p">():</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="default_client"><a class="viewcode-back" href="../../client.html#neuprint.client.default_client">[docs]</a><span class="k">def</span> <span class="nf">default_client</span><span class="p">():</span>
@@ -400,8 +411,11 @@
                     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                         <span class="k">pass</span>
             
-            <span class="n">new_ex</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
-            <span class="n">new_ex</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">ex</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">ex</span><span class="o">.</span><span class="n">response</span> <span class="ow">and</span> <span class="s1">&#39;timeout&#39;</span> <span class="ow">in</span> <span class="n">ex</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">new_ex</span> <span class="o">=</span> <span class="n">NeuprintTimeoutError</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">ex</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">response</span><span class="o">=</span><span class="n">ex</span><span class="o">.</span><span class="n">response</span><span class="p">,</span> <span class="n">request</span><span class="o">=</span><span class="n">ex</span><span class="o">.</span><span class="n">request</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_ex</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+                <span class="n">new_ex</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">ex</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
             
             <span class="c1"># In case this decorator is used twice in a nested call,</span>
             <span class="c1"># mark it as already modified it doesn&#39;t get modified twice.</span>

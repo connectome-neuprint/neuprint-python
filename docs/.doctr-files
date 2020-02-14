@@ -3,8 +3,8 @@ docs/_images/token-screenshot.png
 docs/_modules/index.html
 docs/_modules/neuprint/admin.html
 docs/_modules/neuprint/client.html
+docs/_modules/neuprint/neuroncriteria.html
 docs/_modules/neuprint/queries.html
-docs/_modules/neuprint/segmentcriteria.html
 docs/_modules/neuprint/synapsecriteria.html
 docs/_modules/neuprint/utils.html
 docs/_sources/admin.rst.txt
@@ -13,11 +13,11 @@ docs/_sources/client.rst.txt
 docs/_sources/development.rst.txt
 docs/_sources/faq.rst.txt
 docs/_sources/index.rst.txt
+docs/_sources/neuroncriteria.rst.txt
 docs/_sources/notebooks/Tutorial.ipynb.txt
 docs/_sources/queries.rst.txt
 docs/_sources/quickstart.rst.txt
 docs/_sources/related.rst.txt
-docs/_sources/segmentcriteria.rst.txt
 docs/_sources/synapsecriteria.rst.txt
 docs/_sources/utils.rst.txt
 docs/_static/ajax-loader.gif
@@ -86,6 +86,7 @@ docs/development.html
 docs/faq.html
 docs/genindex.html
 docs/index.html
+docs/neuroncriteria.html
 docs/notebooks/Tutorial.html
 docs/notebooks/Tutorial.ipynb
 docs/objects.inv
@@ -95,6 +96,5 @@ docs/quickstart.html
 docs/related.html
 docs/search.html
 docs/searchindex.js
-docs/segmentcriteria.html
 docs/synapsecriteria.html
 docs/utils.html

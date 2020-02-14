@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Client &mdash; neuprint-python 0.4.3 documentation</title>
+  <title>Client &mdash; neuprint-python 0.4.4+2.gb5ab1ad documentation</title>
   
 
   
@@ -26,6 +26,7 @@
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -62,7 +63,7 @@
             
             
               <div class="version">
-                0.4.3
+                0.4.4+2.gb5ab1ad
               </div>
             
           
@@ -92,7 +93,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="segmentcriteria.html">SegmentCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="neuroncriteria.html">NeuronCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
@@ -602,7 +603,7 @@ Enable neuprint debug logging via:</p>
 <span class="gp">   ...: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_neurons</span>
 <span class="gp">   ...:</span>
 <span class="gp">   ...: </span><span class="n">setup_debug_logging</span><span class="p">()</span>
-<span class="gp">   ...: </span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">SC</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MB(R)&#39;</span><span class="p">],</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="gp">   ...: </span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">roi_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;MBON.*&#39;</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MB(R)&#39;</span><span class="p">],</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 <span class="go">[2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset &#39;hemibrain:v1.0&#39;:</span>
 <span class="go">    MATCH (n :Neuron)</span>
 <span class="go">    // -- Basic conditions for segment &#39;n&#39; --</span>
