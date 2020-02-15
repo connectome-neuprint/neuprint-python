@@ -3,7 +3,7 @@ import copy
 import inspect
 import functools
 from textwrap import indent, dedent
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Collection
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ def copy_as_neuroncriteria(obj, client=None):
             'If passing a DataFrame as NeuronCriteria, it must have "bodyId" column'
         return NeuronCriteria(bodyId=obj['bodyId'].values, client=client)
 
-    if not isinstance(obj, Sequence) or isinstance(obj, str):
+    if not isinstance(obj, Collection) or isinstance(obj, str):
         if obj is None:
             return NeuronCriteria(client=client)
         
