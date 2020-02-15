@@ -4,7 +4,10 @@ Utility functions for manipulating neuprint-python output.
 import sys
 import inspect
 import functools
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
+
+import numpy as np
+import pandas as pd
 
 #
 # Import the notebook-aware version of tqdm if
@@ -13,11 +16,28 @@ from collections.abc import Iterable
 try:
     import ipykernel.iostream
     if isinstance(sys.stdout, ipykernel.iostream.OutStream):
-        from tqdm.notebook import tqdm, trange
+        from tqdm.notebook import tqdm
     else:
-        from tqdm import tqdm, trange
+        from tqdm import tqdm
 except ImportError:
-    from tqdm import tqdm, trange
+    from tqdm import tqdm
+
+
+class tqdm(tqdm):
+    """
+    Same as tqdm, but auto-disable the progress bar if there's only one item.
+    """
+    def __init__(self, iterable=None, *args, disable=None, **kwargs):
+        if disable is None:
+            disable = (iterable is not None
+                       and hasattr(iterable, '__len__')
+                       and len(iterable) <= 1)
+        
+        super().__init__(iterable, *args, disable=disable, **kwargs)
+
+
+def trange(*args, **kwargs):
+    return tqdm(range(*args), **kwargs)
 
 
 def make_iterable(x):
@@ -227,3 +247,65 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
         matrix = matrix.reindex(index=pre_order, columns=post_order)
 
     return matrix
+
+
+def iter_batches(it, batch_size):
+    """
+    Iterator.
+    
+    Consume the given iterator/iterable in batches and
+    yield each batch as a list of items.
+    
+    The last batch might be smaller than the others,
+    if there aren't enough items to fill it.
+    
+    If the given iterator supports the __len__ method,
+    the returned batch iterator will, too.
+    """
+    if hasattr(it, '__len__'):
+        return _iter_batches_with_len(it, batch_size)
+    else:
+        return _iter_batches(it, batch_size)
+
+
+class _iter_batches:
+    def __init__(self, it, batch_size):
+        self.base_iterator = it
+        self.batch_size = batch_size
+                
+
+    def __iter__(self):
+        return self._iter_batches(self.base_iterator, self.batch_size)
+    
+
+    def _iter_batches(self, it, batch_size):
+        if isinstance(it, (pd.DataFrame, pd.Series)):
+            for batch_start in range(0, len(it), batch_size):
+                yield it.iloc[batch_start:batch_start+batch_size]
+            return
+        elif isinstance(it, (list, np.ndarray)):
+            for batch_start in range(0, len(it), batch_size):
+                yield it[batch_start:batch_start+batch_size]
+            return
+        else:
+            if not isinstance(it, Iterator):
+                assert isinstance(it, Iterable)
+                it = iter(it)
+    
+            while True:
+                batch = []
+                try:
+                    for _ in range(batch_size):
+                        batch.append(next(it))
+                except StopIteration:
+                    return
+                finally:
+                    if batch:
+                        yield batch
+
+
+class _iter_batches_with_len(_iter_batches):
+    def __len__(self):
+        return int(np.ceil(len(self.base_iterator) / self.batch_size))
+
+

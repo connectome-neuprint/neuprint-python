@@ -13,7 +13,7 @@ import ujson
 from .client import inject_client, NeuprintTimeoutError
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 from .synapsecriteria import SynapseCriteria
-from .utils import make_args_iterable, trange
+from .utils import make_args_iterable, tqdm, trange, iter_batches
 
 
 NEURON_COLS = ['bodyId', 'instance', 'type',
@@ -1247,7 +1247,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 @inject_client
 @neuroncriteria_args('neuron_criteria')
-def fetch_synapses(neuron_criteria, synapse_criteria=None, *, client=None):
+def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, client=None):
     """
     Fetch synapses from a neuron or selection of neurons.
 
@@ -1327,6 +1327,25 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, *, client=None):
             35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
 
     """
+    neuron_criteria.matchvar = 'n'
+    q = f"""
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions(prefix=8)}
+        RETURN n.bodyId as bodyId
+    """
+    bodies = client.fetch_custom(q)['bodyId'].values
+    
+    batch_dfs = []
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+        batch_criteria = copy.copy(neuron_criteria)
+        batch_criteria.bodyId = batch_bodies
+        batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
+        batch_dfs.append( batch_df )
+    
+    return pd.concat( batch_dfs, ignore_index=True )
+
+
+def _fetch_synapses(neuron_criteria, synapse_criteria, client):
     neuron_criteria.matchvar = 'n'
     
     if synapse_criteria is None:

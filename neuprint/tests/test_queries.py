@@ -2,9 +2,12 @@ import pytest
 import pandas as pd
 
 from neuprint import Client, default_client, set_default_client
-from neuprint import (fetch_custom, NeuronCriteria as NC, fetch_neurons, fetch_meta,
+from neuprint import (NeuronCriteria as NC,
+                      SynapseCriteria as SC,
+                      fetch_custom, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
-                      fetch_adjacencies, fetch_shortest_paths)
+                      fetch_adjacencies, fetch_shortest_paths, fetch_synapses)
+
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 @pytest.fixture(scope='module')
@@ -151,6 +154,19 @@ def test_fetch_all_rois(client):
 def test_fetch_primary_rois(client):
     primary_rois = fetch_primary_rois()
     assert isinstance(primary_rois, list)
+
+
+def test_fetch_synapses(client):
+    nc = NC(type='ADL.*', regex=True, rois=['FB'])
+    sc = SC(rois=['LH(R)', 'SIP(R)'], primary_only=True)
+    syn_df = fetch_synapses(nc, sc)
+    assert set(syn_df['roi']) == {'LH(R)', 'SIP(R)'}
+    
+    neuron_df, _count_df = fetch_neurons(nc)
+    syn_df = syn_df.merge(neuron_df[['bodyId', 'type']], 'left', on='bodyId', suffixes=['_syn', '_body'])
+    assert syn_df['type_body'].isnull().sum() == 0
+    assert syn_df['type_body'].apply(lambda s: s.startswith('ADL')).all()
+    
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
