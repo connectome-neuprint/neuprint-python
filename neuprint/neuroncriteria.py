@@ -502,7 +502,7 @@ class NeuronCriteria:
         
 
     @classmethod
-    def combined_conditions(cls, segment_conditions, vars=None, prefix=0, comments=True):
+    def combined_conditions(cls, neuron_conditions, vars=None, prefix=0, comments=True):
         """
         Combine the conditions from multiple NeuronCriteria into a single string,
         putting the "cheap" conditions first and the "expensive" conditions last.
@@ -512,9 +512,9 @@ class NeuronCriteria:
             prefix = ' '*prefix
             
         if not vars:
-            vars = [sc.matchvar for sc in segment_conditions]
+            vars = [sc.matchvar for sc in neuron_conditions]
         
-        basic_conds = [sc.basic_conditions(*vars, comments=comments) for sc in segment_conditions]
+        basic_conds = [sc.basic_conditions(*vars, comments=comments) for sc in neuron_conditions]
         basic_conds = [*filter(None, basic_conds)]
         if not basic_conds:
             return ""
@@ -522,7 +522,7 @@ class NeuronCriteria:
         basic_conds = '\n\n'.join(basic_conds)
         combined = basic_conds
         
-        roi_conds = [sc.directed_rois_condition(*vars, comments=comments) for sc in segment_conditions]
+        roi_conds = [sc.directed_rois_condition(*vars, comments=comments) for sc in neuron_conditions]
         roi_conds = [*filter(None, roi_conds)]
         if roi_conds:
             roi_conds = '\n\n'.join(roi_conds)

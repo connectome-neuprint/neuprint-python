@@ -1246,14 +1246,14 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 
 @inject_client
-@neuroncriteria_args('segment_criteria')
-def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
+@neuroncriteria_args('neuron_criteria')
+def fetch_synapses(neuron_criteria, synapse_criteria=None, *, client=None):
     """
     Fetch synapses from a neuron or selection of neurons.
 
     Args:
     
-        segment_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+        neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Determines which bodies to fetch synapses for.
 
             Note:
@@ -1327,7 +1327,7 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
             35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
 
     """
-    segment_criteria.matchvar = 'n'
+    neuron_criteria.matchvar = 'n'
     
     if synapse_criteria is None:
         synapse_criteria = SynapseCriteria()
@@ -1339,14 +1339,14 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
     # If the user specified rois to filter synapses by, but hasn't specified rois
     # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
-    if synapse_criteria.rois and not segment_criteria.rois:
-        segment_criteria.rois = {*synapse_criteria.rois}
-        segment_criteria.roi_req = 'any'
+    if synapse_criteria.rois and not neuron_criteria.rois:
+        neuron_criteria.rois = {*synapse_criteria.rois}
+        neuron_criteria.roi_req = 'any'
 
     # Fetch results
     cypher = dedent(f"""\
-        MATCH (n:{segment_criteria.label})
-        {segment_criteria.all_conditions('n', prefix=8)}
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions('n', prefix=8)}
 
         MATCH (n)-[:Contains]->(ss:SynapseSet),
               (ss)-[:Contains]->(s:Synapse)
