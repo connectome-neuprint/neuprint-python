@@ -102,7 +102,7 @@ def setup_debug_logging():
         .. code-block:: ipython
         
             In [1]: from neuprint.client import setup_debug_logging
-               ...: from neuprint import fetch_neurons
+               ...: from neuprint import fetch_neurons, NeuronCriteria as NC
                ...:
                ...: setup_debug_logging()
                ...: neuron_df, roi_df = fetch_neurons(NC(type='MBON.*', rois=['MB(R)'], regex=True))

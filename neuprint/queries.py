@@ -1,7 +1,6 @@
 import os
 import sys
 import copy
-import collections
 from textwrap import indent, dedent
 
 import numpy as np
@@ -260,7 +259,7 @@ def fetch_neurons(criteria, *, client=None):
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
     
     Args:
-        criteria (:py:class:`.NeuronCriteria`):
+        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Only Neurons which satisfy all components of the given criteria are returned.
 
         client:
@@ -283,9 +282,8 @@ def fetch_neurons(criteria, *, client=None):
 
     See also:
 
-        If you like the output format of this function but you want
-        to provide your own cypher query, see :py:func:`.fetch_custom_neurons()`.
-
+        :py:func:`.fetch_custom_neurons()` produces similar output,
+        but permits you to supply your own cypher query directly.
 
     Example:
     
@@ -488,12 +486,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         convenient for small queries.
 
     Args:
-        upstream_criteria:
-            NeuronCriteria indicating how to filter for neurons
-            on the presynaptic side of connections.
-        downstream_criteria:
-            NeuronCriteria indicating how to filter for neurons
-            on the postsynaptic side of connections.
+        upstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            How to filter for neurons on the presynaptic side of connections.
+        downstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            How to filter for neurons on the postsynaptic side of connections.
         rois:
             Limit results to neuron pairs that connect in at least one of the given ROIs.
         min_weight:
@@ -511,10 +507,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
         .. code-block:: ipython
         
-            In [1]: from neuprint import NeuronCriteria as NC, fetch_simple_connections
+            In [1]: from neuprint import fetch_simple_connections
                ...: sources = [329566174, 425790257, 424379864, 329599710]
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
-               ...: fetch_simple_connections(NC(bodyId=sources), NC(bodyId=targets))
+               ...: fetch_simple_connections(sources, targets)
             Out[1]:
                bodyId_pre  bodyId_post  weight                   type_pre                  type_post         instance_pre        instance_post                                       conn_roiInfo
             0   329566174    425790257      43                    OA-VPM3                        APL   OA-VPM3(NO2/NO3)_R                APL_R  {'MB(R)': {'pre': 39, 'post': 39}, 'b'L(R)': {...
@@ -615,12 +611,12 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         convenient for small queries.
 
     Args:
-        sources:
+        sources (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections from bodies that match this criteria.
             Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
             will include all bodies upstream of ``targets``.
 
-        targets:
+        targets (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections to bodies that match this criteria.
             Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
             will include all bodies downstream of ``sources``.
@@ -682,10 +678,10 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             In [1]: from neuprint import Client
                ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0.1')
             
-            In [2]: from neuprint import NeuronCriteria as NC, fetch_adjacencies
+            In [2]: from neuprint import fetch_adjacencies
                ...: sources = [329566174, 425790257, 424379864, 329599710]
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
-               ...: neuron_df, connection_df = fetch_adjacencies(NC(bodyId=sources), NC(bodyId=targets))
+               ...: neuron_df, connection_df = fetch_adjacencies(sources, targets)
             
             In [3]: neuron_df
             Out[3]:
@@ -1091,9 +1087,8 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
     
     
     Args:
-        criteria:
-            :py:class:`.NeuronCriteria` used to determine the match set,
-            for which common connections will be found.
+        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Used to determine the match set, for which common connections will be found.
 
         search_direction (``"upstream"`` or ``"downstream"``):
             Whether or not to search for common connections upstream of
@@ -1156,7 +1151,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
         min_weight:
             Minimum connection strength for each step in the path.
         
-        intermediate_criteria (:py:class:`.NeuronCriteria`):
+        intermediate_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Filtering criteria for neurons on path.
             All intermediate neurons in the path must satisfy this criteria.
             By default, ``NeuronCriteria(status="Traced")`` is used.
@@ -1258,10 +1253,8 @@ def fetch_synapses(segment_criteria, synapse_criteria=None, *, client=None):
 
     Args:
     
-        segment_criteria (NeuronCriteria or bodyId list):
-            Can be either a single bodyID, a list-like of multiple body IDs,
-            a DataFrame with a `bodyId` column or a :py:class:`.NeuronCriteria`
-            used to find a set of body IDs.
+        segment_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Determines which bodies to fetch synapses for.
 
             Note:
                 Any ROI criteria specified in this argument does not affect
@@ -1412,7 +1405,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     
     Args:
     
-        source_criteria (NeuronCriteria or bodyId list):
+        source_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Criteria to by which to filter source (pre-synaptic) neurons.
             If omitted, all Neurons will be considered as possible sources.
 
@@ -1420,7 +1413,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                 Any ROI criteria specified in this argument does not affect
                 which synapses are returned, only which bodies are inspected.
 
-        target_criteria (NeuronCriteria or bodyId list):
+        target_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Criteria to by which to filter target (post-synaptic) neurons.
             If omitted, all Neurons will be considered as possible sources.
 
@@ -1475,8 +1468,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         .. code-block:: ipython
 
-            In [1]: from neuprint import fetch_synapse_connections, NeuronCriteria as NC, SynapseCriteria as SC
-               ...: fetch_synapse_connections(NC(bodyId=792368888), None, SC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
+            In [1]: from neuprint import fetch_synapse_connections, SynapseCriteria as SC
+               ...: fetch_synapse_connections(792368888, None, SC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
             Out[1]:
                 bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post
             0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035
@@ -1611,7 +1604,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     connections which belong to Traced neurons.
     
     Args:
-        criteria (:py:class:`.NeuronCriteria`):
+        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Defines the set of neurons for which output completeness should be computed.
     Returns:
         DataFrame with columns ``['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']``
@@ -1674,6 +1667,15 @@ def fetch_downstream_orphan_tasks(criteria, *, client=None):
     That is, if you started tracing orphans from this DataFrame in
     order, then the ``cum_completeness`` column indicates how complete
     the upstream body is after each orphan becomes traced.
+    
+    Args:
+        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Determines the set of "upstream" bodies for which
+            downstream orphans should be identified.
+    
+    Returns:
+        DataFrame, where ``bodyId_pre`` contains the upstream bodies you specified
+        via ``criteria``, and ``bodyId_post`` contains the list of downstream orphans.
     
     Example:
     
