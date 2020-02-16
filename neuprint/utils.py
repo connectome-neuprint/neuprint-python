@@ -4,7 +4,7 @@ Utility functions for manipulating neuprint-python output.
 import sys
 import inspect
 import functools
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Collection
 
 import numpy as np
 import pandas as pd
@@ -43,12 +43,20 @@ def trange(*args, **kwargs):
 def make_iterable(x):
     """
     If ``x`` is already a list or array, return it unchanged.
+    If ``x`` is Series, return its values.
     If ``x`` is ``None``, return an empty list ``[]``.
     Otherwise, wrap it in a list.
     """
     if x is None:
         return []
-    if isinstance(x, Iterable) and not isinstance(x, str):
+    
+    if isinstance(x, np.ndarray):
+        return x
+    
+    if isinstance(x, pd.Series):
+        return x.values
+    
+    if isinstance(x, Collection) and not isinstance(x, str):
         return x
     else:
         return [x]
