@@ -734,6 +734,27 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         5   424379864    329566174       7
         6   425790257    329566174      12
     """
+    ## Why is this function so dang long and complicated?
+    ## --------------------------------------------------
+    ##
+    ## 1. It batches the requests.  Instead of fetching all adjacencies between
+    ##    sources and targets at once, it splits the requests up into batches of
+    ##    source (or target) bodies.
+    ##
+    ## 2. To achieve (1), it has to pre-fetch either the source body list or the
+    ##    target body list.
+    ##
+    ## 3. To achieve (2), it first fetches the *counts* of the source/body lists,
+    ##    and determines which is shorter, or at least which one can be fetched
+    ##    withina short timeout.
+    ##
+    ## 4. It 'reshapes' roi info into a column, with special care given to the
+    ##    `include_nonprimary` option, and also invents a special ROI `NotPrimary`.
+    ##
+    ## 5. It updates the neuron list if necessary to include all sources and targets.
+    ##
+    ## 6. It writes to CSV.
+
     ##
     ## Preprocess arguments
     ##
