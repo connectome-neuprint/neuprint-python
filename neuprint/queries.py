@@ -875,7 +875,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         
         if sources_df is not None:
             # Break sources into batches
-            for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0), leave=False):
+            for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0)):
                 batch_stop = batch_start + batch_size
                 source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
                 
@@ -894,7 +894,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 conn_tables.append(client.fetch_custom(q))
         else:
             # Break targets into batches
-            for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0), leave=False):
+            for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0)):
                 batch_stop = batch_start + batch_size
                 target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
                 
@@ -1001,7 +1001,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     missing_bodies = [*set(connected_bodies) - set(neurons_df['bodyId'])]
 
     batches = []
-    for start in trange(0, len(missing_bodies), 10_000, leave=False):
+    for start in trange(0, len(missing_bodies), 10_000):
         batch_bodies = missing_bodies[start:start+10_000]
         batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label))
         batches.append( batch_df )
@@ -1270,6 +1270,11 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
             Otherwise, all ROI names will be included in the results.
             In that case, some synapses will be listed multiple times -- once per intersecting ROI.
             If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
+        
+        batch_size:
+            To improve performance and avoid timeouts, the synapses for multiple bodies
+            will be fetched in batches, where each batch corresponds to N bodies.
+            This argument sets the batch size N.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -1410,7 +1415,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
 
 @inject_client
 @neuroncriteria_args('source_criteria', 'target_criteria')
-def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, *, client=None):
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=10, *, client=None):
     """
     Fetch synaptic-level connections between source and target neurons.
     
@@ -1467,6 +1472,12 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                 be less than ``min_total_weight``. That's because you filtered out
                 the synapses in other ROIs.
 
+        batch_size:
+            To avoid timeouts and improve performance, the synapse connections
+            will be fetched in batches, where each batch corresponds to N pairs
+            of ``bodyId_pre``->``bodyId_post`` connections. This argument sets the
+            batch size N.
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
@@ -1508,26 +1519,42 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             14   792368888   1196854070  PED(R)   PED(R)  14331  27921  20099   14317   27935   20101           0.904         0.968408
             15   792368888   1131831702  SMP(R)   SMP(R)  23630  29443  16297   23651   29434   16316           0.984         0.362952
     """
-    def prepare_sc(sc, matchvar):
-        sc.matchvar = matchvar
-        
-        # If the user specified rois to filter synapses by, but hasn't specified rois
-        # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
-        if synapse_criteria.rois and not sc.rois:
-            sc.rois = {*synapse_criteria.rois}
-            sc.roi_req = 'any'
-    
-        return sc
-
     assert source_criteria is not None or target_criteria is not None, \
         "Please specify either source or target search criteria (or both)."
-
-    source_criteria = prepare_sc(source_criteria, 'n')
-    target_criteria = prepare_sc(target_criteria, 'm')
 
     if synapse_criteria is None:
         synapse_criteria = SynapseCriteria(primary_only=True)
     
+    def prepare_nc(nc, matchvar):
+        nc.matchvar = matchvar
+        
+        # If the user specified rois to filter synapses by, but hasn't specified rois
+        # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
+        if synapse_criteria.rois and not nc.rois:
+            nc.rois = {*synapse_criteria.rois}
+            nc.roi_req = 'any'
+    
+        return nc
+
+    source_criteria = prepare_nc(source_criteria, 'n')
+    target_criteria = prepare_nc(target_criteria, 'm')
+
+    _neuron_df, roi_conn_df = fetch_adjacencies(source_criteria, target_criteria, synapse_criteria.rois, 1, min_total_weight, properties=[])
+    conn_df = roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
+    
+    syn_dfs = []
+    for batch_conn_df in tqdm(iter_batches(conn_df, batch_size)):
+        source_criteria.bodyId = batch_conn_df['bodyId_pre']
+        target_criteria.bodyId = batch_conn_df['bodyId_post']
+        
+        batch_syn_df = _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client)
+        syn_dfs.append(batch_syn_df)
+    
+    syn_df = pd.concat(syn_dfs, ignore_index=True)
+    return syn_df
+        
+
+def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client):
     if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
     else:

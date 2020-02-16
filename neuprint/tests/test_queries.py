@@ -6,7 +6,8 @@ from neuprint import (NeuronCriteria as NC,
                       SynapseCriteria as SC,
                       fetch_custom, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
-                      fetch_adjacencies, fetch_shortest_paths, fetch_synapses)
+                      fetch_adjacencies, fetch_shortest_paths, fetch_synapses,
+                      fetch_synapse_connections)
 
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
@@ -167,6 +168,12 @@ def test_fetch_synapses(client):
     assert syn_df['type_body'].isnull().sum() == 0
     assert syn_df['type_body'].apply(lambda s: s.startswith('ADL')).all()
     
+
+def test_fetch_synapse_connections(client):
+    rois = ['PED(R)', 'SMP(R)']
+    syn_df = fetch_synapse_connections(792368888, None, SC(rois=rois, primary_only=True))
+    assert syn_df.eval('roi_pre in @rois and roi_post in @rois').all()
+
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
