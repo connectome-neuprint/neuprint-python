@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>neuprint.queries &mdash; neuprint-python 0.4.4+2.gb5ab1ad documentation</title>
+  <title>neuprint.queries &mdash; neuprint-python 0.4.5 documentation</title>
   
 
   
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.4.4+2.gb5ab1ad
+                0.4.5
               </div>
             
           
@@ -158,7 +158,6 @@
 <span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-<span class="kn">import</span> <span class="nn">collections</span>
 <span class="kn">from</span> <span class="nn">textwrap</span> <span class="kn">import</span> <span class="n">indent</span><span class="p">,</span> <span class="n">dedent</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -171,7 +170,7 @@
 <span class="kn">from</span> <span class="nn">.client</span> <span class="kn">import</span> <span class="n">inject_client</span><span class="p">,</span> <span class="n">NeuprintTimeoutError</span>
 <span class="kn">from</span> <span class="nn">.neuroncriteria</span> <span class="kn">import</span> <span class="n">NeuronCriteria</span><span class="p">,</span> <span class="n">neuroncriteria_args</span><span class="p">,</span> <span class="n">copy_as_neuroncriteria</span>
 <span class="kn">from</span> <span class="nn">.synapsecriteria</span> <span class="kn">import</span> <span class="n">SynapseCriteria</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_args_iterable</span><span class="p">,</span> <span class="n">trange</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">make_args_iterable</span><span class="p">,</span> <span class="n">tqdm</span><span class="p">,</span> <span class="n">trange</span><span class="p">,</span> <span class="n">iter_batches</span>
 
 
 <span class="n">NEURON_COLS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span>
@@ -417,7 +416,7 @@
 <span class="sd">    .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&amp;qt=findneurons&amp;q=1</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
-<span class="sd">        criteria (:py:class:`.NeuronCriteria`):</span>
+<span class="sd">        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Only Neurons which satisfy all components of the given criteria are returned.</span>
 
 <span class="sd">        client:</span>
@@ -440,9 +439,8 @@
 
 <span class="sd">    See also:</span>
 
-<span class="sd">        If you like the output format of this function but you want</span>
-<span class="sd">        to provide your own cypher query, see :py:func:`.fetch_custom_neurons()`.</span>
-
+<span class="sd">        :py:func:`.fetch_custom_neurons()` produces similar output,</span>
+<span class="sd">        but permits you to supply your own cypher query directly.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">    </span>
@@ -645,12 +643,10 @@
 <span class="sd">        convenient for small queries.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        upstream_criteria:</span>
-<span class="sd">            NeuronCriteria indicating how to filter for neurons</span>
-<span class="sd">            on the presynaptic side of connections.</span>
-<span class="sd">        downstream_criteria:</span>
-<span class="sd">            NeuronCriteria indicating how to filter for neurons</span>
-<span class="sd">            on the postsynaptic side of connections.</span>
+<span class="sd">        upstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
+<span class="sd">            How to filter for neurons on the presynaptic side of connections.</span>
+<span class="sd">        downstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
+<span class="sd">            How to filter for neurons on the postsynaptic side of connections.</span>
 <span class="sd">        rois:</span>
 <span class="sd">            Limit results to neuron pairs that connect in at least one of the given ROIs.</span>
 <span class="sd">        min_weight:</span>
@@ -668,10 +664,10 @@
 <span class="sd">    </span>
 <span class="sd">        .. code-block:: ipython</span>
 <span class="sd">        </span>
-<span class="sd">            In [1]: from neuprint import NeuronCriteria as NC, fetch_simple_connections</span>
+<span class="sd">            In [1]: from neuprint import fetch_simple_connections</span>
 <span class="sd">               ...: sources = [329566174, 425790257, 424379864, 329599710]</span>
 <span class="sd">               ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]</span>
-<span class="sd">               ...: fetch_simple_connections(NC(bodyId=sources), NC(bodyId=targets))</span>
+<span class="sd">               ...: fetch_simple_connections(sources, targets)</span>
 <span class="sd">            Out[1]:</span>
 <span class="sd">               bodyId_pre  bodyId_post  weight                   type_pre                  type_post         instance_pre        instance_post                                       conn_roiInfo</span>
 <span class="sd">            0   329566174    425790257      43                    OA-VPM3                        APL   OA-VPM3(NO2/NO3)_R                APL_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 39, &#39;post&#39;: 39}, &#39;b&#39;L(R)&#39;: {...</span>
@@ -772,12 +768,12 @@
 <span class="sd">        convenient for small queries.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        sources:</span>
+<span class="sd">        sources (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Limit results to connections from bodies that match this criteria.</span>
 <span class="sd">            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None</span>
 <span class="sd">            will include all bodies upstream of ``targets``.</span>
 
-<span class="sd">        targets:</span>
+<span class="sd">        targets (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Limit results to connections to bodies that match this criteria.</span>
 <span class="sd">            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None</span>
 <span class="sd">            will include all bodies downstream of ``sources``.</span>
@@ -839,10 +835,10 @@
 <span class="sd">            In [1]: from neuprint import Client</span>
 <span class="sd">               ...: c = Client(&#39;neuprint.janelia.org&#39;, dataset=&#39;hemibrain:v1.0.1&#39;)</span>
 <span class="sd">            </span>
-<span class="sd">            In [2]: from neuprint import NeuronCriteria as NC, fetch_adjacencies</span>
+<span class="sd">            In [2]: from neuprint import fetch_adjacencies</span>
 <span class="sd">               ...: sources = [329566174, 425790257, 424379864, 329599710]</span>
 <span class="sd">               ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]</span>
-<span class="sd">               ...: neuron_df, connection_df = fetch_adjacencies(NC(bodyId=sources), NC(bodyId=targets))</span>
+<span class="sd">               ...: neuron_df, connection_df = fetch_adjacencies(sources, targets)</span>
 <span class="sd">            </span>
 <span class="sd">            In [3]: neuron_df</span>
 <span class="sd">            Out[3]:</span>
@@ -895,6 +891,27 @@
 <span class="sd">        5   424379864    329566174       7</span>
 <span class="sd">        6   425790257    329566174      12</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1">## Why is this function so dang long and complicated?</span>
+    <span class="c1">## --------------------------------------------------</span>
+    <span class="c1">##</span>
+    <span class="c1">## 1. It batches the requests.  Instead of fetching all adjacencies between</span>
+    <span class="c1">##    sources and targets at once, it splits the requests up into batches of</span>
+    <span class="c1">##    source (or target) bodies.</span>
+    <span class="c1">##</span>
+    <span class="c1">## 2. To achieve (1), it has to pre-fetch either the source body list or the</span>
+    <span class="c1">##    target body list.</span>
+    <span class="c1">##</span>
+    <span class="c1">## 3. To achieve (2), it first fetches the *counts* of the source/body lists,</span>
+    <span class="c1">##    and determines which is shorter, or at least which one can be fetched</span>
+    <span class="c1">##    withina short timeout.</span>
+    <span class="c1">##</span>
+    <span class="c1">## 4. It &#39;reshapes&#39; roi info into a column, with special care given to the</span>
+    <span class="c1">##    `include_nonprimary` option, and also invents a special ROI `NotPrimary`.</span>
+    <span class="c1">##</span>
+    <span class="c1">## 5. It updates the neuron list if necessary to include all sources and targets.</span>
+    <span class="c1">##</span>
+    <span class="c1">## 6. It writes to CSV.</span>
+
     <span class="c1">##</span>
     <span class="c1">## Preprocess arguments</span>
     <span class="c1">##</span>
@@ -1036,7 +1053,7 @@
         
         <span class="k">if</span> <span class="n">sources_df</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Break sources into batches</span>
-            <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sources_df</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sources_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sources_df</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)):</span>
                 <span class="n">batch_stop</span> <span class="o">=</span> <span class="n">batch_start</span> <span class="o">+</span> <span class="n">batch_size</span>
                 <span class="n">source_bodies</span> <span class="o">=</span> <span class="n">sources_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 
@@ -1055,7 +1072,7 @@
                 <span class="n">conn_tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Break targets into batches</span>
-            <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets_df</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">batch_start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets_df</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">targets_df</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">)):</span>
                 <span class="n">batch_stop</span> <span class="o">=</span> <span class="n">batch_start</span> <span class="o">+</span> <span class="n">batch_size</span>
                 <span class="n">target_bodies</span> <span class="o">=</span> <span class="n">targets_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">batch_start</span><span class="p">:</span><span class="n">batch_stop</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
                 
@@ -1162,7 +1179,7 @@
     <span class="n">missing_bodies</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="nb">set</span><span class="p">(</span><span class="n">connected_bodies</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">neurons_df</span><span class="p">[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">])]</span>
 
     <span class="n">batches</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_bodies</span><span class="p">),</span> <span class="mi">10_000</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="n">trange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing_bodies</span><span class="p">),</span> <span class="mi">10_000</span><span class="p">):</span>
         <span class="n">batch_bodies</span> <span class="o">=</span> <span class="n">missing_bodies</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">start</span><span class="o">+</span><span class="mi">10_000</span><span class="p">]</span>
         <span class="n">batch_df</span> <span class="o">=</span> <span class="n">_fetch_neurons</span><span class="p">(</span><span class="n">NeuronCriteria</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">batch_bodies</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">missing_label</span><span class="p">))</span>
         <span class="n">batches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">batch_df</span> <span class="p">)</span>
@@ -1248,9 +1265,8 @@
 <span class="sd">    </span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
-<span class="sd">        criteria:</span>
-<span class="sd">            :py:class:`.NeuronCriteria` used to determine the match set,</span>
-<span class="sd">            for which common connections will be found.</span>
+<span class="sd">        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
+<span class="sd">            Used to determine the match set, for which common connections will be found.</span>
 
 <span class="sd">        search_direction (``&quot;upstream&quot;`` or ``&quot;downstream&quot;``):</span>
 <span class="sd">            Whether or not to search for common connections upstream of</span>
@@ -1313,7 +1329,7 @@
 <span class="sd">        min_weight:</span>
 <span class="sd">            Minimum connection strength for each step in the path.</span>
 <span class="sd">        </span>
-<span class="sd">        intermediate_criteria (:py:class:`.NeuronCriteria`):</span>
+<span class="sd">        intermediate_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Filtering criteria for neurons on path.</span>
 <span class="sd">            All intermediate neurons in the path must satisfy this criteria.</span>
 <span class="sd">            By default, ``NeuronCriteria(status=&quot;Traced&quot;)`` is used.</span>
@@ -1408,17 +1424,15 @@
 
 
 <div class="viewcode-block" id="fetch_synapses"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_synapses">[docs]</a><span class="nd">@inject_client</span>
-<span class="nd">@neuroncriteria_args</span><span class="p">(</span><span class="s1">&#39;segment_criteria&#39;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">fetch_synapses</span><span class="p">(</span><span class="n">segment_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="nd">@neuroncriteria_args</span><span class="p">(</span><span class="s1">&#39;neuron_criteria&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">fetch_synapses</span><span class="p">(</span><span class="n">neuron_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch synapses from a neuron or selection of neurons.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">    </span>
-<span class="sd">        segment_criteria (NeuronCriteria or bodyId list):</span>
-<span class="sd">            Can be either a single bodyID, a list-like of multiple body IDs,</span>
-<span class="sd">            a DataFrame with a `bodyId` column or a :py:class:`.NeuronCriteria`</span>
-<span class="sd">            used to find a set of body IDs.</span>
+<span class="sd">        neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
+<span class="sd">            Determines which bodies to fetch synapses for.</span>
 
 <span class="sd">            Note:</span>
 <span class="sd">                Any ROI criteria specified in this argument does not affect</span>
@@ -1434,6 +1448,11 @@
 <span class="sd">            Otherwise, all ROI names will be included in the results.</span>
 <span class="sd">            In that case, some synapses will be listed multiple times -- once per intersecting ROI.</span>
 <span class="sd">            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.</span>
+<span class="sd">        </span>
+<span class="sd">        batch_size:</span>
+<span class="sd">            To improve performance and avoid timeouts, the synapses for multiple bodies</span>
+<span class="sd">            will be fetched in batches, where each batch corresponds to N bodies.</span>
+<span class="sd">            This argument sets the batch size N.</span>
 
 <span class="sd">        client:</span>
 <span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
@@ -1491,7 +1510,26 @@
 <span class="sd">            35   859152522   pre  SIP(R)  13275  25499  13629    0.997000</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">segment_criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+    <span class="n">neuron_criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">        MATCH (n:</span><span class="si">{neuron_criteria.label}</span><span class="s2">)</span>
+<span class="s2">        {neuron_criteria.all_conditions(prefix=8)}</span>
+<span class="s2">        RETURN n.bodyId as bodyId</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">bodies</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)[</span><span class="s1">&#39;bodyId&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    
+    <span class="n">batch_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">batch_bodies</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">iter_batches</span><span class="p">(</span><span class="n">bodies</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)):</span>
+        <span class="n">batch_criteria</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">neuron_criteria</span><span class="p">)</span>
+        <span class="n">batch_criteria</span><span class="o">.</span><span class="n">bodyId</span> <span class="o">=</span> <span class="n">batch_bodies</span>
+        <span class="n">batch_df</span> <span class="o">=</span> <span class="n">_fetch_synapses</span><span class="p">(</span><span class="n">batch_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+        <span class="n">batch_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">batch_df</span> <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span> <span class="n">batch_dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_fetch_synapses</span><span class="p">(</span><span class="n">neuron_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+    <span class="n">neuron_criteria</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="s1">&#39;n&#39;</span>
     
     <span class="k">if</span> <span class="n">synapse_criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">synapse_criteria</span> <span class="o">=</span> <span class="n">SynapseCriteria</span><span class="p">()</span>
@@ -1503,14 +1541,14 @@
 
     <span class="c1"># If the user specified rois to filter synapses by, but hasn&#39;t specified rois</span>
     <span class="c1"># in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.</span>
-    <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">segment_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
-        <span class="n">segment_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">}</span>
-        <span class="n">segment_criteria</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
+    <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">neuron_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+        <span class="n">neuron_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">}</span>
+        <span class="n">neuron_criteria</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
 
     <span class="c1"># Fetch results</span>
     <span class="n">cypher</span> <span class="o">=</span> <span class="n">dedent</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
-<span class="s2">        MATCH (n:</span><span class="si">{segment_criteria.label}</span><span class="s2">)</span>
-<span class="s2">        {segment_criteria.all_conditions(&#39;n&#39;, prefix=8)}</span>
+<span class="s2">        MATCH (n:</span><span class="si">{neuron_criteria.label}</span><span class="s2">)</span>
+<span class="s2">        {neuron_criteria.all_conditions(&#39;n&#39;, prefix=8)}</span>
 
 <span class="s2">        MATCH (n)-[:Contains]-&gt;(ss:SynapseSet),</span>
 <span class="s2">              (ss)-[:Contains]-&gt;(s:Synapse)</span>
@@ -1550,12 +1588,12 @@
     <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
     <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">syn_df</span></div>
+    <span class="k">return</span> <span class="n">syn_df</span>
 
 
 <div class="viewcode-block" id="fetch_synapse_connections"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_synapse_connections">[docs]</a><span class="nd">@inject_client</span>
 <span class="nd">@neuroncriteria_args</span><span class="p">(</span><span class="s1">&#39;source_criteria&#39;</span><span class="p">,</span> <span class="s1">&#39;target_criteria&#39;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">fetch_synapse_connections</span><span class="p">(</span><span class="n">source_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_total_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">fetch_synapse_connections</span><span class="p">(</span><span class="n">source_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_total_weight</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">client</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch synaptic-level connections between source and target neurons.</span>
 <span class="sd">    </span>
@@ -1569,7 +1607,7 @@
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
 <span class="sd">    </span>
-<span class="sd">        source_criteria (NeuronCriteria or bodyId list):</span>
+<span class="sd">        source_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Criteria to by which to filter source (pre-synaptic) neurons.</span>
 <span class="sd">            If omitted, all Neurons will be considered as possible sources.</span>
 
@@ -1577,7 +1615,7 @@
 <span class="sd">                Any ROI criteria specified in this argument does not affect</span>
 <span class="sd">                which synapses are returned, only which bodies are inspected.</span>
 
-<span class="sd">        target_criteria (NeuronCriteria or bodyId list):</span>
+<span class="sd">        target_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Criteria to by which to filter target (post-synaptic) neurons.</span>
 <span class="sd">            If omitted, all Neurons will be considered as possible sources.</span>
 
@@ -1612,6 +1650,12 @@
 <span class="sd">                be less than ``min_total_weight``. That&#39;s because you filtered out</span>
 <span class="sd">                the synapses in other ROIs.</span>
 
+<span class="sd">        batch_size:</span>
+<span class="sd">            To avoid timeouts and improve performance, the synapse connections</span>
+<span class="sd">            will be fetched in batches, where each batch corresponds to N pairs</span>
+<span class="sd">            of ``bodyId_pre``-&gt;``bodyId_post`` connections. This argument sets the</span>
+<span class="sd">            batch size N.</span>
+
 <span class="sd">        client:</span>
 <span class="sd">            If not provided, the global default :py:class:`.Client` will be used.</span>
 
@@ -1632,8 +1676,8 @@
 
 <span class="sd">        .. code-block:: ipython</span>
 
-<span class="sd">            In [1]: from neuprint import fetch_synapse_connections, NeuronCriteria as NC, SynapseCriteria as SC</span>
-<span class="sd">               ...: fetch_synapse_connections(NC(bodyId=792368888), None, SC(rois=[&#39;PED(R)&#39;, &#39;SMP(R)&#39;], primary_only=True))</span>
+<span class="sd">            In [1]: from neuprint import fetch_synapse_connections, SynapseCriteria as SC</span>
+<span class="sd">               ...: fetch_synapse_connections(792368888, None, SC(rois=[&#39;PED(R)&#39;, &#39;SMP(R)&#39;], primary_only=True))</span>
 <span class="sd">            Out[1]:</span>
 <span class="sd">                bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post</span>
 <span class="sd">            0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035</span>
@@ -1653,26 +1697,42 @@
 <span class="sd">            14   792368888   1196854070  PED(R)   PED(R)  14331  27921  20099   14317   27935   20101           0.904         0.968408</span>
 <span class="sd">            15   792368888   1131831702  SMP(R)   SMP(R)  23630  29443  16297   23651   29434   16316           0.984         0.362952</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">prepare_sc</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">):</span>
-        <span class="n">sc</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
-        
-        <span class="c1"># If the user specified rois to filter synapses by, but hasn&#39;t specified rois</span>
-        <span class="c1"># in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.</span>
-        <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
-            <span class="n">sc</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">}</span>
-            <span class="n">sc</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
-    
-        <span class="k">return</span> <span class="n">sc</span>
-
     <span class="k">assert</span> <span class="n">source_criteria</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">target_criteria</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> \
         <span class="s2">&quot;Please specify either source or target search criteria (or both).&quot;</span>
-
-    <span class="n">source_criteria</span> <span class="o">=</span> <span class="n">prepare_sc</span><span class="p">(</span><span class="n">source_criteria</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">)</span>
-    <span class="n">target_criteria</span> <span class="o">=</span> <span class="n">prepare_sc</span><span class="p">(</span><span class="n">target_criteria</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">synapse_criteria</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">synapse_criteria</span> <span class="o">=</span> <span class="n">SynapseCriteria</span><span class="p">(</span><span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     
+    <span class="k">def</span> <span class="nf">prepare_nc</span><span class="p">(</span><span class="n">nc</span><span class="p">,</span> <span class="n">matchvar</span><span class="p">):</span>
+        <span class="n">nc</span><span class="o">.</span><span class="n">matchvar</span> <span class="o">=</span> <span class="n">matchvar</span>
+        
+        <span class="c1"># If the user specified rois to filter synapses by, but hasn&#39;t specified rois</span>
+        <span class="c1"># in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.</span>
+        <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">nc</span><span class="o">.</span><span class="n">rois</span><span class="p">:</span>
+            <span class="n">nc</span><span class="o">.</span><span class="n">rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">}</span>
+            <span class="n">nc</span><span class="o">.</span><span class="n">roi_req</span> <span class="o">=</span> <span class="s1">&#39;any&#39;</span>
+    
+        <span class="k">return</span> <span class="n">nc</span>
+
+    <span class="n">source_criteria</span> <span class="o">=</span> <span class="n">prepare_nc</span><span class="p">(</span><span class="n">source_criteria</span><span class="p">,</span> <span class="s1">&#39;n&#39;</span><span class="p">)</span>
+    <span class="n">target_criteria</span> <span class="o">=</span> <span class="n">prepare_nc</span><span class="p">(</span><span class="n">target_criteria</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">)</span>
+
+    <span class="n">_neuron_df</span><span class="p">,</span> <span class="n">roi_conn_df</span> <span class="o">=</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">source_criteria</span><span class="p">,</span> <span class="n">target_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">rois</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">min_total_weight</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">conn_df</span> <span class="o">=</span> <span class="n">roi_conn_df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">([</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">,</span> <span class="s1">&#39;bodyId_post&#39;</span><span class="p">])</span>
+    
+    <span class="n">syn_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">batch_conn_df</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">iter_batches</span><span class="p">(</span><span class="n">conn_df</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)):</span>
+        <span class="n">source_criteria</span><span class="o">.</span><span class="n">bodyId</span> <span class="o">=</span> <span class="n">batch_conn_df</span><span class="p">[</span><span class="s1">&#39;bodyId_pre&#39;</span><span class="p">]</span>
+        <span class="n">target_criteria</span><span class="o">.</span><span class="n">bodyId</span> <span class="o">=</span> <span class="n">batch_conn_df</span><span class="p">[</span><span class="s1">&#39;bodyId_post&#39;</span><span class="p">]</span>
+        
+        <span class="n">batch_syn_df</span> <span class="o">=</span> <span class="n">_fetch_synapse_connections</span><span class="p">(</span><span class="n">source_criteria</span><span class="p">,</span> <span class="n">target_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="p">,</span> <span class="n">min_total_weight</span><span class="p">,</span> <span class="n">client</span><span class="p">)</span>
+        <span class="n">syn_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_syn_df</span><span class="p">)</span>
+    
+    <span class="n">syn_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">syn_dfs</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">syn_df</span></div>
+        
+
+<span class="k">def</span> <span class="nf">_fetch_synapse_connections</span><span class="p">(</span><span class="n">source_criteria</span><span class="p">,</span> <span class="n">target_criteria</span><span class="p">,</span> <span class="n">synapse_criteria</span><span class="p">,</span> <span class="n">min_total_weight</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">synapse_criteria</span><span class="o">.</span><span class="n">primary_only</span><span class="p">:</span>
         <span class="n">return_rois</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">client</span><span class="o">.</span><span class="n">primary_rois</span><span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
@@ -1756,7 +1816,7 @@
     <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence_pre&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence_pre&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
     <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence_post&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_df</span><span class="p">[</span><span class="s1">&#39;confidence_post&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">syn_df</span></div>
+    <span class="k">return</span> <span class="n">syn_df</span>
 
 
 <div class="viewcode-block" id="fetch_output_completeness"><a class="viewcode-back" href="../../queries.html#neuprint.queries.fetch_output_completeness">[docs]</a><span class="nd">@inject_client</span>
@@ -1768,7 +1828,7 @@
 <span class="sd">    connections which belong to Traced neurons.</span>
 <span class="sd">    </span>
 <span class="sd">    Args:</span>
-<span class="sd">        criteria (:py:class:`.NeuronCriteria`):</span>
+<span class="sd">        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
 <span class="sd">            Defines the set of neurons for which output completeness should be computed.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        DataFrame with columns ``[&#39;bodyId&#39;, &#39;completeness&#39;, &#39;traced_weight&#39;, &#39;untraced_weight&#39;, &#39;total_weight&#39;]``</span>
@@ -1831,6 +1891,15 @@
 <span class="sd">    That is, if you started tracing orphans from this DataFrame in</span>
 <span class="sd">    order, then the ``cum_completeness`` column indicates how complete</span>
 <span class="sd">    the upstream body is after each orphan becomes traced.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):</span>
+<span class="sd">            Determines the set of &quot;upstream&quot; bodies for which</span>
+<span class="sd">            downstream orphans should be identified.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        DataFrame, where ``bodyId_pre`` contains the upstream bodies you specified</span>
+<span class="sd">        via ``criteria``, and ``bodyId_post`` contains the list of downstream orphans.</span>
 <span class="sd">    </span>
 <span class="sd">    Example:</span>
 <span class="sd">    </span>

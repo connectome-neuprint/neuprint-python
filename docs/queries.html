@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Common Queries &mdash; neuprint-python 0.4.4+2.gb5ab1ad documentation</title>
+  <title>Common Queries &mdash; neuprint-python 0.4.5 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.4+2.gb5ab1ad
+                0.4.5
               </div>
             
           
@@ -311,7 +311,7 @@ and server metadata.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_synapses" title="neuprint.queries.fetch_synapses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_synapses</span></code></a>(segment_criteria[,&nbsp;…])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.queries.fetch_synapses" title="neuprint.queries.fetch_synapses"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_synapses</span></code></a>(neuron_criteria[,&nbsp;…])</td>
 <td>Fetch synapses from a neuron or selection of neurons.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.queries.fetch_synapse_connections" title="neuprint.queries.fetch_synapse_connections"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_synapse_connections</span></code></a>([source_criteria,&nbsp;…])</td>
@@ -498,7 +498,7 @@ but doesn’t require you to write cypher.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>criteria</strong> (<a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Only Neurons which satisfy all components of the given criteria are returned.</li>
+<li><strong>criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Only Neurons which satisfy all components of the given criteria are returned.</li>
 <li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
@@ -524,8 +524,8 @@ for <code class="docutils literal notranslate"><span class="pre">pre</span></cod
 </table>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last">If you like the output format of this function but you want
-to provide your own cypher query, see <a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom_neurons()</span></code></a>.</p>
+<p class="last"><a class="reference internal" href="#neuprint.queries.fetch_custom_neurons" title="neuprint.queries.fetch_custom_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_custom_neurons()</span></code></a> produces similar output,
+but permits you to supply your own cypher query directly.</p>
 </div>
 <p class="rubric">Example</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_neurons</span><span class="p">,</span> <span class="n">NeuronCriteria</span> <span class="k">as</span> <span class="n">NC</span>
@@ -634,10 +634,8 @@ convenient for small queries.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>upstream_criteria</strong> – NeuronCriteria indicating how to filter for neurons
-on the presynaptic side of connections.</li>
-<li><strong>downstream_criteria</strong> – NeuronCriteria indicating how to filter for neurons
-on the postsynaptic side of connections.</li>
+<li><strong>upstream_criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – How to filter for neurons on the presynaptic side of connections.</li>
+<li><strong>downstream_criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – How to filter for neurons on the postsynaptic side of connections.</li>
 <li><strong>rois</strong> – Limit results to neuron pairs that connect in at least one of the given ROIs.</li>
 <li><strong>min_weight</strong> – Exclude connections whose total weight (across all ROIs) falls below this threshold.</li>
 <li><strong>properties</strong> – Additional columns to include in the results, for both the upstream and downstream body.</li>
@@ -652,10 +650,10 @@ One row per connection, with columns for upstream (pre-synaptic) and downstream 
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">NeuronCriteria</span> <span class="k">as</span> <span class="n">NC</span><span class="p">,</span> <span class="n">fetch_simple_connections</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_simple_connections</span>
 <span class="gp">   ...: </span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="mi">329566174</span><span class="p">,</span> <span class="mi">425790257</span><span class="p">,</span> <span class="mi">424379864</span><span class="p">,</span> <span class="mi">329599710</span><span class="p">]</span>
 <span class="gp">   ...: </span><span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="mi">425790257</span><span class="p">,</span> <span class="mi">424379864</span><span class="p">,</span> <span class="mi">329566174</span><span class="p">,</span> <span class="mi">329599710</span><span class="p">,</span> <span class="mi">420274150</span><span class="p">]</span>
-<span class="gp">   ...: </span><span class="n">fetch_simple_connections</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sources</span><span class="p">),</span> <span class="n">NC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">targets</span><span class="p">))</span>
+<span class="gp">   ...: </span><span class="n">fetch_simple_connections</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
 <span class="gh">Out[1]:</span>
 <span class="go">   bodyId_pre  bodyId_post  weight                   type_pre                  type_post         instance_pre        instance_post                                       conn_roiInfo</span>
 <span class="go">0   329566174    425790257      43                    OA-VPM3                        APL   OA-VPM3(NO2/NO3)_R                APL_R  {&#39;MB(R)&#39;: {&#39;pre&#39;: 39, &#39;post&#39;: 39}, &#39;b&#39;L(R)&#39;: {...</span>
@@ -690,10 +688,10 @@ convenient for small queries.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>sources</strong> – Limit results to connections from bodies that match this criteria.
+<li><strong>sources</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Limit results to connections from bodies that match this criteria.
 Can be list of body IDs or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>. If <code class="docutils literal notranslate"><span class="pre">None</span>
 <span class="pre">will</span> <span class="pre">include</span> <span class="pre">all</span> <span class="pre">bodies</span> <span class="pre">upstream</span> <span class="pre">of</span> <span class="pre">``targets</span></code>.</li>
-<li><strong>targets</strong> – Limit results to connections to bodies that match this criteria.
+<li><strong>targets</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Limit results to connections to bodies that match this criteria.
 Can be list of body IDs or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>. If <code class="docutils literal notranslate"><span class="pre">None</span>
 <span class="pre">will</span> <span class="pre">include</span> <span class="pre">all</span> <span class="pre">bodies</span> <span class="pre">downstream</span> <span class="pre">of</span> <span class="pre">``sources</span></code>.</li>
 <li><strong>rois</strong> – Limit results to connections within the listed ROIs.</li>
@@ -744,10 +742,10 @@ See caveat above concerning non-primary ROIs.</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">Client</span>
 <span class="gp">   ...: </span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain:v1.0.1&#39;</span><span class="p">)</span>
 
-<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">NeuronCriteria</span> <span class="k">as</span> <span class="n">NC</span><span class="p">,</span> <span class="n">fetch_adjacencies</span>
+<span class="gp">In [2]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_adjacencies</span>
 <span class="gp">   ...: </span><span class="n">sources</span> <span class="o">=</span> <span class="p">[</span><span class="mi">329566174</span><span class="p">,</span> <span class="mi">425790257</span><span class="p">,</span> <span class="mi">424379864</span><span class="p">,</span> <span class="mi">329599710</span><span class="p">]</span>
 <span class="gp">   ...: </span><span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="mi">425790257</span><span class="p">,</span> <span class="mi">424379864</span><span class="p">,</span> <span class="mi">329566174</span><span class="p">,</span> <span class="mi">329599710</span><span class="p">,</span> <span class="mi">420274150</span><span class="p">]</span>
-<span class="gp">   ...: </span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">connection_df</span> <span class="o">=</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">sources</span><span class="p">),</span> <span class="n">NC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="n">targets</span><span class="p">))</span>
+<span class="gp">   ...: </span><span class="n">neuron_df</span><span class="p">,</span> <span class="n">connection_df</span> <span class="o">=</span> <span class="n">fetch_adjacencies</span><span class="p">(</span><span class="n">sources</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
 
 <span class="gp">In [3]: </span><span class="n">neuron_df</span>
 <span class="gh">Out[3]:</span>
@@ -850,8 +848,7 @@ that are common to all neurons in the matched set.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>criteria</strong> – <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a> used to determine the match set,
-for which common connections will be found.</li>
+<li><strong>criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Used to determine the match set, for which common connections will be found.</li>
 <li><strong>search_direction</strong> (<code class="docutils literal notranslate"><span class="pre">&quot;upstream&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;downstream&quot;</span></code>) – Whether or not to search for common connections upstream of
 the matched neurons or downstream of the matched neurons.</li>
 <li><strong>min_weight</strong> – Connections below the given strength will not be included in the results.</li>
@@ -884,7 +881,7 @@ columns.</dd>
 <li><strong>upstream_bodyId</strong> – The starting neuron</li>
 <li><strong>downstream_bodyId</strong> – The destination neuron</li>
 <li><strong>min_weight</strong> – Minimum connection strength for each step in the path.</li>
-<li><strong>intermediate_criteria</strong> (<a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Filtering criteria for neurons on path.
+<li><strong>intermediate_criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Filtering criteria for neurons on path.
 All intermediate neurons in the path must satisfy this criteria.
 By default, <code class="docutils literal notranslate"><span class="pre">NeuronCriteria(status=&quot;Traced&quot;)</span></code> is used.</li>
 <li><strong>timeout</strong> – Give up after this many seconds, in which case an <strong>empty DataFrame is returned.</strong>
@@ -924,16 +921,14 @@ body from the previous body in the path.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_synapses">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>segment_criteria</em>, <em>synapse_criteria=None</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_synapses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>batch_size=10</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_synapses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch synapses from a neuron or selection of neurons.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>segment_criteria</strong> (<a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><em>NeuronCriteria</em></a><em> or </em><em>bodyId list</em>) – <p>Can be either a single bodyID, a list-like of multiple body IDs,
-a DataFrame with a <cite>bodyId</cite> column or a <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>
-used to find a set of body IDs.</p>
+<li><strong>neuron_criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – <p>Determines which bodies to fetch synapses for.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Any ROI criteria specified in this argument does not affect
@@ -949,6 +944,9 @@ Otherwise, all ROI names will be included in the results.
 In that case, some synapses will be listed multiple times – once per intersecting ROI.
 If a synapse does not intersect any ROI, it will be listed with an roi of <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </li>
+<li><strong>batch_size</strong> – To improve performance and avoid timeouts, the synapses for multiple bodies
+will be fetched in batches, where each batch corresponds to N bodies.
+This argument sets the batch size N.</li>
 <li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
@@ -1008,7 +1006,7 @@ if they reside in more than one overlapping ROI.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_synapse_connections">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapse_connections</code><span class="sig-paren">(</span><em>source_criteria=None</em>, <em>target_criteria=None</em>, <em>synapse_criteria=None</em>, <em>min_total_weight=1</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_synapse_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapse_connections" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapse_connections</code><span class="sig-paren">(</span><em>source_criteria=None</em>, <em>target_criteria=None</em>, <em>synapse_criteria=None</em>, <em>min_total_weight=1</em>, <em>batch_size=10</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/queries.html#fetch_synapse_connections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapse_connections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch synaptic-level connections between source and target neurons.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -1024,7 +1022,7 @@ which are faster and have more condensed outputs than this function.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>source_criteria</strong> (<a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><em>NeuronCriteria</em></a><em> or </em><em>bodyId list</em>) – <p>Criteria to by which to filter source (pre-synaptic) neurons.
+<li><strong>source_criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – <p>Criteria to by which to filter source (pre-synaptic) neurons.
 If omitted, all Neurons will be considered as possible sources.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -1032,7 +1030,7 @@ If omitted, all Neurons will be considered as possible sources.</p>
 which synapses are returned, only which bodies are inspected.</p>
 </div>
 </li>
-<li><strong>target_criteria</strong> (<a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><em>NeuronCriteria</em></a><em> or </em><em>bodyId list</em>) – <p>Criteria to by which to filter target (post-synaptic) neurons.
+<li><strong>target_criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – <p>Criteria to by which to filter target (post-synaptic) neurons.
 If omitted, all Neurons will be considered as possible sources.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -1064,6 +1062,10 @@ be less than <code class="docutils literal notranslate"><span class="pre">min_to
 the synapses in other ROIs.</p>
 </div>
 </li>
+<li><strong>batch_size</strong> – To avoid timeouts and improve performance, the synapse connections
+will be fetched in batches, where each batch corresponds to N pairs
+of <code class="docutils literal notranslate"><span class="pre">bodyId_pre</span></code>-&gt;``bodyId_post`` connections. This argument sets the
+batch size N.</li>
 <li><strong>client</strong> – If not provided, the global default <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> will be used.</li>
 </ul>
 </td>
@@ -1082,8 +1084,8 @@ described above.</p>
 </tbody>
 </table>
 <p class="rubric">Example</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_synapse_connections</span><span class="p">,</span> <span class="n">NeuronCriteria</span> <span class="k">as</span> <span class="n">NC</span><span class="p">,</span> <span class="n">SynapseCriteria</span> <span class="k">as</span> <span class="n">SC</span>
-<span class="gp">   ...: </span><span class="n">fetch_synapse_connections</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="mi">792368888</span><span class="p">),</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SC</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PED(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;SMP(R)&#39;</span><span class="p">],</span> <span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_synapse_connections</span><span class="p">,</span> <span class="n">SynapseCriteria</span> <span class="k">as</span> <span class="n">SC</span>
+<span class="gp">   ...: </span><span class="n">fetch_synapse_connections</span><span class="p">(</span><span class="mi">792368888</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">SC</span><span class="p">(</span><span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PED(R)&#39;</span><span class="p">,</span> <span class="s1">&#39;SMP(R)&#39;</span><span class="p">],</span> <span class="n">primary_only</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 <span class="gh">Out[1]:</span>
 <span class="go">    bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post</span>
 <span class="go">0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035</span>
@@ -1116,7 +1118,7 @@ connections which belong to Traced neurons.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>criteria</strong> (<a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Defines the set of neurons for which output completeness should be computed.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Defines the set of neurons for which output completeness should be computed.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">DataFrame with columns <code class="docutils literal notranslate"><span class="pre">['bodyId',</span> <span class="pre">'completeness',</span> <span class="pre">'traced_weight',</span> <span class="pre">'untraced_weight',</span> <span class="pre">'total_weight']</span></code></td>
 </tr>
@@ -1135,6 +1137,18 @@ neuron is also given.</p>
 <p>That is, if you started tracing orphans from this DataFrame in
 order, then the <code class="docutils literal notranslate"><span class="pre">cum_completeness</span></code> column indicates how complete
 the upstream body is after each orphan becomes traced.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>criteria</strong> (bodyId(s), type/instance, or <a class="reference internal" href="neuroncriteria.html#neuprint.NeuronCriteria" title="neuprint.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>) – Determines the set of “upstream” bodies for which
+downstream orphans should be identified.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">DataFrame, where <code class="docutils literal notranslate"><span class="pre">bodyId_pre</span></code> contains the upstream bodies you specified
+via <code class="docutils literal notranslate"><span class="pre">criteria</span></code>, and <code class="docutils literal notranslate"><span class="pre">bodyId_post</span></code> contains the list of downstream orphans.</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Example</p>
 <div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="n">orphan_tasks</span> <span class="o">=</span> <span class="n">fetch_downstream_orphan_tasks</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">&#39;Traced&#39;</span><span class="p">,</span> <span class="n">cropped</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;PB&#39;</span><span class="p">]))</span>
 
