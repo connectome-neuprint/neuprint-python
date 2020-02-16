@@ -97,9 +97,6 @@ def copy_as_neuroncriteria(obj, client=None):
     
         raise RuntimeError(f"Can't auto-construct a NeuronCriteria from {obj}.  Please explicitly create one.")
 
-    
-    
-    
 
 class NeuronCriteria:
     """
@@ -635,6 +632,7 @@ class NeuronCriteria:
 SegmentCriteria = NeuronCriteria
 
 
+@make_args_iterable(['values'])
 def where_expr(field, values, regex=False, matchvar='n'):
     """
     Return an expression to match a particular
