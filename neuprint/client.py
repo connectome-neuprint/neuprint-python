@@ -67,6 +67,8 @@ from requests.adapters import HTTPAdapter
 # ujson is faster than Python's builtin json module
 import ujson
 
+from .utils import skeleton_df_to_nx
+
 logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
 NEUPRINT_CLIENTS = {}
@@ -668,15 +670,21 @@ class Client:
                 int. A neuron or segment ID
             
             format:
-                Either 'swc' (a text format), 'json', or 'pandas'.
+                Either 'swc' (a text format), 'json', 'pandas',
+                or 'nx'.
             
             export_path:
                 Optional. Writes the ``.swc`` file to disk.
         
         Returns:
-            Either a string (swc), dict (json), or a DataFrame (pandas). 
+            Either a string (swc), dict (json), a DataFrame (pandas),
+            or ``networkx.DiGraph`` (nx).
+        
+        See also:
+        
+            :py:func:`.skeleton_df_to_nx()`
         """
-        assert format in ('swc', 'json', 'pandas'), \
+        assert format in ('swc', 'json', 'pandas', 'nx'), \
             f'Invalid format: {format}'
         
         assert not export_path or format == 'swc', \
@@ -701,7 +709,14 @@ class Client:
             return result
 
         df = pd.DataFrame(result['data'], columns=result['columns'])
-        return df
+
+        if format == 'pandas':
+            return df
+    
+        if format == 'nx':
+            return skeleton_df_to_nx(df)
+
+        raise AssertionError('Should not get here.')
 
 
     ##

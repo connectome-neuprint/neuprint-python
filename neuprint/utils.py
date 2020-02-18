@@ -317,3 +317,14 @@ class _iter_batches_with_len(_iter_batches):
         return int(np.ceil(len(self.base_iterator) / self.batch_size))
 
 
+def skeleton_df_to_nx(df):
+    """
+    Convert a skeleton DataFrame into a ``networkx.DiGraph``.
+    """
+    import networkx as nx
+    g = nx.DiGraph()
+    for row in df.itertuples(index=False):
+        g.add_node(row.rowId, x=row.x, y=row.y, z=row.z, radius=row.radius)
+        if row.link != -1:
+            g.add_edge(row.link, row.rowId)
+    return g
