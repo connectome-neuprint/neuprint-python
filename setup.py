@@ -24,7 +24,6 @@ setup(
     install_requires=requirements,
     keywords='neuprint-python',
     classifiers=[
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
