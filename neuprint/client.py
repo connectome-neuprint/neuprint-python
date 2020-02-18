@@ -6,7 +6,7 @@ credentials, the dataset name to use, and other connection settings.
 
 
 For commonly used queries, see :ref:`queries`.
-Or you can implement your own cypher queries using :py:func:`.fetch_custom()`.s
+Or you can implement your own cypher queries using :py:func:`.fetch_custom()`.
 
 Example:
 
