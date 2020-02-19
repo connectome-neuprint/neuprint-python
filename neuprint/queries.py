@@ -800,7 +800,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         
         q = f"""\
             MATCH ({matchvar}:{criteria.label})
-            {criteria.all_conditions(prefix=16)}
+            {criteria.all_conditions(prefix=12)}
             WITH {matchvar}
             RETURN {return_props}
             ORDER BY bodyId
@@ -822,7 +822,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             q = f"""\
                 CALL apoc.cypher.runTimeboxed("
                     MATCH ({matchvar}:{criteria.label})
-                    {criteria.all_conditions(prefix=16)}
+                    {criteria.all_conditions(prefix=20)}
                     RETURN count({matchvar}) as c
                 ", {{}}, {timeout*1000}) YIELD value
                 RETURN value.c as count
@@ -886,7 +886,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 WITH n,m,e
                 WHERE e.weight >= {min_total_weight}
             """)
-            weight_condition = indent(weight_condition, prefix=12*' ')[12:]
+            weight_condition = indent(weight_condition, prefix=20*' ')[20:]
         
         # Fetch connections by batching either the source list
         # or the target list, not both.
@@ -905,7 +905,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 
                 q = f"""\
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {NeuronCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+                    {NeuronCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=20)}
                     {weight_condition}
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -924,7 +924,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 
                 q = f"""\
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {NeuronCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
+                    {NeuronCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=20)}
                     {weight_condition}
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -1224,7 +1224,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
     timeout_ms = int(1000*timeout)
 
-    nodes_where = intermediate_criteria.basic_conditions(comments=False)
+    nodes_where = intermediate_criteria.all_conditions(comments=False)
     nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
     nodes_where = nodes_where.replace('\n', '')
     
@@ -1565,8 +1565,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     
     syn_dfs = []
     for batch_conn_df in tqdm(iter_batches(conn_df, batch_size)):
-        source_criteria.bodyId = batch_conn_df['bodyId_pre']
-        target_criteria.bodyId = batch_conn_df['bodyId_post']
+        source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
+        target_criteria.bodyId = batch_conn_df['bodyId_post'].unique()
         
         batch_syn_df = _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client)
         syn_dfs.append(batch_syn_df)
@@ -1684,7 +1684,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     
     q = f"""\
         MATCH (n:{criteria.label})
-        {criteria.all_conditions(prefix=12)}
+        {criteria.all_conditions(prefix=8)}
         RETURN n.bodyId as bodyId
     """
     bodies = fetch_custom(q)['bodyId']

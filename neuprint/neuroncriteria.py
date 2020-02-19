@@ -2,6 +2,7 @@ import re
 import copy
 import inspect
 import functools
+import collections.abc
 from textwrap import indent, dedent
 from collections.abc import Iterable, Collection
 
@@ -405,6 +406,31 @@ class NeuronCriteria:
         return s
     
 
+    MAX_LITERAL_LENGTH = 3
+    assert MAX_LITERAL_LENGTH >= 3, \
+        ("The logic in where_expr() assumes valuevars "
+         "have length 3 (assuming one could be None).")
+
+    def condition_vars(self):
+        exprs = []
+        if len(self.bodyId) > self.MAX_LITERAL_LENGTH:
+            values = [*filter(lambda s: s is not None, self.bodyId)]
+            exprs.append(f"{[*values]} as {self.matchvar}_search_bodyIds")
+        
+        if len(self.type) > self.MAX_LITERAL_LENGTH:
+            values = [*filter(lambda s: s is not None, self.type)]
+            exprs.append(f"{[*values]} as {self.matchvar}_search_types")
+
+        if len(self.instance) > self.MAX_LITERAL_LENGTH:
+            values = [*filter(lambda s: s is not None, self.instance)]
+            exprs.append(f"{[*values]} as {self.matchvar}_search_instances")
+
+        if len(self.status) > self.MAX_LITERAL_LENGTH:
+            values = [*filter(lambda s: s is not None, self.status)]
+            exprs.append(f"{[*values]} as {self.matchvar}_search_statuses")
+        return exprs
+
+
     def basic_exprs(self):
         """
         Return the list of expressions that correspond
@@ -419,7 +445,10 @@ class NeuronCriteria:
 
 
     def bodyId_expr(self):
-        return where_expr('bodyId', self.bodyId, False, self.matchvar)
+        valuevar = None
+        if len(self.bodyId) > self.MAX_LITERAL_LENGTH:
+            valuevar = f"{self.matchvar}_search_bodyIds"
+        return where_expr('bodyId', self.bodyId, False, self.matchvar, valuevar)
 
     def typeinst_expr(self):
         """
@@ -438,13 +467,22 @@ class NeuronCriteria:
         return ""
 
     def instance_expr(self):
-        return where_expr('instance', self.instance, self.regex, self.matchvar)
+        valuevar = None
+        if len(self.instance) > self.MAX_LITERAL_LENGTH:
+            valuevar = f"{self.matchvar}_search_instances"
+        return where_expr('instance', self.instance, self.regex, self.matchvar, valuevar)
 
     def type_expr(self):
-        return where_expr('type', self.type, self.regex, self.matchvar)
+        valuevar = None
+        if len(self.type) > self.MAX_LITERAL_LENGTH:
+            valuevar = f"{self.matchvar}_search_types"
+        return where_expr('type', self.type, self.regex, self.matchvar, valuevar)
 
     def status_expr(self):
-        return where_expr('status', self.status, False, self.matchvar)
+        valuevar = None
+        if len(self.status) > self.MAX_LITERAL_LENGTH:
+            valuevar = f"{self.matchvar}_search_statuses"
+        return where_expr('status', self.status, False, self.matchvar, valuevar)
 
     def cropped_expr(self):
         if self.cropped is None:
@@ -509,7 +547,7 @@ class NeuronCriteria:
             prefix = ' '*prefix
             
         if not vars:
-            vars = [sc.matchvar for sc in neuron_conditions]
+            vars = [nc.matchvar for nc in neuron_conditions]
         
         basic_conds = [sc.basic_conditions(*vars, comments=comments) for sc in neuron_conditions]
         basic_conds = [*filter(None, basic_conds)]
@@ -544,7 +582,14 @@ class NeuronCriteria:
         clauses = ""
         if comments:
             clauses += f"// -- Basic conditions for segment '{self.matchvar}' --\n"
-            
+        
+        cvars = self.condition_vars()
+        
+        if vars and cvars:
+            vars = (*vars, *cvars)
+        elif cvars:
+            vars = (self.matchvar, *cvars)
+
         if vars:
             clauses += f"WITH {', '.join(vars)}\n"
         
@@ -632,13 +677,63 @@ class NeuronCriteria:
 SegmentCriteria = NeuronCriteria
 
 
-@make_args_iterable(['values'])
-def where_expr(field, values, regex=False, matchvar='n'):
+def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
     """
     Return an expression to match a particular
     field against a list of values, to be used
     within the WHERE clause.
+
+    'values' must be a list, and the generated cypher depends on:
+        - the length of the list
+        - whether or not it contains 'None'
+        - whether or not 'regex' is True
+        - whether or not 'valuevar' was given
+    
+    If 'valuevar' is given, then the generated cypher will refer to the variable
+    instead of the literal values, BUT if the literal values contain None,
+    then an additional 'exists()' condition will be added.
+    
+    Examples:
+    
+        .. code-block: ipython
+
+            In [1]: from neuprint.neuroncriteria import where_expr
+        
+            In [2]: where_expr('status', [])
+            Out[2]: ''
+            
+            In [3]: where_expr('status', [None])
+            Out[3]: 'NOT exists(n.status)'
+            
+            In [4]: where_expr('status', ['Orphan'])
+            Out[4]: "n.status = 'Orphan'"
+            
+            In [5]: where_expr('status', ['Orphan', 'Assign'])
+            Out[5]: "n.status in ['Orphan', 'Assign']"
+            
+            In [6]: where_expr('status', ['Orphan', 'Assign', None])
+            Out[6]: "n.status in ['Orphan', 'Assign'] OR NOT exists(n.status)"
+            
+            In [7]: where_expr('status', ['Orph.*'], regex=True)
+            Out[7]: "n.status =~ 'Orph.*'"
+            
+            In [8]: where_expr('bodyId', [123])
+            Out[8]: 'n.bodyId = 123'
+            
+            In [9]: where_expr('bodyId', [123, 456])
+            Out[9]: 'n.bodyId in [123, 456]'
+
+            In [10]: where_expr('bodyId', [123, 456, 789], valuevar='bodies')
+            Out[10]: 'n.bodyId in bodies'
+            
+            In [11]: where_expr('bodyId', [123, None, 456], valuevar='bodies')
+            Out[11]: 'n.bodyId in bodies OR NOT exists(n.bodyId)'
     """
+    assert isinstance(values, collections.abc.Iterable), \
+        f"Please pass a list or a variable name, not {values}"
+
+    assert valuevar is None or isinstance(valuevar, str)
+    
     assert not regex or len(values) <= 1, \
         f"Can't use regex mode with more than one value: {values}"
 
@@ -658,12 +753,24 @@ def where_expr(field, values, regex=False, matchvar='n'):
         return f"{matchvar}.{field} = {values[0]}"
 
     # list of values
-
     if None not in values:
-        return f"{matchvar}.{field} in {[*values]}"
+        if valuevar:
+            return f"{matchvar}.{field} in {valuevar}"
+        else:
+            return f"{matchvar}.{field} in {[*values]}"
 
     # ['some_val', None, 'some_other']
     values = [*filter(lambda v: v is not None, values)]
-    return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"
+    if len(values) == 1:
+        if isinstance(values[0], str):
+            return f"{matchvar}.{field} = '{values[0]}' OR NOT exists({matchvar}.{field})"
+        else:
+            return f"{matchvar}.{field} = {values[0]} OR NOT exists({matchvar}.{field})"
+    else:
+        if valuevar:
+            return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
+        else:
+            return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"
+        
 
 
