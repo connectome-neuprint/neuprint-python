@@ -478,13 +478,12 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     or all connections from a set of upstream neurons to a set of downstream neurons.
 
     Note:
-        This function is not intended to be used with very large neuron sets.
+        This function is not intended to be used with very large sets of neurons.
         To fetch all adjacencies between a large set of neurons,
-        set :py:func:`fetch_adjacencies()`, and additional ROI-filtering options.
+        see :py:func:`fetch_adjacencies()`, which also has additional
+        ROI-filtering options.
         
-        However, this function returns additional information on every row of the
-        connection table, such as ``type`` and ``instance``, so it may be more
-        convenient for small queries.
+        However, may be more convenient for small interactive queries.
 
     Args:
         upstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
@@ -598,9 +597,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                       include_nonprimary=False, export_dir=None, batch_size=200,
                       properties=['type', 'instance'], *, client=None):
     """
-    Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
+    Find connections to/from large sets of neurons, with per-ROI connection strengths.
     
-    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
+    Fetches the adjacency table for connections between sets of neurons, broken down by ROI.
     Unless ``include_nonprimary=True``, only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
     ``"NotPrimary"`` (which is not currently an ROI name in neuprint itself).
@@ -608,20 +607,16 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     Note:
         :py:func:`.fetch_simple_connections()` has similar functionality,
         but that function isn't suitable for querying large sets of neurons.
-        It does, however, return additional information on every row of the 
-        connection table, such as ``type`` and ``instance``, so it may be more
-        convenient for small queries.
+        However, it may be more convenient for small interactive queries.
 
     Args:
         sources (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections from bodies that match this criteria.
-            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
-            will include all bodies upstream of ``targets``.
+            If ``None``, all neurons upstream of ``targets`` will be fetched.
 
         targets (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections to bodies that match this criteria.
-            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
-            will include all bodies downstream of ``sources``.
+            If ``None``, all neurons downstream of ``sources`` will be fetched.
 
         rois:
             Limit results to connections within the listed ROIs.
@@ -1149,11 +1144,12 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
         client:
             If not provided, the global default :py:class:`.Client` will be used.
     
-    Returns: DataFrame
+    Returns:
+        DataFrame.
         (Same format as returned by :py:func:`fetch_simple_connections()`.)
         One row per connection, with columns for upstream and downstream properties.
         For instance, if ``search_direction="upstream"``, then the matched neurons will appear
-        in the ``downstream_`` columns, and the common connections will appear in the ``upstream_``
+        in the ``_post`` columns, and the common connections will appear in the ``_pre``
         columns.
     """
     assert search_direction in ('upstream', 'downstream')
