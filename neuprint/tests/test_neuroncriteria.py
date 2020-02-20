@@ -59,33 +59,30 @@ def test_NeuronCriteria(client):
     
 
     bodies = [1,2,3]
-    assert NC(bodyId=bodies).basic_conditions(comments=False) == dedent(f"""\
-        WHERE
-          n.bodyId in [1, 2, 3]""")
+    assert NC(bodyId=bodies).basic_conditions(comments=False) == "n.bodyId in [1, 2, 3]"
 
     bodies = [1,2,3,4,5]
-    assert NC(bodyId=bodies).basic_conditions(comments=False) == dedent(f"""\
-        WITH n, {bodies} as n_search_bodyIds
-        WHERE
-          n.bodyId in n_search_bodyIds""")
+    nc = NC(bodyId=bodies)
+    assert nc.global_with() == dedent(f"""\
+        WITH {bodies} as n_search_bodyIds""")
+    assert nc.basic_conditions(comments=False) == dedent("n.bodyId in n_search_bodyIds")
 
     statuses = ['Traced', 'Orphan']
-    assert NC(status=statuses).basic_conditions(comments=False) == dedent(f"""\
-        WHERE
-          n.status in {statuses}""")
+    nc = NC(status=statuses)
+    assert nc.basic_conditions(comments=False) == f"n.status in {statuses}"
 
     statuses = ['Traced', 'Orphan', 'Assign', 'Unimportant']
-    assert NC(status=statuses).basic_conditions(comments=False) == dedent(f"""\
-        WITH n, {statuses} as n_search_statuses
-        WHERE
-          n.status in n_search_statuses""")
+    nc = NC(status=statuses)
+    assert nc.global_with() == dedent(f"""\
+        WITH {statuses} as n_search_statuses""")
+    assert nc.basic_conditions(comments=False) == "n.status in n_search_statuses"
 
     # If None is included, then exists() should be checked.
     statuses = ['Traced', 'Orphan', 'Assign', None]
-    assert NC(status=statuses).basic_conditions(comments=False) == dedent(f"""\
-        WITH n, ['Traced', 'Orphan', 'Assign'] as n_search_statuses
-        WHERE
-          n.status in n_search_statuses OR NOT exists(n.status)""")
+    nc = NC(status=statuses)
+    assert nc.global_with() == dedent(f"""\
+        WITH ['Traced', 'Orphan', 'Assign'] as n_search_statuses""")
+    assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_statuses OR NOT exists(n.status)")
 
 def test_where_expr():
     assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'

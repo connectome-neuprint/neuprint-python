@@ -3,6 +3,7 @@ import copy
 import inspect
 import functools
 import collections.abc
+from itertools import chain
 from textwrap import indent, dedent
 from collections.abc import Iterable, Collection
 
@@ -411,24 +412,46 @@ class NeuronCriteria:
         ("The logic in where_expr() assumes valuevars "
          "have length 3 (assuming one could be None).")
 
-    def condition_vars(self):
-        exprs = []
+
+    def global_vars(self):
+        exprs = {}
+
         if len(self.bodyId) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.bodyId)]
-            exprs.append(f"{[*values]} as {self.matchvar}_search_bodyIds")
+            var = f"{self.matchvar}_search_bodyIds"
+            exprs[var] = (f"{[*values]} as {var}")
         
         if len(self.type) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.type)]
-            exprs.append(f"{[*values]} as {self.matchvar}_search_types")
+            var = f"{self.matchvar}_search_types"
+            exprs[var] = f"{[*values]} as {var}"
 
         if len(self.instance) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.instance)]
-            exprs.append(f"{[*values]} as {self.matchvar}_search_instances")
+            var = f"{self.matchvar}_search_instances"
+            exprs[var] = f"{[*values]} as {var}"
 
         if len(self.status) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.status)]
-            exprs.append(f"{[*values]} as {self.matchvar}_search_statuses")
+            var = f"{self.matchvar}_search_statuses"
+            exprs[var] = f"{[*values]} as {var}"
+
         return exprs
+
+
+    def global_with(self, *vars, prefix=0):
+        if isinstance(prefix, int):
+            prefix = ' '*prefix
+        
+        if vars:
+            carry_forward = [', '.join(vars)]
+        else:
+            carry_forward = []
+
+        full_list = ',\n     '.join([*carry_forward, *self.global_vars().values()])
+        if full_list:
+            return indent('WITH ' + full_list, prefix)[len(prefix):]
+        return ""
 
 
     def basic_exprs(self):
@@ -521,11 +544,15 @@ class NeuronCriteria:
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
             prefix = ' '*prefix
+
+        vars = {*vars} | {self.matchvar, *self.global_vars().keys()}
+        vars = (*vars,)
         
-        if not vars:
-            vars = (self.matchvar,)
+        basic_cond = self.basic_conditions(0, comments)
+        if basic_cond:
+            basic_cond = f"WHERE \n{basic_cond}"
+            basic_cond = indent(basic_cond, '  ')[2:]
         
-        basic_cond = self.basic_conditions(*vars, comments=comments)
         roi_cond = self.directed_rois_condition(*vars, comments=comments)
         
         if roi_cond:
@@ -537,7 +564,24 @@ class NeuronCriteria:
         
 
     @classmethod
-    def combined_conditions(cls, neuron_conditions, vars=None, prefix=0, comments=True):
+    def combined_global_with(cls, neuron_conditions, vars=[], prefix=0):
+        if isinstance(prefix, int):
+            prefix = ' '*prefix
+        
+        if vars:
+            carry_forward = [', '.join(vars)]
+        else:
+            carry_forward = []
+
+        all_globals = chain(*(nc.global_vars().values() for nc in neuron_conditions))
+        full_list = ',\n     '.join([*carry_forward, *all_globals])
+        
+        if full_list:
+            return indent('WITH ' + full_list, prefix)[len(prefix):]
+        return ""
+
+    @classmethod
+    def combined_conditions(cls, neuron_conditions, vars=[], prefix=0, comments=True):
         """
         Combine the conditions from multiple NeuronCriteria into a single string,
         putting the "cheap" conditions first and the "expensive" conditions last.
@@ -545,28 +589,34 @@ class NeuronCriteria:
         """
         if isinstance(prefix, int):
             prefix = ' '*prefix
-            
-        if not vars:
-            vars = [nc.matchvar for nc in neuron_conditions]
-        
-        basic_conds = [sc.basic_conditions(*vars, comments=comments) for sc in neuron_conditions]
-        basic_conds = [*filter(None, basic_conds)]
-        if not basic_conds:
+
+        vars = {*vars}
+        for nc in neuron_conditions:
+            vars = vars | {nc.matchvar, *nc.global_vars().keys()}
+        vars = (*vars,)
+
+        basic_cond = [nc.basic_conditions(0, comments) for nc in neuron_conditions]
+        basic_cond = [*filter(None, basic_cond)]
+        if not basic_cond:
             return ""
+
+        if basic_cond:
+            basic_cond = '\nAND\n'.join(basic_cond)
+            basic_cond = indent(basic_cond, ' '*2)
+            basic_cond = f"WHERE \n{basic_cond}"
+
+        combined = basic_cond
         
-        basic_conds = '\n\n'.join(basic_conds)
-        combined = basic_conds
-        
-        roi_conds = [sc.directed_rois_condition(*vars, comments=comments) for sc in neuron_conditions]
+        roi_conds = [nc.directed_rois_condition(*vars, comments=comments) for nc in neuron_conditions]
         roi_conds = [*filter(None, roi_conds)]
         if roi_conds:
             roi_conds = '\n\n'.join(roi_conds)
-            combined = basic_conds + "\n\n" + roi_conds
+            combined = basic_cond + "\n\n" + roi_conds
         
         return indent(combined, prefix)[len(prefix):]
         
 
-    def basic_conditions(self, *vars, prefix=0, comments=True):
+    def basic_conditions(self, prefix=0, comments=True):
         """
         Construct a WHERE clause based on the basic conditions
         in this criteria (i.e. everything except for the "directed ROI" conditions.)
@@ -582,20 +632,8 @@ class NeuronCriteria:
         clauses = ""
         if comments:
             clauses += f"// -- Basic conditions for segment '{self.matchvar}' --\n"
-        
-        cvars = self.condition_vars()
-        
-        if vars and cvars:
-            vars = (*vars, *cvars)
-        elif cvars:
-            vars = (self.matchvar, *cvars)
 
-        if vars:
-            clauses += f"WITH {', '.join(vars)}\n"
-        
-        clauses += "WHERE\n"
-        clauses += f"  "
-        clauses += f"\n  AND ".join(exprs)
+        clauses += f"\nAND ".join(exprs)
 
         return indent(clauses, prefix)[len(prefix):]
 

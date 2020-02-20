@@ -335,6 +335,7 @@ def fetch_neurons(criteria, *, client=None):
     return_exprs = indent(return_exprs, ' '*15)[15:]
     
     q = f"""\
+        {criteria.global_with(prefix=8)}
         MATCH (n :{criteria.label})
         {criteria.all_conditions(prefix=8)}
         RETURN {return_exprs},
@@ -535,8 +536,6 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
     assert up_crit is not None or down_crit is not None, "No criteria specified"
 
-    combined_conditions = NC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
-
     if min_weight > 1:
         weight_expr = dedent(f"""\
             WITH n, m, e
@@ -567,7 +566,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
     return_props_str = indent(',\n'.join(return_props), prefix=' '*15)[15:]
 
+    combined_global_with = NC.combined_global_with([up_crit, down_crit], prefix=8)
+    combined_conditions = NC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
     q = f"""\
+        {combined_global_with}
         MATCH (n:{up_crit.label})-[e:ConnectsTo]->(m:{down_crit.label})
 
         {combined_conditions}
@@ -799,6 +801,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         value_props = indent(',\n'.join(value_props), ' '*19)[19:]
         
         q = f"""\
+            {criteria.global_with(prefix=12)}
             MATCH ({matchvar}:{criteria.label})
             {criteria.all_conditions(prefix=12)}
             WITH {matchvar}
@@ -821,6 +824,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             matchvar = criteria.matchvar
             q = f"""\
                 CALL apoc.cypher.runTimeboxed("
+                    {criteria.global_with(prefix=20)}
                     MATCH ({matchvar}:{criteria.label})
                     {criteria.all_conditions(prefix=20)}
                     RETURN count({matchvar}) as c
@@ -896,7 +900,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         
         if sources_df is not None:
             # Break sources into batches
-            for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0)):
+            for batch_start in trange(0, len(sources_df), batch_size):
                 batch_stop = batch_start + batch_size
                 source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
                 
@@ -904,6 +908,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 batch_criteria.bodyId = source_bodies
                 
                 q = f"""\
+                    {NeuronCriteria.combined_global_with((batch_criteria, targets), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
                     {NeuronCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=20)}
                     {weight_condition}
@@ -915,7 +920,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 conn_tables.append(client.fetch_custom(q))
         else:
             # Break targets into batches
-            for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0)):
+            for batch_start in trange(0, len(targets_df), batch_size):
                 batch_stop = batch_start + batch_size
                 target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
                 
@@ -923,6 +928,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 batch_criteria.bodyId = target_bodies
                 
                 q = f"""\
+                    {NeuronCriteria.combined_global_with((sources, batch_criteria), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
                     {NeuronCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=20)}
                     {weight_condition}
@@ -1355,6 +1361,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
     """
     neuron_criteria.matchvar = 'n'
     q = f"""
+        {neuron_criteria.global_with(prefix=8)}
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions(prefix=8)}
         RETURN n.bodyId as bodyId
@@ -1390,6 +1397,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
 
     # Fetch results
     cypher = dedent(f"""\
+        {neuron_criteria.global_with(prefix=8)}
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions('n', prefix=8)}
 
@@ -1592,6 +1600,7 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     
     # Fetch results
     cypher = dedent(f"""\
+        {NeuronCriteria.combined_global_with((source_criteria, target_criteria), prefix=8)}
         MATCH (n:{source_criteria.label})-[e:ConnectsTo]->(m:{target_criteria.label}),
               (n)-[:Contains]->(nss:SynapseSet),
               (m)-[:Contains]->(mss:SynapseSet),
@@ -1600,9 +1609,10 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
               (mss)-[:Contains]->(ms:Synapse),
               (ns)-[:SynapsesTo]->(ms)
 
-        WHERE e.weight >= {min_total_weight}
+        {NeuronCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'e', 'm', 'ns', 'ms'), prefix=8)}
         
-        {NeuronCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
+        WITH n, m, ns, ms, e
+        WHERE e.weight >= {min_total_weight}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
@@ -1683,6 +1693,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
         return _fetch_output_completeness(criteria, client)
     
     q = f"""\
+        {criteria.global_with(prefix=8)}
         MATCH (n:{criteria.label})
         {criteria.all_conditions(prefix=8)}
         RETURN n.bodyId as bodyId
@@ -1698,6 +1709,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
 
 def _fetch_output_completeness(criteria, client=None):
     q = f"""\
+        {criteria.global_with(prefix=8)}
         MATCH (n:{criteria.label})
         {criteria.all_conditions(prefix=8)}
 
