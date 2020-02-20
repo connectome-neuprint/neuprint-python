@@ -907,11 +907,21 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 batch_criteria = copy.copy(sources)
                 batch_criteria.bodyId = source_bodies
                 
+                criteria_globals = [*batch_criteria.global_vars().keys(), *targets.global_vars().keys()]
+                
                 q = f"""\
                     {NeuronCriteria.combined_global_with((batch_criteria, targets), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {NeuronCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=20)}
+                    {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
+
+                    // Artificial break in the query flow to fool the query
+                    // planner into avoiding a Cartesian product.
+                    // This improves performance considerably in some cases.
+                    WITH {','.join([*'nme', *criteria_globals])}, true as _
+ 
+                    {targets.all_conditions(*'nme', prefix=20)}
                     {weight_condition}
+
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
                            e.weight as weight,
@@ -927,10 +937,19 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 batch_criteria = copy.copy(targets)
                 batch_criteria.bodyId = target_bodies
                 
+                criteria_globals = [*batch_criteria.global_vars().keys(), *sources.global_vars().keys()]
+                
                 q = f"""\
                     {NeuronCriteria.combined_global_with((sources, batch_criteria), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {NeuronCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=20)}
+                    {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
+
+                    // Artificial break in the query flow to fool the query
+                    // planner into avoiding a Cartesian product.
+                    // This improves performance considerably in some cases.
+                    WITH {','.join([*'nme', *criteria_globals])}, true as _
+
+                    {sources.all_conditions(*'nme', prefix=20)}
                     {weight_condition}
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -1597,6 +1616,8 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
 
     source_syn_crit.type = 'pre'
     target_syn_crit.type = 'post'
+
+    criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
     
     # Fetch results
     cypher = dedent(f"""\
@@ -1609,7 +1630,14 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
               (mss)-[:Contains]->(ms:Synapse),
               (ns)-[:SynapsesTo]->(ms)
 
-        {NeuronCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'e', 'm', 'ns', 'ms'), prefix=8)}
+        {source_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', *criteria_globals, prefix=8)}
+
+        // Artificial break in the query flow to fool the query
+        // planner into avoiding a Cartesian product.
+        // This improves performance considerably in some cases.
+        WITH {','.join(['n', 'e', 'm', 'ns', 'ms', *criteria_globals])}, true as _
+
+        {target_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', prefix=8)}
         
         WITH n, m, ns, ms, e
         WHERE e.weight >= {min_total_weight}
