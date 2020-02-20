@@ -17,6 +17,10 @@ import sys
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../..'))
 
+import inspect
+import neuprint
+from os.path import relpath, dirname
+
 import versioneer
 import numpydoc
 
@@ -45,7 +49,8 @@ release = version
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
+    #'sphinx.ext.viewcode', # Link to sphinx-generated source code pages.
+    'sphinx.ext.linkcode',  # Link to source code on github (see linkcode_resolve(), below.)
     'sphinx.ext.githubpages',
     'sphinx.ext.autosummary',
     'sphinx.ext.autodoc',
@@ -243,3 +248,54 @@ epub_exclude_files = ['search.html']
 
 
 # -- Extension configuration -------------------------------------------------
+
+# Function courtesy of NumPy to return URLs containing line numbers
+# (with edits to handle wrapped functions properly)
+def linkcode_resolve(domain, info):
+    """
+    Determine the URL corresponding to Python object
+    """
+    if domain != 'py':
+        return None
+
+    modname = info['module']
+    fullname = info['fullname']
+
+    submod = sys.modules.get(modname)
+    if submod is None:
+        return None
+
+    obj = submod
+    for part in fullname.split('.'):
+        try:
+            obj = getattr(obj, part)
+        except:
+            return None
+
+    obj = inspect.unwrap(obj)
+
+    try:
+        fn = inspect.getsourcefile(obj)
+    except:
+        fn = None
+    if not fn:
+        return None
+
+    try:
+        _source, lineno = inspect.findsource(obj)
+    except:
+        lineno = None
+
+    if lineno:
+        linespec = "#L%d" % (lineno + 1)
+    else:
+        linespec = ""
+
+    fn = relpath(fn, start=dirname(neuprint.__file__))
+
+    if '.g' in neuprint.__version__:
+        return ("https://github.com/connectome-neuprint/neuprint-python/blob/"
+                "master/neuprint/%s%s" % (fn, linespec))
+    else:
+        return ("https://github.com/connectome-neuprint/neuprint-python/blob/"
+                "%s/neuprint/%s%s" % (neuprint.__version__, fn, linespec))

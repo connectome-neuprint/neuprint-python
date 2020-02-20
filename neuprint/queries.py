@@ -335,6 +335,7 @@ def fetch_neurons(criteria, *, client=None):
     return_exprs = indent(return_exprs, ' '*15)[15:]
     
     q = f"""\
+        {criteria.global_with(prefix=8)}
         MATCH (n :{criteria.label})
         {criteria.all_conditions(prefix=8)}
         RETURN {return_exprs},
@@ -477,13 +478,12 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     or all connections from a set of upstream neurons to a set of downstream neurons.
 
     Note:
-        This function is not intended to be used with very large neuron sets.
+        This function is not intended to be used with very large sets of neurons.
         To fetch all adjacencies between a large set of neurons,
-        set :py:func:`fetch_adjacencies()`, and additional ROI-filtering options.
+        see :py:func:`fetch_adjacencies()`, which also has additional
+        ROI-filtering options.
         
-        However, this function returns additional information on every row of the
-        connection table, such as ``type`` and ``instance``, so it may be more
-        convenient for small queries.
+        However, may be more convenient for small interactive queries.
 
     Args:
         upstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
@@ -535,8 +535,6 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
     assert up_crit is not None or down_crit is not None, "No criteria specified"
 
-    combined_conditions = NC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
-
     if min_weight > 1:
         weight_expr = dedent(f"""\
             WITH n, m, e
@@ -567,7 +565,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     
     return_props_str = indent(',\n'.join(return_props), prefix=' '*15)[15:]
 
+    combined_global_with = NC.combined_global_with([up_crit, down_crit], prefix=8)
+    combined_conditions = NC.combined_conditions([up_crit, down_crit], ('n', 'm', 'e'), prefix=8)
     q = f"""\
+        {combined_global_with}
         MATCH (n:{up_crit.label})-[e:ConnectsTo]->(m:{down_crit.label})
 
         {combined_conditions}
@@ -596,9 +597,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                       include_nonprimary=False, export_dir=None, batch_size=200,
                       properties=['type', 'instance'], *, client=None):
     """
-    Find connections to/from large set(s) of neurons, with per-ROI connection strengths.
+    Find connections to/from large sets of neurons, with per-ROI connection strengths.
     
-    Fetch the adjacency table for connections amongst a set of neurons, broken down by ROI.
+    Fetches the adjacency table for connections between sets of neurons, broken down by ROI.
     Unless ``include_nonprimary=True``, only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
     ``"NotPrimary"`` (which is not currently an ROI name in neuprint itself).
@@ -606,20 +607,16 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     Note:
         :py:func:`.fetch_simple_connections()` has similar functionality,
         but that function isn't suitable for querying large sets of neurons.
-        It does, however, return additional information on every row of the 
-        connection table, such as ``type`` and ``instance``, so it may be more
-        convenient for small queries.
+        However, it may be more convenient for small interactive queries.
 
     Args:
         sources (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections from bodies that match this criteria.
-            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
-            will include all bodies upstream of ``targets``.
+            If ``None``, all neurons upstream of ``targets`` will be fetched.
 
         targets (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections to bodies that match this criteria.
-            Can be list of body IDs or :py:class:`.NeuronCriteria`. If ``None
-            will include all bodies downstream of ``sources``.
+            If ``None``, all neurons downstream of ``sources`` will be fetched.
 
         rois:
             Limit results to connections within the listed ROIs.
@@ -799,8 +796,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         value_props = indent(',\n'.join(value_props), ' '*19)[19:]
         
         q = f"""\
+            {criteria.global_with(prefix=12)}
             MATCH ({matchvar}:{criteria.label})
-            {criteria.all_conditions(prefix=16)}
+            {criteria.all_conditions(prefix=12)}
             WITH {matchvar}
             RETURN {return_props}
             ORDER BY bodyId
@@ -821,8 +819,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             matchvar = criteria.matchvar
             q = f"""\
                 CALL apoc.cypher.runTimeboxed("
+                    {criteria.global_with(prefix=20)}
                     MATCH ({matchvar}:{criteria.label})
-                    {criteria.all_conditions(prefix=16)}
+                    {criteria.all_conditions(prefix=20)}
                     RETURN count({matchvar}) as c
                 ", {{}}, {timeout*1000}) YIELD value
                 RETURN value.c as count
@@ -886,7 +885,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 WITH n,m,e
                 WHERE e.weight >= {min_total_weight}
             """)
-            weight_condition = indent(weight_condition, prefix=12*' ')[12:]
+            weight_condition = indent(weight_condition, prefix=20*' ')[20:]
         
         # Fetch connections by batching either the source list
         # or the target list, not both.
@@ -896,17 +895,28 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         
         if sources_df is not None:
             # Break sources into batches
-            for batch_start in trange(0, len(sources_df), batch_size, disable=(len(sources_df) / batch_size < 1.0)):
+            for batch_start in trange(0, len(sources_df), batch_size):
                 batch_stop = batch_start + batch_size
                 source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
                 
                 batch_criteria = copy.copy(sources)
                 batch_criteria.bodyId = source_bodies
                 
+                criteria_globals = [*batch_criteria.global_vars().keys(), *targets.global_vars().keys()]
+                
                 q = f"""\
+                    {NeuronCriteria.combined_global_with((batch_criteria, targets), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {NeuronCriteria.combined_conditions((batch_criteria, targets), ('n', 'm', 'e'), prefix=12)}
+                    {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
+
+                    // Artificial break in the query flow to fool the query
+                    // planner into avoiding a Cartesian product.
+                    // This improves performance considerably in some cases.
+                    WITH {','.join([*'nme', *criteria_globals])}, true as _
+ 
+                    {targets.all_conditions(*'nme', prefix=20)}
                     {weight_condition}
+
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
                            e.weight as weight,
@@ -915,16 +925,26 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 conn_tables.append(client.fetch_custom(q))
         else:
             # Break targets into batches
-            for batch_start in trange(0, len(targets_df), batch_size, disable=(len(targets_df) / batch_size < 1.0)):
+            for batch_start in trange(0, len(targets_df), batch_size):
                 batch_stop = batch_start + batch_size
                 target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
                 
                 batch_criteria = copy.copy(targets)
                 batch_criteria.bodyId = target_bodies
                 
+                criteria_globals = [*batch_criteria.global_vars().keys(), *sources.global_vars().keys()]
+                
                 q = f"""\
+                    {NeuronCriteria.combined_global_with((sources, batch_criteria), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {NeuronCriteria.combined_conditions((sources, batch_criteria), ('n', 'm', 'e'), prefix=12)}
+                    {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
+
+                    // Artificial break in the query flow to fool the query
+                    // planner into avoiding a Cartesian product.
+                    // This improves performance considerably in some cases.
+                    WITH {','.join([*'nme', *criteria_globals])}, true as _
+
+                    {sources.all_conditions(*'nme', prefix=20)}
                     {weight_condition}
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -1124,11 +1144,12 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
         client:
             If not provided, the global default :py:class:`.Client` will be used.
     
-    Returns: DataFrame
+    Returns:
+        DataFrame.
         (Same format as returned by :py:func:`fetch_simple_connections()`.)
         One row per connection, with columns for upstream and downstream properties.
         For instance, if ``search_direction="upstream"``, then the matched neurons will appear
-        in the ``downstream_`` columns, and the common connections will appear in the ``upstream_``
+        in the ``_post`` columns, and the common connections will appear in the ``_pre``
         columns.
     """
     assert search_direction in ('upstream', 'downstream')
@@ -1224,7 +1245,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
     timeout_ms = int(1000*timeout)
 
-    nodes_where = intermediate_criteria.basic_conditions(comments=False)
+    nodes_where = intermediate_criteria.all_conditions(comments=False)
     nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
     nodes_where = nodes_where.replace('\n', '')
     
@@ -1355,6 +1376,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
     """
     neuron_criteria.matchvar = 'n'
     q = f"""
+        {neuron_criteria.global_with(prefix=8)}
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions(prefix=8)}
         RETURN n.bodyId as bodyId
@@ -1390,6 +1412,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
 
     # Fetch results
     cypher = dedent(f"""\
+        {neuron_criteria.global_with(prefix=8)}
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions('n', prefix=8)}
 
@@ -1495,9 +1518,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         batch_size:
             To avoid timeouts and improve performance, the synapse connections
-            will be fetched in batches, where each batch corresponds to N pairs
-            of ``bodyId_pre``->``bodyId_post`` connections. This argument sets the
-            batch size N.
+            will be fetched in batches, split across N pre-synaptic bodies.
+            This argument sets the batch size N.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -1561,17 +1583,22 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     target_criteria = prepare_nc(target_criteria, 'm')
 
     _neuron_df, roi_conn_df = fetch_adjacencies(source_criteria, target_criteria, synapse_criteria.rois, 1, min_total_weight, properties=[])
-    conn_df = roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
+    conn_df = roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post']).sort_values(['bodyId_pre', 'bodyId_post'])
     
     syn_dfs = []
-    for batch_conn_df in tqdm(iter_batches(conn_df, batch_size)):
-        source_criteria.bodyId = batch_conn_df['bodyId_pre']
-        target_criteria.bodyId = batch_conn_df['bodyId_post']
+    
+    conn_groups = [*conn_df.groupby('bodyId_pre')]
+    for group in iter_batches(conn_groups, batch_size):
+        _, group_dfs = zip(*group)
+        batch_conn_df = pd.concat(group_dfs, ignore_index=True)
+        source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
+        target_criteria.bodyId = batch_conn_df['bodyId_post'].unique()
         
         batch_syn_df = _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client)
         syn_dfs.append(batch_syn_df)
     
     syn_df = pd.concat(syn_dfs, ignore_index=True)
+    assert syn_df.duplicated(syn_df.columns).sum() == 0
     return syn_df
         
 
@@ -1589,9 +1616,12 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
 
     source_syn_crit.type = 'pre'
     target_syn_crit.type = 'post'
+
+    criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
     
     # Fetch results
     cypher = dedent(f"""\
+        {NeuronCriteria.combined_global_with((source_criteria, target_criteria), prefix=8)}
         MATCH (n:{source_criteria.label})-[e:ConnectsTo]->(m:{target_criteria.label}),
               (n)-[:Contains]->(nss:SynapseSet),
               (m)-[:Contains]->(mss:SynapseSet),
@@ -1600,9 +1630,17 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
               (mss)-[:Contains]->(ms:Synapse),
               (ns)-[:SynapsesTo]->(ms)
 
-        WHERE e.weight >= {min_total_weight}
+        {source_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', *criteria_globals, prefix=8)}
+
+        // Artificial break in the query flow to fool the query
+        // planner into avoiding a Cartesian product.
+        // This improves performance considerably in some cases.
+        WITH {','.join(['n', 'e', 'm', 'ns', 'ms', *criteria_globals])}, true as _
+
+        {target_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', prefix=8)}
         
-        {NeuronCriteria.combined_conditions((source_criteria, target_criteria), ('n', 'm', 'ns', 'ms'), prefix=8)}
+        WITH n, m, ns, ms, e
+        WHERE e.weight >= {min_total_weight}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
@@ -1683,8 +1721,9 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
         return _fetch_output_completeness(criteria, client)
     
     q = f"""\
+        {criteria.global_with(prefix=8)}
         MATCH (n:{criteria.label})
-        {criteria.all_conditions(prefix=12)}
+        {criteria.all_conditions(prefix=8)}
         RETURN n.bodyId as bodyId
     """
     bodies = fetch_custom(q)['bodyId']
@@ -1698,6 +1737,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
 
 def _fetch_output_completeness(criteria, client=None):
     q = f"""\
+        {criteria.global_with(prefix=8)}
         MATCH (n:{criteria.label})
         {criteria.all_conditions(prefix=8)}
 

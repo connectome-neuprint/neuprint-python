@@ -1,3 +1,5 @@
+from textwrap import dedent
+import numpy as np
 import pytest
 from neuprint import Client, default_client, set_default_client, NeuronCriteria as NC
 from neuprint.neuroncriteria import  where_expr
@@ -13,10 +15,9 @@ def client():
 
 
 def test_NeuronCriteria(client):
-    assert NC().basic_conditions() == ""
-    assert NC().all_conditions() == ""
-    assert NC.combined_conditions([NC(), NC(), NC()]) == ""
-    
+    ##
+    ## basic_exprs()
+    ##
     assert NC(bodyId=123).basic_exprs() == ["n.bodyId = 123"]
     assert NC('m', bodyId=123).basic_exprs() == ["m.bodyId = 123"]
     assert NC(bodyId=[123, 456]).basic_exprs() == ["n.bodyId in [123, 456]"]
@@ -47,6 +48,41 @@ def test_NeuronCriteria(client):
     assert NC(min_pre=5).basic_exprs() == ["n.pre >= 5"]
     assert NC(min_post=5).basic_exprs() == ["n.post >= 5"]
 
+    assert NC(bodyId=np.arange(1,6)).basic_exprs() == ["n.bodyId in n_search_bodyIds"]
+
+    ##
+    ## basic_conditions()
+    ##
+    assert NC().basic_conditions() == ""
+    assert NC().all_conditions() == ""
+    assert NC.combined_conditions([NC(), NC(), NC()]) == ""
+    
+
+    bodies = [1,2,3]
+    assert NC(bodyId=bodies).basic_conditions(comments=False) == "n.bodyId in [1, 2, 3]"
+
+    bodies = [1,2,3,4,5]
+    nc = NC(bodyId=bodies)
+    assert nc.global_with() == dedent(f"""\
+        WITH {bodies} as n_search_bodyIds""")
+    assert nc.basic_conditions(comments=False) == dedent("n.bodyId in n_search_bodyIds")
+
+    statuses = ['Traced', 'Orphan']
+    nc = NC(status=statuses)
+    assert nc.basic_conditions(comments=False) == f"n.status in {statuses}"
+
+    statuses = ['Traced', 'Orphan', 'Assign', 'Unimportant']
+    nc = NC(status=statuses)
+    assert nc.global_with() == dedent(f"""\
+        WITH {statuses} as n_search_statuses""")
+    assert nc.basic_conditions(comments=False) == "n.status in n_search_statuses"
+
+    # If None is included, then exists() should be checked.
+    statuses = ['Traced', 'Orphan', 'Assign', None]
+    nc = NC(status=statuses)
+    assert nc.global_with() == dedent(f"""\
+        WITH ['Traced', 'Orphan', 'Assign'] as n_search_statuses""")
+    assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_statuses OR NOT exists(n.status)")
 
 def test_where_expr():
     assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
