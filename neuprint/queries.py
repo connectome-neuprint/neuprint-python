@@ -1522,9 +1522,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         batch_size:
             To avoid timeouts and improve performance, the synapse connections
-            will be fetched in batches, where each batch corresponds to N pairs
-            of ``bodyId_pre``->``bodyId_post`` connections. This argument sets the
-            batch size N.
+            will be fetched in batches, split across N pre-synaptic bodies.
+            This argument sets the batch size N.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -1588,10 +1587,14 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     target_criteria = prepare_nc(target_criteria, 'm')
 
     _neuron_df, roi_conn_df = fetch_adjacencies(source_criteria, target_criteria, synapse_criteria.rois, 1, min_total_weight, properties=[])
-    conn_df = roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
+    conn_df = roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post']).sort_values(['bodyId_pre', 'bodyId_post'])
     
     syn_dfs = []
-    for batch_conn_df in tqdm(iter_batches(conn_df, batch_size)):
+    
+    conn_groups = [*conn_df.groupby('bodyId_pre')]
+    for group in iter_batches(conn_groups, batch_size):
+        _, group_dfs = zip(*group)
+        batch_conn_df = pd.concat(group_dfs, ignore_index=True)
         source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
         target_criteria.bodyId = batch_conn_df['bodyId_post'].unique()
         
@@ -1599,6 +1602,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         syn_dfs.append(batch_syn_df)
     
     syn_df = pd.concat(syn_dfs, ignore_index=True)
+    assert syn_df.duplicated(syn_df.columns).sum() == 0
     return syn_df
         
 
