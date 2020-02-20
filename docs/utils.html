@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Utilities &mdash; neuprint-python 0.4.5 documentation</title>
+  <title>Utilities &mdash; neuprint-python 0.4.6 documentation</title>
   
 
   
@@ -26,7 +26,6 @@
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script type="text/javascript" src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -63,7 +62,7 @@
             
             
               <div class="version">
-                0.4.5
+                0.4.6
               </div>
             
           
@@ -210,13 +209,16 @@
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.utils.connection_table_to_matrix" title="neuprint.utils.connection_table_to_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connection_table_to_matrix</span></code></a>(conn_df[,&nbsp;…])</td>
 <td>Given a weighted connection table, produce a weighted adjacency matrix.</td>
 </tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.utils.skeleton_df_to_nx" title="neuprint.utils.skeleton_df_to_nx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_nx</span></code></a>(df)</td>
+<td>Convert a skeleton DataFrame into a <code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>.</td>
+</tr>
 </tbody>
 </table>
 <div class="section" id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="neuprint.utils.merge_neuron_properties">
-<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/utils.html#merge_neuron_properties"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.6/neuprint/utils.py#L86"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Merge neuron properties to a connection table.</p>
 <p>Given a table of neuron properties and a connection table, append
 <code class="docutils literal notranslate"><span class="pre">_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">_post</span></code> columns to the connection table for each of
@@ -272,7 +274,7 @@ the given properties via the appropriate merge operations.</p>
 
 <dl class="function">
 <dt id="neuprint.utils.connection_table_to_matrix">
-<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/neuprint/utils.html#connection_table_to_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.6/neuprint/utils.py#L157"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a weighted connection table, produce a weighted adjacency matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -330,6 +332,12 @@ the ‘post’ group column.</p>
 <span class="go">KCg        380    1969      79     1526  250351</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.utils.skeleton_df_to_nx">
+<code class="descclassname">neuprint.utils.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.6/neuprint/utils.py#L320"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a skeleton DataFrame into a <code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>.</p>
 </dd></dl>
 
 </div>

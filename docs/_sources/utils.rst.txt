@@ -22,10 +22,12 @@ Utilities
 
     merge_neuron_properties
     connection_table_to_matrix
+    skeleton_df_to_nx
 
 Reference
 ---------
 
 .. autofunction:: merge_neuron_properties
 .. autofunction:: connection_table_to_matrix
+.. autofunction:: skeleton_df_to_nx
 

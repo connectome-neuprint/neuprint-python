@@ -1,12 +1,5 @@
 docs/_images/neuprint-explorer-cypher-button.png
 docs/_images/token-screenshot.png
-docs/_modules/index.html
-docs/_modules/neuprint/admin.html
-docs/_modules/neuprint/client.html
-docs/_modules/neuprint/neuroncriteria.html
-docs/_modules/neuprint/queries.html
-docs/_modules/neuprint/synapsecriteria.html
-docs/_modules/neuprint/utils.html
 docs/_sources/admin.rst.txt
 docs/_sources/api.rst.txt
 docs/_sources/client.rst.txt
