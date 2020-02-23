@@ -321,15 +321,37 @@ class _iter_batches_with_len(_iter_batches):
         return int(np.ceil(len(self.base_iterator) / self.batch_size))
 
 
-def skeleton_df_to_nx(df):
+def skeleton_df_to_nx(df, with_attributes=True, directed=True):
     """
-    Convert a skeleton DataFrame into a ``networkx.DiGraph``.
+    Convert a skeleton DataFrame into a ``networkx`` graph.
+    
+    Args:
+        df:
+            DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
+        
+        with_attributes:
+            If True, store node attributes for x, y, z, radius
+        
+        directed:
+            If True, return ``nx.DiGraph``, otherwise ``nx.Graph``.
+    
+    Returns:
+        ``nx.DiGraph`` or ``nx.Graph``
     """
-    g = nx.DiGraph()
-    for row in df.itertuples(index=False):
-        g.add_node(row.rowId, x=row.x, y=row.y, z=row.z, radius=row.radius)
-        if row.link != -1:
-            g.add_edge(row.link, row.rowId)
+    if directed:
+        g = nx.DiGraph()
+    else:
+        g = nx.Graph()
+    
+    if with_attributes:
+        for row in df.itertuples(index=False):
+            g.add_node(row.rowId, x=row.x, y=row.y, z=row.z, radius=row.radius)
+            if row.link != -1:
+                g.add_edge(row.link, row.rowId)
+    else:
+        df = df[['rowId', 'link']].sort_values(['rowId', 'link'])
+        g.add_nodes_from(df['rowId'].sort_values())
+        g.add_edges_from(df.query('link != -1').values)
     return g
 
 
@@ -363,10 +385,10 @@ def heal_skeleton(skeleton_df):
     """
     Rather than a single tree, skeletons from neuprint sometimes
     consist of multiple fragments, i.e. multiple connected
-    components.  In such skeletons, there will be multiple 'root'
-    nodes (SWC rows where ``link == -1``). That's due to artifacts
-    in the underlying segmentation from which the skeletons were
-    generated.
+    components.  That's due to artifacts in the underlying
+    segmentation from which the skeletons were generated.
+    In such skeletons, there will be multiple 'root' nodes
+    (SWC rows where ``link == -1``).
     
     This function 'heals' a fragmented skeleton by joining its 
     fragments into a single tree. The fragments are joined by
@@ -381,7 +403,7 @@ def heal_skeleton(skeleton_df):
         DataFrame, with ``link`` column updated with updated edges.
     """
     skeleton_df = (skeleton_df.sort_values('rowId').reset_index(drop=True))
-    g = skeleton_df_to_nx(skeleton_df).to_undirected()
+    g = skeleton_df_to_nx(skeleton_df, False, False)
 
     # Extract each fragment's rows and construct a KD-Tree
     CC = namedtuple('CC', ['df', 'kd'])
