@@ -38,6 +38,16 @@ def test_members():
     assert isinstance(c.fetch_skeleton(EXAMPLE_BODY), pd.DataFrame)
 
 
+def test_fetch_skeleton():
+    c = Client(NEUPRINT_SERVER, DATASET)
+    orig_df = c.fetch_skeleton(5813027016, False)
+    healed_df = c.fetch_skeleton(5813027016, True)
+
+    assert len(orig_df) == len(healed_df)
+    assert (healed_df['link'] == -1).sum() == 1
+    assert healed_df['link'].iloc[0] == -1
+
+
 @pytest.mark.xfail
 def test_broken_members():
     """

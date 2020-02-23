@@ -406,25 +406,27 @@ def heal_skeleton(skeleton_df):
     g = skeleton_df_to_nx(skeleton_df, False, False)
 
     # Extract each fragment's rows and construct a KD-Tree
-    CC = namedtuple('CC', ['df', 'kd'])
+    CC = namedtuple('CC', ['i', 'df', 'kd'])
     ccs = []
-    for cc in nx.connected_components(g):
+    for i, cc in enumerate(nx.connected_components(g)):
         if len(cc) == len(skeleton_df):
             # There's only one component -- no healing necessary
             return skeleton_df
         
         df = skeleton_df.query('rowId in @cc')
         kd = cKDTree(df[[*'xyz']].values)
-        ccs.append( CC(df, kd) )
+        ccs.append( CC(i, df, kd) )
 
     # Sort from big-to-small, so the calculations below use a
     # KD tree for the larger point set in every fragment pair.
     ccs = sorted(ccs, key=lambda cc: -len(cc.df))
     
-    # Intra-fragment edges must stay linked
-    nx.set_edge_attributes(g, 0, 'distance')
-
-    # Connect all fragment pairs at their nearest neighbors
+    # We could use the full graph and connect all
+    # fragment pairs at their nearest neighbors,
+    # but it's faster to treat each fragment as a
+    # single node and run MST on that quotient graph,
+    # which is tiny.
+    frag_graph = nx.Graph()
     for cc_a, cc_b in combinations(ccs, 2):
         coords_b = cc_b.df[[*'xyz']].values
         distances, indexes = cc_a.kd.query(coords_b)
@@ -435,16 +437,20 @@ def heal_skeleton(skeleton_df):
         node_a = cc_a.df['rowId'].iloc[index_a]
         node_b = cc_b.df['rowId'].iloc[index_b]
         dist_ab = distances[index_b]
-        g.add_edge(node_a, node_b, distance=dist_ab)
+        
+        frag_graph.add_edge(cc_a.i, cc_b.i, node_a=node_a, node_b=node_b, distance=dist_ab)
 
-    # Compute MST edges
-    mst_edges = nx.minimum_spanning_edges(g, weight='distance', data=False)
-    mst = nx.Graph()
-    mst.add_nodes_from(g)
-    mst.add_edges_from(mst_edges)
+    # Compute inter-fragment MST edges
+    frag_edges = nx.minimum_spanning_edges(frag_graph, weight='distance', data=True)
+    
+    # For each inter-fragment edge, add the corresponding
+    # fine-grained edge between skeleton nodes
+    for _u, _v, d in frag_edges:
+        g.add_edge(d['node_a'], d['node_b'])
 
+    # Traverse in depth-first order to compute final tree
     root = skeleton_df['rowId'].iloc[0]
-    edges = list(nx.dfs_edges(mst, source=root))
+    edges = list(nx.dfs_edges(g, source=root))
     edges = pd.DataFrame(edges, columns=['link', 'rowId']) # parent, child
     edges = edges.set_index('rowId')['link']
 
