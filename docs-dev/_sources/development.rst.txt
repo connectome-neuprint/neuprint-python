@@ -48,7 +48,7 @@ follow these steps **on a Linux machine**:
 
     # Export to environment.yml, but relax the neuprint-python version requirement
     conda env export -n neuprint-python > environment.yml
-    sed --in-place 's/neuprint-python=.*/neuprint-python/g'
+    sed --in-place 's/neuprint-python=.*/neuprint-python/g' environment.yml
     
     git commit -m "Updated environment.yml for binder" environment.yml
     git push origin master
