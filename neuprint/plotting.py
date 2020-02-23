@@ -169,7 +169,7 @@ def plot_skeleton_3d(skeleton, color='blue', *, client=None):
                 return
             for c in children:
                 accumulate_points(c)
-            points.append(p)
+                points.append(p)
     
         points = []
         accumulate_points(root)
