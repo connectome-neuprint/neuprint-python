@@ -359,7 +359,7 @@ class Client:
         # Pre-cache these metadata fields,
         # to avoid re-fetching them for many queries that need them.
         self.meta = fetch_meta(client=self)
-        self.primary_rois = self.meta['primaryRois']
+        self.primary_rois = sorted(self.meta['primaryRois'])
         self.all_rois = _all_rois_from_meta(self.meta)
 
 
