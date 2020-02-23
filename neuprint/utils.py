@@ -438,9 +438,13 @@ def heal_skeleton(skeleton_df):
         g.add_edge(node_a, node_b, distance=dist_ab)
 
     # Compute MST edges
+    mst_edges = nx.minimum_spanning_edges(g, weight='distance', data=False)
+    mst = nx.Graph()
+    mst.add_nodes_from(g)
+    mst.add_edges_from(mst_edges)
+
     root = skeleton_df['rowId'].iloc[0]
-    tree = nx.minimum_spanning_tree(g, 'distance')
-    edges = list(nx.dfs_edges(tree, source=root))
+    edges = list(nx.dfs_edges(mst, source=root))
     edges = pd.DataFrame(edges, columns=['link', 'rowId']) # parent, child
     edges = edges.set_index('rowId')['link']
 
