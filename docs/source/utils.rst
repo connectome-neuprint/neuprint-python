@@ -22,6 +22,8 @@ Utilities
 
     merge_neuron_properties
     connection_table_to_matrix
+    heal_skeleton
+    skeleton_df_to_swc
     skeleton_df_to_nx
 
 Reference
@@ -29,5 +31,7 @@ Reference
 
 .. autofunction:: merge_neuron_properties
 .. autofunction:: connection_table_to_matrix
+.. autofunction:: heal_skeleton
+.. autofunction:: skeleton_df_to_swc
 .. autofunction:: skeleton_df_to_nx
 

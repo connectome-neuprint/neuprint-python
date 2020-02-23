@@ -4,10 +4,14 @@ Utility functions for manipulating neuprint-python output.
 import sys
 import inspect
 import functools
+from itertools import combinations
+from collections import namedtuple
 from collections.abc import Iterable, Iterator, Collection
 
 import numpy as np
 import pandas as pd
+import networkx as nx
+from scipy.spatial import cKDTree
 
 #
 # Import the notebook-aware version of tqdm if
@@ -321,10 +325,106 @@ def skeleton_df_to_nx(df):
     """
     Convert a skeleton DataFrame into a ``networkx.DiGraph``.
     """
-    import networkx as nx
     g = nx.DiGraph()
     for row in df.itertuples(index=False):
         g.add_node(row.rowId, x=row.x, y=row.y, z=row.z, radius=row.radius)
         if row.link != -1:
             g.add_edge(row.link, row.rowId)
     return g
+
+
+def skeleton_df_to_swc(df, export_path=None):
+    """
+    Convert a skeleton DataFrame into a the text of an SWC file.
+    
+    Args:
+        df:
+            DataFrame, as returned by :py:meth:`.Client.fetch_skeleton()`
+        
+        export_path:
+            Optional. Write the SWC file to disk a the given location.
+    
+    Returns:
+        string
+    """
+    df['node_type'] = 0
+    df = df[['rowId', 'node_type', 'x', 'y', 'z', 'radius', 'link']]
+    swc = "# "
+    swc += df.to_csv(sep=' ', header=True, index=False)
+    
+    if export_path:
+        with open(export_path, 'w') as f:
+            f.write(swc)
+
+    return swc
+
+    
+def heal_skeleton(skeleton_df):
+    """
+    Rather than a single tree, skeletons from neuprint sometimes
+    consist of multiple fragments, i.e. multiple connected
+    components.  In such skeletons, there will be multiple 'root'
+    nodes (SWC rows where ``link == -1``). That's due to artifacts
+    in the underlying segmentation from which the skeletons were
+    generated.
+    
+    This function 'heals' a fragmented skeleton by joining its 
+    fragments into a single tree. The fragments are joined by
+    selecting the minimum spanning tree after joining all fragments
+    via their pairwise nearest neighbors.
+    
+    Args:
+        skeleton_df:
+            DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
+    
+    Returns:
+        DataFrame, with ``link`` column updated with updated edges.
+    """
+    skeleton_df = (skeleton_df.sort_values('rowId').reset_index(drop=True))
+    g = skeleton_df_to_nx(skeleton_df).to_undirected()
+
+    # Extract each fragment's rows and construct a KD-Tree
+    CC = namedtuple('CC', ['df', 'kd'])
+    ccs = []
+    for cc in nx.connected_components(g):
+        if len(cc) == len(skeleton_df):
+            # There's only one component -- no healing necessary
+            return skeleton_df
+        
+        df = skeleton_df.query('rowId in @cc')
+        kd = cKDTree(df[[*'xyz']].values)
+        ccs.append( CC(df, kd) )
+
+    # Sort from big-to-small, so the calculations below use a
+    # KD tree for the larger point set in every fragment pair.
+    ccs = sorted(ccs, key=lambda cc: -len(cc.df))
+    
+    # Intra-fragment edges must stay linked
+    nx.set_edge_attributes(g, 0, 'distance')
+
+    # Connect all fragment pairs at their nearest neighbors
+    for cc_a, cc_b in combinations(ccs, 2):
+        coords_b = cc_b.df[[*'xyz']].values
+        distances, indexes = cc_a.kd.query(coords_b)
+
+        index_b = np.argmin(distances)
+        index_a = indexes[index_b]
+        
+        node_a = cc_a.df['rowId'].iloc[index_a]
+        node_b = cc_b.df['rowId'].iloc[index_b]
+        dist_ab = distances[index_b]
+        g.add_edge(node_a, node_b, distance=dist_ab)
+
+    # Compute MST edges
+    root = skeleton_df['rowId'].iloc[0]
+    tree = nx.minimum_spanning_tree(g, 'distance')
+    edges = list(nx.dfs_edges(tree, source=root))
+    edges = pd.DataFrame(edges, columns=['link', 'rowId']) # parent, child
+    edges = edges.set_index('rowId')['link']
+
+    # Replace 'link' (parent) column using MST edges
+    skeleton_df['link'] = skeleton_df['rowId'].map(edges).fillna(-1).astype(int)
+    assert (skeleton_df['link'] == -1).sum() == 1
+    assert skeleton_df['link'].iloc[0] == -1
+
+    return skeleton_df

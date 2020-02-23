@@ -53,6 +53,7 @@ import logging
 import functools
 import threading
 import collections
+from io import StringIO
 from textwrap import dedent, indent
 
 import pandas as pd
@@ -67,7 +68,7 @@ from requests.adapters import HTTPAdapter
 # ujson is faster than Python's builtin json module
 import ujson
 
-from .utils import skeleton_df_to_nx
+from .utils import skeleton_df_to_nx, heal_skeleton, skeleton_df_to_swc
 
 logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
@@ -661,58 +662,72 @@ class Client:
     ##
     ## SKELETONS
     ##
-    def fetch_skeleton(self, body, format='swc', export_path=None):
+    def fetch_skeleton(self, body, heal=False, export_path=None, format='pandas'):
         """
         Fetch the skeleton for a neuron or segment.
         
         Args:
-            body:
-                int. A neuron or segment ID
-            
-            format:
-                Either 'swc' (a text format), 'json', 'pandas',
-                or 'nx'.
-            
-            export_path:
+
+            body (int):
+                A neuron or segment ID
+
+            heal (bool):
+                If ``True`` and the skeleton is fragmented, 'heal' it by connecting 
+                its fragments into a single tree. The fragments are joined by
+                selecting the minimum spanning tree after joining all fragments
+                via their pairwise nearest neighbors. See :py:func:`.heal_skeleton()`
+                for more details.
+
+            format (str):
+                Either 'pandas', 'swc' (similar to CSV), or 'nx' (``networkx.DiGraph``).
+
+            export_path (str):
                 Optional. Writes the ``.swc`` file to disk.
+                (SWC format is written, regardless of the returned ``format``.)
         
         Returns:
-            Either a string (swc), dict (json), a DataFrame (pandas),
-            or ``networkx.DiGraph`` (nx).
+
+            Either a string (swc), a DataFrame (pandas), or ``networkx.DiGraph`` (nx).
         
         See also:
         
-            :py:func:`.skeleton_df_to_nx()`
+            - :py:func:`.heal_skeleton()`
+            - :py:func:`.skeleton_df_to_nx()`
+            - :py:func:`.skeleton_df_to_swc()`
         """
-        assert format in ('swc', 'json', 'pandas', 'nx'), \
-            f'Invalid format: {format}'
-        
-        assert not export_path or format == 'swc', \
-            "Only the swc format can be exported to disk."
-        
         try:
             body = int(body)
         except ValueError:
             raise RuntimeError(f"Please pass an integer body ID, not '{body}'")
 
-        url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}"
+        assert isinstance(heal, bool), "Bad argument: 'heal' should be a bool."
+        assert format in ('swc', 'pandas', 'nx'), f'Invalid format: {format}'
+
+        url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}?format=swc"
+        swc = self._fetch_raw(url, ispost=False).decode('utf-8')
+
+        swc_csv = '\n'.join(filter(lambda line: '#' not in line, swc.split('\n')))
+        
+        if heal or format != 'swc':
+            cols = ['rowId', 'node_type', 'x', 'y', 'z', 'radius', 'link']
+            df = pd.read_csv(StringIO(swc_csv), delimiter=' ', engine='c', names=cols, header=None)
+            df = df.drop(columns=['node_type'])
+
+        if heal:
+            df = heal_skeleton(df)
+            if export_path or format == 'swc':
+                swc = skeleton_df_to_swc(df)
+
+        if export_path:
+            with open(export_path, 'w') as f:
+                f.write(swc)
+
         if format == 'swc':
-            url += '?format=swc'
-            swc_text = self._fetch_raw(url, ispost=False).decode('utf-8')
-            if export_path:
-                with open(export_path, 'w') as f:
-                    f.write(swc_text)
-            return swc_text
-
-        result = self._fetch_json(url, ispost=False)
-        if format == 'json':
-            return result
-
-        df = pd.DataFrame(result['data'], columns=result['columns'])
-
+            return swc
+        
         if format == 'pandas':
             return df
-    
+
         if format == 'nx':
             return skeleton_df_to_nx(df)
 
