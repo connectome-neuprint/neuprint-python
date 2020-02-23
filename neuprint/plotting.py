@@ -134,6 +134,13 @@ def plot_skeleton_3d(skeleton, color='blue', *, client=None):
     Args:
         skeleton:
             Either a bodyId or a pre-fetched pandas DataFrame
+        
+        color:
+            See ``ipyvolume`` docs.
+            Examples: ``'blue'``, ``'#0000ff'``
+            If the skeleton is fragmented, you can give a list
+            of colors and each fragment will be shown in a
+            different color.
 
     Requires ``ipyvolume``.
     If using Jupyterlab, install it like this:
@@ -183,8 +190,14 @@ def plot_skeleton_3d(skeleton, color='blue', *, client=None):
             paths.append(skel_path(root))
         return paths
 
+    paths = skel_paths(skeleton)
+    if isinstance(color, str):
+        colors = len(paths)*[color]
+    else:
+        colors = (1+len(paths)//len(color))*color
+
     ipv.figure()
-    for points in skel_paths(skeleton):
+    for points, color in zip(paths, colors):
         ipv.plot(*points.transpose(), color)
     ipv.show()
 
