@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Utilities &mdash; neuprint-python 0.4.6 documentation</title>
+  <title>Utilities &mdash; neuprint-python 0.4.7 documentation</title>
   
 
   
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.6
+                0.4.7
               </div>
             
           
@@ -209,6 +209,12 @@
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.utils.connection_table_to_matrix" title="neuprint.utils.connection_table_to_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connection_table_to_matrix</span></code></a>(conn_df[,&nbsp;…])</td>
 <td>Given a weighted connection table, produce a weighted adjacency matrix.</td>
 </tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.utils.heal_skeleton" title="neuprint.utils.heal_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">heal_skeleton</span></code></a>(skeleton_df)</td>
+<td>Rather than a single tree, skeletons from neuprint sometimes consist of multiple fragments, i.e.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.utils.skeleton_df_to_swc" title="neuprint.utils.skeleton_df_to_swc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_swc</span></code></a>(df[,&nbsp;export_path])</td>
+<td>Convert a skeleton DataFrame into a the text of an SWC file.</td>
+</tr>
 <tr class="row-odd"><td><a class="reference internal" href="#neuprint.utils.skeleton_df_to_nx" title="neuprint.utils.skeleton_df_to_nx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_nx</span></code></a>(df)</td>
 <td>Convert a skeleton DataFrame into a <code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>.</td>
 </tr>
@@ -218,7 +224,7 @@
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="neuprint.utils.merge_neuron_properties">
-<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.6/neuprint/utils.py#L86"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.7/neuprint/utils.py#L90"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Merge neuron properties to a connection table.</p>
 <p>Given a table of neuron properties and a connection table, append
 <code class="docutils literal notranslate"><span class="pre">_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">_post</span></code> columns to the connection table for each of
@@ -274,7 +280,7 @@ the given properties via the appropriate merge operations.</p>
 
 <dl class="function">
 <dt id="neuprint.utils.connection_table_to_matrix">
-<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.6/neuprint/utils.py#L157"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.7/neuprint/utils.py#L161"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a weighted connection table, produce a weighted adjacency matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -335,8 +341,54 @@ the ‘post’ group column.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="neuprint.utils.heal_skeleton">
+<code class="descclassname">neuprint.utils.</code><code class="descname">heal_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.7/neuprint/utils.py#L362"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.heal_skeleton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rather than a single tree, skeletons from neuprint sometimes
+consist of multiple fragments, i.e. multiple connected
+components.  In such skeletons, there will be multiple ‘root’
+nodes (SWC rows where <code class="docutils literal notranslate"><span class="pre">link</span> <span class="pre">==</span> <span class="pre">-1</span></code>). That’s due to artifacts
+in the underlying segmentation from which the skeletons were
+generated.</p>
+<p>This function ‘heals’ a fragmented skeleton by joining its
+fragments into a single tree. The fragments are joined by
+selecting the minimum spanning tree after joining all fragments
+via their pairwise nearest neighbors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>skeleton_df</strong> – DataFrame as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">DataFrame, with <code class="docutils literal notranslate"><span class="pre">link</span></code> column updated with updated edges.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.utils.skeleton_df_to_swc">
+<code class="descclassname">neuprint.utils.</code><code class="descname">skeleton_df_to_swc</code><span class="sig-paren">(</span><em>df</em>, <em>export_path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.7/neuprint/utils.py#L336"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.skeleton_df_to_swc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a skeleton DataFrame into a the text of an SWC file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> – DataFrame, as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
+<li><strong>export_path</strong> – Optional. Write the SWC file to disk a the given location.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">string</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="neuprint.utils.skeleton_df_to_nx">
-<code class="descclassname">neuprint.utils.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.6/neuprint/utils.py#L320"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.7/neuprint/utils.py#L324"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a skeleton DataFrame into a <code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code>.</p>
 </dd></dl>
 

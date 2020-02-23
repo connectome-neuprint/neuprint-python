@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.6 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.7 documentation</title>
   
 
   
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.6
+                0.4.7
               </div>
             
           
@@ -226,7 +226,7 @@ conda create -n neuprint-python -c flyem-forge -c conda-forge <span class="si">$
 
 <span class="c1"># Export to environment.yml, but relax the neuprint-python version requirement</span>
 conda env <span class="nb">export</span> -n neuprint-python &gt; environment.yml
-sed --in-place <span class="s1">&#39;s/neuprint-python=.*/neuprint-python/g&#39;</span>
+sed --in-place <span class="s1">&#39;s/neuprint-python=.*/neuprint-python/g&#39;</span> environment.yml
 
 git commit -m <span class="s2">&quot;Updated environment.yml for binder&quot;</span> environment.yml
 git push origin master
