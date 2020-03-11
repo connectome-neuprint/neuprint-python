@@ -380,11 +380,6 @@ def fetch_custom_neurons(q, *, client=None):
                 RETURN n
                 ...
 
-        neuprint_rois:
-            Optional.  The list of ROI names from neuprint.
-            If not provided, they will be fetched
-            (so that ROI boolean columns can be dropped from the results).
-
         client:
             If not provided, the global default ``Client`` will be used.
         
@@ -479,11 +474,13 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
     Note:
         This function is not intended to be used with very large sets of neurons.
+        Furthermore, it does not return ROI information in a convenient format.
+        But the simple output table it returns is sometimes convenient for small,
+        interactive queries.
+
         To fetch all adjacencies between a large set of neurons,
         see :py:func:`fetch_adjacencies()`, which also has additional
-        ROI-filtering options.
-        
-        However, may be more convenient for small interactive queries.
+        ROI-filtering options, and also returns ROI info in a separate table.
 
     Args:
         upstream_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
@@ -743,7 +740,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     ##
     ## 3. To achieve (2), it first fetches the *counts* of the source/body lists,
     ##    and determines which is shorter, or at least which one can be fetched
-    ##    withina short timeout.
+    ##    within a short timeout.
     ##
     ## 4. It 'reshapes' roi info into a column, with special care given to the
     ##    `include_nonprimary` option, and also invents a special ROI `NotPrimary`.
