@@ -706,10 +706,11 @@ class Client:
         url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}?format=swc"
         swc = self._fetch_raw(url, ispost=False).decode('utf-8')
 
-        swc_csv = '\n'.join(filter(lambda line: '#' not in line, swc.split('\n')))
-        
         if heal or format != 'swc':
             cols = ['rowId', 'node_type', 'x', 'y', 'z', 'radius', 'link']
+            lines = swc.split('\n')
+            lines = filter(lambda line: '#' not in line, lines)
+            swc_csv = '\n'.join(lines)
             df = pd.read_csv(StringIO(swc_csv), delimiter=' ', engine='c', names=cols, header=None)
             df = df.drop(columns=['node_type'])
 

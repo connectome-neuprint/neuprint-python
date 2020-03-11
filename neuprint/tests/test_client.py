@@ -88,3 +88,8 @@ def test_inject_client():
         @inject_client
         def f2(client):
             pass
+
+if __name__ == "__main__":
+    args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_client']
+    #args += ['-k', 'fetch_skeleton']
+    pytest.main(args)

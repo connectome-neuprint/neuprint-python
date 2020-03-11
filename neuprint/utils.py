@@ -402,6 +402,8 @@ def skeleton_df_to_swc(df, export_path=None):
 
 def heal_skeleton(skeleton_df):
     """
+    Ensure a skeleton consists of a single connected component.
+    
     Rather than a single tree, skeletons from neuprint sometimes
     consist of multiple fragments, i.e. multiple connected
     components.  That's due to artifacts in the underlying
@@ -410,9 +412,12 @@ def heal_skeleton(skeleton_df):
     (SWC rows where ``link == -1``).
 
     This function 'heals' a fragmented skeleton by joining its
-    fragments into a single tree. The fragments are joined by
-    selecting the minimum spanning tree after joining all fragments
-    via their pairwise nearest neighbors.
+    fragments into a single tree.
+
+    First, each fragment is joined to every other fragment at
+    their nearest points. The resulting graph has unnecessary
+    edges, which are then removed by extracting the minimum
+    spanning tree.  The MST is returned as the healed skeleton.
 
     Args:
         skeleton_df:
@@ -421,24 +426,24 @@ def heal_skeleton(skeleton_df):
     Returns:
         DataFrame, with ``link`` column updated with updated edges.
     """
-    skeleton_df = (skeleton_df.sort_values('rowId').reset_index(drop=True))
+    skeleton_df = skeleton_df.sort_values('rowId').reset_index(drop=True)
     g = skeleton_df_to_nx(skeleton_df, False, False)
 
     # Extract each fragment's rows and construct a KD-Tree
-    CC = namedtuple('CC', ['i', 'df', 'kd'])
-    ccs = []
-    for i, cc in enumerate(nx.connected_components(g)):
+    Fragment = namedtuple('Fragment', ['frag_id', 'df', 'kd'])
+    fragments = []
+    for frag_id, cc in enumerate(nx.connected_components(g)):
         if len(cc) == len(skeleton_df):
             # There's only one component -- no healing necessary
             return skeleton_df
 
         df = skeleton_df.query('rowId in @cc')
         kd = cKDTree(df[[*'xyz']].values)
-        ccs.append( CC(i, df, kd) )
+        fragments.append( Fragment(frag_id, df, kd) )
 
     # Sort from big-to-small, so the calculations below use a
     # KD tree for the larger point set in every fragment pair.
-    ccs = sorted(ccs, key=lambda cc: -len(cc.df))
+    fragments = sorted(fragments, key=lambda frag: -len(frag.df))
 
     # We could use the full graph and connect all
     # fragment pairs at their nearest neighbors,
@@ -446,24 +451,29 @@ def heal_skeleton(skeleton_df):
     # single node and run MST on that quotient graph,
     # which is tiny.
     frag_graph = nx.Graph()
-    for cc_a, cc_b in combinations(ccs, 2):
-        coords_b = cc_b.df[[*'xyz']].values
-        distances, indexes = cc_a.kd.query(coords_b)
+    for frag_a, frag_b in combinations(fragments, 2):
+        coords_b = frag_b.df[[*'xyz']].values
+        distances, indexes = frag_a.kd.query(coords_b)
 
         index_b = np.argmin(distances)
         index_a = indexes[index_b]
 
-        node_a = cc_a.df['rowId'].iloc[index_a]
-        node_b = cc_b.df['rowId'].iloc[index_b]
+        node_a = frag_a.df['rowId'].iloc[index_a]
+        node_b = frag_b.df['rowId'].iloc[index_b]
         dist_ab = distances[index_b]
 
-        frag_graph.add_edge(cc_a.i, cc_b.i, node_a=node_a, node_b=node_b, distance=dist_ab)
+        # Add edge from one fragment to another,
+        # but keep track of which fine-grained skeleton
+        # nodes were used to calculate distance.
+        frag_graph.add_edge( frag_a.frag_id, frag_b.frag_id,
+                             node_a=node_a, node_b=node_b,
+                             distance=dist_ab )
 
     # Compute inter-fragment MST edges
     frag_edges = nx.minimum_spanning_edges(frag_graph, weight='distance', data=True)
 
     # For each inter-fragment edge, add the corresponding
-    # fine-grained edge between skeleton nodes
+    # fine-grained edge between skeleton nodes in the original graph.
     for _u, _v, d in frag_edges:
         g.add_edge(d['node_a'], d['node_b'])
 
