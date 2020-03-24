@@ -4,6 +4,8 @@ Utility functions for manipulating neuprint-python output.
 import sys
 import inspect
 import functools
+import warnings
+from textwrap import dedent
 from itertools import combinations
 from collections import namedtuple
 from collections.abc import Iterable, Iterator, Collection
@@ -21,8 +23,25 @@ try:
     import ipykernel.iostream
     if isinstance(sys.stdout, ipykernel.iostream.OutStream):
         from tqdm.notebook import tqdm
+
+        try:
+            import ipywidgets
+        except ImportError:
+            msg = dedent("""\
+
+                Progress bar will not work well in the notebook without ipywidgets.
+                Run the following commands (for notebook and jupyterlab users):
+
+                    conda install -c conda-forge ipywidgets
+                    jupyter nbextension enable --py widgetsnbextension
+                    jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+                ...and then reload your jupyterlab session, and restart your kernel.
+            """)
+            warnings.warn(msg)
     else:
         from tqdm import tqdm
+    
 except ImportError:
     from tqdm import tqdm
 
@@ -371,6 +390,7 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True):
         df = df[['rowId', 'link']].sort_values(['rowId', 'link'])
         g.add_nodes_from(df['rowId'].sort_values())
         g.add_edges_from(df.query('link != -1').values)
+
     return g
 
 
