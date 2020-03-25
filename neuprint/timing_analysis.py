@@ -170,7 +170,7 @@ class TimingResult:
             tdata = plot_df[plot_df["region"] == region] 
             ax.scatter(tdata["delay"].to_list(), tdata["amp"].to_list(), c=[np.random.rand(3,)], label=region)
         ax.legend()
-        plt.xlabel("delay (ms")
+        plt.xlabel("delay (ms)")
         plt.ylabel("amplitude (mV)")
 
         # only show graph interactively if in a notebook 
