@@ -639,7 +639,8 @@ class NeuronModel:
         unique_io = self.io_pins.drop_duplicates(subset=["swcid"]).sample(frac=1).reset_index(drop=True)
         
         # consider input/output response symmetrically to create a distance
-        io_list = unique_io[0:num_points]["swcid"].to_list()
+        io_list = unique_io[unique_io["io"] == "out"][0:(num_points//2)]["swcid"].to_list()
+        io_list.extend(unique_io[unique_io["io"] == "in"][0:(num_points//2)]["swcid"].to_list())
 
         # simulate each drive (provide progress bar)
         delay_data = []
