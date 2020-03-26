@@ -34,7 +34,7 @@ Rm_MED=0.8
 Rm_HIGH=3.11
 
 class TimingResult:
-    def __init__(self, bodyid, delay_matrix, amplitude_matrix, neuron_io, symmetric=False):
+    def __init__(self, bodyid, delay_matrix, amplitude_matrix, neuron_io, neuron_conn_info, symmetric=False):
         """
         Timing rseult constructor.
 
@@ -57,7 +57,8 @@ class TimingResult:
         self.amplitude_matrix = amplitude_matrix
         self.neuron_io = neuron_io
         self.symmetric = symmetric
-           
+        self.neuron_conn_info = neuron_conn_info
+
         """
         sources = set(delay_matrix.index.to_list())
         sinks = set(delay_matrix.columns.values())
@@ -245,7 +246,7 @@ class TimingResult:
             plt.savefig(plot_file)
 
     def estimate_neuron_domains(self, num_components, show_plot=False, plot_file=None):
-        """ ** TODO **
+        """
         Estimate the domains based on timing estimates.
 
         Note: only works for symmetric sink and source simulation.
@@ -338,11 +339,37 @@ class TimingResult:
             if plot_file is not None:
                 plt.savefig(plot_file)
 
-
-
         # build KD tree and associate synapses with each point after the cluster
-        # potentially add ROI and #matches for each point in plot
-        # kd tree match needed to export the neuron io table
+        
+        filter_list = []
+        for drive, row in self.delay_matrix.iterrows():
+            idx = self.neuron_io[self.neuron_io["swcid"] == drive].index[0]
+            filter_list.append(idx)
+
+        tree = cKDTree(self.neuron_io.iloc[filter_list]["coords"].to_list())
+        neuron_conn_info = self.neuron_conn_info.copy()
+        coords = list(zip(neuron_conn_info["x"], neuron_conn_info["y"], neuron_conn_info["z"]))
+        neuron_conn_info["domain_id"] = [best_labels[tree.query(x)[1]] for x in coords]
+
+        # build summary input / output table
+
+        # find unique input and output groupings
+        temp_df = neuron_conn_info.drop_duplicates(subset=["partner", "type", "domain_id"])
+        summary_array = []
+        for idx, row in temp_df.iterrows():
+            io = "input"
+            if row["type"] == "pre":
+                io = "output"
+
+            matchgroup = neuron_conn_info[(neuron_conn_info["partner"] == row["partner"]) &
+                    (neuron_conn_info["type"] == row["type"]) &
+                    (neuron_conn_info["domain_id"] == row["domain_id"])]
+            count = len(matchgroup)
+            rois = list(matchgroup["roi"].unique())
+            summary_array.append([io, row["partner"], count, row["domain_id"], rois])
+        connection_summary = pd.DataFrame(summary_array, columns=["io", "partner", "weight", "domain_id", "rois"])
+
+        return connection_summary.sort_values(by=["io", "weight"], ascending=[False, False]).reset_index(drop=True), neuron_conn_info
 
 class NeuronModel:
     def __init__(self, bodyid, Ra=Ra_MED, Rm=Rm_MED, Cm=1e-2, client=None):
@@ -396,7 +423,7 @@ class NeuronModel:
             input_pins["io"] = ["in"]*len(inputs)
 
             outputs["type"] = ["pre"]*len(outputs)
-            outputs = outputs[["x_pre", "y_pre", "z_pre", "roi_pre", "bodyId_post" ]].rename(columns={"x_pre": "x", "y_pre": "y", "z_pre": "z", "roi_pre": "roi", "bodyId_post": "partner"})
+            outputs = outputs[["type", "x_pre", "y_pre", "z_pre", "roi_pre", "bodyId_post" ]].rename(columns={"x_pre": "x", "y_pre": "y", "z_pre": "z", "roi_pre": "roi", "bodyId_post": "partner"})
             outputs["roi"].replace(np.nan, "none", inplace=True)
             
             output_pins = outputs[["roi"]].copy()
@@ -662,7 +689,7 @@ class NeuronModel:
         # only grab unique skel comp id rows and randomize data
         unique_io = self.io_pins.drop_duplicates(subset=["swcid"]).sample(frac=1).reset_index(drop=True)
         
-        # grab top max_per region per input and all ouputs
+        # grab top max_per region per input and all outputs
         drive_list = []
         unique_outs = []
 
@@ -697,7 +724,7 @@ class NeuronModel:
         amp_df = pd.DataFrame(amp_data, columns=unique_outs, index=drive_list) 
 
         # return simulation results
-        return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, False) #self.neuron_conn_info, False)
+        return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, self.neuron_conn_info, False)
 
 
     def estimate_intra_neuron_delay(self, num_points=100):
@@ -745,7 +772,7 @@ class NeuronModel:
         amp_df = pd.DataFrame(amp_data, columns=io_list, index=io_list) 
 
         # return simulation results
-        return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, True) #self.neuron_conn_info, False)
+        return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, self.neuron_conn_info, True)
 
 
 
