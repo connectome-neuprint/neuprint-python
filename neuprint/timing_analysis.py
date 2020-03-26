@@ -75,6 +75,7 @@ class TimingResult:
         Returns:
             (dataframe, dataframe) for the delay and amplitude from brain region to brain region.
         """
+        assert(not self.symmetric)
     
         # determine row and column names
         inrois = set(self.neuron_io[self.neuron_io["io"] == "in"]["roi"].to_list())
@@ -142,6 +143,7 @@ class TimingResult:
             filename (str):
                 Optionally save plot to designated file
         """
+        assert(not self.symmetric)
 
         # matplot for amplitude and delay
         
@@ -180,6 +182,63 @@ class TimingResult:
 
         if filename is not None:
             plt.savefig(filename)
+
+
+    def plot_neuron_domains(self, plot_file=None):
+        """
+        Show how the different simulation points cluster in the neuron
+        and their corresponding ROI.
+
+        Plots the distance matrix in 2D using delay as the distance.
+
+        Args:
+            plot_file (str):
+                svae plot to file as png
+        """
+
+        assert(self.symmetric)
+
+        # ensure matrix is actually symmetric
+        delays = self.delay_matrix.values
+        for iter1 in range(len(self.delay_matrix)):
+            for iter2 in range(iter1, len(self.delay_matrix)):
+                if iter1 == iter2:
+                    delays[iter1, iter2] = 0
+                else:
+                    val = (delays[iter1, iter2] + delays[iter2, iter1]) / 2
+                    if val < 0:
+                        val = 0
+                    delays[iter1, iter2] = val
+                    delays[iter2, iter1] = val
+
+        # use umap to plot distance matrix
+        from umap import UMAP
+        u = UMAP(metric="precomputed", n_neighbors=90).fit(delays)
+        points_2d = u.fit_transform(delays)
+
+        # aasociate a region with each point
+        x_y_region = []
+        for idx, sid in enumerate(self.delay_matrix.index.to_list()):
+            x_y_region.append([points_2d[idx][0], points_2d[idx][1], self.neuron_io[self.neuron_io["swcid"] == sid].iloc[0]["roi"]])
+
+        plot_df = pd.DataFrame(x_y_region, columns=["x", "y", "region"])
+        
+        # create plot
+        import matplotlib.pyplot as plt
+        
+        fig, ax = plt.subplots()
+        for region in plot_df["region"].unique():
+            tdata = plot_df[plot_df["region"] == region] 
+            ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
+        ax.legend()
+
+        # only show graph interactively if in a notebook 
+        import ipykernel.iostream
+        if isinstance(sys.stdout, ipykernel.iostream.OutStream):
+            plt.show()
+
+        if plot_file is not None:
+            plt.savefig(plot_file)
 
     def estimate_neuron_domains(self, num_components=0, show_plot=False, plot_file=None):
         """ ** TODO **
@@ -575,8 +634,28 @@ class NeuronModel:
             
             TimingResult (contains input/output delay matrix)
         """
-        pass
-        # TODO
+
+        # only grab unique skel comp id rows and randomize data
+        unique_io = self.io_pins.drop_duplicates(subset=["swcid"]).sample(frac=1).reset_index(drop=True)
+        
+        # consider input/output response symmetrically to create a distance
+        io_list = unique_io[0:num_points]["swcid"].to_list()
+
+        # simulate each drive (provide progress bar)
+        delay_data = []
+        amp_data = []
+        for drive in tqdm(io_list):
+            # run simulation
+            sim_results = self._runspice(drive, io_list)
+            
+            delay_data.append(sim_results["delay"].to_list())
+            amp_data.append(sim_results["maxv"].to_list())
+
+        delay_df = pd.DataFrame(delay_data, columns=io_list, index=io_list) 
+        amp_df = pd.DataFrame(amp_data, columns=io_list, index=io_list) 
+
+        # return simulation results
+        return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, True) #self.neuron_conn_info, False)
 
 
 
