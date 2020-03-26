@@ -10,7 +10,7 @@ SegmentCriteria = NeuronCriteria
 from .synapsecriteria import SynapseCriteria
 from .queries import *
 from .utils import merge_neuron_properties, connection_table_to_matrix
-from .timing_analysis import NeuronModel
+from .timing_analysis import *
 
 from ._version import get_versions
 __version__ = get_versions()['version']

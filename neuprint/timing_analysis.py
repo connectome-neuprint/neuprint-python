@@ -168,8 +168,10 @@ class TimingResult:
         import matplotlib.pyplot as plt
         
         fig, ax = plt.subplots()
+        fig.set_figwidth(8)
+        fig.set_figheight(8)
         for region in plot_df["region"].unique():
-            tdata = plot_df[plot_df["region"] == region] 
+            tdata = plot_df[plot_df["region"] == region]
             ax.scatter(tdata["delay"].to_list(), tdata["amp"].to_list(), c=[np.random.rand(3,)], label=region)
         ax.legend()
         plt.xlabel("delay (ms)")
@@ -227,6 +229,8 @@ class TimingResult:
         import matplotlib.pyplot as plt
         
         fig, ax = plt.subplots()
+        fig.set_figwidth(8)
+        fig.set_figheight(8)
         for region in plot_df["region"].unique():
             tdata = plot_df[plot_df["region"] == region] 
             ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
@@ -240,7 +244,7 @@ class TimingResult:
         if plot_file is not None:
             plt.savefig(plot_file)
 
-    def estimate_neuron_domains(self, num_components=0, show_plot=False, plot_file=None):
+    def estimate_neuron_domains(self, num_components, show_plot=False, plot_file=None):
         """ ** TODO **
         Estimate the domains based on timing estimates.
 
@@ -248,22 +252,97 @@ class TimingResult:
 
         Args:
             num_components (int):
-                number of cluster domains (0 means to auto choose based on kmeans silhouette)
+                number of cluster domains
             show_plot (bool):
-                show scatter plot of delay to different region (from synapse IO)
+                show cluster results with predicted labels
+                (can compare with roi labels from plot_neuron_domains)
             plot_file (str):
-                save plot to file as png
+                svae plot to file as png
         
         Returns:
             (dataframe, dataframe) input and output connection summary split by domain,
-            neuron_io indicating component partition
+            synapse-level neuron_io indicating component partition
         """
+      
+        assert(self.symmetric)
+       
+        # ensure matrix is actually symmetric
+        delays = self.delay_matrix.values
+        for iter1 in range(len(self.delay_matrix)):
+            for iter2 in range(iter1, len(self.delay_matrix)):
+                if iter1 == iter2:
+                    delays[iter1, iter2] = 0
+                else:
+                    val = (delays[iter1, iter2] + delays[iter2, iter1]) / 2
+                    if val < 0:
+                        val = 0
+                    delays[iter1, iter2] = val
+                    delays[iter2, iter1] = val
         
-        # TODO
+        # create decomposition using hierarchical cluster over distance matrix
+        from scipy.spatial.distance import squareform
+        from scipy.cluster.hierarchy import linkage
+    
+        Dsq = squareform(delays)
+        cluster = linkage(Dsq, 'ward')
+
+        from scipy.cluster.hierarchy import cut_tree
+        if num_components > 1:
+            partitions = cut_tree(cluster, n_clusters=num_components)
+            best_labels = partitions[:,0]
+        else:
+            raise RuntimeError("must request 2 or more partitions")
+            from sklearn.metrics import silhouette_score
+            # find optimal number of clusters using silhouette function or based
+            # on provided input
+            best_score = -1
+            best_labels = None
+
+            for ncomps in range(2, len(self.delay_matrix)//4):
+                partitions = cut_tree(cluster, n_clusters=ncomps)
+                labels = partitions[:,0]
+                score = silhouette_score(delays, labels, metric="precomputed")
+                if score > best_score:
+                    best_score = score
+                    best_labels = labels
+
+        if show_plot or plot_file is not None:
+            # use umap to plot distance matrix
+            from umap import UMAP
+            u = UMAP(metric="precomputed", n_neighbors=90).fit(delays)
+            points_2d = u.fit_transform(delays)
+
+            # aasociate a region with each point
+            x_y_region = []
+            for idx, sid in enumerate(self.delay_matrix.index.to_list()):
+                x_y_region.append([points_2d[idx][0], points_2d[idx][1], best_labels[idx] ])
+
+            plot_df = pd.DataFrame(x_y_region, columns=["x", "y", "region"])
+            
+            # create plot
+            import matplotlib.pyplot as plt
+            
+            fig, ax = plt.subplots()
+            fig.set_figwidth(8)
+            fig.set_figheight(8)
+            for region in plot_df["region"].unique():
+                tdata = plot_df[plot_df["region"] == region] 
+                ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
+            ax.legend()
+
+            # only show graph interactively if in a notebook 
+            import ipykernel.iostream
+            if show_plot:
+                if isinstance(sys.stdout, ipykernel.iostream.OutStream):
+                    plt.show()
+            if plot_file is not None:
+                plt.savefig(plot_file)
+
+
+
         # build KD tree and associate synapses with each point after the cluster
         # potentially add ROI and #matches for each point in plot
         # kd tree match needed to export the neuron io table
-        pass            
 
 class NeuronModel:
     def __init__(self, bodyid, Ra=Ra_MED, Rm=Rm_MED, Cm=1e-2, client=None):
@@ -326,6 +405,10 @@ class NeuronModel:
 
             self.neuron_conn_info = pd.concat([inputs, outputs]).reset_index(drop=True)
             self.io_pins = pd.concat([input_pins, output_pins]).reset_index(drop=True)
+            
+            #if len(self.io_pins) == 0:
+            #    raise RuntimeError("neuron must have at least 1 inputs or output")
+
             self.Ra = Ra 
             self.Rm = Rm
             self.Cm = 1e-2 # farads per square meeter
@@ -595,6 +678,10 @@ class NeuronModel:
                     continue
                 rcounter[row["roi"]] += 1
                 drive_list.append(row["swcid"])
+        if len(unique_outs) == 0:
+            raise RuntimeError("neuron must have at least one output")
+        if len(drive_list) == 0:
+            raise RuntimeError("neuron must specify at least one input")
 
         # simulate each drive (provide progress bar)
         delay_data = []
@@ -634,6 +721,8 @@ class NeuronModel:
             
             TimingResult (contains input/output delay matrix)
         """
+        if num_points < 10:
+            raise RuntimeError("must specifiy at least 10 simulation points")
 
         # only grab unique skel comp id rows and randomize data
         unique_io = self.io_pins.drop_duplicates(subset=["swcid"]).sample(frac=1).reset_index(drop=True)
