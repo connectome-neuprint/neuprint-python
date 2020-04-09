@@ -26,6 +26,7 @@ try:
 
         try:
             import ipywidgets
+            ipywidgets
         except ImportError:
             msg = dedent("""\
 
@@ -36,7 +37,7 @@ try:
                     jupyter nbextension enable --py widgetsnbextension
                     jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
-                ...and then reload your jupyterlab session, and restart your kernel.
+                ...and then reload your jupyter session, and restart your kernel.
             """)
             warnings.warn(msg)
     else:

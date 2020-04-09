@@ -1435,6 +1435,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
     for body, syn_type, conf, x, y, z, syn_info in data:
         # Exclude non-primary ROIs if necessary
         syn_rois = return_rois & {*syn_info.keys()}
+        # Fixme: Filter for the user's ROIs (drop duplicates)
         for roi in syn_rois:
             syn_table.append((body, syn_type, roi, x, y, z, conf))
 
@@ -1579,11 +1580,19 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     source_criteria = prepare_nc(source_criteria, 'n')
     target_criteria = prepare_nc(target_criteria, 'm')
 
-    _neuron_df, roi_conn_df = fetch_adjacencies(source_criteria, target_criteria, synapse_criteria.rois, 1, min_total_weight, properties=[])
-    conn_df = roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post']).sort_values(['bodyId_pre', 'bodyId_post'])
+    # Fetch the list of neuron-neuron pairs in advance so we can break into batches.
+    _neuron_df, roi_conn_df = fetch_adjacencies( source_criteria,
+                                                 target_criteria,
+                                                 synapse_criteria.rois,
+                                                 1,
+                                                 min_total_weight,
+                                                 properties=[] )
     
-    syn_dfs = []
-    
+    conn_df = (roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
+                          .sort_values(['bodyId_pre', 'bodyId_post']))
+
+    # Fetch in batches
+    syn_dfs = []    
     conn_groups = [*conn_df.groupby('bodyId_pre')]
     for group in iter_batches(conn_groups, batch_size):
         _, group_dfs = zip(*group)
@@ -1591,7 +1600,11 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
         target_criteria.bodyId = batch_conn_df['bodyId_post'].unique()
         
-        batch_syn_df = _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client)
+        batch_syn_df = _fetch_synapse_connections( source_criteria,
+                                                   target_criteria,
+                                                   synapse_criteria,
+                                                   min_total_weight,
+                                                   client )
         syn_dfs.append(batch_syn_df)
     
     syn_df = pd.concat(syn_dfs, ignore_index=True)
