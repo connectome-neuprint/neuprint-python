@@ -9,7 +9,7 @@ Packaging
 ---------
 
 ``neuprint-python`` is packaged for both ``conda`` (on the `flyem-forge channel <https://anaconda.org/flyem-forge/neuprint-python/files>`_)
-and ``pip`` (on `PyPI <https://pypi.org/project/neuprint-python/>`_.
+and ``pip`` (on `PyPI <https://pypi.org/project/neuprint-python/>`_).
 
 The package version is automatically inferred from the git tag.
 To prepare a release, follow these steps:
