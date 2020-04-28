@@ -9,15 +9,17 @@ Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
 Author: Stephen Plaza
 """
 
+import os
+import sys
+import math
+
+import numpy as np
+import pandas as pd
+from scipy.spatial import cKDTree
+
 from .utils import tqdm
 from .client import default_client
 from .queries import fetch_synapse_connections
-from scipy.spatial import cKDTree
-import numpy as np
-import pandas as pd
-import math
-import sys
-import os
 
 """
 Axon resistance.
