@@ -2,7 +2,14 @@
 Functions for performing spicedbased electrical simulation of a neuron given
 its synapses and skeleton using a simple linear passive model.
 
-This tool depends on the installation of nspice.
+This module depends on the following additional packages which are not
+already dependencies of neuprint-python.
+They can be installed via conda, from conda-forge:
+
+* ``ngspice``, a circuit simulator
+* ``umap-learn``, a dimensionality reduction package
+* ``scikit-learn``
+* ``matplotlib``
 
 Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
 
@@ -26,19 +33,16 @@ from .utils import tqdm, UMAP
 from .client import default_client
 from .queries import fetch_synapse_connections
 
-"""
-Axon resistance.
-"""
+# Axon resistance.
 Ra_LOW = 0.4
 Ra_MED=1.2
 Ra_HIGH=4.0
 
-"""
-Membrane resistance.
-"""
+# Membrane resistance.
 Rm_LOW = 0.2
 Rm_MED=0.8
 Rm_HIGH=3.11
+
 
 class TimingResult:
     def __init__(self, bodyid, delay_matrix, amplitude_matrix, neuron_io, neuron_conn_info, symmetric=False):
@@ -66,12 +70,10 @@ class TimingResult:
         self.symmetric = symmetric
         self.neuron_conn_info = neuron_conn_info
 
-        """
-        sources = set(delay_matrix.index.to_list())
-        sinks = set(delay_matrix.columns.values())
-        if sources == sinks:
-            self.symmetric = True
-        """
+        # sources = set(delay_matrix.index.to_list())
+        # sinks = set(delay_matrix.columns.values())
+        # if sources == sinks:
+        #     self.symmetric = True
 
     def compute_region_delay_matrix(self):
         """
@@ -383,9 +385,11 @@ class NeuronModel:
             bodyid (int):
                 Segment id for neuron.
             Ra (float):
-                axon resistance (e.g., 0.4, 1.2, or 4.0)
+                axon resistance
+                Examples: 0.4 (``Ra_LOW``), 1.2 (``Ra_MED``), 4.0 (``Ra_HIGH``)
             Rm (float):
-                membrane resistance (e.g., 0.2, 0.8, or 3.11)
+                membrane resistance
+                Examples: 0.2 (``Rm_LOW``), 0.8 (``Rm_MED``), 3.11 (``Rm_HIGH``)
             Cm (float):
                 membrane capacitance (should not very too much between neurons)
         """
