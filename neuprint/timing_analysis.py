@@ -140,7 +140,7 @@ class TimingResult:
         return pd.DataFrame(delay_matrix, index=inrois, columns=outrois), pd.DataFrame(amp_matrix, index=inrois, columns=outrois) 
 
 
-    def plot_response_from_region(self, brain_region, filename=None):
+    def plot_response_from_region(self, brain_region, path=None):
         """
         Show neuron response to brain regions based on inputs from a given region.
 
@@ -148,7 +148,7 @@ class TimingResult:
 
             brain_region (str):
                 Source brain region.
-            filename (str):
+            path (str):
                 Optionally save plot to designated file
         """
         assert(not self.symmetric)
@@ -185,16 +185,14 @@ class TimingResult:
         plt.xlabel("delay (ms)")
         plt.ylabel("amplitude (mV)")
 
-        # only show graph interactively if in a notebook 
-        import ipykernel.iostream
-        if isinstance(sys.stdout, ipykernel.iostream.OutStream):
-            plt.show()
+        if path is not None:
+            plt.savefig(path)
 
-        if filename is not None:
-            plt.savefig(filename)
+        plt.close()
+        return fig
 
 
-    def plot_neuron_domains(self, plot_file=None):
+    def plot_neuron_domains(self, path=None):
         """
         Show how the different simulation points cluster in the neuron
         and their corresponding ROI.
@@ -202,8 +200,8 @@ class TimingResult:
         Plots the distance matrix in 2D using delay as the distance.
 
         Args:
-            plot_file (str):
-                svae plot to file as png
+            path (str):
+                save plot to file as png
         """
 
         assert(self.symmetric)
@@ -243,15 +241,14 @@ class TimingResult:
             ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
         ax.legend()
 
-        # only show graph interactively if in a notebook 
-        import ipykernel.iostream
-        if isinstance(sys.stdout, ipykernel.iostream.OutStream):
-            plt.show()
+        if path is not None:
+            plt.savefig(path)
 
-        if plot_file is not None:
-            plt.savefig(plot_file)
+        plt.close()
+        return fig
 
-    def estimate_neuron_domains(self, num_components, show_plot=False, plot_file=None):
+
+    def estimate_neuron_domains(self, num_components, plot=False):
         """
         Estimate the domains based on timing estimates.
 
@@ -260,15 +257,17 @@ class TimingResult:
         Args:
             num_components (int):
                 number of cluster domains
-            show_plot (bool):
-                show cluster results with predicted labels
-                (can compare with roi labels from plot_neuron_domains)
-            plot_file (str):
-                svae plot to file as png
+            plot (bool):
+                If True, create and return a plot that shows cluster results with predicted labels
+                (can compare with roi labels from plot_neuron_domains).
+                If ``plot`` is a string, it is interpreted as a filepath,
+                to which the plot is also written to disk as a PNG.
         
         Returns:
-            (dataframe, dataframe) input and output connection summary split by domain,
-            synapse-level neuron_io indicating component partition
+            (dataframe, dataframe, plot) input and output connection summary split by domain,
+            synapse-level neuron_io indicating component partition.
+            If a ``plot`` was requested, then the generated plot is returned as the
+            third tuple element, otherwise that element is ``None``.
         """
       
         assert(self.symmetric)
@@ -309,7 +308,8 @@ class TimingResult:
                     best_score = score
                     best_labels = labels
 
-        if show_plot or plot_file is not None:
+        fig = None
+        if plot:
             # use umap to plot distance matrix
             u = UMAP(metric="precomputed", n_neighbors=90).fit(delays)
             points_2d = u.fit_transform(delays)
@@ -332,13 +332,10 @@ class TimingResult:
                 ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
             ax.legend()
 
-            # only show graph interactively if in a notebook 
-            import ipykernel.iostream
-            if show_plot:
-                if isinstance(sys.stdout, ipykernel.iostream.OutStream):
-                    plt.show()
-            if plot_file is not None:
-                plt.savefig(plot_file)
+            if isinstance(plot, str):
+                plt.savefig(plot)
+
+            plt.close()
 
         # build KD tree and associate synapses with each point after the cluster
         
@@ -370,7 +367,8 @@ class TimingResult:
             summary_array.append([io, row["partner"], count, row["domain_id"], rois])
         connection_summary = pd.DataFrame(summary_array, columns=["io", "partner", "weight", "domain_id", "rois"])
 
-        return connection_summary.sort_values(by=["io", "weight"], ascending=[False, False]).reset_index(drop=True), neuron_conn_info
+        connection_summary = connection_summary.sort_values(by=["io", "weight"], ascending=[False, False]).reset_index(drop=True)
+        return connection_summary, neuron_conn_info, fig
 
 class NeuronModel:
     def __init__(self, bodyid, Ra=Ra_MED, Rm=Rm_MED, Cm=1e-2, client=None):
