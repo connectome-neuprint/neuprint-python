@@ -1,20 +1,23 @@
 """
-Functions for performing spicedbased electrical simulation of a neuron given
+Functions for performing SPICE-based electrical simulation of a neuron given
 its synapses and skeleton using a simple linear passive model.
 
-This module depends on the following additional packages which are not
-already dependencies of neuprint-python.
-They can be installed via conda, from conda-forge:
 
-* ``ngspice``, a circuit simulator
-* ``umap-learn``, a dimensionality reduction package
-* ``scikit-learn``
-* ``matplotlib``
+Try the `interactive simulation tutorial`_ for a tour of basic simulation options.
 
-Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
+.. _interactive simulation tutorial: notebooks/SimulationTutorial.ipynb
 
-Author: Stephen Plaza
+.. note::
+
+    The ``simulation`` module depends on additional packages.
+    Install them from ``conda-forge``:
+
+    .. code-block:: bash
+
+       conda install -c conda-forge ngspice umap-learn scikit-learn matplotlib
 """
+# Author: Stephen Plaza
+# Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
 
 import os
 import sys
@@ -47,19 +50,19 @@ Rm_HIGH=3.11
 class TimingResult:
     def __init__(self, bodyid, delay_matrix, amplitude_matrix, neuron_io, neuron_conn_info, symmetric=False):
         """
-        Timing rseult constructor.
+        Timing result constructor.
 
         Provides methods for parsing timing results.
-        
+
         Args:
 
             bodyid (int):
                 Segment id for neuron
-       
+
             delay_matrix (dataframe):
                 nxm matric of source to sink (if source set == sink set,
                 the data can be used to cluster the provided io into different domains.
-       
+
             neuron_io (dataframe):
                 synapse information: location, ispre, brain region
         """
@@ -86,17 +89,17 @@ class TimingResult:
             (dataframe, dataframe) for the delay and amplitude from brain region to brain region.
         """
         assert(not self.symmetric)
-    
+
         # determine row and column names
         inrois = set(self.neuron_io[self.neuron_io["io"] == "in"]["roi"].to_list())
         outrois = set(self.neuron_io[self.neuron_io["io"] == "out"]["roi"].to_list())
-        
+
         inrois = list(inrois)
         outrois = list(outrois)
 
         inrois.sort()
         outrois.sort()
-        
+
         delay_matrix = np.zeros((len(inrois), len(outrois)))
         amp_matrix = np.zeros((len(inrois), len(outrois)))
 
@@ -110,11 +113,11 @@ class TimingResult:
             roi2index_in[roi] = idx
         for idx, roi in enumerate(outrois):
             roi2index_out[roi] = idx
-        
+
         # roi info
         for drive, row in self.delay_matrix.iterrows():
             inroi = self.neuron_io[self.neuron_io["swcid"] == drive].iloc[0]["roi"]
-            for out, val in row.items(): 
+            for out, val in row.items():
                 outroi = self.neuron_io[self.neuron_io["swcid"] == out].iloc[0]["roi"]
                 if (inroi, outroi) not in roi_delays:
                     roi_delays[(inroi, outroi)] = 0
@@ -125,21 +128,21 @@ class TimingResult:
         # calculate average
         for drive, row in self.amplitude_matrix.iterrows():
             inroi = self.neuron_io[self.neuron_io["swcid"] == drive].iloc[0]["roi"]
-            for out, val in row.items(): 
+            for out, val in row.items():
                 outroi = self.neuron_io[self.neuron_io["swcid"] == out].iloc[0]["roi"]
                 if (inroi, outroi) not in roi_amps:
                     roi_amps[(inroi, outroi)] = 0
                 roi_amps[(inroi, outroi)] += val
-        
+
         for key, val in roi_count.items():
             roi_in, roi_out = key
             idx1 = roi2index_in[roi_in]
             idx2 = roi2index_out[roi_out]
             delay_matrix[idx1, idx2] = roi_delays[key] / val
             amp_matrix[idx1, idx2] = roi_amps[key] / val
-       
+
         # return dataframes
-        return pd.DataFrame(delay_matrix, index=inrois, columns=outrois), pd.DataFrame(amp_matrix, index=inrois, columns=outrois) 
+        return pd.DataFrame(delay_matrix, index=inrois, columns=outrois), pd.DataFrame(amp_matrix, index=inrois, columns=outrois)
 
 
     def plot_response_from_region(self, brain_region, path=None):
@@ -156,7 +159,7 @@ class TimingResult:
         assert(not self.symmetric)
 
         # matplot for amplitude and delay
-        
+
         # filter sample brain region inputs
         inputs = self.neuron_io[(self.neuron_io["roi"] == brain_region) & (self.neuron_io["io"] == "in")]["swcid"].to_list()
         delay_matrix_sub = self.delay_matrix[self.delay_matrix.index.isin(inputs)]
@@ -167,16 +170,16 @@ class TimingResult:
 
         for drive, row in delay_matrix_sub.iterrows():
             row2 = self.amplitude_matrix.loc[drive]
-            for out, val in row.items(): 
+            for out, val in row.items():
                 outroi = self.neuron_io[self.neuron_io["swcid"] == out].iloc[0]["roi"]
-                amp = row2[out] 
+                amp = row2[out]
                 delay_amp_region.append([val, amp, outroi])
 
         plot_df = pd.DataFrame(delay_amp_region, columns=["delay", "amp", "region"])
-        
+
         # create plot
         import matplotlib.pyplot as plt
-        
+
         fig, ax = plt.subplots()
         fig.set_figwidth(8)
         fig.set_figheight(8)
@@ -231,15 +234,15 @@ class TimingResult:
             x_y_region.append([points_2d[idx][0], points_2d[idx][1], self.neuron_io[self.neuron_io["swcid"] == sid].iloc[0]["roi"]])
 
         plot_df = pd.DataFrame(x_y_region, columns=["x", "y", "region"])
-        
+
         # create plot
         import matplotlib.pyplot as plt
-        
+
         fig, ax = plt.subplots()
         fig.set_figwidth(8)
         fig.set_figheight(8)
         for region in plot_df["region"].unique():
-            tdata = plot_df[plot_df["region"] == region] 
+            tdata = plot_df[plot_df["region"] == region]
             ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
         ax.legend()
 
@@ -264,16 +267,16 @@ class TimingResult:
                 (can compare with roi labels from plot_neuron_domains).
                 If ``plot`` is a string, it is interpreted as a filepath,
                 to which the plot is also written to disk as a PNG.
-        
+
         Returns:
             (dataframe, dataframe, plot) input and output connection summary split by domain,
             synapse-level neuron_io indicating component partition.
             If a ``plot`` was requested, then the generated plot is returned as the
             third tuple element, otherwise that element is ``None``.
         """
-      
+
         assert(self.symmetric)
-       
+
         # ensure matrix is actually symmetric
         delays = self.delay_matrix.values
         for iter1 in range(len(self.delay_matrix)):
@@ -286,7 +289,7 @@ class TimingResult:
                         val = 0
                     delays[iter1, iter2] = val
                     delays[iter2, iter1] = val
-        
+
         # create decomposition using hierarchical cluster over distance matrix
         Dsq = squareform(delays)
         cluster = linkage(Dsq, 'ward')
@@ -322,15 +325,15 @@ class TimingResult:
                 x_y_region.append([points_2d[idx][0], points_2d[idx][1], best_labels[idx] ])
 
             plot_df = pd.DataFrame(x_y_region, columns=["x", "y", "region"])
-            
+
             # create plot
             import matplotlib.pyplot as plt
-            
+
             fig, ax = plt.subplots()
             fig.set_figwidth(8)
             fig.set_figheight(8)
             for region in plot_df["region"].unique():
-                tdata = plot_df[plot_df["region"] == region] 
+                tdata = plot_df[plot_df["region"] == region]
                 ax.scatter(tdata["x"].to_list(), tdata["y"].to_list(), c=[np.random.rand(3,)], label=region)
             ax.legend()
 
@@ -340,7 +343,7 @@ class TimingResult:
             plt.close()
 
         # build KD tree and associate synapses with each point after the cluster
-        
+
         filter_list = []
         for drive, row in self.delay_matrix.iterrows():
             idx = self.neuron_io[self.neuron_io["swcid"] == drive].index[0]
@@ -394,9 +397,9 @@ class NeuronModel:
                 membrane capacitance (should not very too much between neurons)
         """
         self.bodyid = bodyid
-       
 
-        with tqdm(total=100) as pbar: 
+
+        with tqdm(total=100) as pbar:
             # retrieve healed skeleton
             if client is None:
                 client = default_client()
@@ -420,7 +423,7 @@ class NeuronModel:
             inputs["type"] = ["post"]*len(inputs)
             inputs = inputs[["type", "x_post", "y_post", "z_post", "roi_post", "bodyId_pre" ]].rename(columns={"x_post": "x", "y_post": "y", "z_post": "z", "roi_post": "roi", "bodyId_pre": "partner"})
             inputs["roi"].replace(np.nan, "none", inplace=True)
-            
+
             input_pins = inputs[["roi"]].copy()
             input_pins["coords"] = list(zip(inputs["x"], inputs["y"], inputs["z"]))
             input_pins["io"] = ["in"]*len(inputs)
@@ -428,18 +431,18 @@ class NeuronModel:
             outputs["type"] = ["pre"]*len(outputs)
             outputs = outputs[["type", "x_pre", "y_pre", "z_pre", "roi_pre", "bodyId_post" ]].rename(columns={"x_pre": "x", "y_pre": "y", "z_pre": "z", "roi_pre": "roi", "bodyId_post": "partner"})
             outputs["roi"].replace(np.nan, "none", inplace=True)
-            
+
             output_pins = outputs[["roi"]].copy()
             output_pins["coords"] = list(zip(outputs["x"], outputs["y"], outputs["z"]))
             output_pins["io"] = ["out"]*len(outputs)
 
             self.neuron_conn_info = pd.concat([inputs, outputs]).reset_index(drop=True)
             self.io_pins = pd.concat([input_pins, output_pins]).reset_index(drop=True)
-            
+
             #if len(self.io_pins) == 0:
             #    raise RuntimeError("neuron must have at least 1 inputs or output")
 
-            self.Ra = Ra 
+            self.Ra = Ra
             self.Rm = Rm
             self.Cm = 1e-2 # farads per square meeter
 
@@ -448,7 +451,7 @@ class NeuronModel:
             tree = cKDTree(list(zip(self.skeleton_df["x"], self.skeleton_df["y"], self.skeleton_df["z"])))
             # apply
             self.io_pins["swcid"] = self.io_pins["coords"].apply(lambda x: tree.query(x)[1]+1)
-                
+
 
             # get voxelSize (8e-9) assume nanometers
             self.resolution = client.fetch_custom("MATCH (m :Meta) RETURN m.voxelSize").iloc[0][0][0] * 1e-9
@@ -469,18 +472,18 @@ class NeuronModel:
                 cs = [0.0] * len(self.skeleton_df)
                 rg = [1e30]* len(self.skeleton_df)
                 rs = [[0, 0, 1.0] for i in range(len(self.skeleton_df))]   # N-1 Rs, first has none.  node, node, value
-              
+
                 for idx, fromrow in  self.skeleton_df.iterrows():
                     if idx == 0:
                         continue
-                
+
                     # only one root, should be first entry
                     assert(fromrow["link"] != -1)
 
                     # row number = link - 1
                     parent = int(fromrow["link"]-1)
                     torow = self.skeleton_df.iloc[parent]
-              
+
                     # compute axonal resistance
                     L = math.sqrt((fromrow["x"] - torow["x"])**2 + (fromrow["y"] - torow["y"])**2 + (fromrow["z"] - torow["z"])**2) * self.resolution
 
@@ -493,7 +496,7 @@ class NeuronModel:
 
                     # axonal resistance
                     res = (G(L, r1, r2, L) - G(0, r1, r2, L)) * self.Ra
-                    
+
                     # compute membrane resistance both to and from
                     area_from = F(L/2, r1, r2, L) - F(  0, r1, r2, L)   # Half of segment
                     c_from = area_from * self.Cm
@@ -521,8 +524,8 @@ class NeuronModel:
                         modelstr += f"R{i+1} {rs[i][0]+1} {rs[i][1]+1} {rs[i][2]}\n" # axonal resistance
                         assert(rs[i][2] > 0)
 
-                return modelstr 
-            
+                return modelstr
+
             self.spice_model = build_spice_model()
             pbar.update(10)
             pbar.set_description("built model")
@@ -531,32 +534,32 @@ class NeuronModel:
     def _runspice(self, drive, unique_outs):
         """
         Run spice injecting current for a given input and return response for all outputs.
-        
+
         Note: drive and unique_outs should be swc node ids for an input and output.
-        
+
         Args:
-        
+
             drive (int):
                 id for input
             unique_outs (list):
                 ids for outputs
-        
+
         Returns:
 
             Dataframe (output ids, delay, amplitude)
         """
- 
+
         # apply current at the specified input location
         drive_str = f"RDRIVE {drive} {len(self.skeleton_df)+1} 10000000000\n" # 0.1 ns conductance
         drive_str += f"V1 {len(self.skeleton_df)+1} 0 EXP(0 60.0 0.1 0.1 1.1 1.0 40)\n"
         drive_str += ".tran 0.1 40\n" # work from 0-10 ms (try 40)
- 
+
         # call command line spice simulator and write to temporary file
         fd, path = mkstemp()
 
         # run ngspice
         try:
-        p = Popen(["ngspice", "-b", "-r", path], stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
+            p = Popen(["ngspice", "-b", "-r", path], stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
         except FileNotFoundError as ex:
             msg = ("The 'ngspice' circuit simulation tool is not installed (or not on your PATH).\n\n"
                    "Please install it:\n\n"
@@ -571,7 +574,7 @@ class NeuronModel:
         """Read ngspice binary raw files. Return tuple of the data, and the
         plot metadata. The dtype of the data contains field names. This is
         not very robust yet, and only supports ngspice.
-        
+
         # Example header of raw file
         # Title: rc band pass example circuit
         # Date: Sun Feb 21 11:29:14  2016
@@ -630,25 +633,25 @@ class NeuronModel:
             sim_results = arrs[0]
         # delete file
         os.unlink(path)
-        
+
         times = [0.0] * len(sim_results)
         # for each output (based on skeleton compartment id),
         # determine the delay to the max voltage and the width
-        out_results = [] 
-        
+        out_results = []
+
         for i in range(len(sim_results)):
             times[i] = sim_results[i]["time"]
             # parse out delay and amplitdue responses
         volts = [0.0] * len(sim_results)
-        
+
         for idx in range(len(unique_outs)):
             # compartment id
-            j = unique_outs[idx] 
-            
+            j = unique_outs[idx]
+
             for i in range(len(sim_results)):
                 volts[i] = sim_results[i][j]
-            
-            #Now find max voltage, time at max voltag, 
+
+            #Now find max voltage, time at max voltag,
             maxv = 0.0
             maxt = -1
             for i in range(1,len(volts)-1):
@@ -665,8 +668,8 @@ class NeuronModel:
                     maxt = times[i] + deltax
                     break     # should be only one peak.
             assert(maxt >= 0)
-          
-            maxt -= 1.1   # subtract the peak time of the input 
+
+            maxt -= 1.1   # subtract the peak time of the input
             for i in range(len(volts)):
                 if volts[i] > maxv/2:
                     break
@@ -676,26 +679,26 @@ class NeuronModel:
             out_results.append([j, maxt, maxv, times[k] - times[i]])
             assert(maxt <= 20)
 
-        return pd.DataFrame(out_results, columns=["comp id", "delay", "maxv", "width"]) 
+        return pd.DataFrame(out_results, columns=["comp id", "delay", "maxv", "width"])
 
 
     def simulate(self, max_per_region=10):
         """Simulate passive model based on neuron inputs and outputs.
 
         Args:
-            
-            max_per_region (int): 
+
+            max_per_region (int):
                 maxinum number of inputs per primary ROI to sample (0 means all)
 
         Returns:
-            
+
             TimingResult (contains input/output delay matrix)
         """
-      
-    
+
+
         # only grab unique skel comp id rows and randomize data
         unique_io = self.io_pins.drop_duplicates(subset=["swcid"]).sample(frac=1).reset_index(drop=True)
-        
+
         # grab top max_per region per input and all outputs
         drive_list = []
         unique_outs = []
@@ -723,12 +726,12 @@ class NeuronModel:
         for drive in tqdm(drive_list):
             # run simulation
             sim_results = self._runspice(drive, unique_outs)
-            
+
             delay_data.append(sim_results["delay"].to_list())
             amp_data.append(sim_results["maxv"].to_list())
 
-        delay_df = pd.DataFrame(delay_data, columns=unique_outs, index=drive_list) 
-        amp_df = pd.DataFrame(amp_data, columns=unique_outs, index=drive_list) 
+        delay_df = pd.DataFrame(delay_data, columns=unique_outs, index=drive_list)
+        amp_df = pd.DataFrame(amp_data, columns=unique_outs, index=drive_list)
 
         # return simulation results
         return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, self.neuron_conn_info, False)
@@ -750,9 +753,9 @@ class NeuronModel:
 
             num_points(int):
                 number of points to simulate.
-        
+
         Returns:
-            
+
             TimingResult (contains input/output delay matrix)
         """
         if num_points < 10:
@@ -760,7 +763,7 @@ class NeuronModel:
 
         # only grab unique skel comp id rows and randomize data
         unique_io = self.io_pins.drop_duplicates(subset=["swcid"]).sample(frac=1).reset_index(drop=True)
-        
+
         # consider input/output response symmetrically to create a distance
         io_list = unique_io[unique_io["io"] == "out"][0:(num_points//2)]["swcid"].to_list()
         io_list.extend(unique_io[unique_io["io"] == "in"][0:(num_points//2)]["swcid"].to_list())
@@ -771,15 +774,12 @@ class NeuronModel:
         for drive in tqdm(io_list):
             # run simulation
             sim_results = self._runspice(drive, io_list)
-            
+
             delay_data.append(sim_results["delay"].to_list())
             amp_data.append(sim_results["maxv"].to_list())
 
-        delay_df = pd.DataFrame(delay_data, columns=io_list, index=io_list) 
-        amp_df = pd.DataFrame(amp_data, columns=io_list, index=io_list) 
+        delay_df = pd.DataFrame(delay_data, columns=io_list, index=io_list)
+        amp_df = pd.DataFrame(amp_data, columns=io_list, index=io_list)
 
         # return simulation results
         return TimingResult(self.bodyid, delay_df, amp_df, self.io_pins, self.neuron_conn_info, True)
-
-
-

@@ -10,5 +10,6 @@ API
    queries
    neuroncriteria
    synapsecriteria
+   simulation
    admin
    utils
