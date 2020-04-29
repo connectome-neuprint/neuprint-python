@@ -12,12 +12,17 @@ Author: Stephen Plaza
 import os
 import sys
 import math
+from tempfile import mkstemp
+from subprocess import Popen, PIPE, DEVNULL
 
 import numpy as np
 import pandas as pd
-from scipy.spatial import cKDTree
 
-from .utils import tqdm
+from scipy.spatial import cKDTree
+from scipy.spatial.distance import squareform
+from scipy.cluster.hierarchy import linkage, cut_tree
+
+from .utils import tqdm, UMAP
 from .client import default_client
 from .queries import fetch_synapse_connections
 
@@ -217,7 +222,6 @@ class TimingResult:
                     delays[iter2, iter1] = val
 
         # use umap to plot distance matrix
-        from umap import UMAP
         u = UMAP(metric="precomputed", n_neighbors=90).fit(delays)
         points_2d = u.fit_transform(delays)
 
@@ -283,13 +287,9 @@ class TimingResult:
                     delays[iter2, iter1] = val
         
         # create decomposition using hierarchical cluster over distance matrix
-        from scipy.spatial.distance import squareform
-        from scipy.cluster.hierarchy import linkage
-    
         Dsq = squareform(delays)
         cluster = linkage(Dsq, 'ward')
 
-        from scipy.cluster.hierarchy import cut_tree
         if num_components > 1:
             partitions = cut_tree(cluster, n_clusters=num_components)
             best_labels = partitions[:,0]
@@ -311,7 +311,6 @@ class TimingResult:
 
         if show_plot or plot_file is not None:
             # use umap to plot distance matrix
-            from umap import UMAP
             u = UMAP(metric="precomputed", n_neighbors=90).fit(delays)
             points_2d = u.fit_transform(delays)
 
@@ -551,13 +550,17 @@ class NeuronModel:
         drive_str += ".tran 0.1 40\n" # work from 0-10 ms (try 40)
  
         # call command line spice simulator and write to temporary file
-        from tempfile import mkstemp
-        from subprocess import Popen, PIPE, DEVNULL
-
         fd, path = mkstemp()
 
         # run ngspice
+        try:
         p = Popen(["ngspice", "-b", "-r", path], stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
+        except FileNotFoundError as ex:
+            msg = ("The 'ngspice' circuit simulation tool is not installed (or not on your PATH).\n\n"
+                   "Please install it:\n\n"
+                   "  conda install -c conda-forge ngspice\n\n")
+            raise RuntimeError(msg) from ex
+
         data = self.spice_model + drive_str
         p.stdin.write(data.encode())
         p.stdin.close()
