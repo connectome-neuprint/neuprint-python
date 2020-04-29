@@ -14,7 +14,7 @@ from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_r
                        fetch_synapses, fetch_synapse_connections, fetch_output_completeness,
                        fetch_downstream_orphan_tasks )
 from .utils import merge_neuron_properties, connection_table_to_matrix
-from .timing_analysis import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm_LOW, Rm_MED, Rm_HIGH )
+from .simulation import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm_LOW, Rm_MED, Rm_HIGH )
 
 from ._version import get_versions
 __version__ = get_versions()['version']
