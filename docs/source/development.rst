@@ -43,7 +43,9 @@ follow these steps **on a Linux machine**:
     cd neuprint-python
 
     # Create an environment with the binder dependencies
-    BINDER_DEPS="neuprint-python jupyterlab ipywidgets bokeh holoviews hvplot"
+    TUTORIAL_DEPS="ipywidgets bokeh holoviews hvplot"
+    SIMULATION_DEPS="ngspice umap-learn scikit-learn matplotlib"
+    BINDER_DEPS="neuprint-python jupyterlab ${TUTORIAL_DEPS} ${SIMULATION_DEPS}"
     conda create -n neuprint-python -c flyem-forge -c conda-forge ${BINDER_DEPS}
 
     # Export to environment.yml, but relax the neuprint-python version requirement
