@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.8 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.9 documentation</title>
   
 
   
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.8
+                0.4.9
               </div>
             
           
@@ -88,7 +88,7 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Development Notes</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#packaging">Packaging</a></li>
@@ -194,7 +194,7 @@
 <div class="section" id="packaging">
 <h2>Packaging<a class="headerlink" href="#packaging" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> is packaged for both <code class="docutils literal notranslate"><span class="pre">conda</span></code> (on the <a class="reference external" href="https://anaconda.org/flyem-forge/neuprint-python/files">flyem-forge channel</a>)
-and <code class="docutils literal notranslate"><span class="pre">pip</span></code> (on <a class="reference external" href="https://pypi.org/project/neuprint-python/">PyPI</a>.</p>
+and <code class="docutils literal notranslate"><span class="pre">pip</span></code> (on <a class="reference external" href="https://pypi.org/project/neuprint-python/">PyPI</a>).</p>
 <p>The package version is automatically inferred from the git tag.
 To prepare a release, follow these steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
@@ -216,12 +216,14 @@ anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span c
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
 <p>If you need to add dependencies to <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>, edit <code class="docutils literal notranslate"><span class="pre">dependencies.txt</span></code> (which is used by the conda recipe).
 You should also update <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> so that our binder container will acquire the new dependencies
-when users try out the interactive <a class="reference internal" href="notebooks/Tutorial.html"><span class="doc">tutorial</span></a>.  After publishing a new conda package with the updated dependencies,
+when users try out the interactive <a class="reference internal" href="notebooks/QueryTutorial.html"><span class="doc">tutorial</span></a>.  After publishing a new conda package with the updated dependencies,
 follow these steps <strong>on a Linux machine</strong>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
 
 <span class="c1"># Create an environment with the binder dependencies</span>
-<span class="nv">BINDER_DEPS</span><span class="o">=</span><span class="s2">&quot;neuprint-python jupyterlab ipywidgets bokeh holoviews hvplot&quot;</span>
+<span class="nv">TUTORIAL_DEPS</span><span class="o">=</span><span class="s2">&quot;ipywidgets bokeh holoviews hvplot&quot;</span>
+<span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice umap-learn scikit-learn matplotlib&quot;</span>
+<span class="nv">BINDER_DEPS</span><span class="o">=</span><span class="s2">&quot;neuprint-python jupyterlab </span><span class="si">${</span><span class="nv">TUTORIAL_DEPS</span><span class="si">}</span><span class="s2"> </span><span class="si">${</span><span class="nv">SIMULATION_DEPS</span><span class="si">}</span><span class="s2">&quot;</span>
 conda create -n neuprint-python -c flyem-forge -c conda-forge <span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
 
 <span class="c1"># Export to environment.yml, but relax the neuprint-python version requirement</span>
@@ -256,7 +258,7 @@ Only push to master when you’re ready to deploy new packages.</p>
 </div>
 <div class="section" id="interactive-tutorial">
 <h2>Interactive Tutorial<a class="headerlink" href="#interactive-tutorial" title="Permalink to this headline">¶</a></h2>
-<p>The documentation contains a <a class="reference internal" href="notebooks/Tutorial.html"><span class="doc">tutorial</span></a> which can be launched interactively via binder.
+<p>The documentation contains a <a class="reference internal" href="notebooks/QueryTutorial.html"><span class="doc">tutorial</span></a> which can be launched interactively via binder.
 To update the tutorial contents, simply edit the <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> file and re-build the docs.</p>
 <p>If the binder setup is broken, make sure the dependencies are configured properly as described above.</p>
 <p>It takes a few minutes to initialize the binder container for the first time after a new release.

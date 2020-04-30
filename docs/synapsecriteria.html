@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>SynapseCriteria &mdash; neuprint-python 0.4.8 documentation</title>
+  <title>SynapseCriteria &mdash; neuprint-python 0.4.9 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Admin Tools" href="admin.html" />
+    <link rel="next" title="Simulation" href="simulation.html" />
     <link rel="prev" title="NeuronCriteria" href="neuroncriteria.html" /> 
 </head>
 
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.8
+                0.4.9
               </div>
             
           
@@ -88,12 +88,16 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="neuroncriteria.html">NeuronCriteria</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">SynapseCriteria</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="queriesapi.html">Queries API</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="queries.html">Common Queries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="neuroncriteria.html">NeuronCriteria</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">SynapseCriteria</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
 </ul>
@@ -148,6 +152,8 @@
         
           <li><a href="api.html">API</a> &raquo;</li>
         
+          <li><a href="queriesapi.html">Queries API</a> &raquo;</li>
+        
       <li>SynapseCriteria</li>
     
     
@@ -195,7 +201,7 @@
 <span id="id1"></span><h1>SynapseCriteria<a class="headerlink" href="#synapsecriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="neuprint.SynapseCriteria">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">SynapseCriteria</code><span class="sig-paren">(</span><em>matchvar='s'</em>, <em>*</em>, <em>rois=None</em>, <em>type=None</em>, <em>confidence=0.0</em>, <em>primary_only=False</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.8/neuprint/synapsecriteria.py#L6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SynapseCriteria" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">SynapseCriteria</code><span class="sig-paren">(</span><em>matchvar='s'</em>, <em>*</em>, <em>rois=None</em>, <em>type=None</em>, <em>confidence=0.0</em>, <em>primary_only=False</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/synapsecriteria.py#L6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SynapseCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies which fields to filter by when searching for a Synapses.
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>
@@ -239,7 +245,7 @@ If not provided, the global default <a class="reference internal" href="client.h
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="admin.html" class="btn btn-neutral float-right" title="Admin Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="simulation.html" class="btn btn-neutral float-right" title="Simulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="neuroncriteria.html" class="btn btn-neutral float-left" title="NeuronCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

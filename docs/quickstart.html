@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quickstart &mdash; neuprint-python 0.4.8 documentation</title>
+  <title>Quickstart &mdash; neuprint-python 0.4.9 documentation</title>
   
 
   
@@ -37,7 +37,7 @@
   <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorial" href="notebooks/Tutorial.html" />
+    <link rel="next" title="Tutorials" href="tutorials.html" />
     <link rel="prev" title="neuprint-python" href="index.html" /> 
 </head>
 
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.8
+                0.4.9
               </div>
             
           
@@ -88,13 +88,14 @@
             
               <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-neuprint-python">Install neuprint-python</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#client-and-authorization-token">Client and Authorization Token</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#create-the-client">Create the Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#execute-a-query">Execute a query</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
@@ -189,6 +190,17 @@
 </style>
 <div class="section" id="quickstart">
 <span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="install-neuprint-python">
+<h2>Install neuprint-python<a class="headerlink" href="#install-neuprint-python" title="Permalink to this headline">¶</a></h2>
+<p>If you’re using <a class="reference external" href="https://docs.conda.io/en/latest/">conda</a>, use this command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install -c flyem-forge neuprint-python
+</pre></div>
+</div>
+<p>Otherwise, use <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install neuprint-python
+</pre></div>
+</div>
+</div>
 <div class="section" id="client-and-authorization-token">
 <h2>Client and Authorization Token<a class="headerlink" href="#client-and-authorization-token" title="Permalink to this headline">¶</a></h2>
 <p>All communication with the <code class="docutils literal notranslate"><span class="pre">neuPrintHTTP</span></code> server is done via a <a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> object.</p>
@@ -247,7 +259,7 @@ For information about the neuprint data model, see the <a class="reference exter
 
 <span class="gp">In [2]: </span><span class="n">results</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">fetch_custom</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
 
-<span class="gp">In [3]: </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found {len(results)} results&quot;</span><span class="p">)</span>
+<span class="gp">In [3]: </span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> results&quot;</span><span class="p">)</span>
 <span class="go">Found 177 results</span>
 
 <span class="gp">In [4]: </span><span class="n">results</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
@@ -264,7 +276,7 @@ For information about the neuprint data model, see the <a class="reference exter
 </div>
 <div class="section" id="next-steps">
 <h2>Next Steps<a class="headerlink" href="#next-steps" title="Permalink to this headline">¶</a></h2>
-<p>Try the <a class="reference internal" href="notebooks/Tutorial.html"><span class="doc">interactive tutorial</span></a> for a tour of basic features in <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>.</p>
+<p>Try the <a class="reference internal" href="notebooks/QueryTutorial.html"><span class="doc">interactive tutorial</span></a> for a tour of basic features in <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>.</p>
 </div>
 </div>
 
@@ -276,7 +288,7 @@ For information about the neuprint data model, see the <a class="reference exter
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="notebooks/Tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="index.html" class="btn btn-neutral float-left" title="neuprint-python" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>

@@ -9,7 +9,7 @@ Packaging
 ---------
 
 ``neuprint-python`` is packaged for both ``conda`` (on the `flyem-forge channel <https://anaconda.org/flyem-forge/neuprint-python/files>`_)
-and ``pip`` (on `PyPI <https://pypi.org/project/neuprint-python/>`_.
+and ``pip`` (on `PyPI <https://pypi.org/project/neuprint-python/>`_).
 
 The package version is automatically inferred from the git tag.
 To prepare a release, follow these steps:
@@ -21,13 +21,13 @@ To prepare a release, follow these steps:
     # Tag the git repo with the new version
     git tag -a 0.3.1 -m 0.3.1
     git push --tags origin
-    
+
     # Build and upload the conda package
     conda build conda-recipe
     anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-0.3.1-py_0.tar.bz2
 
     # Build and upload the PyPI package
-    ./upload-to-pypi.sh        
+    ./upload-to-pypi.sh
 
 
 Dependencies
@@ -41,20 +41,22 @@ follow these steps **on a Linux machine**:
 .. code-block:: bash
 
     cd neuprint-python
-    
+
     # Create an environment with the binder dependencies
-    BINDER_DEPS="neuprint-python jupyterlab ipywidgets bokeh holoviews hvplot"
+    TUTORIAL_DEPS="ipywidgets bokeh holoviews hvplot"
+    SIMULATION_DEPS="ngspice umap-learn scikit-learn matplotlib"
+    BINDER_DEPS="neuprint-python jupyterlab ${TUTORIAL_DEPS} ${SIMULATION_DEPS}"
     conda create -n neuprint-python -c flyem-forge -c conda-forge ${BINDER_DEPS}
 
     # Export to environment.yml, but relax the neuprint-python version requirement
     conda env export -n neuprint-python > environment.yml
     sed --in-place 's/neuprint-python=.*/neuprint-python/g' environment.yml
-    
+
     git commit -m "Updated environment.yml for binder" environment.yml
     git push origin master
 
 
-.. _tutorial: notebooks/Tutorial.ipynb
+.. _tutorial: notebooks/QueryTutorial.ipynb
 
 Documentation
 -------------

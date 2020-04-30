@@ -24,7 +24,7 @@ It serves as the primary storage engine for FlyEM's reconstruction efforts.
 neuprintr
 ---------
 
-`neuprintr <http://natverse.org/neuprintr/>`_ provides R users with access to neuprint. 
+`neuprintr <http://natverse.org/neuprintr/>`_ provides R users with access to neuprint.
 
 NAVis
 -----

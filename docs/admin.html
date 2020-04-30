@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Admin Tools &mdash; neuprint-python 0.4.8 documentation</title>
+  <title>Admin Tools &mdash; neuprint-python 0.4.9 documentation</title>
   
 
   
@@ -38,7 +38,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Utilities" href="utils.html" />
-    <link rel="prev" title="SynapseCriteria" href="synapsecriteria.html" /> 
+    <link rel="prev" title="Simulation" href="simulation.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.4.8
+                0.4.9
               </div>
             
           
@@ -88,12 +88,11 @@
             
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="notebooks/Tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
-<li class="toctree-l2"><a class="reference internal" href="queries.html">Common Queries</a></li>
-<li class="toctree-l2"><a class="reference internal" href="neuroncriteria.html">NeuronCriteria</a></li>
-<li class="toctree-l2"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queriesapi.html">Queries API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Admin Tools</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
 </ul>
@@ -197,7 +196,7 @@
 Using these tools requires admin privileges on the neuPrintHttp server.</p>
 <dl class="class">
 <dt id="neuprint.admin.Transaction">
-<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.8/neuprint/admin.py#L8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/admin.py#L8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>For admins only.
 Used to batch a set of operations into a single database transaction.</p>
 <p>This class is implemented as a context manager.</p>
@@ -221,14 +220,14 @@ Used to batch a set of operations into a single database transaction.</p>
 </table>
 <dl class="method">
 <dt id="neuprint.admin.Transaction.query">
-<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.8/neuprint/admin.py#L49"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
+<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/admin.py#L49"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a custom cypher query within the context
 of this transaction (allows writes).</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="neuprint.admin.Transaction.kill">
-<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.8/neuprint/admin.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
+<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/admin.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kills (rolls back) transaction.</p>
 </dd></dl>
 
@@ -247,7 +246,7 @@ of this transaction (allows writes).</p>
         <a href="utils.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="simulation.html" class="btn btn-neutral float-left" title="Simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
