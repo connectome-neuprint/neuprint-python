@@ -3,7 +3,7 @@
 
 package:
   name: neuprint-python
-  
+
   version: {{ data['version'] }}
 
 source:

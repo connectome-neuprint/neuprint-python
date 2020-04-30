@@ -12,16 +12,16 @@ def test_members():
     c = Client(NEUPRINT_SERVER, DATASET)
     assert c.server == f'https://{NEUPRINT_SERVER}'
     assert c.dataset == DATASET
-    
+
     assert default_client() is c
-    
+
     df = c.fetch_custom("MATCH (m:Meta) RETURN m.primaryRois as rois")
     assert isinstance(df, pd.DataFrame)
     assert df.columns == ['rois']
     assert len(df) == 1
     assert isinstance(df['rois'].iloc[0], list)
-    
-    
+
+
     assert isinstance(c.fetch_available(), list)
     assert isinstance(c.fetch_help(), str)
     assert c.fetch_server_info() is True
@@ -53,11 +53,11 @@ def test_broken_members():
     """
     These endpoints are listed in the neuprintHTTP API,
     but don't seem to work.
-    """    
+    """
     c = Client(NEUPRINT_SERVER, DATASET)
 
     # Broken. neuprint returns error 500
-    assert isinstance(c.fetch_instances(), list) 
+    assert isinstance(c.fetch_instances(), list)
 
 
 @pytest.mark.skip
@@ -78,7 +78,7 @@ def test_inject_client():
     @inject_client
     def f(*, client):
         return client
-    
+
     # Uses default client unless client was specified
     assert f() is c
     assert f(client=c2) is c2

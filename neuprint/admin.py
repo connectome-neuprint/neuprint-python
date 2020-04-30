@@ -9,25 +9,25 @@ class Transaction:
     """
     For admins only.
     Used to batch a set of operations into a single database transaction.
-    
+
     This class is implemented as a context manager.
-    
+
     Example:
-    
+
         .. code-block:: python
-        
+
             with Transaction('hemibrain') as t:
                 t.query("MATCH (n :Neuron {bodyId: 1047426385}) SET m.type=TuBu4)")
-    """    
+    """
     @inject_client
     def __init__(self, dataset, *, client=None):
         """
         Transaction constructor.
-        
+
         Args:
             dataset:
                 Name of the dataset to use.  Required.
-            
+
             client:
                 Client object to use.
         """
@@ -37,14 +37,14 @@ class Transaction:
             msg = ("The dataset you provided does not match the client's dataset.\n"
                    "To avoid confusion, provide a client whose dataset matches the transaction dataset.")
             raise RuntimeError(msg)
-        
+
         assert dataset, \
             "Transactions require an an explicit dataset."
         self.dataset = dataset
         self.client = client
         self.transaction_id = None
         self.killed = False
-    
+
 
     def query(self, cypher, format='pandas'):
         """
@@ -57,7 +57,7 @@ class Transaction:
         url = f"{self.client.server}/api/raw/cypher/transaction/{self.transaction_id}/cypher"
         return self.client._fetch_cypher(url, cypher, self.dataset, format)
 
-    
+
     def kill(self):
         """
         Kills (rolls back) transaction.
@@ -74,7 +74,7 @@ class Transaction:
     def __enter__(self):
         self._start()
         return self
-    
+
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:

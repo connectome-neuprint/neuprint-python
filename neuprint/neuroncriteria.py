@@ -18,7 +18,7 @@ def neuroncriteria_args(*argnames):
     Returns a decorator.
     For the given argument names, the decorator converts the
     arguments into NeuronCriteria objects via ``copy_as_neuroncriteria()``.
-    
+
     If the decorated function also accepts a 'client' argument,
     that argument is used to initialize the NeuronCriteria.
     """
@@ -52,14 +52,14 @@ def copy_as_neuroncriteria(obj, client=None):
         int -> NC(bodyId)
         [str,...] -> NC(bodyId)
         DataFrame['bodyId'] -> NC(bodyId)
-        
+
         str -> NC(type, instance)
         [str, ...] -> NC(type, instance)
 
         [] -> Error
         [None] -> Error
         Anything else -> Error
-        
+
     """
     if isinstance(obj, pd.DataFrame):
         assert 'bodyId' in obj.columns, \
@@ -69,13 +69,13 @@ def copy_as_neuroncriteria(obj, client=None):
     if not isinstance(obj, Collection) or isinstance(obj, str):
         if obj is None:
             return NeuronCriteria(client=client)
-        
+
         if isinstance(obj, NeuronCriteria):
             return copy.copy(obj)
-    
+
         if isinstance(obj, str):
             return NeuronCriteria(type=obj, instance=obj, client=client)
-        
+
         if np.issubdtype(type(obj), np.integer):
             return NeuronCriteria(bodyId=obj, client=client)
 
@@ -83,20 +83,20 @@ def copy_as_neuroncriteria(obj, client=None):
     else:
         if len(obj) == 0:
             raise RuntimeError(f"Can't auto-construct a NeuronCriteria from {obj}.  Please explicitly create one.")
-    
+
         if len(obj) == 1 and obj[0] is None:
             raise RuntimeError(f"Can't auto-construct a NeuronCriteria from {obj}.  Please explicitly create one.")
-    
+
         if isinstance(obj, np.ndarray) and np.issubdtype(obj.dtype, np.integer):
             return NeuronCriteria(bodyId=obj, client=client)
-        
+
         item = [*filter(lambda item: item is not None, obj)][0]
         if np.issubdtype(type(item), np.integer):
             return NeuronCriteria(bodyId=obj, client=client)
-    
+
         if isinstance(item, str):
             return NeuronCriteria(type=obj, instance=obj, client=client)
-    
+
         raise RuntimeError(f"Can't auto-construct a NeuronCriteria from {obj}.  Please explicitly create one.")
 
 
@@ -105,16 +105,16 @@ class NeuronCriteria:
     Specifies which fields to filter by when searching for a Neuron (or Segment).
     This class does not send queries itself, but you use it to specify search
     criteria for various query functions.
-    
+
     Note:
         For simple queries involving only particular bodyId(s) or type(s)/instance(s),
         you can usually just pass the ``bodyId`` or ``type`` to the query function,
         without constructing a full ``NeuronCriteria``.
-        
+
         .. code-block:: python
-        
+
             from neuprint import fetch_neurons, NeuronCriteria as NC
-        
+
             # Equivalent
             neuron_df, conn_df = fetch_neurons(NC(bodyId=329566174))
             neuron_df, conn_df = fetch_neurons(329566174)
@@ -241,7 +241,7 @@ class NeuronCriteria:
         assert re.match('^[a-zA-Z0-9]+$', matchvar), \
             (f"matchvar contains invalid characters: '{matchvar}'. "
              "Did you mean to pass this as a type or instance?")
-        
+
         assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
         assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
             "bodyId should be an integer or list of integers"
@@ -350,20 +350,20 @@ class NeuronCriteria:
     def __repr__(self):
         # Show all non-default constructor args
         s = f'NeuronCriteria("{self.matchvar}"'
-        
+
         if len(self.bodyId):
             s += f", bodyId={list(self.bodyId)}"
-        
+
         if len(self.instance) == 1:
             s += f', instance="{self.instance[0]}"'
         elif len(self.instance) > 1:
             s += f", instance={list(self.instance)}"
-            
+
         if len(self.type) == 1:
             s += f', type="{self.type[0]}"'
         elif len(self.instance) > 1:
             s += f", type={list(self.type)}"
-        
+
         if self.regex:
             s += ", regex=True"
 
@@ -371,7 +371,7 @@ class NeuronCriteria:
             s += f', status="{self.status[0]}"'
         elif len(self.instance) > 1:
             s += f", status={list(self.status)}"
-        
+
         if self.cropped is not None:
             s += f", cropped={self.cropped}"
 
@@ -389,10 +389,10 @@ class NeuronCriteria:
 
         if self.outputRois:
             s += f", outputRois={list(self.outputRois)}"
-        
+
         if self.min_roi_inputs != 1:
             s += f", min_roi_inputs={self.min_roi_inputs}"
-                    
+
         if self.min_roi_outputs != 1:
             s += f", min_roi_outputs={self.min_roi_outputs}"
 
@@ -403,9 +403,9 @@ class NeuronCriteria:
             s += f', roi_req="{self.roi_req}"'
 
         s += ')'
-        
+
         return s
-    
+
 
     MAX_LITERAL_LENGTH = 3
     assert MAX_LITERAL_LENGTH >= 3, \
@@ -420,7 +420,7 @@ class NeuronCriteria:
             values = [*filter(lambda s: s is not None, self.bodyId)]
             var = f"{self.matchvar}_search_bodyIds"
             exprs[var] = (f"{[*values]} as {var}")
-        
+
         if len(self.type) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.type)]
             var = f"{self.matchvar}_search_types"
@@ -442,7 +442,7 @@ class NeuronCriteria:
     def global_with(self, *vars, prefix=0):
         if isinstance(prefix, int):
             prefix = ' '*prefix
-        
+
         if vars:
             carry_forward = [', '.join(vars)]
         else:
@@ -480,7 +480,7 @@ class NeuronCriteria:
         """
         t = self.type_expr()
         i = self.instance_expr()
-        
+
         if t and i:
             return f"({t} OR {i})"
         if t:
@@ -522,7 +522,7 @@ class NeuronCriteria:
     def rois_expr(self):
         if len(self.rois) == 0:
             return ""
-        
+
         rois = sorted(self.rois)
         roi_logic = {'any': 'OR', 'all': 'AND'}[self.roi_req]
         return "(" + f" {roi_logic} ".join(f"{self.matchvar}.`{roi}`" for roi in rois) + ")"
@@ -547,27 +547,27 @@ class NeuronCriteria:
 
         vars = {*vars} | {self.matchvar, *self.global_vars().keys()}
         vars = (*vars,)
-        
+
         basic_cond = self.basic_conditions(0, comments)
         if basic_cond:
             basic_cond = f"WHERE \n{basic_cond}"
             basic_cond = indent(basic_cond, '  ')[2:]
-        
+
         roi_cond = self.directed_rois_condition(*vars, comments=comments)
-        
+
         if roi_cond:
             combined = basic_cond + "\n\n" + roi_cond
         else:
             combined = basic_cond
 
         return indent(combined, prefix)[len(prefix):]
-        
+
 
     @classmethod
     def combined_global_with(cls, neuron_conditions, vars=[], prefix=0):
         if isinstance(prefix, int):
             prefix = ' '*prefix
-        
+
         if vars:
             carry_forward = [', '.join(vars)]
         else:
@@ -575,7 +575,7 @@ class NeuronCriteria:
 
         all_globals = chain(*(nc.global_vars().values() for nc in neuron_conditions))
         full_list = ',\n     '.join([*carry_forward, *all_globals])
-        
+
         if full_list:
             return indent('WITH ' + full_list, prefix)[len(prefix):]
         return ""
@@ -606,15 +606,15 @@ class NeuronCriteria:
             basic_cond = f"WHERE \n{basic_cond}"
 
         combined = basic_cond
-        
+
         roi_conds = [nc.directed_rois_condition(*vars, comments=comments) for nc in neuron_conditions]
         roi_conds = [*filter(None, roi_conds)]
         if roi_conds:
             roi_conds = '\n\n'.join(roi_conds)
             combined = basic_cond + "\n\n" + roi_conds
-        
+
         return indent(combined, prefix)[len(prefix):]
-        
+
 
     def basic_conditions(self, prefix=0, comments=True):
         """
@@ -627,7 +627,7 @@ class NeuronCriteria:
 
         if isinstance(prefix, int):
             prefix = prefix*' '
-            
+
         # Build WHERE clause by combining exprs for each field
         clauses = ""
         if comments:
@@ -643,7 +643,7 @@ class NeuronCriteria:
         Construct the ```WITH...WHERE``` statements that apply the "directed ROI"
         conditions specified by this criteria's ``inputRois`` and ``outputRois``
         members.
-        
+
         These conditions are expensive to evaluate, so it's usually a good
         idea to position them LAST in your cypher query, once the result set
         has already been narrowed down by eariler filters.
@@ -677,14 +677,14 @@ class NeuronCriteria:
             vars = ', '.join(vars)
         else:
             vars = self.matchvar
-         
+
         conditions = dedent(f"""\
             // -- Directed ROI conditions for segment '{self.matchvar}' --
             WITH {vars},
                  {[*self.inputRois]} as inputRois,
                  {[*self.outputRois]} as outputRois,
                  apoc.convert.fromJsonMap({self.matchvar}.roiInfo) as roiInfo
-    
+
             // Check input ROIs (segment '{self.matchvar}')
             UNWIND keys(roiInfo) as roi
             WITH {vars}, roi, roiInfo, inputRois, outputRois, roiInfo[roi]['post'] as roi_post
@@ -693,7 +693,7 @@ class NeuronCriteria:
             WHERE {min_input_matches} = 0 OR (roi in inputRois AND roi_post >= {self.min_roi_inputs})
             WITH {vars}, roiInfo, inputRois, outputRois, collect(roi) as matchingInputRois, size(collect(roi)) as numMatchingInputRois
             WHERE numMatchingInputRois >= {min_input_matches}
-    
+
             // Check output ROIs (segment '{self.matchvar}')
             UNWIND keys(roiInfo) as roi
             WITH {vars}, roi, roiInfo, inputRois, outputRois, matchingInputRois, roiInfo[roi]['pre'] as roi_pre
@@ -726,44 +726,44 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         - whether or not it contains 'None'
         - whether or not 'regex' is True
         - whether or not 'valuevar' was given
-    
+
     If 'valuevar' is given, then the generated cypher will refer to the variable
     instead of the literal values, BUT if the literal values contain None,
     then an additional 'exists()' condition will be added.
-    
+
     Examples:
-    
+
         .. code-block: ipython
 
             In [1]: from neuprint.neuroncriteria import where_expr
-        
+
             In [2]: where_expr('status', [])
             Out[2]: ''
-            
+
             In [3]: where_expr('status', [None])
             Out[3]: 'NOT exists(n.status)'
-            
+
             In [4]: where_expr('status', ['Orphan'])
             Out[4]: "n.status = 'Orphan'"
-            
+
             In [5]: where_expr('status', ['Orphan', 'Assign'])
             Out[5]: "n.status in ['Orphan', 'Assign']"
-            
+
             In [6]: where_expr('status', ['Orphan', 'Assign', None])
             Out[6]: "n.status in ['Orphan', 'Assign'] OR NOT exists(n.status)"
-            
+
             In [7]: where_expr('status', ['Orph.*'], regex=True)
             Out[7]: "n.status =~ 'Orph.*'"
-            
+
             In [8]: where_expr('bodyId', [123])
             Out[8]: 'n.bodyId = 123'
-            
+
             In [9]: where_expr('bodyId', [123, 456])
             Out[9]: 'n.bodyId in [123, 456]'
 
             In [10]: where_expr('bodyId', [123, 456, 789], valuevar='bodies')
             Out[10]: 'n.bodyId in bodies'
-            
+
             In [11]: where_expr('bodyId', [123, None, 456], valuevar='bodies')
             Out[11]: 'n.bodyId in bodies OR NOT exists(n.bodyId)'
     """
@@ -771,7 +771,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         f"Please pass a list or a variable name, not {values}"
 
     assert valuevar is None or isinstance(valuevar, str)
-    
+
     assert not regex or len(values) <= 1, \
         f"Can't use regex mode with more than one value: {values}"
 
@@ -781,13 +781,13 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
     if len(values) == 1:
         if values[0] is None:
             return f"NOT exists({matchvar}.{field})"
-    
+
         if regex:
             return f"{matchvar}.{field} =~ '{values[0]}'"
-    
+
         if isinstance(values[0], str):
             return f"{matchvar}.{field} = '{values[0]}'"
-    
+
         return f"{matchvar}.{field} = {values[0]}"
 
     # list of values
@@ -809,6 +809,6 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
         else:
             return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"
-        
+
 
 

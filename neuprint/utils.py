@@ -42,7 +42,7 @@ try:
             warnings.warn(msg)
     else:
         from tqdm import tqdm
-    
+
 except ImportError:
     from tqdm import tqdm
 
@@ -424,7 +424,7 @@ def skeleton_df_to_swc(df, export_path=None):
 def heal_skeleton(skeleton_df):
     """
     Ensure a skeleton consists of a single connected component.
-    
+
     Rather than a single tree, skeletons from neuprint sometimes
     consist of multiple fragments, i.e. multiple connected
     components.  That's due to artifacts in the underlying

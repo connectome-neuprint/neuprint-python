@@ -11,7 +11,7 @@ Or you can implement your own cypher queries using :py:func:`.fetch_custom()`.
 Example:
 
     .. code-block:: ipython
-    
+
         In [1]: from neuprint import Client, fetch_custom, fetch_neurons
 
         In [2]: # Create a default client. Will be implicitly used for all subsequent queries.
@@ -36,11 +36,11 @@ Example:
         21660  2429314661        None                 None
         21661  2464541644        None                 None
         21662  2404203061        None                 None
-        
+
         [21663 rows x 3 columns]
 
 Tip:
-    
+
     All cypher queries are logged, but the messages are not
     shown in the console by default.  To display them, see
     :py:func:`setup_debug_logging()`.
@@ -81,29 +81,29 @@ def setup_debug_logging():
     """
     Simple debug logging configuration.
     Useful for interactive terminal sessions.
-    
+
     Warning:
         Replaces your current logging setup.
         If you've already set up logging for your app,
         don't call this function.
         Enable neuprint debug logging via:
-        
+
         .. code-block:: python
-        
+
             import logging
             logging.getLogger('neuprint.client').setLevel(logging.DEBUG)
 
     To disable cypher logging again, increase the logging severity threshold:
-    
+
         .. code-block:: python
-        
+
             import logging
             logging.getLogger('neuprint.client').setLevel(logging.INFO)
 
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: from neuprint.client import setup_debug_logging
                ...: from neuprint import fetch_neurons, NeuronCriteria as NC
                ...:
@@ -126,7 +126,7 @@ def setup_debug_logging():
     root_logger.handlers = []
     root_logger.addHandler(handler)
     root_logger.setLevel(logging.INFO)
-    
+
     enable_debug_logging()
 
 
@@ -143,7 +143,7 @@ def default_client():
     Obtain the default Client object to use.
     This function returns a separate copy of the
     default client for each thread (and process).
-    
+
     There's usually no need to call this function.
     It is automatically called by all query functions if
     you haven't passed in an explict `client` argument.
@@ -170,7 +170,7 @@ def default_client():
 def set_default_client(client):
     """
     Set (or overwrite) the default Client.
-    
+
     There's usually no need to call this function.
     It's is automatically called when your first
     ``Client`` is created, but you can call it again
@@ -203,7 +203,7 @@ def inject_client(f):
     argspec = inspect.getfullargspec(f)
     assert 'client' in argspec.kwonlyargs, \
         f"Cannot wrap {f.__name__}: neuprint API wrappers must accept 'client' as a keyword-only argument."
-    
+
     @functools.wraps(f)
     def wrapper(*args, client=None, **kwargs):
         if client is None:
@@ -256,13 +256,13 @@ def verbose_errors(f):
                         msg += f":\n\n{err}"
                     except Exception:
                         pass
-            
+
             if ex.response and 'timeout' in ex.response.content.decode('utf-8').lower():
                 new_ex = NeuprintTimeoutError(msg, *ex.args[1:], response=ex.response, request=ex.request)
             else:
                 new_ex = copy.copy(ex)
                 new_ex.args = (msg, *ex.args[1:])
-            
+
             # In case this decorator is used twice in a nested call,
             # mark it as already modified it doesn't get modified twice.
             new_ex.response_content_appended = True
@@ -274,7 +274,7 @@ class Client:
     def __init__(self, server, dataset=None, token=None, verify=True):
         """
         Client constructor.
-        
+
         The first ``Client`` you create will be stored as the default
         ``Client`` to be used with all ``neuprint-python`` functions
         if you don't explicitly specify one.
@@ -399,14 +399,14 @@ class Client:
     def fetch_custom(self, cypher, dataset="", format='pandas'):
         """
         Query the neuprint server with a custom Cypher query.
-        
+
         Args:
             cypher:
                 A cypher query string
 
             dataset:
                 *Deprecated. Please provide your dataset as a Client constructor argument.*
-                
+
                 Which neuprint dataset to query against.
                 If None provided, the client's default dataset is used.
 
@@ -414,13 +414,13 @@ class Client:
                 Either ``'pandas'`` or ``'json'``.
                 Whether to load the results into a ``pandas.DataFrame``,
                 or return the server's raw JSON response as a Python ``dict``.
-        
+
         Returns:
             Either json or DataFrame, depending on ``format``.
         """
         url = f"{self.server}/api/custom/custom"
         return self._fetch_cypher(url, cypher, dataset, format)
-    
+
 
     def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
         """
@@ -428,7 +428,7 @@ class Client:
         Called by fetch_custom and by Transaction queries.
         """
         assert format in ('json', 'pandas')
-        
+
         if set("‘’“”").intersection(cypher):
             msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
                    " which are not valid characters in cypher."
@@ -436,12 +436,12 @@ class Client:
                    "Your query was:\n"
                    + cypher)
             raise RuntimeError(msg)
-        
+
         dataset = dataset or self.dataset
-        
+
         cypher = indent(dedent(cypher), '    ')
         logger.debug(f"Performing cypher query against dataset '{dataset}':\n{cypher}")
-        
+
         result = self._fetch_json(url,
                                   json={"cypher": cypher, "dataset": dataset},
                                   ispost=True)
@@ -509,7 +509,7 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/instances")
 
-    
+
     def fetch_db_version(self):
         """
         Fetch the database version
@@ -532,7 +532,7 @@ class Client:
     def fetch_token(self):
         """
         Fetch your user authentication token.
-        
+
         Note:
             This method just echoes the token back to you for debug purposes.
             To obtain your token for the first time, use the neuprint explorer
@@ -541,15 +541,15 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/token")['token']
 
-    
+
     ##
     ## Cached
     ##
-    
+
     def fetch_daily_type(self, format='pandas'):
         """
         Return information about today's cell type of the day.
-        
+
         The server updates the completeness numbers each day. A different
         cell type is randomly picked and an exemplar is chosen
         from this type.
@@ -566,23 +566,23 @@ class Client:
         result = self._fetch_json(url, ispost=False)
         if format == 'json':
             return result
-        
+
         conn_df = pd.DataFrame(result['connectivity']['data'],
-                               columns=result['connectivity']['columns']) 
+                               columns=result['connectivity']['columns'])
         skel_df = pd.DataFrame(result['skeleton']['data'],
                                columns=result['skeleton']['columns'])
 
         return result['info'], conn_df, skel_df
 
-    
+
     def fetch_roi_completeness(self, format='pandas'):
         """
         Fetch the pre-computed traced "completeness" statistics
         for each primary ROI in the dataset.
-        
+
         The completeness statistics indicate how many synapses
         belong to Traced neurons.
-        
+
         Note:
             These results are not computed on-the-fly.
             They are computed periodically and cached.
@@ -592,7 +592,7 @@ class Client:
         result = self._fetch_json(url, ispost=False)
         if format == 'json':
             return result
-        
+
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
 
@@ -601,7 +601,7 @@ class Client:
         """
         Fetch the pre-computed connectivity statistics
         between primary ROIs in the dataset.
-        
+
         Note:
             These results are not computed on-the-fly.
             They are computed periodically and cached.
@@ -611,7 +611,7 @@ class Client:
         result = self._fetch_json(url, ispost=False)
         if format == 'json':
             return result
-        
+
         # Example result:
         # {
         #    "roi_names": [['ME(R)', "a'L(L)", 'aL(L)', ...]],
@@ -623,7 +623,7 @@ class Client:
         #       ...
         #    }
         # }
-        
+
         weights = [(*k.split('=>'), v['count'], v['weight']) for k,v in result["weights"].items()]
         df = pd.DataFrame(weights, columns=['from_roi', 'to_roi', 'count', 'weight'])
         return df
@@ -635,13 +635,13 @@ class Client:
     def fetch_roi_mesh(self, roi, export_path=None):
         """
         Fetch a mesh for the given ROI, in ``.obj`` format.
-        
+
         Args:
             roi:
                 Name of an ROI
             export_path:
                 Optional. Writes the ``.obj`` file to the given path.
-            
+
         Returns:
             bytes
             The contents of the fetched ``.obj`` mesh file.
@@ -652,27 +652,27 @@ class Client:
         """
         url = f"{self.server}/api/roimeshes/mesh/{self.dataset}/{roi}"
         data = self._fetch_raw(url, ispost=False)
-        
+
         if export_path:
             with open(export_path, 'wb') as f:
                 f.write(data)
         return data
-        
-    
+
+
     ##
     ## SKELETONS
     ##
     def fetch_skeleton(self, body, heal=False, export_path=None, format='pandas'):
         """
         Fetch the skeleton for a neuron or segment.
-        
+
         Args:
 
             body (int):
                 A neuron or segment ID
 
             heal (bool):
-                If ``True`` and the skeleton is fragmented, 'heal' it by connecting 
+                If ``True`` and the skeleton is fragmented, 'heal' it by connecting
                 its fragments into a single tree. The fragments are joined by
                 selecting the minimum spanning tree after joining all fragments
                 via their pairwise nearest neighbors. See :py:func:`.heal_skeleton()`
@@ -684,13 +684,13 @@ class Client:
             export_path (str):
                 Optional. Writes the ``.swc`` file to disk.
                 (SWC format is written, regardless of the returned ``format``.)
-        
+
         Returns:
 
             Either a string (swc), a DataFrame (pandas), or ``networkx.DiGraph`` (nx).
-        
+
         See also:
-        
+
             - :py:func:`.heal_skeleton()`
             - :py:func:`.skeleton_df_to_nx()`
             - :py:func:`.skeleton_df_to_swc()`
@@ -725,7 +725,7 @@ class Client:
 
         if format == 'swc':
             return swc
-        
+
         if format == 'pandas':
             return df
 
@@ -746,7 +746,7 @@ class Client:
         """
         url = f"{self.server}/api/raw/keyvalue/key/{instance}/{key}"
         return self._fetch_raw(url, ispost=False)
-        
+
 
     def post_raw_keyvalue(self, instance, key, value):
         """

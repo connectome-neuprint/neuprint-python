@@ -31,11 +31,11 @@ To obtain your authorization token, follow these steps:
 
 Create the Client
 -----------------
-   
+
     .. code-block:: python
-   
+
         from neuprint import Client
-    
+
         c = Client('neuprint.janelia.org', dataset='hemibrain', token='YOUR-TOKEN-HERE')
         c.fetch_version()
 
@@ -69,7 +69,7 @@ Also, ``neuprint-python`` comes with convenience functions to implement common q
            ...:     RETURN n.bodyId AS bodyId, n.name AS name, n.pre AS numpre, n.post AS numpost
            ...:     ORDER BY n.pre + n.post DESC
            ...: """
-        
+
         In [2]: results = c.fetch_custom(q)
 
         In [3]: print(f"Found {len(results)} results")

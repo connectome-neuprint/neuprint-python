@@ -19,18 +19,18 @@ def plot_soma_projections(neurons_df, color_by='cellBodyFiber'):
     colored by the given column.
 
     Requires ``bokeh``.
-    
+
     Returns a layout which can be displayed
     with ``bokeh.plotting.show()``.
 
     Example:
-    
+
     .. code-block: python
-    
+
         from neuprint import fetch_neurons, NeuronCriteria as NC
         from bokeh.plotting import output_notebook
         output_notebook()
-        
+
         criteria = NC(status='Traced', cropped=False)
         neurons_df, _roi_counts_df = fetch_neurons(criteria)
         p = plot_soma_projections(neurons_df, 'cellBodyFiber')
@@ -76,21 +76,21 @@ def plot_soma_3d(neurons_df, color_by='cellBodyFiber', point_size=1.0):
     """
     Plot the soma locations in 3D, colored randomly according
     to the column given in ``color_by``.
-    
+
     Requires ``ipyvolume``.
     If using Jupyterlab, install it like this:
-    
+
     .. code-block: bash
-    
+
         conda install -c conda-forge ipyvolume
         jupyter labextension install ipyvolume
-    
+
     Example:
-    
+
         .. code-block: python
-        
+
             from neuprint import fetch_neurons, NeuronCriteria as NC
-            
+
             criteria = NC(status='Traced', cropped=False)
             neurons_df, _roi_counts_df = fetch_neurons(criteria)
             plot_soma_3d(neurons_df, 'cellBodyFiber')
@@ -100,14 +100,14 @@ def plot_soma_3d(neurons_df, color_by='cellBodyFiber', point_size=1.0):
 
     extract_soma_coords(neurons_df)
     assign_colors(neurons_df, color_by)
-    
+
     neurons_with_soma_df = neurons_df.query('not somaLocation.isnull()')
     assert neurons_with_soma_df.eval('color.isnull()').sum() == 0
-    
+
     soma_x = neurons_with_soma_df['soma_x'].values
     soma_y = neurons_with_soma_df['soma_y'].values
     soma_z = neurons_with_soma_df['soma_z'].values
-    
+
     def color_to_vals(color_string):
         # Convert bokeh color string into float tuples,
         # e.g. '#00ff00' -> (0.0, 1.0, 0.0)
@@ -115,7 +115,7 @@ def plot_soma_3d(neurons_df, color_by='cellBodyFiber', point_size=1.0):
         return (int(s[1:3], 16) / 255,
                 int(s[3:5], 16) / 255,
                 int(s[5:7], 16) / 255 )
-        
+
     color_vals = neurons_with_soma_df['color'].apply(color_to_vals).tolist()
 
     # DVID coordinate system assumes (0,0,0) is in the upper-left.
@@ -130,11 +130,11 @@ def plot_soma_3d(neurons_df, color_by='cellBodyFiber', point_size=1.0):
 def plot_skeleton_3d(skeleton, color='blue', *, client=None):
     """
     Plot the given skeleton in 3D.
-    
+
     Args:
         skeleton:
             Either a bodyId or a pre-fetched pandas DataFrame
-        
+
         color:
             See ``ipyvolume`` docs.
             Examples: ``'blue'``, ``'#0000ff'``
@@ -144,9 +144,9 @@ def plot_skeleton_3d(skeleton, color='blue', *, client=None):
 
     Requires ``ipyvolume``.
     If using Jupyterlab, install it like this:
-    
+
     .. code-block: bash
-    
+
         conda install -c conda-forge ipyvolume
         jupyter labextension install ipyvolume
     """
@@ -170,18 +170,18 @@ def plot_skeleton_3d(skeleton, color='blue', *, client=None):
         def accumulate_points(n):
             p = (g.nodes[n]['x'], g.nodes[n]['y'], g.nodes[n]['z'])
             points.append(p)
-    
+
             children = [*g.successors(n)]
             if not children:
                 return
             for c in children:
                 accumulate_points(c)
                 points.append(p)
-    
+
         points = []
         accumulate_points(root)
         return np.asarray(points)
-    
+
     # Skeleton may contain multiple fragments,
     # so compute the path for each one.
     def skel_paths(df):
@@ -206,9 +206,9 @@ def extract_soma_coords(neurons_df):
     """
     Expand the ``somaLocation`` column into three separate
     columns for ``soma_x``, ``soma_y``, and ``soma_z``.
-    
-    If ``somaLocation is None``, then the soma coords will be ``NaN``. 
-    
+
+    If ``somaLocation is None``, then the soma coords will be ``NaN``.
+
     Works in-place.
     """
     neurons_df['soma_x'] = neurons_df['soma_y'] = neurons_df['soma_z'] = np.nan
@@ -225,10 +225,10 @@ def assign_colors(neurons_df, color_by='cellBodyFiber'):
     """
     Use a random colortable to assign a color to each row,
     according to the column given in ``color_by``.
-    
+
     NaN values are always black.
-    
-    Works in-place.    
+
+    Works in-place.
     """
     from bokeh.palettes import Turbo256
     colors = list(Turbo256)
@@ -242,7 +242,7 @@ def assign_colors(neurons_df, color_by='cellBodyFiber'):
 
     while len(colors) < len(color_categories):
         colors.extend(colors[1:])
-    
+
     color_mapping = dict(zip(color_categories, colors))
     neurons_df['color'] = neurons_df[color_by].fillna('').map(color_mapping)
 

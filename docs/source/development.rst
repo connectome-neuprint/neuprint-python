@@ -21,13 +21,13 @@ To prepare a release, follow these steps:
     # Tag the git repo with the new version
     git tag -a 0.3.1 -m 0.3.1
     git push --tags origin
-    
+
     # Build and upload the conda package
     conda build conda-recipe
     anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-0.3.1-py_0.tar.bz2
 
     # Build and upload the PyPI package
-    ./upload-to-pypi.sh        
+    ./upload-to-pypi.sh
 
 
 Dependencies
@@ -41,7 +41,7 @@ follow these steps **on a Linux machine**:
 .. code-block:: bash
 
     cd neuprint-python
-    
+
     # Create an environment with the binder dependencies
     BINDER_DEPS="neuprint-python jupyterlab ipywidgets bokeh holoviews hvplot"
     conda create -n neuprint-python -c flyem-forge -c conda-forge ${BINDER_DEPS}
@@ -49,7 +49,7 @@ follow these steps **on a Linux machine**:
     # Export to environment.yml, but relax the neuprint-python version requirement
     conda env export -n neuprint-python > environment.yml
     sed --in-place 's/neuprint-python=.*/neuprint-python/g' environment.yml
-    
+
     git commit -m "Updated environment.yml for binder" environment.yml
     git push origin master
 

@@ -1,9 +1,9 @@
 .. currentmodule:: neuprint.utils
-  
+
 
 ..
    (The following |br| definition is the only way
-   I can force numpydoc to display explicit newlines...) 
+   I can force numpydoc to display explicit newlines...)
 
 .. |br| raw:: html
 

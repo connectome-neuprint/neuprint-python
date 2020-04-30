@@ -28,20 +28,20 @@ NEURON_COLS = ['bodyId', 'instance', 'type',
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
     """
     Make a custom cypher query.
-    
+
     Alternative form of :py:meth:`.Client.fetch_custom()`, as a free function.
     That is, ``fetch_custom(..., client=c)`` is equivalent to ``c.fetch_custom(...)``.
 
     If ``client=None``, the default ``Client`` is used
     (assuming you have created at least one ``Client``.)
-    
+
     Args:
         cypher:
             A cypher query string
 
         dataset:
             *Deprecated. Please provide your dataset as a Client constructor argument.*
-            
+
             Which neuprint dataset to query against.
             If None provided, the client's default dataset is used.
 
@@ -52,7 +52,7 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
         Either json or DataFrame, depending on ``format``.
     """
@@ -64,16 +64,16 @@ def fetch_meta(*, client=None):
     """
     Fetch the dataset metadata.
     Parses json fields as needed.
-    
+
     Returns:
         dict
-    
+
     Example
-    
+
     .. code-block:: ipython
-    
+
         In [1]: meta = fetch_meta()
-    
+
         In [2]: list(meta.keys())
         Out[2]:
         ['dataset',
@@ -147,37 +147,37 @@ def fetch_primary_rois(*, client=None):
 def fetch_roi_hierarchy(include_subprimary=True, mark_primary=True, format='dict', *, client=None):
     """
     Fetch the ROI hierarchy nesting relationships.
-    
+
     Most ROIs in neuprint are part of a hierarchy of nested regions.
     The structure of the hierarchy is stored in the dataset metadata,
     and can be retrieved with this function.
-    
+
     Args:
         include_subprimary:
             If True, all hierarchy levels are included in the output.
             Otherwise, the hierarchy will only go as deep as necessary to
             cover all "primary" ROIs, but not any sub-primary ROIs that
             are contained within them.
-        
+
         mark_primary:
             If True, append an asterisk (``*``) to the names of
             "primary" ROIs in the hierarchy.
             Primary ROIs do not overlap with each other.
-            
+
         format:
             Either ``"dict"``, ``"text"``, or ``nx``.
             Specifies whether to return the hierarchy as a `dict`, or as
             a printable text-based tree, or as a ``networkx.DiGraph``
             (requires ``networkx``).
-    
+
     Returns:
         Either ``dict``, ``str``, or ``nx.DiGraph``,
         depending on your chosen ``format``.
 
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: from neuprint.queries import fetch_roi_hierarchy
                ...:
                ...: # Print the first few nodes of the tree -- you get the idea
@@ -210,27 +210,27 @@ def fetch_roi_hierarchy(include_subprimary=True, mark_primary=True, format='dict
         is_primary = (name in primary_rois)
         if mark_primary and is_primary:
             name += "*"
-        
+
         d[name] = {}
-        
+
         if 'children' not in h:
             return
 
         if is_primary and not include_subprimary:
             return
-        
+
         for c in sorted(h['children'], key=lambda c: c['name']):
             insert(c, d[name])
 
     d = {}
     insert(hierarchy, d)
-    
+
     if format == 'dict':
         return d
-    
+
     if format == "text":
         return LeftAligned()(d)
-    
+
     if format == 'nx':
         import networkx as nx
         g = nx.DiGraph()
@@ -240,42 +240,42 @@ def fetch_roi_hierarchy(include_subprimary=True, mark_primary=True, format='dict
                 add_nodes(k, d[k])
         add_nodes('hemibrain', d['hemibrain'])
         return g
-        
+
 
 @inject_client
 @neuroncriteria_args('criteria')
 def fetch_neurons(criteria, *, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
-    
+
     Searches for a set of Neurons (or Segments) that match the given :py:class:`.NeuronCriteria`.
     Returns their properties, including the distibution of their synapses in all brain regions.
-    
+
     This implements a superset of the features on the Neuprint Explorer `Find Neurons`_ page.
 
     Returns data in the the same format as :py:func:`fetch_custom_neurons()`,
     but doesn't require you to write cypher.
-    
+
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
-    
+
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Only Neurons which satisfy all components of the given criteria are returned.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
         Two DataFrames.
         ``(neurons_df, roi_counts_df)``
-        
+
         In ``neurons_df``, all available ``:Neuron`` columns are returned, with the following changes:
-        
+
             - ROI boolean columns are removed
             - ``roiInfo`` is parsed as json data
             - ``somaLocation`` is provided as a list ``[x, y, z]``
             - New columns ``input_rois`` and ``output_rois`` contain lists of each neuron's ROIs.
-        
+
         In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table
         of per-neuron-per-ROI synapse counts, with separate columns
         for ``pre`` (outputs) and ``post`` (inputs).
@@ -286,9 +286,9 @@ def fetch_neurons(criteria, *, client=None):
         but permits you to supply your own cypher query directly.
 
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: from neuprint import fetch_neurons, NeuronCriteria as NC
 
             In [2]: neurons_df, roi_counts_df = fetch_neurons(
@@ -296,7 +296,7 @@ def fetch_neurons(criteria, *, client=None):
                ...:        status='Traced',
                ...:        type='MBON.*',
                ...:        regex=True))
-            
+
             In [3]: neurons_df.iloc[:5, :11]
             Out[3]:
                   bodyId                     instance    type cellBodyFiber   pre   post        size  status  cropped     statusLabel  somaRadius
@@ -305,7 +305,7 @@ def fetch_neurons(criteria, *, client=None):
             2  423382015        MBON23(a2sp)(PDL05)_R  MBON23          SFS1   733   4466   857093893  Traced    False  Roughly traced       291.0
             3  423774471       MBON19(a2p3p)(PDL05)_R  MBON19          SFS1   299   1484   628019179  Traced    False  Roughly traced       286.0
             4  424767514  MBON11(y1pedc>a/B)(ADM05)_R  MBON11        mAOTU2  1643  27641  5249327644  Traced    False          Traced       694.5
-            
+
             In [4]: neurons_df['inputRois'].head()
             Out[4]:
             0    [MB(+ACA)(R), MB(R), None, SIP(R), SLP(R), SMP...
@@ -314,7 +314,7 @@ def fetch_neurons(criteria, *, client=None):
             3    [MB(+ACA)(R), MB(R), SIP(R), SMP(R), SNP(R), a...
             4    [CRE(-ROB,-RUB)(R), CRE(L), CRE(R), INP, MB(+A...
             Name: inputRois, dtype: object
-            
+
             In [5]: roi_counts_df.head()
             Out[5]:
                   bodyId          roi  pre   post
@@ -333,7 +333,7 @@ def fetch_neurons(criteria, *, client=None):
     props.remove('somaLocation')
     return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
-    
+
     q = f"""\
         {criteria.global_with(prefix=8)}
         MATCH (n :{criteria.label})
@@ -355,25 +355,25 @@ def fetch_custom_neurons(q, *, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons,
     using your own cypher query.
-    
+
     Use a custom query to fetch a neuron table, with nicer output
     than you would get from a call to :py:func:`.fetch_custom()`.
-    
+
     Returns data in the the same format as :py:func:`.fetch_neurons()`.
     but allows you to provide your own cypher query logic
     (subject to certain requirements; see below).
 
     This function includes all Neuron fields in the results,
     and also sends back ROI counts as a separate table.
-    
+
     Args:
 
         q:
             Custom query. Must match a neuron named ``n``,
             and must ``RETURN n``.
-            
+
             .. code-block::
-            
+
                 ...
                 MATCH (n :Neuron)
                 ...
@@ -382,29 +382,29 @@ def fetch_custom_neurons(q, *, client=None):
 
         client:
             If not provided, the global default ``Client`` will be used.
-        
+
     Returns:
         Two DataFrames.
         ``(neurons_df, roi_counts_df)``
-        
+
         In ``neurons_df``, all available columns ``:Neuron`` columns are returned, with the following changes:
-        
+
             - ROI boolean columns are removed
             - ``roiInfo`` is parsed as json data
             - ``somaLocation`` is provided as a list ``[x, y, z]``
             - New columns ``inputRoi`` and ``outputRoi`` contain lists of each neuron's ROIs.
-        
+
         In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table
         of per-neuron-per-ROI synapse counts, with separate columns
         for ``pre`` (outputs) and ``post`` (inputs).
     """
     results = client.fetch_custom(q)
-    
+
     if len(results) == 0:
         neuron_df = pd.DataFrame([], columns=NEURON_COLS, dtype=object)
         roi_counts_df = pd.DataFrame([], columns=['bodyId', 'roi', 'pre', 'post'])
         return neuron_df, roi_counts_df
-    
+
     neuron_df = pd.DataFrame(results['n'].tolist())
 
     # If somaLocation is already provided as a top-level column in the query results,
@@ -425,10 +425,10 @@ def _process_neuron_df(neuron_df, client):
     Given a DataFrame of neuron properties, parse the roiInfo into
     inputRois and outputRois, and a secondary DataFrame for per-ROI
     synapse counts.
-    
+
     Returns:
         neuron_df, roi_counts_df
-    
+
     Warning: destructively modifies the input DataFrame.
     """
     # Drop roi columns
@@ -467,7 +467,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
                              *, client=None):
     """
     Find connections to/from small set(s) of neurons.
-    
+
     Finds all connections from a set of "upstream" neurons,
     or to a set of "downstream" neurons,
     or all connections from a set of upstream neurons to a set of downstream neurons.
@@ -495,15 +495,15 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             Additional columns to include in the results, for both the upstream and downstream body.
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
         DataFrame
         One row per connection, with columns for upstream (pre-synaptic) and downstream (post-synaptic) properties.
-    
+
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: from neuprint import fetch_simple_connections
                ...: sources = [329566174, 425790257, 424379864, 329599710]
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
@@ -529,7 +529,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
     up_crit.matchvar = 'n'
     down_crit.matchvar = 'm'
-    
+
     assert up_crit is not None or down_crit is not None, "No criteria specified"
 
     if min_weight > 1:
@@ -537,7 +537,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             WITH n, m, e
             WHERE e.weight >= {min_weight}
             """)
-        weight_expr = indent(weight_expr, ' '*8)[8:] 
+        weight_expr = indent(weight_expr, ' '*8)[8:]
     else:
         weight_expr = ""
 
@@ -549,7 +549,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     return_props = ['n.bodyId as bodyId_pre',
                     'm.bodyId as bodyId_post',
                     'e.weight as weight']
-    
+
     for p in properties:
         if p == 'roiInfo':
             return_props.append('apoc.convert.fromJsonMap(n.roiInfo) as roiInfo_pre')
@@ -557,9 +557,9 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         else:
             return_props.append(f'n.{p} as {p}_pre')
             return_props.append(f'm.{p} as {p}_post')
-    
+
     return_props += ['e.roiInfo as conn_roiInfo']
-    
+
     return_props_str = indent(',\n'.join(return_props), prefix=' '*15)[15:]
 
     combined_global_with = NC.combined_global_with([up_crit, down_crit], prefix=8)
@@ -576,10 +576,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
                  m.bodyId
     """
     edges_df = client.fetch_custom(q)
-    
+
     # Load connection roiInfo with ujson
     edges_df['conn_roiInfo'] = edges_df['conn_roiInfo'].apply(ujson.loads)
-    
+
     if rois:
         keep = edges_df['conn_roiInfo'].apply(lambda roiInfo: bool(rois & {*roiInfo.keys()}))
         edges_df = edges_df.loc[keep].reset_index(drop=True)
@@ -595,7 +595,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                       properties=['type', 'instance'], *, client=None):
     """
     Find connections to/from large sets of neurons, with per-ROI connection strengths.
-    
+
     Fetches the adjacency table for connections between sets of neurons, broken down by ROI.
     Unless ``include_nonprimary=True``, only primary ROIs are included in the per-ROI connection table.
     Connections outside of the primary ROIs are labeled with the special name
@@ -620,10 +620,10 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
         min_roi_weight:
             Limit results to connections of at least this strength within at least one of the returned ROIs.
-        
+
         min_total_weight:
             Limit results to connections that are at least this strong when totaled across all ROIs.
-            
+
             Note:
                 Even if ``min_roi_weight`` is also specified, all connections are counted towards satisfying
                 the total weight threshold, even though some ROI entries are filtered out.
@@ -666,17 +666,17 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         :py:func:`.fetch_traced_adjacencies()`
 
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: from neuprint import Client
                ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0.1')
-            
+
             In [2]: from neuprint import fetch_adjacencies
                ...: sources = [329566174, 425790257, 424379864, 329599710]
                ...: targets = [425790257, 424379864, 329566174, 329599710, 420274150]
                ...: neuron_df, connection_df = fetch_adjacencies(sources, targets)
-            
+
             In [3]: neuron_df
             Out[3]:
                   bodyId             instance                       type
@@ -685,7 +685,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             2  424379864  AVM03e_pct(AVM03)_R                 AVM03e_pct
             3  425790257                APL_R                        APL
             4  420274150  AVM03m_pct(AVM03)_R                 AVM03m_pct
-            
+
             In [4]: connection_df
             Out[4]:
                 bodyId_pre  bodyId_post     roi  weight
@@ -714,7 +714,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     **Total Connection Strength**
 
     To aggregate the per-ROI connection weights into total connection weights, use ``groupby(...)['weight'].sum()``
-    
+
     .. code-block:: ipython
 
         In [5]: connection_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
@@ -756,7 +756,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     rois = {*rois}
     invalid_rois = rois - {*client.all_rois}
     assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
-    
+
     nonprimary_rois = rois - {*client.primary_rois}
     assert include_nonprimary or not nonprimary_rois, \
         f"Since you listed nonprimary rois ({nonprimary_rois}), please specify include_nonprimary=True"
@@ -769,7 +769,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
     def _prepare_criteria(criteria, matchvar):
         criteria.matchvar = matchvar
-        
+
         # If the user wants to filter for specific rois,
         # we can speed up the query by adding them to the NeuronCriteria
         if rois and not criteria.rois:
@@ -791,7 +791,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
         value_props = [f'value.{prop} as {prop}' for prop in properties]
         value_props = indent(',\n'.join(value_props), ' '*19)[19:]
-        
+
         q = f"""\
             {criteria.global_with(prefix=12)}
             MATCH ({matchvar}:{criteria.label})
@@ -827,29 +827,29 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 result = client.fetch_custom(q)['count']
             except NeuprintTimeoutError:
                 return None
-    
+
             if len(result) == 0:
                 return None
-    
+
             return result.iloc[0]
-    
+
         num_sources = _fetch_count(sources, 5)
         num_targets = _fetch_count(targets, 5)
-    
+
         if num_sources is None and num_targets is None:
             num_sources = _fetch_count(sources, 120)
             num_targets = _fetch_count(targets, 120)
-    
+
         if num_sources is None and num_targets is None:
             raise RuntimeError("Both source and target list are too large to pre-fetch without timing out. "
                                "This query is too big to process.")
-    
+
         if num_sources == 0:
             raise RuntimeError("No neurons match your source criteria")
-    
+
         if num_targets == 0:
             raise RuntimeError("No neurons match your target criteria")
-    
+
         sources_df = targets_df = None
         if (num_sources is not None) and (num_targets is not None):
             if num_sources <= num_targets:
@@ -860,7 +860,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             sources_df = _fetch_neurons(sources)
         elif num_targets is not None:
             targets_df = _fetch_neurons(targets)
-    
+
         assert (sources_df is None) != (targets_df is None)
         return sources_df, targets_df
 
@@ -883,24 +883,24 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 WHERE e.weight >= {min_total_weight}
             """)
             weight_condition = indent(weight_condition, prefix=20*' ')[20:]
-        
+
         # Fetch connections by batching either the source list
         # or the target list, not both.
         # (It turns out that batching across BOTH sources and
         # targets is much slower than batching across only one.)
         conn_tables = []
-        
+
         if sources_df is not None:
             # Break sources into batches
             for batch_start in trange(0, len(sources_df), batch_size):
                 batch_stop = batch_start + batch_size
                 source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
-                
+
                 batch_criteria = copy.copy(sources)
                 batch_criteria.bodyId = source_bodies
-                
+
                 criteria_globals = [*batch_criteria.global_vars().keys(), *targets.global_vars().keys()]
-                
+
                 q = f"""\
                     {NeuronCriteria.combined_global_with((batch_criteria, targets), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
@@ -910,7 +910,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                     // planner into avoiding a Cartesian product.
                     // This improves performance considerably in some cases.
                     WITH {','.join([*'nme', *criteria_globals])}, true as _
- 
+
                     {targets.all_conditions(*'nme', prefix=20)}
                     {weight_condition}
 
@@ -925,12 +925,12 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             for batch_start in trange(0, len(targets_df), batch_size):
                 batch_stop = batch_start + batch_size
                 target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
-                
+
                 batch_criteria = copy.copy(targets)
                 batch_criteria.bodyId = target_bodies
-                
+
                 criteria_globals = [*batch_criteria.global_vars().keys(), *sources.global_vars().keys()]
-                
+
                 q = f"""\
                     {NeuronCriteria.combined_global_with((sources, batch_criteria), prefix=20)}
                     MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
@@ -949,7 +949,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                            e.roiInfo as roiInfo
                 """
                 conn_tables.append(client.fetch_custom(q))
-    
+
         # Combine batches
         connections_df = pd.concat(conn_tables, ignore_index=True)
         return connections_df
@@ -970,13 +970,13 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         # We use the 'post' count as the weight (ignore pre)
         roi_connections += [(row.bodyId_pre, row.bodyId_post, roi, weights.get('post', 0))
                             for roi, weights in row.roiInfo.items()]
-    
+
     roi_conn_df = pd.DataFrame(roi_connections,
                                columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
-    
+
     # Filter out non-primary ROIs
     primary_roi_conn_df = roi_conn_df.query('roi in @client.primary_rois')
-    
+
     # Add a special roi name "NotPrimary" to account for the
     # difference between total weights and primary-only weights.
     primary_totals = primary_roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
@@ -985,20 +985,20 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     totals_df.fillna(0, inplace=True)
     totals_df['weight_notprimary'] = totals_df.eval('weight_all - weight_primary').astype(int)
     totals_df['roi'] = 'NotPrimary'
-    
+
     # Drop weights other than NotPrimary
     totals_df = totals_df[['bodyId_pre', 'bodyId_post', 'roi', 'weight_notprimary']]
     notprimary_totals_df = totals_df.query('weight_notprimary > 0')
     notprimary_totals_df = notprimary_totals_df.rename(columns={'weight_notprimary': 'weight'})
-    
+
     if not include_nonprimary:
         roi_conn_df = primary_roi_conn_df
-    
+
     # Append NotPrimary rows to the connection table.
     roi_conn_df = pd.concat((roi_conn_df, notprimary_totals_df), ignore_index=True)
     roi_conn_df.sort_values(['bodyId_pre', 'bodyId_post', 'weight'], ascending=[True, True, False], inplace=True)
     roi_conn_df.reset_index(drop=True, inplace=True)
-    
+
     # Consistency check: Double-check our math against the original totals
     summed_roi_weights = (roi_conn_df
                             .query('roi in @client.primary_rois or roi == "NotPrimary"')
@@ -1056,7 +1056,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         # Export Nodes
         p = f"{export_dir}/neurons.csv"
         neurons_df.to_csv(p, index=False, header=True)
-        
+
         # Export Edges (per ROI)
         p = f"{export_dir}/roi-connections.csv"
         roi_conn_df.to_csv(p, index=False, header=True)
@@ -1072,16 +1072,16 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
     """
     Convenience function that calls :py:func:`.fetch_adjacencies()`
-    for all ``Traced``, non-``cropped`` neurons. 
- 
+    for all ``Traced``, non-``cropped`` neurons.
+
     Note:
         On the hemibrain dataset, this function takes a few minutes to run,
         and the results are somewhat large (~300 MB).
-    
+
     Example:
-        
+
         .. code-block:: ipython
-        
+
             In [1]: neurons_df, roi_conn_df = fetch_traced_adjacencies('exported-connections')
 
             In [2]: roi_conn_df.head()
@@ -1103,7 +1103,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             1   202916528    203257652       2
             2   202916528    203598557       2
             3   202916528    234292899       4
-            4   202916528    264986706       2        
+            4   202916528    264986706       2
      """
     criteria = NeuronCriteria(status="Traced", cropped=False, client=client)
     return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir, batch_size=batch_size, client=client)
@@ -1114,24 +1114,24 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
     """
     Find shared connections among a set of neurons.
-    
+
     Given a set of neurons that match the given criteria, find neurons
     that connect to ALL of the neurons in the set, i.e. connections
     that are common to all neurons in the matched set.
-    
+
     This is the Python equivalent to the Neuprint Explorer `Common Connectivity`_ page.
 
     .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=commonconnectivity&q=1
-    
-    
+
+
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Used to determine the match set, for which common connections will be found.
 
         search_direction (``"upstream"`` or ``"downstream"``):
             Whether or not to search for common connections upstream of
-            the matched neurons or downstream of the matched neurons. 
-        
+            the matched neurons or downstream of the matched neurons.
+
         min_weight:
             Connections below the given strength will not be included in the results.
 
@@ -1140,7 +1140,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
         DataFrame.
         (Same format as returned by :py:func:`fetch_simple_connections()`.)
@@ -1152,7 +1152,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
     assert search_direction in ('upstream', 'downstream')
     if search_direction == "upstream":
         edges_df = fetch_simple_connections(None, criteria, min_weight, properties, client=client)
-        
+
         # How bodies many met main search criteria?
         num_primary = edges_df['bodyId_post'].nunique()
 
@@ -1163,7 +1163,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
 
     if search_direction == "downstream":
         edges_df = fetch_simple_connections(criteria, None, min_weight, properties, client=client)
-        
+
         # How bodies many met main search criteria?
         num_primary = edges_df['bodyId_pre'].nunique()
 
@@ -1179,39 +1179,39 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
                          timeout=5.0, *, client=None):
     """
     Find all neurons along the shortest path between two neurons.
-    
+
     Args:
         upstream_bodyId:
             The starting neuron
-        
+
         downstream_bodyId:
             The destination neuron
-        
+
         min_weight:
             Minimum connection strength for each step in the path.
-        
+
         intermediate_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Filtering criteria for neurons on path.
             All intermediate neurons in the path must satisfy this criteria.
             By default, ``NeuronCriteria(status="Traced")`` is used.
-        
+
         timeout:
             Give up after this many seconds, in which case an **empty DataFrame is returned.**
             No exception is raised!
-        
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
-    
+
     Returns:
         All paths are concatenated into a single DataFrame.
         The `path` column indicates which path that row belongs to.
         The `weight` column indicates the connection strength to that
         body from the previous body in the path.
-        
+
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
             Out[1]:
                   path     bodyId                       type  weight
@@ -1226,14 +1226,14 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
             5775   962  294424196                PDL13ob_pct      21
             5776   962  295133927               PDM18a_d_pct      10
             5777   962  294792184  olfactory multi vPN mlALT      10
-            
+
             [5778 rows x 4 columns]
     """
     if intermediate_criteria is None:
         intermediate_criteria = NeuronCriteria(status="Traced", client=client)
     else:
         intermediate_criteria = copy_as_neuroncriteria(intermediate_criteria)
-    
+
     assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
         "This function doesn't support search criteria that specifies inputRois or outputRois. "\
         "You can specify generic (intersecting) rois, though."
@@ -1245,7 +1245,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
     nodes_where = intermediate_criteria.all_conditions(comments=False)
     nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
     nodes_where = nodes_where.replace('\n', '')
-    
+
     q = f"""\
         call apoc.cypher.runTimeboxed(
             "MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
@@ -1257,12 +1257,12 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
             RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
                    [x in relationships(p) | x.weight] AS weights",
-            
+
             {{}},{timeout_ms}) YIELD value
             RETURN value.path as path, value.weights AS weights
     """
     results_df = client.fetch_custom(q)
-    
+
     table_indexes = []
     table_bodies = []
     table_types = []
@@ -1271,7 +1271,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
     for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
         bodies, types = zip(*path)
         weights = [0, *weights]
-        
+
         table_indexes += len(bodies)*[path_index]
         table_bodies += bodies
         table_types += types
@@ -1291,7 +1291,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
     Fetch synapses from a neuron or selection of neurons.
 
     Args:
-    
+
         neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Determines which bodies to fetch synapses for.
 
@@ -1309,7 +1309,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
             Otherwise, all ROI names will be included in the results.
             In that case, some synapses will be listed multiple times -- once per intersecting ROI.
             If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
-        
+
         batch_size:
             To improve performance and avoid timeouts, the synapses for multiple bodies
             will be fetched in batches, where each batch corresponds to N bodies.
@@ -1319,15 +1319,15 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
             If not provided, the global default :py:class:`.Client` will be used.
 
     Returns:
-    
+
         DataFrame in which each row represent a single synapse.
         Unless ``primary_only`` was specified, some synapses may be listed more than once,
         if they reside in more than one overlapping ROI.
-    
+
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_synapses
                ...: fetch_synapses(NC(type='ADL.*', regex=True, rois=['FB']),
                ...:                SC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
@@ -1379,20 +1379,20 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
         RETURN n.bodyId as bodyId
     """
     bodies = client.fetch_custom(q)['bodyId'].values
-    
+
     batch_dfs = []
     for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
         batch_dfs.append( batch_df )
-    
+
     return pd.concat( batch_dfs, ignore_index=True )
 
 
 def _fetch_synapses(neuron_criteria, synapse_criteria, client):
     neuron_criteria.matchvar = 'n'
-    
+
     if synapse_criteria is None:
         synapse_criteria = SynapseCriteria()
 
@@ -1419,7 +1419,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
         {synapse_criteria.condition('n', 's', prefix=8)}
         // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
         WITH DISTINCT n, s
-        
+
         RETURN n.bodyId as bodyId,
                s.type as type,
                s.confidence as confidence,
@@ -1460,7 +1460,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
 def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=10, *, client=None):
     """
     Fetch synaptic-level connections between source and target neurons.
-    
+
     Note:
         Use this function if you need information about individual synapse connections,
         such as their exact positions or confidence scores.
@@ -1468,9 +1468,9 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         (including connection strengths and ROI intersections), see
         :py:func:`fetch_simple_connections()` and :py:func:`fetch_adjacencies()`,
         which are faster and have more condensed outputs than this function.
-    
+
     Args:
-    
+
         source_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Criteria to by which to filter source (pre-synaptic) neurons.
             If omitted, all Neurons will be considered as possible sources.
@@ -1492,11 +1492,11 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             The same criteria is used to filter both ``pre`` and ``post`` sides
             of the connection.
             By default, ``SynapseCriteria(primary_only=True)`` is used.
-            
+
             If ``primary_only`` is specified in the criteria, then the resulting
             ``roi_pre`` and ``roi_post`` columns will contain a single
             string (or ``None``) in every row.
-            
+
             Otherwise, the roi columns will contain a list of ROIs for every row.
             (Primary ROIs do not overlap, so every synapse resides in only one
             (or zero) primary ROI.)
@@ -1505,7 +1505,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         min_total_weight:
             If the total weight of the connection between two bodies is not at least
             this strong, don't include the synapses for that connection in the results.
-            
+
             Note:
                 This filters for total connection weight, regardless of the weight
                 within any particular ROI.  So, if your ``SynapseCriteria`` limits
@@ -1523,7 +1523,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             If not provided, the global default :py:class:`.Client` will be used.
 
     Returns:
-    
+
         DataFrame in which each row represents a single synaptic connection
         between an upstream (pre-synaptic) body and downstream (post-synaptic) body.
 
@@ -1534,7 +1534,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         The ``roi_pre`` and ``roi_post`` columns will contain either strings
         or lists-of-strings, depending on the ``primary_only`` synapse criteria as
         described above.
-    
+
     Example:
 
         .. code-block:: ipython
@@ -1565,16 +1565,16 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
     if synapse_criteria is None:
         synapse_criteria = SynapseCriteria(primary_only=True)
-    
+
     def prepare_nc(nc, matchvar):
         nc.matchvar = matchvar
-        
+
         # If the user specified rois to filter synapses by, but hasn't specified rois
         # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
         if synapse_criteria.rois and not nc.rois:
             nc.rois = {*synapse_criteria.rois}
             nc.roi_req = 'any'
-    
+
         return nc
 
     source_criteria = prepare_nc(source_criteria, 'n')
@@ -1587,30 +1587,30 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                  1,
                                                  min_total_weight,
                                                  properties=[] )
-    
+
     conn_df = (roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
                           .sort_values(['bodyId_pre', 'bodyId_post']))
 
     # Fetch in batches
-    syn_dfs = []    
+    syn_dfs = []
     conn_groups = [*conn_df.groupby('bodyId_pre')]
     for group in iter_batches(conn_groups, batch_size):
         _, group_dfs = zip(*group)
         batch_conn_df = pd.concat(group_dfs, ignore_index=True)
         source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
         target_criteria.bodyId = batch_conn_df['bodyId_post'].unique()
-        
+
         batch_syn_df = _fetch_synapse_connections( source_criteria,
                                                    target_criteria,
                                                    synapse_criteria,
                                                    min_total_weight,
                                                    client )
         syn_dfs.append(batch_syn_df)
-    
+
     syn_df = pd.concat(syn_dfs, ignore_index=True)
     assert syn_df.duplicated(syn_df.columns).sum() == 0
     return syn_df
-        
+
 
 def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client):
     if synapse_criteria.primary_only:
@@ -1628,7 +1628,7 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     target_syn_crit.type = 'post'
 
     criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
-    
+
     # Fetch results
     cypher = dedent(f"""\
         {NeuronCriteria.combined_global_with((source_criteria, target_criteria), prefix=8)}
@@ -1648,13 +1648,13 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         WITH {','.join(['n', 'e', 'm', 'ns', 'ms', *criteria_globals])}, true as _
 
         {target_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', prefix=8)}
-        
+
         WITH n, m, ns, ms, e
         WHERE e.weight >= {min_total_weight}
 
         {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
         {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
-        
+
         RETURN n.bodyId as bodyId_pre,
                m.bodyId as bodyId_post,
                ns.location.x as ux,
@@ -1689,7 +1689,7 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         if synapse_criteria.primary_only:
             pre_rois = pre_rois[0]
             post_rois = post_rois[0]
-        
+
         syn_table.append((bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
 
     syn_df = pd.DataFrame(syn_table, columns=['bodyId_pre', 'bodyId_post',
@@ -1717,7 +1717,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     Compute an estimate of "output completeness" for a set of neurons.
     Output completeness is defined as the fraction of post-synaptic
     connections which belong to Traced neurons.
-    
+
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Defines the set of neurons for which output completeness should be computed.
@@ -1729,7 +1729,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
 
     if batch_size is None:
         return _fetch_output_completeness(criteria, client)
-    
+
     q = f"""\
         {criteria.global_with(prefix=8)}
         MATCH (n:{criteria.label})
@@ -1737,7 +1737,7 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
         RETURN n.bodyId as bodyId
     """
     bodies = fetch_custom(q)['bodyId']
-    
+
     batch_results = []
     for start in trange(0, len(bodies), batch_size):
         criteria.bodyId = bodies[start:start+batch_size]
@@ -1766,7 +1766,7 @@ def _fetch_output_completeness(criteria, client=None):
     completion_stats_df = client.fetch_custom(q)
     completion_stats_df['untraced_weight'] = completion_stats_df.eval('total_weight - traced_weight')
     completion_stats_df['completeness'] = completion_stats_df.eval('traced_weight / total_weight')
-    
+
     return completion_stats_df[['bodyId', 'total_weight', 'traced_weight', 'untraced_weight', 'completeness']]
 
 
@@ -1775,29 +1775,29 @@ def _fetch_output_completeness(criteria, client=None):
 def fetch_downstream_orphan_tasks(criteria, *, client=None):
     """
     Fetch the set of "downstream orphans" for a given set of neurons.
-    
+
     Returns a single DataFrame, where the downstream orphans have
     been sorted by the weight of the connection, and their cumulative
     contributions to the overall output-completeness of the upstream
     neuron is also given.
-    
+
     That is, if you started tracing orphans from this DataFrame in
     order, then the ``cum_completeness`` column indicates how complete
     the upstream body is after each orphan becomes traced.
-    
+
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Determines the set of "upstream" bodies for which
             downstream orphans should be identified.
-    
+
     Returns:
         DataFrame, where ``bodyId_pre`` contains the upstream bodies you specified
         via ``criteria``, and ``bodyId_post`` contains the list of downstream orphans.
-    
+
     Example:
-    
+
         .. code-block:: ipython
-        
+
             In [1]: orphan_tasks = fetch_downstream_orphan_tasks(NC(status='Traced', cropped=False, rois=['PB']))
 
             In [1]: orphan_tasks.query('cum_completeness < 0.2').head(10)
