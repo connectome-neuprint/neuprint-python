@@ -36,12 +36,31 @@ class tqdm(tqdm):
             disable = (iterable is not None
                        and hasattr(iterable, '__len__')
                        and len(iterable) <= 1)
-        
+
         super().__init__(iterable, *args, disable=disable, **kwargs)
 
 
 def trange(*args, **kwargs):
     return tqdm(range(*args), **kwargs)
+
+
+def UMAP(*args, **kwargs):
+    """
+    UMAP is an optional dependency, so this wrapper emits
+    a nicer error message if it's not available.
+    """
+    try:
+        from umap import UMAP
+    except ImportError as ex:
+        msg = (
+            "The 'umap' dimensionality reduction package is required for some "
+            "plotting functionality, but it isn't currently installed.\n\n"
+            "Please install it:\n\n"
+            "  conda install -c conda-forge umap-learn\n\n"
+        )
+        raise RuntimeError(msg) from ex
+
+    return UMAP(*args, **kwargs)
 
 
 def make_iterable(x):
@@ -53,13 +72,13 @@ def make_iterable(x):
     """
     if x is None:
         return []
-    
+
     if isinstance(x, np.ndarray):
         return x
-    
+
     if isinstance(x, pd.Series):
         return x.values
-    
+
     if isinstance(x, Collection) and not isinstance(x, str):
         return x
     else:
@@ -91,28 +110,28 @@ def make_args_iterable(argnames):
 def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance']):
     """
     Merge neuron properties to a connection table.
-    
+
     Given a table of neuron properties and a connection table, append
     ``_pre`` and ``_post`` columns to the connection table for each of
     the given properties via the appropriate merge operations.
-    
+
     Args:
         neuron_df:
             DataFrame with columns for 'bodyId' and any properties you want to merge
-        
+
         conn_df:
             DataFrame with columns ``bodyId_pre`` and ``bodyId_post``
-        
+
         properties:
             Column names from ``neuron_df`` to merge onto ``conn_df``.
-    
+
     Returns:
         Updated ``conn_df`` with new columns.
-    
+
     Example:
-    
+
         .. code-block:: ipython
-    
+
             In [1]: from neuprint import fetch_adjacencies, NeuronCriteria as NC, merge_neuron_properties
                ...: neuron_df, conn_df = fetch_adjacencies(rois='PB', min_roi_weight=120)
                ...: print(conn_df)
@@ -127,7 +146,7 @@ def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance'])
             7   911911004   1062526223  PB     125
             8   911919044    973566036  PB     122
             9  5813080838    974239375  PB     136
-            
+
             In [2]: merge_neuron_properties(neuron_df, conn_df, 'type')
             Out[2]:
                bodyId_pre  bodyId_post roi  weight  type_pre    type_post
@@ -143,9 +162,9 @@ def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance'])
             9  5813080838    974239375  PB     136       EPG          PEG
     """
     neuron_df = neuron_df[['bodyId', *properties]]
-    
+
     newcols  = [f'{prop}_pre'  for prop in properties]
-    newcols += [f'{prop}_post' for prop in properties]    
+    newcols += [f'{prop}_post' for prop in properties]
     conn_df = conn_df.drop(columns=newcols, errors='ignore')
 
     conn_df = conn_df.merge(neuron_df, 'left', left_on='bodyId_pre', right_on='bodyId')
@@ -161,13 +180,13 @@ def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance'])
 def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight', sort_by=None):
     """
     Given a weighted connection table, produce a weighted adjacency matrix.
-    
+
     Args:
         conn_df:
             A DataFrame with columns for pre- and post- identifiers
             (e.g. bodyId, type or instance), and a column for the
             weight of the connection.
-        
+
         group_cols:
             Which two columns to use as the row index and column index
             of the returned matrix, respetively.
@@ -178,25 +197,25 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
             If a pair of pre/post values occurs more than once in the
             connection table, all of its weights will be summed in the
             output matrix.
-        
+
         weight_col:
             Which column holds the connection weight, to be aggregated for each unique pre/post pair.
-            
+
         sort_by:
             How to sort the rows and columns of the result.
             Can be two strings, e.g. ``("type_pre", "type_post")``,
             or a single string, e.g. ``"type"`` in which case the suffixes are assumed.
-            
+
     Returns:
         DataFrame, shape NxM, where N is the number of unique values in
         the 'pre' group column, and M is the number of unique values in
         the 'post' group column.
-    
+
     Example:
-    
+
         .. code-block:: ipython
-        
-            In [1]: from neuprint import fetch_simple_connections, NeuronCriteria as NC  
+
+            In [1]: from neuprint import fetch_simple_connections, NeuronCriteria as NC
                ...: kc_criteria = NC(type='KC.*', regex=True)
                ...: conn_df = fetch_simple_connections(kc_criteria, kc_criteria)
             In [1]: conn_df.head()
@@ -207,7 +226,7 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
             2   517858947   5813032943      26   KCab-p    KCab-p       KCab-p        KCab-p  {'MB(R)': {'pre': 25, 'post': 25}, 'PED(R)': {...
             3   642680826   5812980940      25   KCab-p    KCab-p       KCab-p        KCab-p  {'MB(R)': {'pre': 25, 'post': 25}, 'PED(R)': {...
             4  5813067826   1172713521      24      KCg       KCg        KCg-d    KCg(super)  {'MB(R)': {'pre': 23, 'post': 23}, 'gL(R)': {'...
-    
+
             In [2]: from neuprint.utils import connection_table_to_matrix
                ...: connection_table_to_matrix(conn_df, 'type')
             Out[2]:
@@ -220,20 +239,20 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
             KCg        380    1969      79     1526  250351
     """
     if isinstance(group_cols, str):
-        group_cols = (f"{group_cols}_pre", f"{group_cols}_post") 
-    
+        group_cols = (f"{group_cols}_pre", f"{group_cols}_post")
+
     assert len(group_cols) == 2, \
         "Please provide two group_cols (e.g. 'bodyId_pre', 'bodyId_post')"
-    
+
     assert group_cols[0] in conn_df, \
         f"Column missing: {group_cols[0]}"
 
     assert group_cols[1] in conn_df, \
         f"Column missing: {group_cols[1]}"
-        
+
     assert weight_col in conn_df, \
         f"Column missing: {weight_col}"
-    
+
     col_pre, col_post = group_cols
     dtype = conn_df[weight_col].dtype
 
@@ -241,14 +260,14 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
     agg_weights_df = grouped[weight_col].sum()
     matrix = agg_weights_df.pivot(col_pre, col_post, weight_col)
     matrix = matrix.fillna(0).astype(dtype)
-    
+
     if sort_by:
         if isinstance(sort_by, str):
-            sort_by = (f"{sort_by}_pre", f"{sort_by}_post") 
+            sort_by = (f"{sort_by}_pre", f"{sort_by}_post")
 
         assert len(sort_by) == 2, \
             "Please provide two sort_by column names (e.g. 'type_pre', 'type_post')"
-        
+
         pre_order = conn_df.sort_values(sort_by[0])[col_pre].unique()
         post_order = conn_df.sort_values(sort_by[1])[col_post].unique()
         matrix = matrix.reindex(index=pre_order, columns=post_order)
@@ -264,13 +283,13 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
 def iter_batches(it, batch_size):
     """
     Iterator.
-    
+
     Consume the given iterator/iterable in batches and
     yield each batch as a list of items.
-    
+
     The last batch might be smaller than the others,
     if there aren't enough items to fill it.
-    
+
     If the given iterator supports the __len__ method,
     the returned batch iterator will, too.
     """
@@ -284,11 +303,11 @@ class _iter_batches:
     def __init__(self, it, batch_size):
         self.base_iterator = it
         self.batch_size = batch_size
-                
+
 
     def __iter__(self):
         return self._iter_batches(self.base_iterator, self.batch_size)
-    
+
 
     def _iter_batches(self, it, batch_size):
         if isinstance(it, (pd.DataFrame, pd.Series)):
@@ -303,7 +322,7 @@ class _iter_batches:
             if not isinstance(it, Iterator):
                 assert isinstance(it, Iterable)
                 it = iter(it)
-    
+
             while True:
                 batch = []
                 try:
@@ -324,17 +343,17 @@ class _iter_batches_with_len(_iter_batches):
 def skeleton_df_to_nx(df, with_attributes=True, directed=True):
     """
     Convert a skeleton DataFrame into a ``networkx`` graph.
-    
+
     Args:
         df:
             DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
-        
+
         with_attributes:
             If True, store node attributes for x, y, z, radius
-        
+
         directed:
             If True, return ``nx.DiGraph``, otherwise ``nx.Graph``.
-    
+
     Returns:
         ``nx.DiGraph`` or ``nx.Graph``
     """
@@ -342,7 +361,7 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True):
         g = nx.DiGraph()
     else:
         g = nx.Graph()
-    
+
     if with_attributes:
         for row in df.itertuples(index=False):
             g.add_node(row.rowId, x=row.x, y=row.y, z=row.z, radius=row.radius)
@@ -358,14 +377,14 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True):
 def skeleton_df_to_swc(df, export_path=None):
     """
     Convert a skeleton DataFrame into a the text of an SWC file.
-    
+
     Args:
         df:
             DataFrame, as returned by :py:meth:`.Client.fetch_skeleton()`
-        
+
         export_path:
             Optional. Write the SWC file to disk a the given location.
-    
+
     Returns:
         string
     """
@@ -373,14 +392,14 @@ def skeleton_df_to_swc(df, export_path=None):
     df = df[['rowId', 'node_type', 'x', 'y', 'z', 'radius', 'link']]
     swc = "# "
     swc += df.to_csv(sep=' ', header=True, index=False)
-    
+
     if export_path:
         with open(export_path, 'w') as f:
             f.write(swc)
 
     return swc
 
-    
+
 def heal_skeleton(skeleton_df):
     """
     Rather than a single tree, skeletons from neuprint sometimes
@@ -389,16 +408,16 @@ def heal_skeleton(skeleton_df):
     segmentation from which the skeletons were generated.
     In such skeletons, there will be multiple 'root' nodes
     (SWC rows where ``link == -1``).
-    
-    This function 'heals' a fragmented skeleton by joining its 
+
+    This function 'heals' a fragmented skeleton by joining its
     fragments into a single tree. The fragments are joined by
     selecting the minimum spanning tree after joining all fragments
     via their pairwise nearest neighbors.
-    
+
     Args:
         skeleton_df:
             DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
-    
+
     Returns:
         DataFrame, with ``link`` column updated with updated edges.
     """
@@ -412,7 +431,7 @@ def heal_skeleton(skeleton_df):
         if len(cc) == len(skeleton_df):
             # There's only one component -- no healing necessary
             return skeleton_df
-        
+
         df = skeleton_df.query('rowId in @cc')
         kd = cKDTree(df[[*'xyz']].values)
         ccs.append( CC(i, df, kd) )
@@ -420,7 +439,7 @@ def heal_skeleton(skeleton_df):
     # Sort from big-to-small, so the calculations below use a
     # KD tree for the larger point set in every fragment pair.
     ccs = sorted(ccs, key=lambda cc: -len(cc.df))
-    
+
     # We could use the full graph and connect all
     # fragment pairs at their nearest neighbors,
     # but it's faster to treat each fragment as a
@@ -433,16 +452,16 @@ def heal_skeleton(skeleton_df):
 
         index_b = np.argmin(distances)
         index_a = indexes[index_b]
-        
+
         node_a = cc_a.df['rowId'].iloc[index_a]
         node_b = cc_b.df['rowId'].iloc[index_b]
         dist_ab = distances[index_b]
-        
+
         frag_graph.add_edge(cc_a.i, cc_b.i, node_a=node_a, node_b=node_b, distance=dist_ab)
 
     # Compute inter-fragment MST edges
     frag_edges = nx.minimum_spanning_edges(frag_graph, weight='distance', data=True)
-    
+
     # For each inter-fragment edge, add the corresponding
     # fine-grained edge between skeleton nodes
     for _u, _v, d in frag_edges:

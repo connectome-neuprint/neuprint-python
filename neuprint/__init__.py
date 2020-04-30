@@ -8,8 +8,13 @@ from .neuroncriteria import NeuronCriteria
 SegmentCriteria = NeuronCriteria
 
 from .synapsecriteria import SynapseCriteria
-from .queries import *
+from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_rois, fetch_roi_hierarchy,
+                       fetch_neurons, fetch_custom_neurons, fetch_simple_connections, fetch_adjacencies,
+                       fetch_traced_adjacencies, fetch_common_connectivity, fetch_shortest_paths,
+                       fetch_synapses, fetch_synapse_connections, fetch_output_completeness,
+                       fetch_downstream_orphan_tasks )
 from .utils import merge_neuron_properties, connection_table_to_matrix
+from .simulation import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm_LOW, Rm_MED, Rm_HIGH )
 
 from ._version import get_versions
 __version__ = get_versions()['version']

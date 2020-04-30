@@ -54,7 +54,7 @@ follow these steps **on a Linux machine**:
     git push origin master
 
 
-.. _tutorial: notebooks/Tutorial.ipynb
+.. _tutorial: notebooks/QueryTutorial.ipynb
 
 Documentation
 -------------

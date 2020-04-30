@@ -7,8 +7,7 @@ API
    :maxdepth: 2
 
    client
-   queries
-   neuroncriteria
-   synapsecriteria
+   queriesapi
+   simulation
    admin
    utils

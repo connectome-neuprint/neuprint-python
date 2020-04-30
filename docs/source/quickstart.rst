@@ -89,4 +89,4 @@ Next Steps
 
 Try the `interactive tutorial`_ for a tour of basic features in ``neuprint-python``.
 
-.. _interactive tutorial: notebooks/Tutorial.ipynb
+.. _interactive tutorial: notebooks/QueryTutorial.ipynb
