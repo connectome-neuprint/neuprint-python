@@ -5,6 +5,23 @@
 Quickstart
 ==========
 
+Install neuprint-python
+-----------------------
+
+If you're using `conda <https://docs.conda.io/en/latest/>`_, use this command:
+
+
+.. code-block:: bash
+
+    conda install -c flyem-forge neuprint-python
+
+
+Otherwise, use ``pip``:
+
+
+.. code-block:: bash
+
+    pip install neuprint-python
 
 Client and Authorization Token
 ------------------------------
