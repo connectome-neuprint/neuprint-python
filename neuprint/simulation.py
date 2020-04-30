@@ -33,7 +33,7 @@ from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, cut_tree
 
 from .utils import tqdm, UMAP
-from .client import default_client
+from .client import inject_client
 from .queries import fetch_synapse_connections
 
 # Axon resistance.
@@ -376,7 +376,9 @@ class TimingResult:
         return connection_summary, neuron_conn_info, fig
 
 class NeuronModel:
-    def __init__(self, bodyid, Ra=Ra_MED, Rm=Rm_MED, Cm=1e-2, client=None):
+
+    @inject_client
+    def __init__(self, bodyid, Ra=Ra_MED, Rm=Rm_MED, Cm=1e-2, *, client=None):
         """
         Neuron model constructor.
 
@@ -401,8 +403,6 @@ class NeuronModel:
 
         with tqdm(total=100) as pbar:
             # retrieve healed skeleton
-            if client is None:
-                client = default_client()
             pbar.set_description("fetching skeleton")
             self.skeleton_df = client.fetch_skeleton(bodyid, heal=True)
             #print("Fetched skeleton")
