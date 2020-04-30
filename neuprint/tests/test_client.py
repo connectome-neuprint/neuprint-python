@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
-from neuprint import Client, default_client, set_default_client, inject_client
+from neuprint import Client, default_client, set_default_client
+from neuprint.client import inject_client
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 EXAMPLE_BODY = 5813037876 # Delta6G, Delta6G_04, Traced, non-cropped
