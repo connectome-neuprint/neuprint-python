@@ -67,7 +67,7 @@ nbsphinx_prolog = """
 
 ..
    (The following |br| definition is the only way
-   I can force numpydoc to display explicit newlines...) 
+   I can force numpydoc to display explicit newlines...)
 
 .. |br| raw:: html
 
@@ -78,9 +78,9 @@ nbsphinx_prolog = """
     This page corresponds to a Jupyter notebook you can
     `try out yourself`_. |br|
     (The original version is `here`_.)
-    
+
     .. _try out yourself: https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2F{{ env.doc2path(env.docname, base=None) }}
-    
+
     .. _here: https://github.com/connectome-neuprint/neuprint-python/tree/master/docs/source/{{ env.doc2path(env.docname, base=None) }}
 
     .. image:: https://mybinder.org/badge_logo.svg

@@ -37,7 +37,7 @@ def test_fetch_neurons(client):
     neurons, roi_counts = fetch_neurons(NC(bodyId=bodyId))
     assert len(neurons) == len(bodyId)
     assert set(roi_counts['bodyId']) == set(bodyId)
-    
+
     neurons, roi_counts = fetch_neurons(NC(instance='APL_R'))
     assert len(neurons) == 1, "There's only one APL neuron in the hemibrain"
     assert neurons.loc[0, 'type'] == "APL"
@@ -55,8 +55,8 @@ def test_fetch_neurons(client):
 
     neurons, roi_counts = fetch_neurons(NC(status=['Traced', 'Orphan'], cropped=False))
     assert neurons.eval('status == "Traced" or status == "Orphan"').all()
-    assert not neurons['cropped'].any() 
-    
+    assert not neurons['cropped'].any()
+
     neurons, roi_counts = fetch_neurons(NC(inputRois='AL(R)', outputRois='SNP(R)'))
     assert all(['AL(R)' in rois for rois in neurons['inputRois']])
     assert all(['SNP(R)' in rois for rois in neurons['outputRois']])
@@ -76,7 +76,7 @@ def test_fetch_simple_connections(client):
 
     conn_df = fetch_simple_connections(None, NC(bodyId=bodyId))
     assert set(conn_df['bodyId_post'].unique()) == set(bodyId)
-    
+
     APL_R = 425790257
 
     conn_df = fetch_simple_connections(NC(instance='APL_R'))
@@ -94,7 +94,7 @@ def test_fetch_simple_connections(client):
     conn_df = fetch_simple_connections(NC(bodyId=APL_R), min_weight=10)
     assert (conn_df['bodyId_pre'] == APL_R).all()
     assert (conn_df['weight'] >= 10).all()
-    
+
     conn_df = fetch_simple_connections(NC(bodyId=APL_R), min_weight=10, properties=['somaLocation'])
     assert 'somaLocation_pre' in conn_df
     assert 'somaLocation_post' in conn_df
@@ -162,12 +162,12 @@ def test_fetch_synapses(client):
     sc = SC(rois=['LH(R)', 'SIP(R)'], primary_only=True)
     syn_df = fetch_synapses(nc, sc)
     assert set(syn_df['roi']) == {'LH(R)', 'SIP(R)'}
-    
+
     neuron_df, _count_df = fetch_neurons(nc)
     syn_df = syn_df.merge(neuron_df[['bodyId', 'type']], 'left', on='bodyId', suffixes=['_syn', '_body'])
     assert syn_df['type_body'].isnull().sum() == 0
     assert syn_df['type_body'].apply(lambda s: s.startswith('ADL')).all()
-    
+
 
 def test_fetch_synapse_connections(client):
     rois = ['PED(R)', 'SMP(R)']

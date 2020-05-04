@@ -34,7 +34,7 @@ Where can I find help?
 
     - General questions about neuPrint or the hemibrain dataset can be asked on the neuPrint
       `Google Groups forum <https://groups.google.com/forum/#!forum/neuprint>`_.
-    
+
     - For information about the Cypher query language, see the
       `neo4j docs <https://neo4j.com/developer/cypher-query-language/>`_.
 
@@ -43,7 +43,7 @@ Where can I find help?
       web UI.  Try exploring the `Janelia FlyEM Hemibrain neuprint database <https://neuprint.janelia.org/>`_.
       To see the Cypher query that was used for each result on the site,
       click the information icon (shown below).
-      
+
       .. image:: _static/neuprint-explorer-cypher-button.png
          :scale: 25  %
          :alt: Neuprint Explorer Cypher Info Button

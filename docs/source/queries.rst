@@ -1,9 +1,9 @@
 .. currentmodule:: neuprint.queries
-  
+
 
 ..
    (The following |br| definition is the only way
-   I can force numpydoc to display explicit newlines...) 
+   I can force numpydoc to display explicit newlines...)
 
 .. |br| raw:: html
 
@@ -28,7 +28,7 @@ Built-in Queries
 
 See the :ref:`Client` class reference for neuprint's built-in
 (non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
-and server metadata. 
+and server metadata.
 
 General
 -------
@@ -87,7 +87,7 @@ Reconstruction Tools
 
     fetch_output_completeness
     fetch_downstream_orphan_tasks
-    
+
 
 Reference
 ---------

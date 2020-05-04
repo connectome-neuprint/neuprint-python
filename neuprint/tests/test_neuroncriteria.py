@@ -21,7 +21,7 @@ def test_NeuronCriteria(client):
     assert NC(bodyId=123).basic_exprs() == ["n.bodyId = 123"]
     assert NC('m', bodyId=123).basic_exprs() == ["m.bodyId = 123"]
     assert NC(bodyId=[123, 456]).basic_exprs() == ["n.bodyId in [123, 456]"]
-    
+
     assert NC(instance="foo").basic_exprs() == ["n.instance = 'foo'"]
     assert NC(instance="foo", regex=True).basic_exprs() == ["n.instance =~ 'foo'"]
     assert NC(instance=["foo", "bar"]).basic_exprs() == ["n.instance in ['foo', 'bar']"]
@@ -56,7 +56,7 @@ def test_NeuronCriteria(client):
     assert NC().basic_conditions() == ""
     assert NC().all_conditions() == ""
     assert NC.combined_conditions([NC(), NC(), NC()]) == ""
-    
+
 
     bodies = [1,2,3]
     assert NC(bodyId=bodies).basic_conditions(comments=False) == "n.bodyId in [1, 2, 3]"

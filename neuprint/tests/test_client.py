@@ -1,6 +1,7 @@
 import pytest
 import pandas as pd
-from neuprint import Client, default_client, set_default_client, inject_client
+from neuprint import Client, default_client, set_default_client
+from neuprint.client import inject_client
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 EXAMPLE_BODY = 5813037876 # Delta6G, Delta6G_04, Traced, non-cropped
@@ -12,16 +13,16 @@ def test_members():
     c = Client(NEUPRINT_SERVER, DATASET)
     assert c.server == f'https://{NEUPRINT_SERVER}'
     assert c.dataset == DATASET
-    
+
     assert default_client() is c
-    
+
     df = c.fetch_custom("MATCH (m:Meta) RETURN m.primaryRois as rois")
     assert isinstance(df, pd.DataFrame)
     assert df.columns == ['rois']
     assert len(df) == 1
     assert isinstance(df['rois'].iloc[0], list)
-    
-    
+
+
     assert isinstance(c.fetch_available(), list)
     assert isinstance(c.fetch_help(), str)
     assert c.fetch_server_info() is True
@@ -35,7 +36,17 @@ def test_members():
     assert isinstance(c.fetch_roi_completeness(), pd.DataFrame)
     assert isinstance(c.fetch_roi_connectivity(), pd.DataFrame)
     assert isinstance(c.fetch_roi_mesh('AB(R)'), bytes)
-    assert isinstance(c.fetch_skeleton(EXAMPLE_BODY), str)
+    assert isinstance(c.fetch_skeleton(EXAMPLE_BODY), pd.DataFrame)
+
+
+def test_fetch_skeleton():
+    c = Client(NEUPRINT_SERVER, DATASET)
+    orig_df = c.fetch_skeleton(5813027016, False)
+    healed_df = c.fetch_skeleton(5813027016, True)
+
+    assert len(orig_df) == len(healed_df)
+    assert (healed_df['link'] == -1).sum() == 1
+    assert healed_df['link'].iloc[0] == -1
 
 
 @pytest.mark.xfail
@@ -43,11 +54,11 @@ def test_broken_members():
     """
     These endpoints are listed in the neuprintHTTP API,
     but don't seem to work.
-    """    
+    """
     c = Client(NEUPRINT_SERVER, DATASET)
 
     # Broken. neuprint returns error 500
-    assert isinstance(c.fetch_instances(), list) 
+    assert isinstance(c.fetch_instances(), list)
 
 
 @pytest.mark.skip
@@ -68,7 +79,7 @@ def test_inject_client():
     @inject_client
     def f(*, client):
         return client
-    
+
     # Uses default client unless client was specified
     assert f() is c
     assert f(client=c2) is c2
@@ -78,3 +89,8 @@ def test_inject_client():
         @inject_client
         def f2(client):
             pass
+
+if __name__ == "__main__":
+    args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_client']
+    #args += ['-k', 'fetch_skeleton']
+    pytest.main(args)

@@ -6,3 +6,5 @@ pandas
 tqdm
 ujson
 asciitree
+scipy
+networkx

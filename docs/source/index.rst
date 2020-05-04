@@ -17,7 +17,7 @@ web UI.  Try exploring the `Janelia FlyEM Hemibrain neuprint database <https://n
 
 
 Once you're familiar with the basics, you're ready to start writing
-Python scripts to query the database programmatically with 
+Python scripts to query the database programmatically with
 ``neuprint-python``.
 
 .. _install:
@@ -47,7 +47,7 @@ Contents
    :maxdepth: 2
 
    quickstart
-   notebooks/Tutorial
+   tutorials
    api
    development
    related
