@@ -10,18 +10,29 @@ Try the `interactive simulation tutorial`_ for a tour of basic simulation option
 .. note::
 
     The ``simulation`` module depends on additional packages.
-    Install them from ``conda-forge``:
+    Mac and Linux users can install them from ``conda-forge``:
 
     .. code-block:: bash
 
        conda install -c conda-forge ngspice umap-learn scikit-learn matplotlib
+
+    Fow now, Windows users must `download ngspice`_ separately and make sure
+    ``Spice64\\bin\\ngspice_con.exe`` is available on your ``PATH`` when you run python.
+
+    But the other dependencies can be downloaded from ``conda-forge``:
+
+    .. code-block:: bash
+
+       conda install -c conda-forge umap-learn scikit-learn matplotlib
+
+    .. _download ngspice: https://sourceforge.net/projects/ngspice/files/ng-spice-rework/32/ngspice-32_64.zip/download
 """
 # Author: Stephen Plaza
 # Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
 
 import os
-import sys
 import math
+import platform
 from tempfile import mkstemp
 from subprocess import Popen, PIPE, DEVNULL
 
@@ -553,13 +564,19 @@ class NeuronModel:
         drive_str = f"RDRIVE {drive} {len(self.skeleton_df)+1} 10000000000\n" # 0.1 ns conductance
         drive_str += f"V1 {len(self.skeleton_df)+1} 0 EXP(0 60.0 0.1 0.1 1.1 1.0 40)\n"
         drive_str += ".tran 0.1 40\n" # work from 0-10 ms (try 40)
+        drive_str += ".options filetype=binary\n"
 
         # call command line spice simulator and write to temporary file
         fd, path = mkstemp()
 
+        if platform.system() == "Windows":
+            ngspice = "ngspice_con.exe"
+        else:
+            ngspice = "ngspice"
+
         # run ngspice
         try:
-            p = Popen(["ngspice", "-b", "-r", path], stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
+            p = Popen([ngspice, "-b", "-r", path], stdin=PIPE, stdout=DEVNULL, stderr=DEVNULL)
         except FileNotFoundError as ex:
             msg = ("The 'ngspice' circuit simulation tool is not installed (or not on your PATH).\n\n"
                    "Please install it:\n\n"
