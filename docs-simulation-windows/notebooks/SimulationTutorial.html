@@ -1,0 +1,1162 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Simulation Tutorial &mdash; neuprint-python 0.4.9+1.g68c3181 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API" href="../api.html" />
+    <link rel="prev" title="Query Tutorial" href="QueryTutorial.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.9+1.g68c3181
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="QueryTutorial.html">Query Tutorial</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simulation Tutorial</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Setup-neuron-model">Setup neuron model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Estimate-neuron-timing">Estimate neuron timing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Run-simulation-for-the-given-neuron">Run simulation for the given neuron</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Examine-the-response-results">Examine the response results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Plot-response-from-one-brain-region-to-others">Plot response from one brain region to others</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#Decompose-neuron-connections-by-electrical-domain">Decompose neuron connections by electrical domain</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Simulate-the-delay-‘distances’-between-parts-of-the-neuron">Simulate the delay ‘distances’ between parts of the neuron</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Show-delay-propogation-closeness-between-simulated-points">Show delay propogation closeness between simulated points</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#Partition-the-neuron-into-different-domains-based-on-simulated-points">Partition the neuron into different domains based on simulated points</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../related.html">Related Projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+        
+      <li>Simulation Tutorial</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/notebooks/SimulationTutorial.ipynb.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container,
+div.nbinput.container div.prompt,
+div.nbinput.container div.input_area,
+div.nbinput.container div[class*=highlight],
+div.nbinput.container div[class*=highlight] pre,
+div.nboutput.container,
+div.nboutput.container div.prompt,
+div.nboutput.container div.output_area,
+div.nboutput.container div[class*=highlight],
+div.nboutput.container div[class*=highlight] pre {
+    background: none;
+    border: none;
+    padding: 0 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    background: #f5f5f5;
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt a.copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+div.rendered_html th {
+  font-weight: bold;
+}
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>This page corresponds to a Jupyter notebook you can
+<a class="reference external" href="https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2Fnotebooks/SimulationTutorial.ipynb">try out yourself</a>. <br />
+(The original version is <a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/tree/master/docs/source/notebooks/SimulationTutorial.ipynb">here</a>.)</p>
+<a class="last reference external image-reference" href="https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2Fnotebooks/SimulationTutorial.ipynb"><img alt="https://mybinder.org/badge_logo.svg" src="https://mybinder.org/badge_logo.svg" /></a>
+</div>
+<hr class="docutils" />
+<div class="section" id="Simulation-Tutorial">
+<h1>Simulation Tutorial<a class="headerlink" href="#Simulation-Tutorial" title="Permalink to this headline">¶</a></h1>
+<p>This notebook shows how to estimate the delay and amplitude response between primary brain regions for a given neuron. In general, the delay within a compartment tends to be isopotential meaning a region to region response matrix is a reasonable characterization of the output response of a neuron.</p>
+<p>The electrical simulation uses a simple linear passive model using a network of resistors and capacitors based on a skeleton representation of the neuron. Users can specify specific membrane resistance and capacitance values and cytoplasm resitance.</p>
+<div class="admonition note">
+<p class="admonition-title fa fa-exclamation-circle"><strong>Note:</strong> You must install some additional dependencies before using simulation functions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">ngspice</span> <span class="n">umap</span><span class="o">-</span><span class="n">learn</span> <span class="n">scikit</span><span class="o">-</span><span class="n">learn</span> <span class="n">matplotlib</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="Setup-neuron-model">
+<h2>Setup neuron model<a class="headerlink" href="#Setup-neuron-model" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>create neuprint client using the public hemibrain dataset</li>
+<li>build a neuron spice model for a given body id</li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">Client</span>
+
+<span class="n">TOKEN</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="c1"># &lt;--- Paste your token here</span>
+           <span class="c1"># (or define NEUPRINT_APPLICATION CREDENTIALS in your environment)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s2">&quot;neuprint.janelia.org&quot;</span><span class="p">,</span> <span class="s2">&quot;hemibrain:v1.0.1&quot;</span><span class="p">,</span> <span class="n">TOKEN</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># simulate a PEG neuron (same type as in hemibrain paper)</span>
+<span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">NeuronModel</span>
+<span class="n">nm</span> <span class="o">=</span> <span class="n">NeuronModel</span><span class="p">(</span><span class="mi">449438847</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "595621b6a3b44f9fbfb0580648b69912", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Estimate-neuron-timing">
+<h2>Estimate neuron timing<a class="headerlink" href="#Estimate-neuron-timing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="Run-simulation-for-the-given-neuron">
+<h3>Run simulation for the given neuron<a class="headerlink" href="#Run-simulation-for-the-given-neuron" title="Permalink to this headline">¶</a></h3>
+<p>Specify the number of inputs per brain region (randomly selected) which will be tested. A current is injected at each input site one at a time and delay and amplitude response is measured.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">res</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">simulate</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "84f23d763d6f46d98aafbde1e2e5cc5c", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Examine-the-response-results">
+<h3>Examine the response results<a class="headerlink" href="#Examine-the-response-results" title="Permalink to this headline">¶</a></h3>
+<p>compute_region_delay_matrix reports the delay between regions where the row index is the input brain region and the column names represent the output region. A delay (ms) and amplitude (mV) are returned. They are averages over all the response for a given region input-output pair.</p>
+<p>Note: the results to synapses that are not in brain regions (“none”) are shown for completeness. But those output responses are not necessarily co-located and cannot be treated as an ROI.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">delay</span><span class="p">,</span> <span class="n">amp</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">compute_region_delay_matrix</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># delay matrix in ms</span>
+<span class="n">delay</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>EB</th>
+      <th>LAL(R)</th>
+      <th>PB</th>
+      <th>none</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CRE(R)</th>
+      <td>2.074233</td>
+      <td>0.427321</td>
+      <td>3.208169</td>
+      <td>2.539196</td>
+    </tr>
+    <tr>
+      <th>EB</th>
+      <td>1.258467</td>
+      <td>2.456816</td>
+      <td>3.166434</td>
+      <td>2.483917</td>
+    </tr>
+    <tr>
+      <th>FB</th>
+      <td>1.657618</td>
+      <td>2.120017</td>
+      <td>1.880404</td>
+      <td>1.058834</td>
+    </tr>
+    <tr>
+      <th>LAL(R)</th>
+      <td>2.356702</td>
+      <td>0.329966</td>
+      <td>3.474082</td>
+      <td>2.809558</td>
+    </tr>
+    <tr>
+      <th>PB</th>
+      <td>3.143595</td>
+      <td>3.550282</td>
+      <td>0.437841</td>
+      <td>0.713781</td>
+    </tr>
+    <tr>
+      <th>none</th>
+      <td>2.590528</td>
+      <td>3.010865</td>
+      <td>0.676969</td>
+      <td>0.154951</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># amplitude in mV</span>
+<span class="n">amp</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>EB</th>
+      <th>LAL(R)</th>
+      <th>PB</th>
+      <th>none</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CRE(R)</th>
+      <td>0.153407</td>
+      <td>0.489385</td>
+      <td>0.122230</td>
+      <td>0.134334</td>
+    </tr>
+    <tr>
+      <th>EB</th>
+      <td>0.181624</td>
+      <td>0.143877</td>
+      <td>0.121702</td>
+      <td>0.134000</td>
+    </tr>
+    <tr>
+      <th>FB</th>
+      <td>0.160437</td>
+      <td>0.149854</td>
+      <td>0.149690</td>
+      <td>0.167537</td>
+    </tr>
+    <tr>
+      <th>LAL(R)</th>
+      <td>0.146963</td>
+      <td>0.749892</td>
+      <td>0.117411</td>
+      <td>0.128987</td>
+    </tr>
+    <tr>
+      <th>PB</th>
+      <td>0.123022</td>
+      <td>0.116236</td>
+      <td>0.416325</td>
+      <td>0.261497</td>
+    </tr>
+    <tr>
+      <th>none</th>
+      <td>0.134309</td>
+      <td>0.126698</td>
+      <td>0.283109</td>
+      <td>0.311731</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</div>
+<div class="section" id="Plot-response-from-one-brain-region-to-others">
+<h3>Plot response from one brain region to others<a class="headerlink" href="#Plot-response-from-one-brain-region-to-others" title="Permalink to this headline">¶</a></h3>
+<p>Each dot represents the response from each input from the specified input region (LAL(R) here) to every output in the neuron (each output brain region is indicated).</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">res</span><span class="o">.</span><span class="n">plot_response_from_region</span><span class="p">(</span><span class="s2">&quot;LAL(R)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_SimulationTutorial_14_0.png" src="../_images/notebooks_SimulationTutorial_14_0.png" />
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="Decompose-neuron-connections-by-electrical-domain">
+<h2>Decompose neuron connections by electrical domain<a class="headerlink" href="#Decompose-neuron-connections-by-electrical-domain" title="Permalink to this headline">¶</a></h2>
+<p>Use simple linear passive delay progragation through the neuron to determine distinct domains for representing the neuron. The decomposition can be used to derive ROIs using electrical delay.</p>
+<div class="section" id="Simulate-the-delay-‘distances’-between-parts-of-the-neuron">
+<h3>Simulate the delay ‘distances’ between parts of the neuron<a class="headerlink" href="#Simulate-the-delay-‘distances’-between-parts-of-the-neuron" title="Permalink to this headline">¶</a></h3>
+<p>This function checks propagation delays throughout the neuron based on the number of specified points. The points are randomly chosen even between inputs and outputs. In principle, any points could be chosen.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">res</span> <span class="o">=</span> <span class="n">nm</span><span class="o">.</span><span class="n">estimate_intra_neuron_delay</span><span class="p">(</span><span class="n">num_points</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "630e3bd540ff487e913027795620d440", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Show-delay-propogation-closeness-between-simulated-points">
+<h3>Show delay propogation closeness between simulated points<a class="headerlink" href="#Show-delay-propogation-closeness-between-simulated-points" title="Permalink to this headline">¶</a></h3>
+<p>This plot should show whether there are distinct electrical domains for the neuron. The primary ROI labels are provided to show how well the points correspond to the annotated regions.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">res</span><span class="o">.</span><span class="n">plot_neuron_domains</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_SimulationTutorial_19_0.png" src="../_images/notebooks_SimulationTutorial_19_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Partition-the-neuron-into-different-domains-based-on-simulated-points">
+<h3>Partition the neuron into different domains based on simulated points<a class="headerlink" href="#Partition-the-neuron-into-different-domains-based-on-simulated-points" title="Permalink to this headline">¶</a></h3>
+<p>Cluster the simulated points and map a partition id to each synapse in the neuron. The function returns input and output connections broken down by these domain ids.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">summary</span><span class="p">,</span> <span class="n">detailed_io</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">estimate_neuron_domains</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># input / output table broken down by domain id from partitioning</span>
+<span class="n">summary</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>io</th>
+      <th>partner</th>
+      <th>weight</th>
+      <th>domain_id</th>
+      <th>rois</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>output</td>
+      <td>696682163</td>
+      <td>147</td>
+      <td>0</td>
+      <td>[EB]</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>output</td>
+      <td>974300015</td>
+      <td>97</td>
+      <td>1</td>
+      <td>[PB, none]</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>output</td>
+      <td>858587718</td>
+      <td>88</td>
+      <td>0</td>
+      <td>[EB]</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>output</td>
+      <td>858587718</td>
+      <td>72</td>
+      <td>2</td>
+      <td>[LAL(R)]</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>output</td>
+      <td>1228692168</td>
+      <td>66</td>
+      <td>0</td>
+      <td>[EB]</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>720</th>
+      <td>input</td>
+      <td>5813057963</td>
+      <td>1</td>
+      <td>0</td>
+      <td>[EB]</td>
+    </tr>
+    <tr>
+      <th>721</th>
+      <td>input</td>
+      <td>5813062805</td>
+      <td>1</td>
+      <td>0</td>
+      <td>[CRE(R)]</td>
+    </tr>
+    <tr>
+      <th>722</th>
+      <td>input</td>
+      <td>5813061383</td>
+      <td>1</td>
+      <td>1</td>
+      <td>[PB]</td>
+    </tr>
+    <tr>
+      <th>723</th>
+      <td>input</td>
+      <td>5813070465</td>
+      <td>1</td>
+      <td>0</td>
+      <td>[EB]</td>
+    </tr>
+    <tr>
+      <th>724</th>
+      <td>input</td>
+      <td>5813080269</td>
+      <td>1</td>
+      <td>0</td>
+      <td>[EB]</td>
+    </tr>
+  </tbody>
+</table>
+<p>725 rows × 5 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="c1"># domain id for each x,y,z location</span>
+<span class="n">detailed_io</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>type</th>
+      <th>x</th>
+      <th>y</th>
+      <th>z</th>
+      <th>roi</th>
+      <th>partner</th>
+      <th>domain_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>post</td>
+      <td>21510</td>
+      <td>26069</td>
+      <td>20648</td>
+      <td>EB</td>
+      <td>387364605</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>post</td>
+      <td>23679</td>
+      <td>24857</td>
+      <td>20538</td>
+      <td>EB</td>
+      <td>387364605</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>post</td>
+      <td>22135</td>
+      <td>26177</td>
+      <td>20494</td>
+      <td>EB</td>
+      <td>387364605</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>post</td>
+      <td>21613</td>
+      <td>25974</td>
+      <td>20679</td>
+      <td>EB</td>
+      <td>387364605</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>post</td>
+      <td>23870</td>
+      <td>23196</td>
+      <td>20455</td>
+      <td>EB</td>
+      <td>387364605</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>7092</th>
+      <td>pre</td>
+      <td>23030</td>
+      <td>24895</td>
+      <td>20167</td>
+      <td>EB</td>
+      <td>1002507131</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7093</th>
+      <td>pre</td>
+      <td>23621</td>
+      <td>24908</td>
+      <td>20429</td>
+      <td>EB</td>
+      <td>1002507131</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7094</th>
+      <td>pre</td>
+      <td>22615</td>
+      <td>24507</td>
+      <td>19708</td>
+      <td>EB</td>
+      <td>1002507131</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7095</th>
+      <td>pre</td>
+      <td>22992</td>
+      <td>24888</td>
+      <td>20123</td>
+      <td>EB</td>
+      <td>1002507131</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7096</th>
+      <td>pre</td>
+      <td>23278</td>
+      <td>24606</td>
+      <td>20178</td>
+      <td>EB</td>
+      <td>1002507131</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+<p>7097 rows × 7 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre>
+<span></span><span class="n">plot</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_SimulationTutorial_24_0.png" src="../_images/notebooks_SimulationTutorial_24_0.png" />
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../api.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="QueryTutorial.html" class="btn btn-neutral float-left" title="Query Tutorial" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
