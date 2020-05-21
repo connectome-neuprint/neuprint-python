@@ -126,9 +126,10 @@ class NeuronCriteria:
     """
 
     @inject_client
-    @make_args_iterable(['bodyId', 'instance', 'type', 'status', 'rois', 'inputRois', 'outputRois'])
+    @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber', 'status', 'rois', 'inputRois', 'outputRois'])
     def __init__( self, matchvar='n', *,
                   bodyId=None, instance=None, type=None, regex=False,
+                  cellBodyFiber=None,
                   status=None, cropped=None,
                   min_pre=0, min_post=0,
                   rois=None, inputRois=None, outputRois=None, min_roi_inputs=1, min_roi_outputs=1,
@@ -180,6 +181,10 @@ class NeuronCriteria:
             regex (bool):
                 If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
                 regular expressions, rather than exact match strings.
+
+            cellBodyFiber (str or list of str):
+                Matches for the neuron ``cellBodyFiber`` field.  To search for neurons
+                with no CBF at all, use ``status=[None]``.
 
             status (str or list of str):
                 Matches for the neuron ``status`` field.  To search for neurons with no status
@@ -295,6 +300,7 @@ class NeuronCriteria:
         self.bodyId = bodyId
         self.instance = instance
         self.type = type
+        self.cellBodyFiber = cellBodyFiber
         self.status = status
         self.cropped = cropped
         self.min_pre = min_pre
@@ -367,6 +373,11 @@ class NeuronCriteria:
         if self.regex:
             s += ", regex=True"
 
+        if len(self.cellBodyFiber) == 1:
+            s += f', cellBodyFiber="{self.cellBodyFiber[0]}"'
+        elif len(self.instance) > 1:
+            s += f", cellBodyFiber={list(self.cellBodyFiber)}"
+
         if len(self.status) == 1:
             s += f', status="{self.status[0]}"'
         elif len(self.instance) > 1:
@@ -436,6 +447,11 @@ class NeuronCriteria:
             var = f"{self.matchvar}_search_statuses"
             exprs[var] = f"{[*values]} as {var}"
 
+        if len(self.cellBodyFiber) > self.MAX_LITERAL_LENGTH:
+            values = [*filter(lambda s: s is not None, self.cellBodyFiber)]
+            var = f"{self.matchvar}_search_CBFs"
+            exprs[var] = f"{[*values]} as {var}"
+
         return exprs
 
 
@@ -461,7 +477,7 @@ class NeuronCriteria:
         They're intended be combined (via 'AND') in
         the WHERE clause of a cypher query.
         """
-        exprs = [self.bodyId_expr(), self.typeinst_expr(), self.status_expr(),
+        exprs = [self.bodyId_expr(), self.typeinst_expr(), self.cbf_expr(), self.status_expr(),
                  self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr()]
         exprs = [*filter(None, exprs)]
         return exprs
@@ -500,6 +516,12 @@ class NeuronCriteria:
         if len(self.type) > self.MAX_LITERAL_LENGTH:
             valuevar = f"{self.matchvar}_search_types"
         return where_expr('type', self.type, self.regex, self.matchvar, valuevar)
+
+    def cbf_expr(self):
+        valuevar = None
+        if len(self.cellBodyFiber) > self.MAX_LITERAL_LENGTH:
+            valuevar = f"{self.matchvar}_search_CBFs"
+        return where_expr('cellBodyFiber', self.cellBodyFiber, False, self.matchvar, valuevar)
 
     def status_expr(self):
         valuevar = None
@@ -809,6 +831,3 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
         else:
             return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"
-
-
-
