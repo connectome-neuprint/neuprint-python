@@ -1,15 +1,19 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Utilities &mdash; neuprint-python 0.4.9 documentation</title>
+  <title>Utilities &mdash; neuprint-python 0.4.10 documentation</title>
   
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
 
   
   
@@ -17,7 +21,9 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -30,15 +36,10 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Development Notes" href="development.html" />
-    <link rel="prev" title="Admin Tools" href="admin.html" /> 
+    <link rel="next" title="Admin Tools" href="admin.html" />
+    <link rel="prev" title="Skeletons" href="skeleton.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -52,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> neuprint-python
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
           
 
           
@@ -62,7 +63,7 @@
             
             
               <div class="version">
-                0.4.9
+                0.4.10
               </div>
             
           
@@ -79,6 +80,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -93,21 +95,24 @@
 <li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="queriesapi.html">Queries API</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skeleton.html">Skeletons</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#reference">Reference</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -146,7 +151,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="api.html">API</a> &raquo;</li>
         
@@ -208,22 +213,13 @@
 <tr class="row-even"><td><a class="reference internal" href="#neuprint.utils.connection_table_to_matrix" title="neuprint.utils.connection_table_to_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">connection_table_to_matrix</span></code></a>(conn_df[,&nbsp;…])</td>
 <td>Given a weighted connection table, produce a weighted adjacency matrix.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.utils.heal_skeleton" title="neuprint.utils.heal_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">heal_skeleton</span></code></a>(skeleton_df)</td>
-<td>Ensure a skeleton consists of a single connected component.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#neuprint.utils.skeleton_df_to_swc" title="neuprint.utils.skeleton_df_to_swc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_swc</span></code></a>(df[,&nbsp;export_path])</td>
-<td>Convert a skeleton DataFrame into a the text of an SWC file.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="#neuprint.utils.skeleton_df_to_nx" title="neuprint.utils.skeleton_df_to_nx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_nx</span></code></a>(df[,&nbsp;with_attributes,&nbsp;…])</td>
-<td>Convert a skeleton DataFrame into a <code class="docutils literal notranslate"><span class="pre">networkx</span></code> graph.</td>
-</tr>
 </tbody>
 </table>
 <div class="section" id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="neuprint.utils.merge_neuron_properties">
-<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/utils.py#L129"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">merge_neuron_properties</code><span class="sig-paren">(</span><em>neuron_df, conn_df, properties=['type', 'instance']</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/utils.py#L126"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Merge neuron properties to a connection table.</p>
 <p>Given a table of neuron properties and a connection table, append
 <code class="docutils literal notranslate"><span class="pre">_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">_post</span></code> columns to the connection table for each of
@@ -279,7 +275,7 @@ the given properties via the appropriate merge operations.</p>
 
 <dl class="function">
 <dt id="neuprint.utils.connection_table_to_matrix">
-<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/utils.py#L200"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.utils.</code><code class="descname">connection_table_to_matrix</code><span class="sig-paren">(</span><em>conn_df</em>, <em>group_cols='bodyId'</em>, <em>weight_col='weight'</em>, <em>sort_by=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/utils.py#L197"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a weighted connection table, produce a weighted adjacency matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -339,77 +335,6 @@ the ‘post’ group column.</p>
 </div>
 </dd></dl>
 
-<dl class="function">
-<dt id="neuprint.utils.heal_skeleton">
-<code class="descclassname">neuprint.utils.</code><code class="descname">heal_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/utils.py#L424"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.heal_skeleton" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ensure a skeleton consists of a single connected component.</p>
-<p>Rather than a single tree, skeletons from neuprint sometimes
-consist of multiple fragments, i.e. multiple connected
-components.  That’s due to artifacts in the underlying
-segmentation from which the skeletons were generated.
-In such skeletons, there will be multiple ‘root’ nodes
-(SWC rows where <code class="docutils literal notranslate"><span class="pre">link</span> <span class="pre">==</span> <span class="pre">-1</span></code>).</p>
-<p>This function ‘heals’ a fragmented skeleton by joining its
-fragments into a single tree.</p>
-<p>First, each fragment is joined to every other fragment at
-their nearest points. The resulting graph has unnecessary
-edges, which are then removed by extracting the minimum
-spanning tree.  The MST is returned as the healed skeleton.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>skeleton_df</strong> – DataFrame as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">DataFrame, with <code class="docutils literal notranslate"><span class="pre">link</span></code> column updated with updated edges.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="neuprint.utils.skeleton_df_to_swc">
-<code class="descclassname">neuprint.utils.</code><code class="descname">skeleton_df_to_swc</code><span class="sig-paren">(</span><em>df</em>, <em>export_path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/utils.py#L398"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.skeleton_df_to_swc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a skeleton DataFrame into a the text of an SWC file.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>df</strong> – DataFrame, as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
-<li><strong>export_path</strong> – Optional. Write the SWC file to disk a the given location.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">string</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="neuprint.utils.skeleton_df_to_nx">
-<code class="descclassname">neuprint.utils.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em>, <em>with_attributes=True</em>, <em>directed=True</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.9/neuprint/utils.py#L363"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.utils.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert a skeleton DataFrame into a <code class="docutils literal notranslate"><span class="pre">networkx</span></code> graph.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>df</strong> – DataFrame as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
-<li><strong>with_attributes</strong> – If True, store node attributes for x, y, z, radius</li>
-<li><strong>directed</strong> – If True, return <code class="docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">nx.Graph</span></code>.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="docutils literal notranslate"><span class="pre">nx.DiGraph</span></code> or <code class="docutils literal notranslate"><span class="pre">nx.Graph</span></code></p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </div>
 </div>
 
@@ -421,10 +346,10 @@ spanning tree.  The MST is returned as the healed skeleton.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="development.html" class="btn btn-neutral float-right" title="Development Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="admin.html" class="btn btn-neutral float-right" title="Admin Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="admin.html" class="btn btn-neutral float-left" title="Admin Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="skeleton.html" class="btn btn-neutral float-left" title="Skeletons" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -433,11 +358,19 @@ spanning tree.  The MST is returned as the healed skeleton.</p>
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2019, FlyEM
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -448,7 +381,6 @@ spanning tree.  The MST is returned as the healed skeleton.</p>
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

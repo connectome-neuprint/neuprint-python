@@ -1,15 +1,19 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.9 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.10 documentation</title>
   
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
 
   
   
@@ -17,7 +21,9 @@
   
 
   
-  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -30,15 +36,10 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
     
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Related Projects" href="related.html" />
-    <link rel="prev" title="Utilities" href="utils.html" /> 
+    <link rel="prev" title="Admin Tools" href="admin.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -52,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> neuprint-python
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
           
 
           
@@ -62,7 +63,7 @@
             
             
               <div class="version">
-                0.4.9
+                0.4.10
               </div>
             
           
@@ -79,6 +80,7 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
@@ -100,11 +102,13 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 </ul>
 
             
           
         </div>
+        
       </div>
     </nav>
 
@@ -143,7 +147,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="index.html">Docs</a> &raquo;</li>
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
       <li>Development Notes</li>
     
@@ -199,6 +203,9 @@ and <code class="docutils literal notranslate"><span class="pre">pip</span></cod
 To prepare a release, follow these steps:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
 
+<span class="c1"># Update the change log!</span>
+code docs/source/changelog.rst
+
 <span class="c1"># Tag the git repo with the new version</span>
 git tag -a <span class="m">0</span>.3.1 -m <span class="m">0</span>.3.1
 git push --tags origin
@@ -222,7 +229,7 @@ follow these steps <strong>on a Linux machine</strong>:</p>
 
 <span class="c1"># Create an environment with the binder dependencies</span>
 <span class="nv">TUTORIAL_DEPS</span><span class="o">=</span><span class="s2">&quot;ipywidgets bokeh holoviews hvplot&quot;</span>
-<span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice umap-learn scikit-learn matplotlib&quot;</span>
+<span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice-lib umap-learn scikit-learn matplotlib&quot;</span>
 <span class="nv">BINDER_DEPS</span><span class="o">=</span><span class="s2">&quot;neuprint-python jupyterlab </span><span class="si">${</span><span class="nv">TUTORIAL_DEPS</span><span class="si">}</span><span class="s2"> </span><span class="si">${</span><span class="nv">SIMULATION_DEPS</span><span class="si">}</span><span class="s2">&quot;</span>
 conda create -n neuprint-python -c flyem-forge -c conda-forge <span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
 
@@ -287,7 +294,7 @@ which means you must define <code class="docutils literal notranslate"><span cla
         <a href="related.html" class="btn btn-neutral float-right" title="Related Projects" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="utils.html" class="btn btn-neutral float-left" title="Utilities" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="admin.html" class="btn btn-neutral float-left" title="Admin Tools" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -296,11 +303,19 @@ which means you must define <code class="docutils literal notranslate"><span cla
 
   <div role="contentinfo">
     <p>
+        
         &copy; Copyright 2019, FlyEM
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -311,7 +326,6 @@ which means you must define <code class="docutils literal notranslate"><span cla
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

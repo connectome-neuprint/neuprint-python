@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Skeletons &mdash; neuprint-python 0.4.10 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities" href="utils.html" />
+    <link rel="prev" title="Simulation" href="simulation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.10
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queriesapi.html">Queries API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Skeletons</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reference">Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="api.html">API</a> &raquo;</li>
+        
+      <li>Skeletons</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/skeleton.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="module-neuprint.skeleton">
+<span id="skeletons"></span><span id="skeleton"></span><h1>Skeletons<a class="headerlink" href="#module-neuprint.skeleton" title="Permalink to this headline">¶</a></h1>
+<p>Functions related to fetching and manipulating skeletons.</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.skeleton.fetch_skeleton" title="neuprint.skeleton.fetch_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_skeleton</span></code></a>(body[,&nbsp;heal,&nbsp;export_path,&nbsp;…])</td>
+<td>Equivalent to <code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code>.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.skeleton.heal_skeleton" title="neuprint.skeleton.heal_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">heal_skeleton</span></code></a>(skeleton_df[,&nbsp;max_distance])</td>
+<td>Attempt to repair a fragmented skeleton into a single connected component.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.skeleton.reorient_skeleton" title="neuprint.skeleton.reorient_skeleton"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reorient_skeleton</span></code></a>(skeleton_df[,&nbsp;rowId,&nbsp;xyz,&nbsp;…])</td>
+<td>Change the root node of a skeleton.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.skeleton.skeleton_swc_to_df" title="neuprint.skeleton.skeleton_swc_to_df"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_swc_to_df</span></code></a>(swc)</td>
+<td>Create a DataFrame from and SWC file.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.skeleton.skeleton_df_to_swc" title="neuprint.skeleton.skeleton_df_to_swc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_swc</span></code></a>(df[,&nbsp;export_path])</td>
+<td>Create an SWC file from a skeleton DataFrame.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.skeleton.skeleton_df_to_nx" title="neuprint.skeleton.skeleton_df_to_nx"><code class="xref py py-obj docutils literal notranslate"><span class="pre">skeleton_df_to_nx</span></code></a>(df[,&nbsp;with_attributes,&nbsp;…])</td>
+<td>Create a <code class="docutils literal notranslate"><span class="pre">networkx.Graph</span></code> from a skeleton DataFrame.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="neuprint.skeleton.fetch_skeleton">
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">fetch_skeleton</code><span class="sig-paren">(</span><em>body</em>, <em>heal=False</em>, <em>export_path=None</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/skeleton.py#L17"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Equivalent to <code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code>.  See that function for details.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.skeleton.heal_skeleton">
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">heal_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em>, <em>max_distance=inf</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/skeleton.py#L118"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.heal_skeleton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to repair a fragmented skeleton into a single connected component.</p>
+<p>Rather than a single tree, skeletons from neuprint sometimes
+consist of multiple fragments, i.e. multiple connected
+components.  That’s due to artifacts in the underlying
+segmentation from which the skeletons were generated.
+In such skeletons, there will be multiple ‘root’ nodes
+(SWC rows where <code class="docutils literal notranslate"><span class="pre">link</span> <span class="pre">==</span> <span class="pre">-1</span></code>).</p>
+<p>This function ‘heals’ a fragmented skeleton by joining its
+fragments into a single tree.</p>
+<p>First, each fragment is joined to every other fragment at
+their nearest points. The resulting graph has unnecessary
+edges, which are then removed by extracting the minimum
+spanning tree.  The MST is returned as the healed skeleton.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>skeleton_df</strong> – DataFrame as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
+<li><strong>max_distance</strong> – If a skeleton’s fragments are very spatially distant, it may
+not be desirable to connect them with a new edge.
+This parameter specifies the maximum length of new edges
+introduced by the healing procedure.  If a skeleton fragment
+cannot be connected to the rest of the skeleton because it’s
+too far away, the skeleton will remain fragmented.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataFrame, with <code class="docutils literal notranslate"><span class="pre">link</span></code> column updated with updated edges.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.skeleton.reorient_skeleton">
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">reorient_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em>, <em>rowId=None</em>, <em>xyz=None</em>, <em>use_max_radius=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/skeleton.py#L267"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.reorient_skeleton" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the root node of a skeleton.</p>
+<p>In general, the root node of the skeletons in stored in neuprint is
+not particularly significant, so the directionality of the nodes
+(parent to child or vice-versa) on any given neuron branch is arbitrary.</p>
+<p>This function allows you to pick a different root node and reorient
+the tree with respect to that node. Replaces the ‘link’ column in
+each row of the skeleton dataframe so that its parent corresponds
+to a depth-first traversal from the new root node.</p>
+<p>You can specify the new root node either by its row, or by a coordinate
+(the closest node to that coordinate will be selected) or by size
+(the largest node will be selected).</p>
+<p>Works in-place.  Only the ‘link’ column is changed.</p>
+<p>If the given skeleton has more than one connected component (and thus
+more than one root node), the orientation of the edges in other components
+will be arbitrary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>skeleton_df</strong> – A skeleton dataframe, e.g. as returned by <cite>py:func:fetch_skeleton(…, heal=True)</cite></li>
+<li><strong>rowId</strong> – A rowId to use as the new root node</li>
+<li><strong>xyz</strong> – If given, chooses the node closest to the given coordinate as the new root node.</li>
+<li><strong>use_max_radius</strong> – If True, choose the largest node (by radius) to use as the new root node.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.skeleton.skeleton_swc_to_df">
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_swc_to_df</code><span class="sig-paren">(</span><em>swc</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/skeleton.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_swc_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a DataFrame from and SWC file.
+The ‘node_type’ column is discarded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>swc</strong> – Either a filepath ending in ‘.swc’, or a file object,
+or the contents of an SWC file (as a string).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal notranslate"><span class="pre">pd.DataFrame</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.skeleton.skeleton_df_to_swc">
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_df_to_swc</code><span class="sig-paren">(</span><em>df</em>, <em>export_path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/skeleton.py#L91"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_df_to_swc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an SWC file from a skeleton DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> – DataFrame, as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
+<li><strong>export_path</strong> – Optional. Write the SWC file to disk a the given location.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="docutils literal notranslate"><span class="pre">str</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="neuprint.skeleton.skeleton_df_to_nx">
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em>, <em>with_attributes=True</em>, <em>directed=True</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.10/neuprint/skeleton.py#L25"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a <code class="docutils literal notranslate"><span class="pre">networkx.Graph</span></code> from a skeleton DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>df</strong> – DataFrame as returned by <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
+<li><strong>with_attributes</strong> – If True, store node attributes for x, y, z, radius</li>
+<li><strong>directed</strong> – If True, return <code class="docutils literal notranslate"><span class="pre">nx.DiGraph</span></code>, otherwise <code class="docutils literal notranslate"><span class="pre">nx.Graph</span></code>.
+Edges will point from child to parent.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><code class="docutils literal notranslate"><span class="pre">nx.DiGraph</span></code> or <code class="docutils literal notranslate"><span class="pre">nx.Graph</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="utils.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="simulation.html" class="btn btn-neutral float-left" title="Simulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
