@@ -76,6 +76,20 @@ def test_reorient_skeleton(linear_skeleton):
     assert (s['link'] == [*range(2,11), -1]).all()
 
 
+def test_reorient_broken_skeleton(linear_skeleton):
+    broken_skeleton = linear_skeleton.copy()
+    broken_skeleton.loc[2, 'link'] = -1
+    broken_skeleton.loc[7, 'link'] = -1
+
+    s = broken_skeleton.copy()
+    reorient_skeleton(s, 10)
+    assert (s['link'].iloc[7:10] == [9,10,-1]).all()
+
+    # reorienting shouldn't change the number of roots,
+    # though they may change locations.
+    assert len(s.query('link == -1')) == 3
+
+
 def test_heal_skeleton(linear_skeleton):
     broken_skeleton = linear_skeleton.copy()
     broken_skeleton.loc[2, 'link'] = -1

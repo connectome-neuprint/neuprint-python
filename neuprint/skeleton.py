@@ -226,6 +226,14 @@ def _reorient_skeleton(skeleton_df, root, g=None):
         "skeleton graph must be undirected"
 
     edges = list(nx.dfs_edges(g, source=root))
+
+    # If the graph has more than one connected component,
+    # the remaining components have arbitrary roots
+    if len(edges) != len(g.edges):
+        for cc in nx.connected_components(g):
+            if root not in cc:
+                edges += list(nx.dfs_edges(g, source=cc.pop()))
+
     edges = pd.DataFrame(edges, columns=['link', 'rowId'])  # parent, child
     edges = edges.set_index('rowId')['link']
 
@@ -246,13 +254,15 @@ def reorient_skeleton(skeleton_df, rowId=None, xyz=None, use_max_radius=False):
     each row of the skeleton dataframe so that its parent corresponds
     to a depth-first traversal from the new root node.
 
-    Works in-place.  Only the 'link' column is changed.
-    This function can only be used with skeletons which contain exactly one
-    root node.
-
     You can specify the new root node either by its row, or by a coordinate
     (the closest node to that coordinate will be selected) or by size
     (the largest node will be selected).
+
+    Works in-place.  Only the 'link' column is changed.
+
+    If the given skeleton has more than one connected component (and thus
+    more than one root node), the orientation of the edges in other components
+    will be arbitrary.
 
     Args:
         skeleton_df:
@@ -272,9 +282,6 @@ def reorient_skeleton(skeleton_df, rowId=None, xyz=None, use_max_radius=False):
 
     assert bool(rowId) + (xyz is not None) + use_max_radius == 1, \
         "Select either a rowId to use as the new root, or a coordinate, or use_max_radius=True"
-
-    assert len(skeleton_df.query('link == -1')) <= 1, \
-        "The given skeleton has more than one root node. Try healing it first with heal_skeleton()."
 
     if xyz is not None:
         # Find closest node to the given coordinate
