@@ -14,7 +14,7 @@ Try the `interactive simulation tutorial`_ for a tour of basic simulation option
 
     .. code-block:: bash
 
-       conda install -c conda-forge ngspice-lib umap-learn scikit-learn matplotlib
+       conda install -c conda-forge ngspice umap-learn scikit-learn matplotlib
 """
 # Author: Stephen Plaza
 # Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
