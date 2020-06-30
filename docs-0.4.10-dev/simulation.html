@@ -1,0 +1,480 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Simulation &mdash; neuprint-python 0.4.9+1.g24a174d documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Admin Tools" href="admin.html" />
+    <link rel="prev" title="SynapseCriteria" href="synapsecriteria.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4.9+1.g24a174d
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queriesapi.html">Queries API</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simulation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#neuronmodel">NeuronModel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#timingresult">TimingResult</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">neuprint-python</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="api.html">API</a> &raquo;</li>
+        
+      <li>Simulation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/simulation.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="simulation">
+<span id="id1"></span><h1>Simulation<a class="headerlink" href="#simulation" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-neuprint.simulation"></span><p>Functions for performing SPICE-based electrical simulation of a neuron given
+its synapses and skeleton using a simple linear passive model.</p>
+<p>Try the <a class="reference internal" href="notebooks/SimulationTutorial.html"><span class="doc">interactive simulation tutorial</span></a> for a tour of basic simulation options.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">simulation</span></code> module depends on additional packages.
+Install them from <code class="docutils literal notranslate"><span class="pre">conda-forge</span></code>:</p>
+<div class="last highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install -c conda-forge ngspice umap-learn scikit-learn matplotlib
+</pre></div>
+</div>
+</div>
+<div class="section" id="neuronmodel">
+<h2>NeuronModel<a class="headerlink" href="#neuronmodel" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.simulation.NeuronModel" title="neuprint.simulation.NeuronModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NeuronModel</span></code></a>(bodyid[,&nbsp;Ra,&nbsp;Rm,&nbsp;Cm,&nbsp;client])</td>
+<td>Neuron model constructor.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.simulation.NeuronModel.simulate" title="neuprint.simulation.NeuronModel.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NeuronModel.simulate</span></code></a>([max_per_region])</td>
+<td>Simulate passive model based on neuron inputs and outputs.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.simulation.NeuronModel.estimate_intra_neuron_delay" title="neuprint.simulation.NeuronModel.estimate_intra_neuron_delay"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NeuronModel.estimate_intra_neuron_delay</span></code></a>([…])</td>
+<td>Simulate delay between random parts of a neuron.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="timingresult">
+<h2>TimingResult<a class="headerlink" href="#timingresult" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.simulation.TimingResult" title="neuprint.simulation.TimingResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimingResult</span></code></a>(bodyid,&nbsp;delay_matrix,&nbsp;…[,&nbsp;…])</td>
+<td>Timing result constructor.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.simulation.TimingResult.compute_region_delay_matrix" title="neuprint.simulation.TimingResult.compute_region_delay_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimingResult.compute_region_delay_matrix</span></code></a>()</td>
+<td>Generate delay and amplitude matrix based on primary brain regions.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.simulation.TimingResult.plot_response_from_region" title="neuprint.simulation.TimingResult.plot_response_from_region"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimingResult.plot_response_from_region</span></code></a>(…)</td>
+<td>Show neuron response to brain regions based on inputs from a given region.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#neuprint.simulation.TimingResult.plot_neuron_domains" title="neuprint.simulation.TimingResult.plot_neuron_domains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimingResult.plot_neuron_domains</span></code></a>([path])</td>
+<td>Show how the different simulation points cluster in the neuron and their corresponding ROI.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#neuprint.simulation.TimingResult.estimate_neuron_domains" title="neuprint.simulation.TimingResult.estimate_neuron_domains"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TimingResult.estimate_neuron_domains</span></code></a>(…[,&nbsp;plot])</td>
+<td>Estimate the domains based on timing estimates.</td>
+</tr>
+</tbody>
+</table>
+<dl class="class">
+<dt id="neuprint.simulation.NeuronModel">
+<em class="property">class </em><code class="descclassname">neuprint.simulation.</code><code class="descname">NeuronModel</code><span class="sig-paren">(</span><em>bodyid</em>, <em>Ra=1.2</em>, <em>Rm=0.8</em>, <em>Cm=0.01</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L378"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Neuron model constructor.</p>
+<p>Create model of a neuron which can be simulated.
+in different ways.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bodyid</strong> (<em>int</em>) – Segment id for neuron.</li>
+<li><strong>Ra</strong> (<em>float</em>) – axon resistance
+Examples: 0.4 (<code class="docutils literal notranslate"><span class="pre">Ra_LOW</span></code>), 1.2 (<code class="docutils literal notranslate"><span class="pre">Ra_MED</span></code>), 4.0 (<code class="docutils literal notranslate"><span class="pre">Ra_HIGH</span></code>)</li>
+<li><strong>Rm</strong> (<em>float</em>) – membrane resistance
+Examples: 0.2 (<code class="docutils literal notranslate"><span class="pre">Rm_LOW</span></code>), 0.8 (<code class="docutils literal notranslate"><span class="pre">Rm_MED</span></code>), 3.11 (<code class="docutils literal notranslate"><span class="pre">Rm_HIGH</span></code>)</li>
+<li><strong>Cm</strong> (<em>float</em>) – membrane capacitance (should not very too much between neurons)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="neuprint.simulation.NeuronModel.simulate">
+<code class="descname">simulate</code><span class="sig-paren">(</span><em>max_per_region=10</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L685"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel.simulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate passive model based on neuron inputs and outputs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>max_per_region</strong> (<em>int</em>) – maxinum number of inputs per primary ROI to sample (0 means all)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">TimingResult (contains input/output delay matrix)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.simulation.NeuronModel.estimate_intra_neuron_delay">
+<code class="descname">estimate_intra_neuron_delay</code><span class="sig-paren">(</span><em>num_points=100</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L740"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel.estimate_intra_neuron_delay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate delay between random parts of a neuron.</p>
+<p>This function produces a delay matrix for a set of points
+determined by pre or post-synaptic sites.  The result
+is a square distance matrix which can be clustered to
+determine isopotential regions.  The points where current
+are injected do not represent real neural mechanisms
+and in practice random points could be chosen for simulation.
+Synapse location are chosen for convenience and to ensure
+proper weighting on ‘important’ parts of the neuron.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>num_points</strong> (<em>int</em>) – number of points to simulate.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">TimingResult (contains input/output delay matrix)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="neuprint.simulation.TimingResult">
+<em class="property">class </em><code class="descclassname">neuprint.simulation.</code><code class="descname">TimingResult</code><span class="sig-paren">(</span><em>bodyid</em>, <em>delay_matrix</em>, <em>amplitude_matrix</em>, <em>neuron_io</em>, <em>neuron_conn_info</em>, <em>symmetric=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L50"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Timing result constructor.</p>
+<p>Provides methods for parsing timing results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bodyid</strong> (<em>int</em>) – Segment id for neuron</li>
+<li><strong>delay_matrix</strong> (<em>dataframe</em>) – nxm matric of source to sink (if source set == sink set,
+the data can be used to cluster the provided io into different domains.</li>
+<li><strong>neuron_io</strong> (<em>dataframe</em>) – synapse information: location, ispre, brain region</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="neuprint.simulation.TimingResult.compute_region_delay_matrix">
+<code class="descname">compute_region_delay_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L81"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.compute_region_delay_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate delay and amplitude matrix based on primary brain regions.</p>
+<p>Averages the delay and amplitude between the sources and sinks of the
+timing results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(dataframe, dataframe) for the delay and amplitude from brain region to brain region.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.simulation.TimingResult.plot_response_from_region">
+<code class="descname">plot_response_from_region</code><span class="sig-paren">(</span><em>brain_region</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L148"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.plot_response_from_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show neuron response to brain regions based on inputs from a given region.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>brain_region</strong> (<em>str</em>) – Source brain region.</li>
+<li><strong>path</strong> (<em>str</em>) – Optionally save plot to designated file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.simulation.TimingResult.plot_neuron_domains">
+<code class="descname">plot_neuron_domains</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L200"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.plot_neuron_domains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show how the different simulation points cluster in the neuron
+and their corresponding ROI.</p>
+<p>Plots the distance matrix in 2D using delay as the distance.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> (<em>str</em>) – save plot to file as png</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="neuprint.simulation.TimingResult.estimate_neuron_domains">
+<code class="descname">estimate_neuron_domains</code><span class="sig-paren">(</span><em>num_components</em>, <em>plot=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L256"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.estimate_neuron_domains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate the domains based on timing estimates.</p>
+<p>Note: only works for symmetric sink and source simulation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_components</strong> (<em>int</em>) – number of cluster domains</li>
+<li><strong>plot</strong> (<em>bool</em>) – If True, create and return a plot that shows cluster results with predicted labels
+(can compare with roi labels from plot_neuron_domains).
+If <code class="docutils literal notranslate"><span class="pre">plot</span></code> is a string, it is interpreted as a filepath,
+to which the plot is also written to disk as a PNG.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(dataframe, dataframe, plot) input and output connection summary split by domain,
+synapse-level neuron_io indicating component partition.
+If a <code class="docutils literal notranslate"><span class="pre">plot</span></code> was requested, then the generated plot is returned as the
+third tuple element, otherwise that element is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="admin.html" class="btn btn-neutral float-right" title="Admin Tools" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright 2019, FlyEM
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
