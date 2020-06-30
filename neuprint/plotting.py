@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from .client import inject_client
-from .utils import skeleton_df_to_nx
+from .skeleton import skeleton_df_to_nx
 
 def plot_soma_projections(neurons_df, color_by='cellBodyFiber'):
     """

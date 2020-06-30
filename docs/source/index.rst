@@ -52,3 +52,4 @@ Contents
    development
    related
    faq
+   changelog

@@ -65,6 +65,7 @@ target/
 .pydevproject
 .ipynb_checkpoints
 .settings/
+.vscode/
 
 .DS_store
 _autosummary/

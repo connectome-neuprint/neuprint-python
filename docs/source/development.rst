@@ -18,6 +18,9 @@ To prepare a release, follow these steps:
 
     cd neuprint-python
 
+    # Update the change log!
+    code docs/source/changelog.rst
+
     # Tag the git repo with the new version
     git tag -a 0.3.1 -m 0.3.1
     git push --tags origin
