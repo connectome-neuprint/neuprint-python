@@ -10,22 +10,11 @@ Try the `interactive simulation tutorial`_ for a tour of basic simulation option
 .. note::
 
     The ``simulation`` module depends on additional packages.
-    Mac and Linux users can install them from ``conda-forge``:
+    Install them from ``conda-forge``:
 
     .. code-block:: bash
 
-       conda install -c conda-forge ngspice umap-learn scikit-learn matplotlib
-
-    Fow now, Windows users must `download ngspice`_ separately and make sure
-    ``Spice64\\bin\\ngspice_con.exe`` is available on your ``PATH`` when you run python.
-
-    But the other dependencies can be downloaded from ``conda-forge``:
-
-    .. code-block:: bash
-
-       conda install -c conda-forge umap-learn scikit-learn matplotlib
-
-    .. _download ngspice: https://sourceforge.net/projects/ngspice/files/ng-spice-rework/32/ngspice-32_64.zip/download
+       conda install -c conda-forge ngspice-lib umap-learn scikit-learn matplotlib
 """
 # Author: Stephen Plaza
 # Delay modeling and spice parsing adapted from code  by Louis K. Scheffer.
