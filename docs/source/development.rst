@@ -44,7 +44,7 @@ follow these steps **on a Linux machine**:
 
     # Create an environment with the binder dependencies
     TUTORIAL_DEPS="ipywidgets bokeh holoviews hvplot"
-    SIMULATION_DEPS="ngspice umap-learn scikit-learn matplotlib"
+    SIMULATION_DEPS="ngspice-lib umap-learn scikit-learn matplotlib"
     BINDER_DEPS="neuprint-python jupyterlab ${TUTORIAL_DEPS} ${SIMULATION_DEPS}"
     conda create -n neuprint-python -c flyem-forge -c conda-forge ${BINDER_DEPS}
 
