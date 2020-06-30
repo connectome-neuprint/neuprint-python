@@ -583,7 +583,8 @@ class NeuronModel:
                    "  conda install -c conda-forge ngspice\n\n")
             raise RuntimeError(msg) from ex
 
-        data = self.spice_model + drive_str
+        title = 'FIBSEM simulation\n'
+        data = title + self.spice_model + drive_str
         p.stdin.write(data.encode())
         p.stdin.close()
         p.wait()
