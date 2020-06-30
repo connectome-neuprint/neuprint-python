@@ -9,5 +9,6 @@ API
    client
    queriesapi
    simulation
-   admin
+   skeleton
    utils
+   admin

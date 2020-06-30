@@ -68,14 +68,14 @@ from requests.adapters import HTTPAdapter
 # ujson is faster than Python's builtin json module
 import ujson
 
-from .utils import skeleton_df_to_nx, heal_skeleton, skeleton_df_to_swc
-
 logger = logging.getLogger(__name__)
 DEFAULT_NEUPRINT_CLIENT = None
 NEUPRINT_CLIENTS = {}
 
+
 class NeuprintTimeoutError(HTTPError):
     pass
+
 
 def setup_debug_logging():
     """
@@ -228,7 +228,7 @@ def verbose_errors(f):
             # If the error response body is non-empty, show that in the traceback, too.
             # neuprint-http error messages are often helpful -- show them!
             if hasattr(ex, 'response_content_appended') or (ex.response is None and ex.request is None):
-                raise # Nothing to add to the exception.
+                raise  # Nothing to add to the exception.
 
             msg = ""
 
@@ -363,7 +363,6 @@ class Client:
         self.primary_rois = sorted(self.meta['primaryRois'])
         self.all_rois = _all_rois_from_meta(self.meta)
 
-
     def __repr__(self):
         s = f'Client("{self.server}", "{self.dataset}"'
         if not self.verify:
@@ -381,20 +380,18 @@ class Client:
         r.raise_for_status()
         return r
 
-
     def _fetch_raw(self, url, json=None, ispost=False):
         return self._fetch(url, json=json, ispost=ispost).content
-
 
     def _fetch_json(self, url, json=None, ispost=False):
         r = self._fetch(url, json=json, ispost=ispost)
         return ujson.loads(r.content)
 
-
     ##
     ## CUSTOM QUERIES
     ##
     ## Note: Transaction queries are not implemented here.  See admin.py
+    ##
 
     def fetch_custom(self, cypher, dataset="", format='pandas'):
         """
@@ -421,7 +418,6 @@ class Client:
         url = f"{self.server}/api/custom/custom"
         return self._fetch_cypher(url, cypher, dataset, format)
 
-
     def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
         """
         Fetch cypher from an endpoint.
@@ -433,8 +429,7 @@ class Client:
             msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
                    " which are not valid characters in cypher."
                    " Please replace them with ordinary quotes (e.g. 'foo' or \"foo\").\n"
-                   "Your query was:\n"
-                   + cypher)
+                   "Your query was:\n" + cypher)
             raise RuntimeError(msg)
 
         dataset = dataset or self.dataset
@@ -452,7 +447,6 @@ class Client:
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
 
-
     ##
     ## API-META
     ##
@@ -463,13 +457,11 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/available")
 
-
     def fetch_help(self):
         """
         Fetch auto-generated REST API documentation, as YAML text.
         """
         return self._fetch_raw(f"{self.server}/api/help/swagger.yaml").decode('utf-8')
-
 
     def fetch_server_info(self):
         """
@@ -477,13 +469,11 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/serverinfo")['IsPublic']
 
-
     def fetch_version(self):
         """
         Returns the version of the ``neuPrintHTTP`` server.
         """
         return self._fetch_json(f"{self.server}/api/version")['Version']
-
 
     ##
     ## DB-META
@@ -495,13 +485,11 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/database")
 
-
     def fetch_datasets(self):
         """
         Fetch basic information about the available datasets on the server.
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
-
 
     def fetch_instances(self):
         """
@@ -509,13 +497,11 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/instances")
 
-
     def fetch_db_version(self):
         """
         Fetch the database version
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/version")['Version']
-
 
     ##
     ## USER
@@ -528,7 +514,6 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/profile")
 
-
     def fetch_token(self):
         """
         Fetch your user authentication token.
@@ -540,7 +525,6 @@ class Client:
             this documentation.
         """
         return self._fetch_json(f"{self.server}/token")['token']
-
 
     ##
     ## Cached
@@ -574,7 +558,6 @@ class Client:
 
         return result['info'], conn_df, skel_df
 
-
     def fetch_roi_completeness(self, format='pandas'):
         """
         Fetch the pre-computed traced "completeness" statistics
@@ -595,7 +578,6 @@ class Client:
 
         df = pd.DataFrame(result['data'], columns=result['columns'])
         return df
-
 
     def fetch_roi_connectivity(self, format='pandas'):
         """
@@ -628,7 +610,6 @@ class Client:
         df = pd.DataFrame(weights, columns=['from_roi', 'to_roi', 'count', 'weight'])
         return df
 
-
     ##
     ## ROI MESHES
     ##
@@ -657,7 +638,6 @@ class Client:
             with open(export_path, 'wb') as f:
                 f.write(data)
         return data
-
 
     ##
     ## SKELETONS
@@ -695,6 +675,8 @@ class Client:
             - :py:func:`.skeleton_df_to_nx()`
             - :py:func:`.skeleton_df_to_swc()`
         """
+        from .skeleton import skeleton_df_to_nx, heal_skeleton, skeleton_df_to_swc, skeleton_swc_to_df
+
         try:
             body = int(body)
         except ValueError:
@@ -707,12 +689,7 @@ class Client:
         swc = self._fetch_raw(url, ispost=False).decode('utf-8')
 
         if heal or format != 'swc':
-            cols = ['rowId', 'node_type', 'x', 'y', 'z', 'radius', 'link']
-            lines = swc.split('\n')
-            lines = filter(lambda line: '#' not in line, lines)
-            swc_csv = '\n'.join(lines)
-            df = pd.read_csv(StringIO(swc_csv), delimiter=' ', engine='c', names=cols, header=None)
-            df = df.drop(columns=['node_type'])
+            df = skeleton_swc_to_df(swc)
 
         if heal:
             df = heal_skeleton(df)
@@ -734,7 +711,6 @@ class Client:
 
         raise AssertionError('Should not get here.')
 
-
     ##
     ## RAW KEY-VALUE
     ##
@@ -746,7 +722,6 @@ class Client:
         """
         url = f"{self.server}/api/raw/keyvalue/key/{instance}/{key}"
         return self._fetch_raw(url, ispost=False)
-
 
     def post_raw_keyvalue(self, instance, key, value):
         """
