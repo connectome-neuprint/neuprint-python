@@ -658,6 +658,10 @@ class Client:
                 via their pairwise nearest neighbors. See :py:func:`.heal_skeleton()`
                 for more details.
 
+                If you want the healing procedure to refrain from connecting very
+                distant fragments, set ``heal`` to a maximum allowed distance,
+                e.g. ``heal=1000.0``
+
             format (str):
                 Either 'pandas', 'swc' (similar to CSV), or 'nx' (``networkx.DiGraph``).
 
@@ -682,7 +686,6 @@ class Client:
         except ValueError:
             raise RuntimeError(f"Please pass an integer body ID, not '{body}'")
 
-        assert isinstance(heal, bool), "Bad argument: 'heal' should be a bool."
         assert format in ('swc', 'pandas', 'nx'), f'Invalid format: {format}'
 
         url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}?format=swc"
@@ -692,7 +695,7 @@ class Client:
             df = skeleton_swc_to_df(swc)
 
         if heal:
-            df = heal_skeleton(df)
+            df = heal_skeleton(df, heal)
             if export_path or format == 'swc':
                 swc = skeleton_df_to_swc(df)
 

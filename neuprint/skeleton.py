@@ -115,9 +115,9 @@ def skeleton_df_to_swc(df, export_path=None):
     return swc
 
 
-def heal_skeleton(skeleton_df):
+def heal_skeleton(skeleton_df, max_distance=np.inf):
     """
-    Ensure a skeleton consists of a single connected component.
+    Attempt to repair a fragmented skeleton into a single connected component.
 
     Rather than a single tree, skeletons from neuprint sometimes
     consist of multiple fragments, i.e. multiple connected
@@ -138,9 +138,23 @@ def heal_skeleton(skeleton_df):
         skeleton_df:
             DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
 
+        max_distance:
+            If a skeleton's fragments are very spatially distant, it may
+            not be desirable to connect them with a new edge.
+            This parameter specifies the maximum length of new edges
+            introduced by the healing procedure.  If a skeleton fragment
+            cannot be connected to the rest of the skeleton because it's
+            too far away, the skeleton will remain fragmented.
+
     Returns:
         DataFrame, with ``link`` column updated with updated edges.
     """
+    if max_distance is True:
+        max_distance = np.inf
+
+    if not max_distance:
+        max_distance = 0.0
+
     skeleton_df = skeleton_df.sort_values('rowId').reset_index(drop=True)
     g = skeleton_df_to_nx(skeleton_df, False, False)
 
@@ -189,8 +203,11 @@ def heal_skeleton(skeleton_df):
 
     # For each inter-fragment edge, add the corresponding
     # fine-grained edge between skeleton nodes in the original graph.
+    omit_edges = []
     for _u, _v, d in frag_edges:
         g.add_edge(d['node_a'], d['node_b'])
+        if d['distance'] > max_distance:
+            omit_edges.append((d['node_a'], d['node_b']))
 
     # Traverse in depth-first order to compute edges for final tree
     root = skeleton_df['rowId'].iloc[0]
@@ -199,6 +216,12 @@ def heal_skeleton(skeleton_df):
     _reorient_skeleton(skeleton_df, root, g)
     assert (skeleton_df['link'] == -1).sum() == 1
     assert skeleton_df['link'].iloc[0] == -1
+
+    # Delete edges that violated max_distance
+    for a,b in omit_edges:
+        q = '(rowId == @a and link == @b) or (rowId == @b and link == @a)'
+        idx = skeleton_df.query(q).index
+        skeleton_df.loc[idx, 'link'] = -1
 
     return skeleton_df
 

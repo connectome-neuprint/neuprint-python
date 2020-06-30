@@ -25,7 +25,7 @@ def linear_skeleton():
     """
     rows = np.arange(1,11)
     coords = np.zeros((10,3), dtype=int)
-    coords[:,0] = rows * 5
+    coords[:,0] = rows**2
     radii = rows.astype(np.float32)
     links = [-1, *range(1,10)]
 
@@ -99,6 +99,20 @@ def test_heal_skeleton(linear_skeleton):
     assert (healed_skeleton == linear_skeleton).all().all()
 
 
+def test_heal_skeleton_with_threshold(linear_skeleton):
+    broken_skeleton = linear_skeleton.copy()
+    broken_skeleton.loc[2, 'link'] = -1
+    broken_skeleton.loc[7, 'link'] = -1
+
+    healed_skeleton = heal_skeleton(broken_skeleton, 10.0)
+
+    # With a threshold of 10, the first break could be healed,
+    # but not the second.
+    expected_skeleton = linear_skeleton.copy()
+    expected_skeleton.loc[7, 'link'] = -1
+    assert (healed_skeleton == expected_skeleton).all().all()
+
+
 def test_fetch_skeleton(client):
     orig_df = fetch_skeleton(5813027016, False)
     healed_df = fetch_skeleton(5813027016, True)
@@ -106,7 +120,6 @@ def test_fetch_skeleton(client):
     assert len(orig_df) == len(healed_df)
     assert (healed_df['link'] == -1).sum() == 1
     assert healed_df['link'].iloc[0] == -1
-
 
 
 if __name__ == "__main__":
