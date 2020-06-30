@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.10 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.11 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.10
+                0.4.11
               </div>
             
           
@@ -229,7 +229,7 @@ follow these steps <strong>on a Linux machine</strong>:</p>
 
 <span class="c1"># Create an environment with the binder dependencies</span>
 <span class="nv">TUTORIAL_DEPS</span><span class="o">=</span><span class="s2">&quot;ipywidgets bokeh holoviews hvplot&quot;</span>
-<span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice-lib umap-learn scikit-learn matplotlib&quot;</span>
+<span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice umap-learn scikit-learn matplotlib&quot;</span>
 <span class="nv">BINDER_DEPS</span><span class="o">=</span><span class="s2">&quot;neuprint-python jupyterlab </span><span class="si">${</span><span class="nv">TUTORIAL_DEPS</span><span class="si">}</span><span class="s2"> </span><span class="si">${</span><span class="nv">SIMULATION_DEPS</span><span class="si">}</span><span class="s2">&quot;</span>
 conda create -n neuprint-python -c flyem-forge -c conda-forge <span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
 
