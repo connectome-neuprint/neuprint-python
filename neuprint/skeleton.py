@@ -17,7 +17,7 @@ from .client import inject_client
 @inject_client
 def fetch_skeleton(body, heal=False, export_path=None, format='pandas', *, client=None):
     """
-    Equivalent to :py:meth:`Client.fetch_skeleton()`.  See that function for details.
+    Equivalent to :py:meth:`.Client.fetch_skeleton()`.  See that function for details.
     """
     return client.fetch_skeleton(body, heal, export_path, format)
 
