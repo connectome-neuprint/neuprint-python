@@ -122,6 +122,11 @@ def test_fetch_skeleton(client):
     assert healed_df['link'].iloc[0] == -1
 
 
+@pytest.mark.skip("Need to write a test for skeleton_segments()")
+def test_skeleton_segments(linear_skeleton):
+    pass
+
+
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_skeleton']
     #args += ['-k', 'heal_skeleton']

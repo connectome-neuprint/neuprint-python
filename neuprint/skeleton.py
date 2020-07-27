@@ -360,3 +360,35 @@ def reorient_skeleton(skeleton_df, rowId=None, xyz=None, use_max_radius=False):
     assert rowId is not None, "You must specify a new root node"
 
     _reorient_skeleton(skeleton_df, rowId)
+
+
+def skeleton_segments(skeleton_df):
+    """
+    Compute a table of skeleton segments.
+
+    A skeleton dataframe is a table of nodes (points) and their parent nodes.
+
+    This function computes a table of segments, where each row lists both the
+    child and parent point, along with some attributes describing the segment:
+    length, average radius, and segment volume.
+    """
+    assert isinstance(skeleton_df, pd.DataFrame)
+
+    segment_df = skeleton_df.merge(skeleton_df[['rowId', 'link', *'xyz', 'radius']],
+                                   'inner',
+                                   left_on='link',
+                                   right_on='rowId',
+                                   suffixes=['', '_parent'])
+
+    child_points = segment_df[[*'xyz']].values
+    parent_points = segment_df[['x_parent', 'y_parent', 'z_parent']].values
+    segment_df['length'] = np.linalg.norm(child_points - parent_points, axis=1)
+    segment_df['avg_radius'] = segment_df.eval('(radius + radius_parent) / 2')
+
+    # Volume of a truncated cone:
+    # V = π * h * (R² * r² + R*r) / 3
+    PI = np.pi
+    e = '@PI * length * (radius_parent**2 + radius**2 + radius*radius_parent) / 3'
+    segment_df['volume'] = segment_df.eval(e)
+
+    return segment_df
