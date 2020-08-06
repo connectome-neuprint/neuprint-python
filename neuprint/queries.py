@@ -1608,7 +1608,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         syn_dfs.append(batch_syn_df)
 
     syn_df = pd.concat(syn_dfs, ignore_index=True)
-    assert syn_df.duplicated(syn_df.columns).sum() == 0
+    hashable_cols = [col for col, dtype in syn_df.dtypes.items() if dtype != object]
+    assert syn_df.duplicated(hashable_cols).sum() == 0
     return syn_df
 
 
