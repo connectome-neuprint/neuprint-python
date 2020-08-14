@@ -83,7 +83,18 @@ def skeleton_swc_to_df(swc):
     lines = swc.split('\n')
     lines = filter(lambda line: '#' not in line, lines)
     swc_csv = '\n'.join(lines)
-    df = pd.read_csv(StringIO(swc_csv), delimiter=' ', engine='c', names=cols, header=None)
+
+    # Compact dtypes save RAM when loading lots of skeletons
+    dtypes = {
+        'rowId': np.int32,
+        'node_type': np.int8,
+        'x': np.float32,
+        'y': np.float32,
+        'z': np.float32,
+        'radius': np.float32,
+        'link': np.int32,
+    }
+    df = pd.read_csv(StringIO(swc_csv), delimiter=' ', engine='c', names=cols, dtype=dtypes, header=None)
     df = df.drop(columns=['node_type'])
     return df
 
