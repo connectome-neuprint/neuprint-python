@@ -955,6 +955,13 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         return connections_df
 
     connections_df = _fetch_connections()
+    if len(connections_df) == 0:
+        # Return empty DataFrames, but with the correct dtypes
+        neuron_df = pd.DataFrame([], columns=['bodyId', 'instance', 'type'])
+        neuron_df = neuron_df.astype({'bodyId': int, 'instance': str, 'type': str})
+        roi_conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
+        roi_conn_df = roi_conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'roi': str, 'weight': int})
+        return neuron_df, roi_conn_df
 
     ##
     ## Post-process connections, construct roi_conn_df
@@ -1587,6 +1594,24 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                  1,
                                                  min_total_weight,
                                                  properties=[] )
+
+    if len(roi_conn_df) == 0:
+        # Return empty dataframe, but with the correct dtypes
+        dtypes = {
+            'bodyId_pre': np.dtype('int64'),
+            'bodyId_post': np.dtype('int64'),
+            'roi_pre': np.dtype('O'),
+            'roi_post': np.dtype('O'),
+            'x_pre': np.dtype('int32'),
+            'y_pre': np.dtype('int32'),
+            'z_pre': np.dtype('int32'),
+            'x_post': np.dtype('int32'),
+            'y_post': np.dtype('int32'),
+            'z_post': np.dtype('int32'),
+            'confidence_pre': np.dtype('float32'),
+            'confidence_post': np.dtype('float32')
+        }
+        return pd.DataFrame([], columns=dtypes.keys()).astype(dtypes)
 
     conn_df = (roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
                           .sort_values(['bodyId_pre', 'bodyId_post']))

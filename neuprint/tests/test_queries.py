@@ -142,6 +142,13 @@ def test_fetch_adjacencies(client):
     assert (neuron_df.fillna('') == neuron_df2.fillna('')).all().all()
     assert (roi_conn_df == roi_conn_df2).all().all()
 
+    # What happens if results are empty
+    neuron_df, roi_conn_df = fetch_adjacencies(879442155, 5813027103)
+    assert len(neuron_df) == 0
+    assert len(roi_conn_df) == 0
+    assert neuron_df.columns.tolist() == ['bodyId', 'instance', 'type']
+
+
 def test_fetch_meta(client):
     meta = fetch_meta()
     assert isinstance(meta, dict)
@@ -173,7 +180,12 @@ def test_fetch_synapse_connections(client):
     rois = ['PED(R)', 'SMP(R)']
     syn_df = fetch_synapse_connections(792368888, None, SC(rois=rois, primary_only=True))
     assert syn_df.eval('roi_pre in @rois and roi_post in @rois').all()
+    dtypes = syn_df.dtypes.to_dict()
 
+    # Empty results
+    syn_df = fetch_synapse_connections(879442155, 5813027103)
+    assert len(syn_df) == 0
+    assert syn_df.dtypes.to_dict() == dtypes
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
