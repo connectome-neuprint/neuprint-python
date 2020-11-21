@@ -39,7 +39,7 @@ install:
   - conda config --add channels conda-forge
   - conda config --add channels flyem-forge
   - conda update -q conda
-  - conda install -y conda-build
+  - conda install -y conda-build python=3.7
   - conda install -c conda-forge codecov
   - conda info -a
   - conda install -y --file dependencies.txt
@@ -47,7 +47,7 @@ install:
   - conda install -y doctr
 
 script:
-  conda build conda-recipe
+  conda build --python=3.7 conda-recipe
 
 after_success:
   - set -e
