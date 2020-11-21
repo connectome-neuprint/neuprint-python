@@ -574,9 +574,7 @@ class NeuronModel:
 
         title = 'FIBSEM simulation\n'
         data = title + self.spice_model + drive_str
-        p.stdin.write(data.encode())
-        p.stdin.close()
-        p.wait()
+        p.communicate(data.encode())
 
         """Read ngspice binary raw files. Return tuple of the data, and the
         plot metadata. The dtype of the data contains field names. This is
