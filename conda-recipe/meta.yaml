@@ -12,6 +12,8 @@ source:
 build:
   script: python setup.py install --single-version-externally-managed --record=record.txt
   noarch: python
+  script_env:
+    - NEUPRINT_APPLICATION_CREDENTIALS
 
 requirements:
   build:
