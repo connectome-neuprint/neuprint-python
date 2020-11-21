@@ -9,6 +9,17 @@ What Cypher Queries is my code using?
 Enable debug logging to see the cypher queries that are being sent to the neuPrint server.
 See :py:func:`.setup_debug_logging()` for details.
 
+How can I download the exact ROI shapes?
+----------------------------------------
+
+A volume containing the exact primary ROI region labels in hdf5 format can be `found here`_.
+Please see the enclosed README for details on how to read and interpret the volume.
+
+.. note::
+
+   The volume tarball is only 10MB to download, but loading the full uncompressed volume requires 2 GB of RAM.
+
+.. _found here: https://storage.cloud.google.com/hemibrain/v1.1/hemibrain-v1.1-primary-roi-segmentation.tar.gz
 
 Can this library be used with ``multiprocessing``?
 --------------------------------------------------

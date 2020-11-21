@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>FAQ &mdash; neuprint-python 0.4.11 documentation</title>
+  <title>FAQ &mdash; neuprint-python 0.4.12 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.11
+                0.4.12
               </div>
             
           
@@ -96,6 +96,7 @@
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#what-cypher-queries-is-my-code-using">What Cypher Queries is my code using?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-can-i-download-the-exact-roi-shapes">How can I download the exact ROI shapes?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#can-this-library-be-used-with-multiprocessing">Can this library be used with <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#where-can-i-find-help">Where can I find help?</a></li>
 </ul>
@@ -196,6 +197,15 @@
 <h2>What Cypher Queries is my code using?<a class="headerlink" href="#what-cypher-queries-is-my-code-using" title="Permalink to this headline">¶</a></h2>
 <p>Enable debug logging to see the cypher queries that are being sent to the neuPrint server.
 See <a class="reference internal" href="client.html#neuprint.client.setup_debug_logging" title="neuprint.client.setup_debug_logging"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_debug_logging()</span></code></a> for details.</p>
+</div>
+<div class="section" id="how-can-i-download-the-exact-roi-shapes">
+<h2>How can I download the exact ROI shapes?<a class="headerlink" href="#how-can-i-download-the-exact-roi-shapes" title="Permalink to this headline">¶</a></h2>
+<p>A volume containing the exact primary ROI region labels in hdf5 format can be <a class="reference external" href="https://storage.cloud.google.com/hemibrain/v1.1/hemibrain-v1.1-primary-roi-segmentation.tar.gz">found here</a>.
+Please see the enclosed README for details on how to read and interpret the volume.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The volume tarball is only 10MB to download, but loading the full uncompressed volume requires 2 GB of RAM.</p>
+</div>
 </div>
 <div class="section" id="can-this-library-be-used-with-multiprocessing">
 <h2>Can this library be used with <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code>?<a class="headerlink" href="#can-this-library-be-used-with-multiprocessing" title="Permalink to this headline">¶</a></h2>
