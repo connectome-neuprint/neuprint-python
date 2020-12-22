@@ -47,6 +47,7 @@ class SynapseCriteria:
         unknown_rois = {*rois} - {*client.all_rois}
         assert not unknown_rois, f"Unrecognized synapse rois: {unknown_rois}"
 
+        type = type or None
         assert type in ('pre', 'post', None), \
             f"Invalid synapse type: {type}.  Choices are 'pre' and 'post'."
 
