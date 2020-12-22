@@ -132,7 +132,7 @@ class NeuronCriteria:
                   status=None, cropped=None,
                   min_pre=0, min_post=0,
                   rois=None, inputRois=None, outputRois=None, min_roi_inputs=1, min_roi_outputs=1,
-                  label='Neuron', roi_req='all',
+                  label=None, roi_req='all',
                   client=None ):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
@@ -224,6 +224,9 @@ class NeuronCriteria:
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.
                 (In neuprint, all ``Neuron`` nodes are also ``Segment`` nodes.)
+                By default, ``'Neuron'`` is used, unless you provided a non-empty ``bodyId`` list.
+                In that case, ``'Segment'`` is the default. (It's assumed you're really interested
+                in the bodies you explicitly listed, whether or not they have the ``'Neuron'`` label.)
 
             client (:py:class:`neuprint.client.Client`):
                 Used to validate ROI names.
@@ -242,9 +245,15 @@ class NeuronCriteria:
             (f"matchvar contains invalid characters: '{matchvar}'. "
              "Did you mean to pass this as a type or instance?")
 
-        assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
         assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
             "bodyId should be an integer or list of integers"
+
+        if not label:
+            if len(bodyId) == 0:
+                label = 'Neuron'
+            else:
+                label = 'Segment'
+        assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
 
         assert not regex or len(instance) <= 1, \
             "Please provide only one regex pattern for instance"
