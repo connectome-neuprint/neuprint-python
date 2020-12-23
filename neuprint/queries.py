@@ -13,6 +13,7 @@ import ujson
 from .client import inject_client, NeuprintTimeoutError
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 from .synapsecriteria import SynapseCriteria
+from .mitocriteria import MitoCriteria
 from .utils import make_args_iterable, tqdm, trange, iter_batches
 
 
@@ -280,10 +281,19 @@ def fetch_neurons(criteria, *, client=None):
         of per-neuron-per-ROI synapse counts, with separate columns
         for ``pre`` (outputs) and ``post`` (inputs).
 
+        .. note::
+
+           The ``roi_counts_df``, the sum of the ``pre`` and ``post`` counts will be more than
+           the total ``pre`` and ``post`` values returned in ``neuron_df``.
+           That is, synapses are double-counted in ``roi_counts_df``.
+           This is because ROIs form a hierarchical structure, so each synapse intersects
+           more than one ROI. See :py:func:`.fetch_roi_hierarchy()` for more information.
+
     See also:
 
         :py:func:`.fetch_custom_neurons()` produces similar output,
         but permits you to supply your own cypher query directly.
+
 
     Example:
 
@@ -781,7 +791,6 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     # Ensure sources/targets are NeuronCriteria
     sources = _prepare_criteria(sources, 'n')
     targets = _prepare_criteria(targets, 'm')
-
 
     def _fetch_neurons(criteria):
         matchvar = criteria.matchvar
@@ -1293,6 +1302,163 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 @inject_client
 @neuroncriteria_args('neuron_criteria')
+def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, client=None):
+    """
+    Fetch mitochondria from a neuron or selection of neurons.
+
+    Args:
+
+        neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Determines which bodies from which to fetch mitochondria.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which mitochondria are returned, only which bodies are inspected.
+
+        mito_criteria (MitoCriteria):
+            Optional. Allows you to filter mitochondria by roi, mitoType, size.
+            See :py:class:`.MitoCriteria` for details.
+
+            If the criteria specifies ``primary_only=True`` only primary ROIs will be returned in the results.
+            If a mitochondrion does not intersect any primary ROI, it will be listed with an roi of ``None``.
+            (Since 'primary' ROIs do not overlap, each mitochondrion will be listed only once.)
+            Otherwise, all ROI names will be included in the results.
+            In that case, some mitochondria will be listed multiple times -- once per intersecting ROI.
+            If a mitochondria does not intersect any ROI, it will be listed with an roi of ``None``.
+
+        batch_size:
+            To improve performance and avoid timeouts, the mitochondria for multiple bodies
+            will be fetched in batches, where each batch corresponds to N bodies.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+
+        DataFrame in which each row represent a single synapse.
+        If ``primary_only=False`` was specified in ``mito_criteria``, some mitochondria
+        may be listed more than once, if they reside in more than one overlapping ROI.
+
+    Example:
+
+        .. code-block:: ipython
+
+            In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_synapses
+            ...:
+            ...: # Consider only neurons which innervate EB
+            ...: nc = NC(type='ExR.*', regex=True, rois=['EB'])
+            ...:
+            ...: # But return only large mitos from those neurons that reside in the FB or LAL(R)
+            ...: mc = MC(rois=['FB', 'LAL(R)'], size=100_000)
+            ...: fetch_mitochondria(nc, mc)
+            Out[1]:
+                    bodyId  mitoType     roi      x      y      z     size
+            0     1136865339         1  LAL(R)  15064  30810  22486   281960
+            1     1136865339         1  LAL(R)  15468  30634  22368   121608
+            2     1136865339         1  LAL(R)  15470  30518  21884   205256
+            3     1136865339         3  LAL(R)  14674  30472  22346   113504
+            4     1136865339         3  LAL(R)  14810  29996  22046   257184
+            ...          ...       ...     ...    ...    ...    ...      ...
+            2807  1259386264         1      FB  18926  24632  21046   159184
+            2808  1259386264         1      FB  22162  24474  22486   127968
+            2809  1259386264         3      FB  19322  24198  21952  1110888
+            2810  1259386264         1      FB  19272  23632  21728   428168
+            2811  1259386264         1      FB  19208  23442  21602   141928
+
+            [2812 rows x 7 columns]
+    """
+    mito_criteria = copy.copy(mito_criteria) or MitoCriteria()
+    mito_criteria.matchvar = 'm'
+    neuron_criteria.matchvar = 'n'
+
+    q = f"""
+        {neuron_criteria.global_with(prefix=8)}
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions(prefix=8)}
+        RETURN n.bodyId as bodyId
+    """
+    bodies = client.fetch_custom(q)['bodyId'].values
+
+    batch_dfs = []
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+        batch_criteria = copy.copy(neuron_criteria)
+        batch_criteria.bodyId = batch_bodies
+        batch_df = _fetch_mitos(batch_criteria, mito_criteria, client)
+        batch_dfs.append( batch_df )
+
+    if batch_dfs:
+        return pd.concat( batch_dfs, ignore_index=True )
+
+    # Return empty results, but with correct dtypes
+    dtypes = {'bodyId': np.dtype('int64'),
+              'mitoType': np.dtype('uint8'),
+              'roi': np.dtype('O'),
+              'x': np.dtype('int32'),
+              'y': np.dtype('int32'),
+              'z': np.dtype('int32'),
+              'size': np.dtype('int32')}
+
+    return pd.DataFrame([], columns=dtypes.keys()).astype(dtypes)
+
+
+def _fetch_mitos(neuron_criteria, mito_criteria, client):
+    if mito_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    # If the user specified rois to filter mitos by, but hasn't specified rois
+    # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
+    if mito_criteria.rois and not neuron_criteria.rois:
+        neuron_criteria.rois = {*mito_criteria.rois}
+        neuron_criteria.roi_req = 'any'
+
+    # Fetch results
+    cypher = dedent(f"""\
+        {neuron_criteria.global_with(prefix=8)}
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions('n', prefix=8)}
+
+        MATCH (n)-[:Contains]->(:ElementSet)-[:Contains]->(m:Element)
+
+        {mito_criteria.condition('n', 'm', prefix=8)}
+
+        RETURN n.bodyId as bodyId,
+               m.mitoType as mitoType,
+               m.size as size,
+               m.location.x as x,
+               m.location.y as y,
+               m.location.z as z,
+               apoc.map.removeKeys(m, ['location', 'mitoType', 'size']) as mito_info
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    mito_table = []
+    for body, mitoType, size, x, y, z, mito_info in data:
+        # Exclude non-primary ROIs if necessary
+        mito_rois = return_rois & {*mito_info.keys()}
+        # Fixme: Filter for the user's ROIs (drop duplicates)
+        for roi in mito_rois:
+            mito_table.append((body, mitoType, roi, x, y, z, size))
+
+        if not mito_rois:
+            mito_table.append((body, mitoType, None, x, y, z, size))
+
+    mito_df = pd.DataFrame(mito_table, columns=['bodyId', 'mitoType', 'roi', 'x', 'y', 'z', 'size'])
+
+    # Save RAM with smaller dtypes and interned strings
+    mito_df['mitoType'] = mito_df['mitoType'].astype(np.uint8)
+    mito_df['roi'] = mito_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    mito_df['x'] = mito_df['x'].astype(np.int32)
+    mito_df['y'] = mito_df['y'].astype(np.int32)
+    mito_df['z'] = mito_df['z'].astype(np.int32)
+    mito_df['size'] = mito_df['size'].astype(np.int32)
+    return mito_df
+
+
+@inject_client
+@neuroncriteria_args('neuron_criteria')
 def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, client=None):
     """
     Fetch synapses from a neuron or selection of neurons.
@@ -1394,7 +1560,19 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
         batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
         batch_dfs.append( batch_df )
 
-    return pd.concat( batch_dfs, ignore_index=True )
+    if batch_dfs:
+        return pd.concat( batch_dfs, ignore_index=True )
+
+    # Return empty results, but with correct dtypes
+    dtypes = {'bodyId': np.dtype('int64'),
+              'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
+              'roi': np.dtype('O'),
+              'x': np.dtype('int32'),
+              'y': np.dtype('int32'),
+              'z': np.dtype('int32'),
+              'confidence': np.dtype('float32')}
+
+    return pd.DataFrame([], columns=dtypes.keys()).astype(dtypes)
 
 
 def _fetch_synapses(neuron_criteria, synapse_criteria, client):

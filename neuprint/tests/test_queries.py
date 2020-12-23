@@ -3,11 +3,13 @@ import pandas as pd
 
 from neuprint import Client, default_client, set_default_client
 from neuprint import (NeuronCriteria as NC,
+                      MitoCriteria as MC,
                       SynapseCriteria as SC,
                       fetch_custom, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
-                      fetch_adjacencies, fetch_shortest_paths, fetch_synapses,
-                      fetch_synapse_connections)
+                      fetch_adjacencies, fetch_shortest_paths,
+                      fetch_mitochondria,
+                      fetch_synapses, fetch_synapse_connections)
 
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
@@ -164,21 +166,35 @@ def test_fetch_primary_rois(client):
     assert isinstance(primary_rois, list)
 
 
+def test_fetch_mitochondria(client):
+    nc = NC(type='ExR.*', regex=True, rois=['EB'])
+    mc = MC(rois=['FB', 'LAL(R)'], mitoType=1, size=100_000, primary_only=True)
+    mito_df = fetch_mitochondria(nc, mc)
+    assert set(mito_df['roi']) == {'FB', 'LAL(R)'}
+    assert (mito_df['mitoType'] == 1).all()
+    assert (mito_df['size'] >= 100_000).all()
+
+    neuron_df, _count_df = fetch_neurons(nc)
+    mito_df = mito_df.merge(neuron_df[['bodyId', 'type']], 'left', on='bodyId', suffixes=['_mito', '_body'])
+    assert mito_df['type'].isnull().sum() == 0
+    assert mito_df['type'].apply(lambda s: s.startswith('ExR')).all()
+
+
 def test_fetch_synapses(client):
-    nc = NC(type='ADL.*', regex=True, rois=['FB'])
-    sc = SC(rois=['LH(R)', 'SIP(R)'], primary_only=True)
+    nc = NC(type='ExR.*', regex=True, rois=['EB'])
+    sc = SC(rois=['FB', 'LAL(R)'], primary_only=True)
     syn_df = fetch_synapses(nc, sc)
-    assert set(syn_df['roi']) == {'LH(R)', 'SIP(R)'}
+    assert set(syn_df['roi']) == {'FB', 'LAL(R)'}
 
     neuron_df, _count_df = fetch_neurons(nc)
     syn_df = syn_df.merge(neuron_df[['bodyId', 'type']], 'left', on='bodyId', suffixes=['_syn', '_body'])
     assert syn_df['type_body'].isnull().sum() == 0
-    assert syn_df['type_body'].apply(lambda s: s.startswith('ADL')).all()
+    assert syn_df['type_body'].apply(lambda s: s.startswith('ExR')).all()
 
 
 def test_fetch_synapse_connections(client):
     rois = ['PED(R)', 'SMP(R)']
-    syn_df = fetch_synapse_connections(792368888, None, SC(rois=rois, primary_only=True))
+    syn_df = fetch_synapse_connections(792368888, None, SC(rois=rois, primary_only=True), batch_size=2)
     assert syn_df.eval('roi_pre in @rois and roi_post in @rois').all()
     dtypes = syn_df.dtypes.to_dict()
 
@@ -187,7 +203,8 @@ def test_fetch_synapse_connections(client):
     assert len(syn_df) == 0
     assert syn_df.dtypes.to_dict() == dtypes
 
+
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
-    #args += ['-k', 'fetch_adjacencies']
+    #args += ['-k', 'fetch_mitochondria']
     pytest.main(args)

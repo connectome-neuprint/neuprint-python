@@ -9,3 +9,4 @@ Queries API
    queries
    neuroncriteria
    synapsecriteria
+   mitocriteria
