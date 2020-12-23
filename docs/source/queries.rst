@@ -83,7 +83,7 @@ Mitochondria
 ------------
 
     fetch_mitochondria
-
+    fetch_synapses_and_closest_mitochondria
 
 Reconstruction Tools
 --------------------

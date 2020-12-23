@@ -8,7 +8,7 @@ from neuprint import (NeuronCriteria as NC,
                       fetch_custom, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
                       fetch_adjacencies, fetch_shortest_paths,
-                      fetch_mitochondria,
+                      fetch_mitochondria, fetch_synapses_and_closest_mitochondria,
                       fetch_synapses, fetch_synapse_connections)
 
 from neuprint.tests import NEUPRINT_SERVER, DATASET
@@ -192,6 +192,10 @@ def test_fetch_synapses(client):
     assert syn_df['type_body'].apply(lambda s: s.startswith('ExR')).all()
 
 
+def test_fetch_synapses_and_closest_mitochondria(client):
+    syn_mito_distances = fetch_synapses_and_closest_mitochondria(NC(type='ExR2'), SC(type='pre'))
+    assert len(syn_mito_distances), "Shouldn't be empty!"
+
 def test_fetch_synapse_connections(client):
     rois = ['PED(R)', 'SMP(R)']
     syn_df = fetch_synapse_connections(792368888, None, SC(rois=rois, primary_only=True), batch_size=2)
@@ -207,4 +211,5 @@ def test_fetch_synapse_connections(client):
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
     #args += ['-k', 'fetch_mitochondria']
+    #args += ['-k', 'fetch_synapses_and_closest_mitochondria']
     pytest.main(args)
