@@ -66,13 +66,13 @@ def copy_as_neuroncriteria(obj, client=None):
             'If passing a DataFrame as NeuronCriteria, it must have "bodyId" column'
         return NeuronCriteria(bodyId=obj['bodyId'].values, client=client)
 
+    if obj is None:
+        return NeuronCriteria(client=client)
+
+    if isinstance(obj, NeuronCriteria):
+        return copy.copy(obj)
+
     if not isinstance(obj, Collection) or isinstance(obj, str):
-        if obj is None:
-            return NeuronCriteria(client=client)
-
-        if isinstance(obj, NeuronCriteria):
-            return copy.copy(obj)
-
         if isinstance(obj, str):
             return NeuronCriteria(type=obj, instance=obj, client=client)
 
