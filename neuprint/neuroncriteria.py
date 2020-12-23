@@ -265,11 +265,11 @@ class NeuronCriteria:
         assert not regex or len(type) <= 1, \
             "Please provide only one regex pattern for type"
 
-        if not regex and isinstance(instance, str) and len(instance) == 1:
+        if not regex and instance and len(instance) == 1 and isinstance(instance[0], str):
             assert '.*' not in instance[0], \
                 f"instance appears to be a regular expression ('{instance[0]}'), but you didn't pass regex=True"
 
-        if not regex and isinstance(type, str) and len(type) == 1:
+        if not regex and type and len(type) == 1 and isinstance(type[0], str):
             assert '.*' not in type[0], \
                 f"type appears to be a regular expression ('{type[0]}'), but you didn't pass regex=True"
 
