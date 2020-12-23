@@ -79,6 +79,13 @@ Synapses
     fetch_synapses
     fetch_synapse_connections
 
+Mitochondria
+------------
+
+.. autosummary::
+
+    fetch_mitochondria
+    fetch_synapses_and_closest_mitochondria
 
 Reconstruction Tools
 --------------------

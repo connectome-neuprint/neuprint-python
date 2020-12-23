@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Simulation &mdash; neuprint-python 0.4.12+1.g1bdfc9f documentation</title>
+  <title>Simulation &mdash; neuprint-python 0.4.13 documentation</title>
   
 
   
@@ -39,7 +39,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Skeletons" href="skeleton.html" />
-    <link rel="prev" title="SynapseCriteria" href="synapsecriteria.html" /> 
+    <link rel="prev" title="MitoCriteria" href="mitocriteria.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.12+1.g1bdfc9f
+                0.4.13
               </div>
             
           
@@ -259,7 +259,7 @@ Install them from <code class="docutils literal notranslate"><span class="pre">c
 </table>
 <dl class="class">
 <dt id="neuprint.simulation.NeuronModel">
-<em class="property">class </em><code class="descclassname">neuprint.simulation.</code><code class="descname">NeuronModel</code><span class="sig-paren">(</span><em>bodyid</em>, <em>Ra=1.2</em>, <em>Rm=0.8</em>, <em>Cm=0.01</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L378"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.simulation.</code><code class="descname">NeuronModel</code><span class="sig-paren">(</span><em>bodyid</em>, <em>Ra=1.2</em>, <em>Rm=0.8</em>, <em>Cm=0.01</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L378"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Neuron model constructor.</p>
 <p>Create model of a neuron which can be simulated.
 in different ways.</p>
@@ -281,7 +281,7 @@ Examples: 0.2 (<code class="docutils literal notranslate"><span class="pre">Rm_L
 </table>
 <dl class="method">
 <dt id="neuprint.simulation.NeuronModel.simulate">
-<code class="descname">simulate</code><span class="sig-paren">(</span><em>max_per_region=10</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L690"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel.simulate" title="Permalink to this definition">¶</a></dt>
+<code class="descname">simulate</code><span class="sig-paren">(</span><em>max_per_region=10</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L690"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel.simulate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate passive model based on neuron inputs and outputs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -297,7 +297,7 @@ Examples: 0.2 (<code class="docutils literal notranslate"><span class="pre">Rm_L
 
 <dl class="method">
 <dt id="neuprint.simulation.NeuronModel.estimate_intra_neuron_delay">
-<code class="descname">estimate_intra_neuron_delay</code><span class="sig-paren">(</span><em>num_points=100</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L745"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel.estimate_intra_neuron_delay" title="Permalink to this definition">¶</a></dt>
+<code class="descname">estimate_intra_neuron_delay</code><span class="sig-paren">(</span><em>num_points=100</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L745"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.NeuronModel.estimate_intra_neuron_delay" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate delay between random parts of a neuron.</p>
 <p>This function produces a delay matrix for a set of points
 determined by pre or post-synaptic sites.  The result
@@ -323,7 +323,7 @@ proper weighting on ‘important’ parts of the neuron.</p>
 
 <dl class="class">
 <dt id="neuprint.simulation.TimingResult">
-<em class="property">class </em><code class="descclassname">neuprint.simulation.</code><code class="descname">TimingResult</code><span class="sig-paren">(</span><em>bodyid</em>, <em>delay_matrix</em>, <em>amplitude_matrix</em>, <em>neuron_io</em>, <em>neuron_conn_info</em>, <em>symmetric=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L50"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.simulation.</code><code class="descname">TimingResult</code><span class="sig-paren">(</span><em>bodyid</em>, <em>delay_matrix</em>, <em>amplitude_matrix</em>, <em>neuron_io</em>, <em>neuron_conn_info</em>, <em>symmetric=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L50"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult" title="Permalink to this definition">¶</a></dt>
 <dd><p>Timing result constructor.</p>
 <p>Provides methods for parsing timing results.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -342,7 +342,7 @@ the data can be used to cluster the provided io into different domains.</li>
 </table>
 <dl class="method">
 <dt id="neuprint.simulation.TimingResult.compute_region_delay_matrix">
-<code class="descname">compute_region_delay_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L81"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.compute_region_delay_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descname">compute_region_delay_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L81"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.compute_region_delay_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate delay and amplitude matrix based on primary brain regions.</p>
 <p>Averages the delay and amplitude between the sources and sinks of the
 timing results.</p>
@@ -358,7 +358,7 @@ timing results.</p>
 
 <dl class="method">
 <dt id="neuprint.simulation.TimingResult.plot_response_from_region">
-<code class="descname">plot_response_from_region</code><span class="sig-paren">(</span><em>brain_region</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L148"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.plot_response_from_region" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_response_from_region</code><span class="sig-paren">(</span><em>brain_region</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L148"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.plot_response_from_region" title="Permalink to this definition">¶</a></dt>
 <dd><p>Show neuron response to brain regions based on inputs from a given region.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -376,7 +376,7 @@ timing results.</p>
 
 <dl class="method">
 <dt id="neuprint.simulation.TimingResult.plot_neuron_domains">
-<code class="descname">plot_neuron_domains</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L200"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.plot_neuron_domains" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_neuron_domains</code><span class="sig-paren">(</span><em>path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L200"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.plot_neuron_domains" title="Permalink to this definition">¶</a></dt>
 <dd><p>Show how the different simulation points cluster in the neuron
 and their corresponding ROI.</p>
 <p>Plots the distance matrix in 2D using delay as the distance.</p>
@@ -392,7 +392,7 @@ and their corresponding ROI.</p>
 
 <dl class="method">
 <dt id="neuprint.simulation.TimingResult.estimate_neuron_domains">
-<code class="descname">estimate_neuron_domains</code><span class="sig-paren">(</span><em>num_components</em>, <em>plot=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/simulation.py#L256"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.estimate_neuron_domains" title="Permalink to this definition">¶</a></dt>
+<code class="descname">estimate_neuron_domains</code><span class="sig-paren">(</span><em>num_components</em>, <em>plot=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/simulation.py#L256"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.simulation.TimingResult.estimate_neuron_domains" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate the domains based on timing estimates.</p>
 <p>Note: only works for symmetric sink and source simulation.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -434,7 +434,7 @@ third tuple element, otherwise that element is <code class="docutils literal not
         <a href="skeleton.html" class="btn btn-neutral float-right" title="Skeletons" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="mitocriteria.html" class="btn btn-neutral float-left" title="MitoCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

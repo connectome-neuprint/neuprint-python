@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Skeletons &mdash; neuprint-python 0.4.12+1.g1bdfc9f documentation</title>
+  <title>Skeletons &mdash; neuprint-python 0.4.13 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.12+1.g1bdfc9f
+                0.4.13
               </div>
             
           
@@ -231,13 +231,13 @@
 <h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="neuprint.skeleton.fetch_skeleton">
-<code class="descclassname">neuprint.skeleton.</code><code class="descname">fetch_skeleton</code><span class="sig-paren">(</span><em>body</em>, <em>heal=False</em>, <em>export_path=None</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/skeleton.py#L17"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">fetch_skeleton</code><span class="sig-paren">(</span><em>body</em>, <em>heal=False</em>, <em>export_path=None</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/skeleton.py#L17"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
 <dd><p>Equivalent to <a class="reference internal" href="client.html#neuprint.client.Client.fetch_skeleton" title="neuprint.client.Client.fetch_skeleton"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a>.  See that function for details.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="neuprint.skeleton.heal_skeleton">
-<code class="descclassname">neuprint.skeleton.</code><code class="descname">heal_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em>, <em>max_distance=inf</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/skeleton.py#L129"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.heal_skeleton" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">heal_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em>, <em>max_distance=inf</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/skeleton.py#L129"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.heal_skeleton" title="Permalink to this definition">¶</a></dt>
 <dd><p>Attempt to repair a fragmented skeleton into a single connected component.</p>
 <p>Rather than a single tree, skeletons from neuprint sometimes
 consist of multiple fragments, i.e. multiple connected
@@ -275,7 +275,7 @@ too far away, the skeleton will remain fragmented.</li>
 
 <dl class="function">
 <dt id="neuprint.skeleton.reorient_skeleton">
-<code class="descclassname">neuprint.skeleton.</code><code class="descname">reorient_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em>, <em>rowId=None</em>, <em>xyz=None</em>, <em>use_max_radius=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/skeleton.py#L278"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.reorient_skeleton" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">reorient_skeleton</code><span class="sig-paren">(</span><em>skeleton_df</em>, <em>rowId=None</em>, <em>xyz=None</em>, <em>use_max_radius=False</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/skeleton.py#L278"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.reorient_skeleton" title="Permalink to this definition">¶</a></dt>
 <dd><p>Change the root node of a skeleton.</p>
 <p>In general, the root node of the skeletons in stored in neuprint is
 not particularly significant, so the directionality of the nodes
@@ -309,7 +309,7 @@ will be arbitrary.</p>
 
 <dl class="function">
 <dt id="neuprint.skeleton.skeleton_swc_to_df">
-<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_swc_to_df</code><span class="sig-paren">(</span><em>swc</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/skeleton.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_swc_to_df" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_swc_to_df</code><span class="sig-paren">(</span><em>swc</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/skeleton.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_swc_to_df" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a DataFrame from and SWC file.
 The ‘node_type’ column is discarded.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -327,7 +327,7 @@ or the contents of an SWC file (as a string).</td>
 
 <dl class="function">
 <dt id="neuprint.skeleton.skeleton_df_to_swc">
-<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_df_to_swc</code><span class="sig-paren">(</span><em>df</em>, <em>export_path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/skeleton.py#L102"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_df_to_swc" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_df_to_swc</code><span class="sig-paren">(</span><em>df</em>, <em>export_path=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/skeleton.py#L102"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_df_to_swc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an SWC file from a skeleton DataFrame.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -348,7 +348,7 @@ or the contents of an SWC file (as a string).</td>
 
 <dl class="function">
 <dt id="neuprint.skeleton.skeleton_df_to_nx">
-<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em>, <em>with_attributes=True</em>, <em>directed=True</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/skeleton.py#L25"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.skeleton.</code><code class="descname">skeleton_df_to_nx</code><span class="sig-paren">(</span><em>df</em>, <em>with_attributes=True</em>, <em>directed=True</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/skeleton.py#L25"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.skeleton.skeleton_df_to_nx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a <code class="docutils literal notranslate"><span class="pre">networkx.Graph</span></code> from a skeleton DataFrame.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
