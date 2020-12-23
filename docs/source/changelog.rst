@@ -1,6 +1,7 @@
 Changelog
 =========
 
+- ``NeuronCriteria``: Added ``cellBodyFiber`` parameter.
 0.4.12 / 2020-11-21
 -------------------
 
