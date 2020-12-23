@@ -382,7 +382,7 @@ def fetch_custom_neurons(q, *, client=None):
             Custom query. Must match a neuron named ``n``,
             and must ``RETURN n``.
 
-            .. code-block::
+            .. code-block:: cypher
 
                 ...
                 MATCH (n :Neuron)

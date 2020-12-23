@@ -82,6 +82,8 @@ Synapses
 Mitochondria
 ------------
 
+.. autosummary::
+
     fetch_mitochondria
     fetch_synapses_and_closest_mitochondria
 

@@ -4,12 +4,13 @@ neuprint-python
 .. _intro:
 
 
-Introduction to neuPrint and ``neuprint-python``
+Introduction to neuPrint+ and ``neuprint-python``
 ------------------------------------------------
 
-The `neuPrint project <https://github.com/connectome-neuprint>`_ defines
+The `neuPrint+ project <https://github.com/connectome-neuprint>`_ defines
 a graph database structure and suite of tools for storing and analyzing
-connectomic data.
+inter- and intra-cellular interactions.  It supports various data analyses,
+especially those related to connectomic datasets.
 
 The best way to become acquainted with neuPrint's capabilities and data
 model is to experiment with a public neuprint database via the neuprint
@@ -39,6 +40,8 @@ Otherwise, use ``pip``:
 .. code-block:: bash
 
     pip install neuprint-python
+
+For developers, the ``neuprint-python`` `source code can be found here <https://github.com/connectome-neuprint/neuprint-python>`_.
 
 Contents
 --------

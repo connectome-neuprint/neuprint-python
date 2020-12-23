@@ -27,9 +27,9 @@ class MitoCriteria:
 
             mitoType:
                 If provided, limit the results to mitochondria of the specified type.
-                Either ``1``,``2``, or ``3``, OR the equivalent name ``'dark'``,
+                Either ``1``, ``2``, or ``3``, OR the equivalent name ``'dark'``,
                 ``'light'``, or ``'medium'``, which will be translated by neuprint-python
-                to ``1``,``2, or `3``, respectively.
+                to ``1``, ``2``, or `3``, respectively.
                 (Note that in the hemibrain mito data, ``medium=3``)
 
             size:

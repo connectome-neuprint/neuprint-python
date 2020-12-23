@@ -4,9 +4,9 @@ Changelog
 0.4.13 / 2020-11-22
 -------------------
 
-- ``NeuronCriteria``: Added ``cellBodyFiber`` parameter.
 - ``SynapseCriteria``: Changed the default value of ``primary_only`` to ``False``,
   since it may been counter-intuitive to obtain duplicate results by default.
+- ``NeuronCriteria``: Added ``cellBodyFiber`` parameter. (Philipp Shlegel #13)
 - Added mitochondria queries
 
 0.4.12 / 2020-11-21
