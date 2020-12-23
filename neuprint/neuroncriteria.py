@@ -184,7 +184,7 @@ class NeuronCriteria:
 
             cellBodyFiber (str or list of str):
                 Matches for the neuron ``cellBodyFiber`` field.  To search for neurons
-                with no CBF at all, use ``status=[None]``.
+                with no CBF at all, use ``cellBodyFiber=[None]``.
 
             status (str or list of str):
                 Matches for the neuron ``status`` field.  To search for neurons with no status
