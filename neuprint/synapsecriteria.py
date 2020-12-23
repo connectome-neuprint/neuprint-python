@@ -5,14 +5,14 @@ from .client import inject_client
 
 class SynapseCriteria:
     """
-    Specifies which fields to filter by when searching for a Synapses.
+    Specifies which fields to filter by when searching for Synapses.
     This class does not send queries itself, but you use it to specify search
     criteria for various query functions.
     """
 
     @inject_client
     @make_args_iterable(['rois'])
-    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=0.0, primary_only=False, client=None):
+    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=0.0, primary_only=True, client=None):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
 
@@ -33,13 +33,16 @@ class SynapseCriteria:
 
             primary_only (boolean):
                 If True, only include primary ROI names in the results.
+                Disable this with caution.
 
                 Note:
                     This parameter does NOT filter by ROI. (See the ``rois`` argument for that.)
-                    It merely determines whether or each synapse should be associated with exactly
+                    It merely determines whether or not each synapse should be associated with exactly
                     one ROI in the query output, or with multiple ROIs (one for every non-primary
                     ROI the synapse intersects).
 
+                    If you set ``primary_only=False``, then the table will contain duplicate entries
+                    for each synapse -- one per intersecting ROI.
             client:
                 Used to validate ROI names.
                 If not provided, the global default :py:class:`.Client` will be used.
