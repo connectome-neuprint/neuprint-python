@@ -1476,6 +1476,11 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
     For a set of synapses from a selection of neurons and also return
     their nearest mitocondria (by path-length within the neuron segment).
 
+    Note:
+        Some synapses have no nearby mitochondria, possibly due to
+        fragmented segmentation around the synapse point.
+        Such synapses ARE NOT RETURNED by this function. They're omitted.
+
     Args:
 
         neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
@@ -2230,21 +2235,31 @@ def fetch_downstream_orphan_tasks(criteria, *, client=None):
             44840   759685279   1129418900              1        None          7757                1427                  6330           0.183963                 11          0.185381
 
     """
+    # Find all downstream segments, along with the status of all upstream and downstream bodies.
     status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment'), properties=['status'], client=client)
 
+    # That table is laid out per-ROI, but we don't care about ROI. Aggregate.
     conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+
+    # Sort connections from strong to weak.
     conn_df.sort_values(['bodyId_pre', 'weight', 'bodyId_post'], ascending=[True, False, True], inplace=True)
     conn_df.reset_index(drop=True, inplace=True)
 
+    # Append status column.
     conn_df = conn_df.merge(status_df, left_on='bodyId_post', right_on='bodyId').drop(columns={'bodyId'})
+
+    # Drop non-orphans.
     conn_df.query('status != "Traced"', inplace=True)
     conn_df.rename(columns={'status': 'status_post', 'weight': 'orphan_weight'}, inplace=True)
 
+    # Calculate current output completeness
     completeness_df = fetch_output_completeness(criteria, client=client)
     completeness_df = completeness_df.rename(columns={'completeness': 'orig_completeness',
                                                       'traced_weight': 'orig_traced_weight',
                                                       'untraced_weight': 'orig_untraced_weight'})
 
+    # Calculate the potential output completeness we would
+    # achieve if these orphans became traced, one-by-one.
     conn_df = conn_df.merge(completeness_df, 'left', left_on='bodyId_pre', right_on='bodyId').drop(columns=['bodyId'])
     conn_df['cum_orphan_weight'] = conn_df.groupby('bodyId_pre')['orphan_weight'].cumsum()
     conn_df['cum_completeness'] = conn_df.eval('(orig_traced_weight + cum_orphan_weight) / total_weight')
