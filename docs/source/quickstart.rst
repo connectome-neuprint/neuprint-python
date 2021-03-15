@@ -38,8 +38,8 @@ To obtain your authorization token, follow these steps:
 
     1. Navigate your web browser to the neuprint server address.
     2. Log in.
-    3. Using the account menu in the upper right-hand corner, select "Auth Token" as shown in the screenshot below.
-    4. Copy the entire token
+    3. Using the account menu in the upper right-hand corner, select "Account" as shown in the screenshot below.
+    4. Copy the entire auth token.
 
 
 .. image:: _static/token-screenshot.png
