@@ -18,7 +18,7 @@ from .utils import make_args_iterable, tqdm, trange, iter_batches
 
 
 NEURON_COLS = ['bodyId', 'instance', 'type',
-               'pre', 'post', 'size',
+               'pre', 'post', 'downstream', 'upstream', 'mito', 'size',
                'status', 'cropped', 'statusLabel',
                'cellBodyFiber',
                'somaRadius', 'somaLocation',
@@ -463,9 +463,14 @@ def _process_neuron_df(neuron_df, client):
         for roi, counts in row.roiInfo.items():
             pre = counts.get('pre', 0)
             post = counts.get('post', 0)
-            roi_counts.append( (row.bodyId, roi, pre, post) )
+            downstream = counts.get('downstream', 0)
+            upstream = counts.get('upstream', 0)
+            mito = counts.get('mito', 0)
 
-    roi_counts_df = pd.DataFrame(roi_counts, columns=['bodyId', 'roi', 'pre', 'post'])
+            roi_counts.append( (row.bodyId, roi, pre, post, downstream, upstream, mito) )
+
+    cols = ['bodyId', 'roi', 'pre', 'post', 'downstream', 'upstream', 'mito']
+    roi_counts_df = pd.DataFrame(roi_counts, columns=cols)
     return neuron_df, roi_counts_df
 
 
