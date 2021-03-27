@@ -1462,7 +1462,7 @@ def _fetch_mitos(neuron_criteria, mito_criteria, client):
     mito_df = pd.DataFrame(mito_table, columns=cols)
 
     # Save RAM with smaller dtypes and interned strings
-    mito_df['mitoType'] = mito_df['mitoType'].astype(np.uint8)
+    mito_df['mitoType'] = mito_df['mitoType'].apply(lambda s: sys.intern(s) if s else s)
     mito_df['roi'] = mito_df['roi'].apply(lambda s: sys.intern(s) if s else s)
     mito_df['x'] = mito_df['x'].astype(np.int32)
     mito_df['y'] = mito_df['y'].astype(np.int32)
@@ -1478,7 +1478,7 @@ def _fetch_mitos(neuron_criteria, mito_criteria, client):
 @neuroncriteria_args('neuron_criteria')
 def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=None, *, batch_size=10, client=None):
     """
-    For a set of synapses from a selection of neurons and also return
+    Fetch a set of synapses from a selection of neurons and also return
     their nearest mitocondria (by path-length within the neuron segment).
 
     Note:
@@ -1615,7 +1615,7 @@ def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, 
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions('n', prefix=8)}
 
-        MATCH (n)-[:Contains]->(ss:SynapseSet)-[:Contains]->(s:Synapse)-[c:CloseTo]->(m:Element {{type: "mitochondria"}})
+        MATCH (n)-[:Contains]->(ss:SynapseSet)-[:Contains]->(s:Synapse)-[c:CloseTo]->(m:Element {{type: "mitochondrion"}})
 
         {synapse_criteria.condition('n', 's', 'm', 'c', prefix=8)}
         // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
@@ -1666,9 +1666,9 @@ def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, 
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
     syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
-    syn_df['mitoType'] = syn_df['mitoType'].astype(np.uint8)
+    syn_df['mitoType'] = syn_df['mitoType'].apply(lambda s: sys.intern(s) if s else s)
     syn_df['distance'] = syn_df['distance'].astype(np.float32)
-    syn_df['size'] = syn_df['mitoType'].astype(np.int32)
+    syn_df['size'] = syn_df['size'].astype(np.int32)
     syn_df['mx'] = syn_df['mx'].astype(np.int32)
     syn_df['my'] = syn_df['my'].astype(np.int32)
     syn_df['mz'] = syn_df['mz'].astype(np.int32)

@@ -27,10 +27,8 @@ class MitoCriteria:
 
             mitoType:
                 If provided, limit the results to mitochondria of the specified type.
-                Either ``1``, ``2``, or ``3``, OR the equivalent name ``'dark'``,
-                ``'light'``, or ``'medium'``, which will be translated by neuprint-python
-                to ``1``, ``2``, or `3``, respectively.
-                (Note that in the hemibrain mito data, ``medium=3``)
+                Either ``dark``, ``medium``, or ``light``.
+                (Neuroglancer users: Note that in the hemibrain mito segmentation, ``medium=3``)
 
             size:
                 Specifies a minimum size (in voxels) for mitochondria returned in the results.
@@ -41,7 +39,7 @@ class MitoCriteria:
 
                 Note:
                     This parameter does NOT filter by ROI. (See the ``rois`` argument for that.)
-                    It merely determines whether or not each mitochondria should be associated with exactly
+                    It merely determines whether or not each mitochondrion should be associated with exactly
                     one ROI in the query output, or with multiple ROIs (one for every non-primary
                     ROI the mitochondrion intersects).
 
@@ -56,12 +54,8 @@ class MitoCriteria:
         assert not unknown_rois, f"Unrecognized mito rois: {unknown_rois}"
 
         mitoType = mitoType or None
-        if isinstance(mitoType, str):
-            mito_type_names = {'dark': 1, 'light': 2, 'medium': 3}
-            assert mitoType in mito_type_names, \
-                f"Invalid mitoType name: {mitoType}. Choices are : {[*mito_type_names.keys()]}"
-            mitoType = mito_type_names[mitoType]
-        assert mitoType in [None, 1, 2, 3], f"Invalid mitoType: {mitoType}."
+        assert mitoType in (None, 'dark', 'medium', 'light'), \
+            f"Invalid mitoType: {mitoType}."
 
         self.matchvar = matchvar
         self.rois = rois
@@ -86,7 +80,7 @@ class MitoCriteria:
         if isinstance(prefix, int):
             prefix = ' '*prefix
 
-        type_expr = f'{self.matchvar}.type = "mitochondria"'
+        type_expr = f'{self.matchvar}.type = "mitochondrion"'
         roi_expr = size_expr = mitoType_expr = ""
 
         if self.rois:
@@ -96,7 +90,7 @@ class MitoCriteria:
             size_expr = f'({self.matchvar}.size >= {self.size})'
 
         if self.mitoType:
-            mitoType_expr = f"({self.matchvar}.mitoType = {self.mitoType})"
+            mitoType_expr = f"({self.matchvar}.mitoType = '{self.mitoType}')"
 
         exprs = [*filter(None, [type_expr, roi_expr, size_expr, mitoType_expr])]
 
@@ -132,7 +126,7 @@ class MitoCriteria:
             args.append("rois=[" + ", ".join(f"'{roi}'" for roi in self.rois) + "]")
 
         if self.mitoType:
-            args.append(f"mitoType={self.type}")
+            args.append(f"mitoType='{self.type}'")
 
         if self.size:
             args.append(f"size={self.size}")

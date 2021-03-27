@@ -168,10 +168,10 @@ def test_fetch_primary_rois(client):
 
 def test_fetch_mitochondria(client):
     nc = NC(type='ExR.*', regex=True, rois=['EB'])
-    mc = MC(rois=['FB', 'LAL(R)'], mitoType=1, size=100_000, primary_only=True)
+    mc = MC(rois=['FB', 'LAL(R)'], mitoType='dark', size=100_000, primary_only=True)
     mito_df = fetch_mitochondria(nc, mc)
     assert set(mito_df['roi']) == {'FB', 'LAL(R)'}
-    assert (mito_df['mitoType'] == 1).all()
+    assert (mito_df['mitoType'] == 'dark').all()
     assert (mito_df['size'] >= 100_000).all()
 
     neuron_df, _count_df = fetch_neurons(nc)
