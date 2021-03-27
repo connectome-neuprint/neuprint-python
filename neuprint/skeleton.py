@@ -15,14 +15,14 @@ from .client import inject_client
 
 
 @inject_client
-def fetch_skeleton(body, heal=False, export_path=None, format='pandas', *, client=None):
+def fetch_skeleton(body, heal=False, export_path=None, format='pandas', with_distances=False, *, client=None):
     """
     Equivalent to :py:meth:`.Client.fetch_skeleton()`.  See that function for details.
     """
-    return client.fetch_skeleton(body, heal, export_path, format)
+    return client.fetch_skeleton(body, heal, export_path, format, with_distances)
 
 
-def skeleton_df_to_nx(df, with_attributes=True, directed=True):
+def skeleton_df_to_nx(df, with_attributes=True, directed=True, with_distances=False):
     """
     Create a ``networkx.Graph`` from a skeleton DataFrame.
 
@@ -37,6 +37,10 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True):
             If True, return ``nx.DiGraph``, otherwise ``nx.Graph``.
             Edges will point from child to parent.
 
+        with_distances:
+            If True, add an edge attribute 'distance' indicating the
+            euclidean distance between skeleton nodes.
+
     Returns:
         ``nx.DiGraph`` or ``nx.Graph``
     """
@@ -48,14 +52,41 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True):
     if with_attributes:
         for row in df.itertuples(index=False):
             g.add_node(row.rowId, x=row.x, y=row.y, z=row.z, radius=row.radius)
-            if row.link != -1:
-                g.add_edge(row.rowId, row.link)
     else:
-        df = df[['rowId', 'link']].sort_values(['rowId', 'link'])
         g.add_nodes_from(df['rowId'].sort_values())
-        g.add_edges_from(df.query('link != -1').values)
+
+    if with_distances:
+        edges_df = df[['rowId', 'link']].copy()
+        edges_df['distance'] = calc_segment_distances(df)
+        edges_df = edges_df.query('link != -1').sort_values(['rowId', 'link'])
+        g.add_weighted_edges_from(edges_df.itertuples(index=False), 'distance')
+    else:
+        edges_df = df.query('link != -1')[['rowId', 'link']]
+        edges_df = edges_df.sort_values(['rowId', 'link'])
+        g.add_edges_from(edges_df.values)
 
     return g
+
+
+def calc_segment_distances(df):
+    """
+    For each node (row) in the given skeleton DataFrame,
+    compute euclidean distance from the node to its parent (link) node.
+    Root nodes (i.e. when link == -1) will be assigned a distance of np.inf.
+
+    Returns:
+        np.ndarray
+    """
+    # Append parent (link) columns to each row by matching
+    # each row's 'link' ID with the parent's 'rowId'.
+    edges_df = df[['rowId', 'link', *'xyz']].merge(
+        df[['rowId', *'xyz']], 'left',
+        left_on='link', right_on='rowId', suffixes=['', '_link'])
+
+    diff = edges_df[[*'xyz']] - edges_df[['x_link', 'y_link', 'z_link']].values
+    distances = np.linalg.norm(diff, axis=1).astype(np.float32)
+    distances[np.isnan(distances)] = np.inf
+    return distances
 
 
 def skeleton_swc_to_df(swc):

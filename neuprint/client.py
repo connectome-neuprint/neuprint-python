@@ -642,7 +642,7 @@ class Client:
     ##
     ## SKELETONS
     ##
-    def fetch_skeleton(self, body, heal=False, export_path=None, format='pandas'):
+    def fetch_skeleton(self, body, heal=False, export_path=None, format='pandas', with_distances=False):
         """
         Fetch the skeleton for a neuron or segment.
 
@@ -669,6 +669,15 @@ class Client:
                 Optional. Writes the ``.swc`` file to disk.
                 (SWC format is written, regardless of the returned ``format``.)
 
+            with_distances:
+                Only valid when format is ``pandas`` or ``nx``.
+                If True, a 'distance' column (or edge attribute) will be added
+                to the dataframe (or nx.Graph), indicating the distances from each
+                node to its parent node.
+                In DataFrame results, root nodes will be assigned a distance of ``np.inf``.
+                Distances are computed AFTER healing is performed.
+                Distances will not be present in any exported SWC file.
+
         Returns:
 
             Either a string (swc), a DataFrame (pandas), or ``networkx.DiGraph`` (nx).
@@ -679,7 +688,7 @@ class Client:
             - :py:func:`.skeleton_df_to_nx()`
             - :py:func:`.skeleton_df_to_swc()`
         """
-        from .skeleton import skeleton_df_to_nx, heal_skeleton, skeleton_df_to_swc, skeleton_swc_to_df
+        from .skeleton import skeleton_df_to_nx, heal_skeleton, skeleton_df_to_swc, skeleton_swc_to_df, calc_segment_distances
 
         try:
             body = int(body)
@@ -687,6 +696,8 @@ class Client:
             raise RuntimeError(f"Please pass an integer body ID, not '{body}'")
 
         assert format in ('swc', 'pandas', 'nx'), f'Invalid format: {format}'
+        assert not with_distances or format in ('pandas', 'nx'), \
+            f"The with_distances option can only be used with the 'pandas' or 'nx' output formats, not {format}"
 
         url = f"{self.server}/api/skeletons/skeleton/{self.dataset}/{body}?format=swc"
         swc = self._fetch_raw(url, ispost=False).decode('utf-8')
@@ -707,10 +718,12 @@ class Client:
             return swc
 
         if format == 'pandas':
+            if with_distances:
+                df['distance'] = calc_segment_distances(df)
             return df
 
         if format == 'nx':
-            return skeleton_df_to_nx(df)
+            return skeleton_df_to_nx(df, with_distances=with_distances)
 
         raise AssertionError('Should not get here.')
 
