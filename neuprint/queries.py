@@ -2053,26 +2053,19 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     target_syn_crit.type = 'post'
 
     criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
+    combined_conditions = NeuronCriteria.combined_conditions(
+        [source_criteria, target_criteria],
+        ['n', 'e', 'm', 'ns', 'ms', *criteria_globals],
+        prefix=8)
 
     # Fetch results
     cypher = dedent(f"""\
         {NeuronCriteria.combined_global_with((source_criteria, target_criteria), prefix=8)}
         MATCH (n:{source_criteria.label})-[e:ConnectsTo]->(m:{target_criteria.label}),
-              (n)-[:Contains]->(nss:SynapseSet),
-              (m)-[:Contains]->(mss:SynapseSet),
-              (nss)-[:ConnectsTo]->(mss),
-              (nss)-[:Contains]->(ns:Synapse),
-              (mss)-[:Contains]->(ms:Synapse),
-              (ns)-[:SynapsesTo]->(ms)
+              (n)-[:Contains]->(nss:SynapseSet)-[:ConnectsTo]->(mss:SynapseSet)<-[:Contains]-(m),
+              (nss)-[:Contains]->(ns:Synapse)-[:SynapsesTo]->(ms:Synapse)<-[:Contains]-(mss)
 
-        {source_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', *criteria_globals, prefix=8)}
-
-        // Artificial break in the query flow to fool the query
-        // planner into avoiding a Cartesian product.
-        // This improves performance considerably in some cases.
-        WITH {','.join(['n', 'e', 'm', 'ns', 'ms', *criteria_globals])}, true as _
-
-        {target_criteria.all_conditions('n', 'e', 'm', 'ns', 'ms', prefix=8)}
+        {combined_conditions}
 
         WITH n, m, ns, ms, e
         WHERE e.weight >= {min_total_weight}
