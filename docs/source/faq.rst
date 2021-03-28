@@ -3,16 +3,52 @@
 FAQ
 ===
 
-What Cypher Queries is my code using?
--------------------------------------
+Why use this API? Why not just use plain Cypher?
+------------------------------------------------
+
+Cypher is a powerful language for querying the neuprint database,
+and there will always be some needs that can only be satisfed with
+a custom-tailored Cypher query.
+
+However, there are some advantages that come from using the higher-level
+API provided in ``neuprint-python``:
+
+* To use Cypher, you need an understanding of the neuprint data model.
+  It's not too complex, but for many users, basic neuron attributes and
+  connection information is enough.
+* Some queries are difficult to specify.  For example, efficiently filtering neurons
+  by ``inputRoi`` or ``outputRoi`` is not trivial.  But ``NeuronCriteria`` handles that for you.
+* The ``neuprint-python`` API uses reasonable default parameters,
+  which aren't always obvious in raw Cypher queries.
+* ``neuprint-python`` saves you from certain nuisance tasks, like converting ``roiInfo``
+  from JSON data into a DataFrame for easy analysis.
+* When a query might return a large amount of data, it's often critical to break the query
+  into batches, to avoid timeouts from the server.  For functions in which that is likely to occur,
+  ``neuprint-python`` implements batching for you.
+
+Nonetheless, if you need to run a query that isn't conveniently
+supported by the high-level API in this library,
+or you simply prefer to write your own Cypher,
+then feel free to use :py:meth:`.Client.fetch_custom()`.
+
+
+What Cypher queries are being used by this code internally?
+-----------------------------------------------------------
 
 Enable debug logging to see the cypher queries that are being sent to the neuPrint server.
 See :py:func:`.setup_debug_logging()` for details.
 
-How can I download the exact ROI shapes?
-----------------------------------------
 
-A volume containing the exact primary ROI region labels in hdf5 format can be `found here`_.
+Where are the release notes for the *data*?
+-------------------------------------------
+
+Please see the `neuprint dataset release notes and errata <https://neuprint.janelia.org/releasenotes>`_.
+
+
+How can I download the exact Hemibrain ROI shapes?
+--------------------------------------------------
+
+A volume containing the exact primary ROI region labels for the hemibrain in hdf5 format can be `found here`_.
 Please see the enclosed README for details on how to read and interpret the volume.
 
 .. note::
@@ -20,6 +56,7 @@ Please see the enclosed README for details on how to read and interpret the volu
    The volume tarball is only 10MB to download, but loading the full uncompressed volume requires 2 GB of RAM.
 
 .. _found here: https://storage.cloud.google.com/hemibrain/v1.1/hemibrain-v1.1-primary-roi-segmentation.tar.gz
+
 
 Can this library be used with ``multiprocessing``?
 --------------------------------------------------
@@ -36,6 +73,7 @@ a separate client for each thread/process in your program.
 
     Running many queries in parallel can place a heavy load the neuprint server.
     Please be considerate to other users, and limit the number of parallel queries you make.
+
 
 Where can I find help?
 ----------------------
