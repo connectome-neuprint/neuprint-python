@@ -5,7 +5,7 @@ neuprint-python
 
 
 Introduction to neuPrint+ and ``neuprint-python``
-------------------------------------------------
+-------------------------------------------------
 
 The `neuPrint+ project <https://github.com/connectome-neuprint>`_ defines
 a graph database structure and suite of tools for storing and analyzing

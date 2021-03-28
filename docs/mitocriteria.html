@@ -3,11 +3,11 @@
 <!DOCTYPE html>
 <html class="writer-html4" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>MitoCriteria &mdash; neuprint-python 0.4.13 documentation</title>
+  <title>MitoCriteria &mdash; neuprint-python 0.4.14 documentation</title>
   
 
   
@@ -17,7 +17,10 @@
 
   
   
+
   
+  
+
   
 
   
@@ -53,7 +56,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
+            <a href="index.html" class="icon icon-home"> neuprint-python
           
 
           
@@ -63,7 +66,7 @@
             
             
               <div class="version">
-                0.4.13
+                0.4.14
               </div>
             
           
@@ -150,6 +153,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -165,7 +170,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/mitocriteria.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -207,7 +212,7 @@
 <span id="id1"></span><h1>MitoCriteria<a class="headerlink" href="#mitocriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="neuprint.MitoCriteria">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">MitoCriteria</code><span class="sig-paren">(</span><em>matchvar='m'</em>, <em>*</em>, <em>rois=None</em>, <em>mitoType=None</em>, <em>size=0</em>, <em>primary_only=True</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.13/neuprint/mitocriteria.py#L6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.MitoCriteria" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">MitoCriteria</code><span class="sig-paren">(</span><em>matchvar='m'</em>, <em>*</em>, <em>rois=None</em>, <em>mitoType=None</em>, <em>size=0</em>, <em>primary_only=True</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.14/neuprint/mitocriteria.py#L6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.MitoCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies which fields to filter by when searching for mitochondria.
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>
@@ -222,17 +227,15 @@ criteria for various query functions.</p>
 <li><strong>rois</strong> (<em>str</em><em> or </em><em>list</em>) – Optional.
 If provided, limit the results to mitochondria that reside within the given roi(s).</li>
 <li><strong>mitoType</strong> – If provided, limit the results to mitochondria of the specified type.
-Either <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, or <code class="docutils literal notranslate"><span class="pre">3</span></code>, OR the equivalent name <code class="docutils literal notranslate"><span class="pre">'dark'</span></code>,
-<code class="docutils literal notranslate"><span class="pre">'light'</span></code>, or <code class="docutils literal notranslate"><span class="pre">'medium'</span></code>, which will be translated by neuprint-python
-to <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, or <cite>3`</cite>, respectively.
-(Note that in the hemibrain mito data, <code class="docutils literal notranslate"><span class="pre">medium=3</span></code>)</li>
+Either <code class="docutils literal notranslate"><span class="pre">dark</span></code>, <code class="docutils literal notranslate"><span class="pre">medium</span></code>, or <code class="docutils literal notranslate"><span class="pre">light</span></code>.
+(Neuroglancer users: Note that in the hemibrain mito segmentation, <code class="docutils literal notranslate"><span class="pre">medium=3</span></code>)</li>
 <li><strong>size</strong> – Specifies a minimum size (in voxels) for mitochondria returned in the results.</li>
 <li><strong>primary_only</strong> (<em>boolean</em>) – <p>If True, only include primary ROI names in the results.
 Disable this with caution.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p>This parameter does NOT filter by ROI. (See the <code class="docutils literal notranslate"><span class="pre">rois</span></code> argument for that.)
-It merely determines whether or not each mitochondria should be associated with exactly
+It merely determines whether or not each mitochondrion should be associated with exactly
 one ROI in the query output, or with multiple ROIs (one for every non-primary
 ROI the mitochondrion intersects).</p>
 <p class="last">If you set <code class="docutils literal notranslate"><span class="pre">primary_only=False</span></code>, then the table will contain duplicate entries
@@ -255,37 +258,29 @@ If not provided, the global default <a class="reference internal" href="client.h
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="simulation.html" class="btn btn-neutral float-right" title="Simulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="simulation.html" class="btn btn-neutral float-right" title="Simulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2019, FlyEM
+        &#169; Copyright 2019, FlyEM.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 

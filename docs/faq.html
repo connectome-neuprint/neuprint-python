@@ -3,11 +3,11 @@
 <!DOCTYPE html>
 <html class="writer-html4" lang="en" >
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>FAQ &mdash; neuprint-python 0.4.13 documentation</title>
+  <title>FAQ &mdash; neuprint-python 0.4.14 documentation</title>
   
 
   
@@ -17,7 +17,10 @@
 
   
   
+
   
+  
+
   
 
   
@@ -53,7 +56,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
+            <a href="index.html" class="icon icon-home"> neuprint-python
           
 
           
@@ -63,7 +66,7 @@
             
             
               <div class="version">
-                0.4.13
+                0.4.14
               </div>
             
           
@@ -95,8 +98,10 @@
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">FAQ</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#what-cypher-queries-is-my-code-using">What Cypher Queries is my code using?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#how-can-i-download-the-exact-roi-shapes">How can I download the exact ROI shapes?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-use-this-api-why-not-just-use-plain-cypher">Why use this API? Why not just use plain Cypher?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-cypher-queries-are-being-used-by-this-code-internally">What Cypher queries are being used by this code internally?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#where-are-the-release-notes-for-the-data">Where are the release notes for the <em>data</em>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-can-i-download-the-exact-hemibrain-roi-shapes">How can I download the exact Hemibrain ROI shapes?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#can-this-library-be-used-with-multiprocessing">Can this library be used with <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#where-can-i-find-help">Where can I find help?</a></li>
 </ul>
@@ -142,6 +147,8 @@
 
 
 
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -153,7 +160,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-            
+          
             <a href="_sources/faq.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -193,14 +200,44 @@
 </style>
 <div class="section" id="faq">
 <span id="id1"></span><h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="what-cypher-queries-is-my-code-using">
-<h2>What Cypher Queries is my code using?<a class="headerlink" href="#what-cypher-queries-is-my-code-using" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="why-use-this-api-why-not-just-use-plain-cypher">
+<h2>Why use this API? Why not just use plain Cypher?<a class="headerlink" href="#why-use-this-api-why-not-just-use-plain-cypher" title="Permalink to this headline">¶</a></h2>
+<p>Cypher is a powerful language for querying the neuprint database,
+and there will always be some needs that can only be satisfed with
+a custom-tailored Cypher query.</p>
+<p>However, there are some advantages that come from using the higher-level
+API provided in <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>:</p>
+<ul class="simple">
+<li>To use Cypher, you need an understanding of the neuprint data model.
+It’s not too complex, but for many users, basic neuron attributes and
+connection information is enough.</li>
+<li>Some queries are difficult to specify.  For example, efficiently filtering neurons
+by <code class="docutils literal notranslate"><span class="pre">inputRoi</span></code> or <code class="docutils literal notranslate"><span class="pre">outputRoi</span></code> is not trivial.  But <code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code> handles that for you.</li>
+<li>The <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> API uses reasonable default parameters,
+which aren’t always obvious in raw Cypher queries.</li>
+<li><code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> saves you from certain nuisance tasks, like converting <code class="docutils literal notranslate"><span class="pre">roiInfo</span></code>
+from JSON data into a DataFrame for easy analysis.</li>
+<li>When a query might return a large amount of data, it’s often critical to break the query
+into batches, to avoid timeouts from the server.  For functions in which that is likely to occur,
+<code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> implements batching for you.</li>
+</ul>
+<p>Nonetheless, if you need to run a query that isn’t conveniently
+supported by the high-level API in this library,
+or you simply prefer to write your own Cypher,
+then feel free to use <a class="reference internal" href="client.html#neuprint.client.Client.fetch_custom" title="neuprint.client.Client.fetch_custom"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code></a>.</p>
+</div>
+<div class="section" id="what-cypher-queries-are-being-used-by-this-code-internally">
+<h2>What Cypher queries are being used by this code internally?<a class="headerlink" href="#what-cypher-queries-are-being-used-by-this-code-internally" title="Permalink to this headline">¶</a></h2>
 <p>Enable debug logging to see the cypher queries that are being sent to the neuPrint server.
 See <a class="reference internal" href="client.html#neuprint.client.setup_debug_logging" title="neuprint.client.setup_debug_logging"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_debug_logging()</span></code></a> for details.</p>
 </div>
-<div class="section" id="how-can-i-download-the-exact-roi-shapes">
-<h2>How can I download the exact ROI shapes?<a class="headerlink" href="#how-can-i-download-the-exact-roi-shapes" title="Permalink to this headline">¶</a></h2>
-<p>A volume containing the exact primary ROI region labels in hdf5 format can be <a class="reference external" href="https://storage.cloud.google.com/hemibrain/v1.1/hemibrain-v1.1-primary-roi-segmentation.tar.gz">found here</a>.
+<div class="section" id="where-are-the-release-notes-for-the-data">
+<h2>Where are the release notes for the <em>data</em>?<a class="headerlink" href="#where-are-the-release-notes-for-the-data" title="Permalink to this headline">¶</a></h2>
+<p>Please see the <a class="reference external" href="https://neuprint.janelia.org/releasenotes">neuprint dataset release notes and errata</a>.</p>
+</div>
+<div class="section" id="how-can-i-download-the-exact-hemibrain-roi-shapes">
+<h2>How can I download the exact Hemibrain ROI shapes?<a class="headerlink" href="#how-can-i-download-the-exact-hemibrain-roi-shapes" title="Permalink to this headline">¶</a></h2>
+<p>A volume containing the exact primary ROI region labels for the hemibrain in hdf5 format can be <a class="reference external" href="https://storage.cloud.google.com/hemibrain/v1.1/hemibrain-v1.1-primary-roi-segmentation.tar.gz">found here</a>.
 Please see the enclosed README for details on how to read and interpret the volume.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -252,37 +289,29 @@ click the information icon (shown below).</p>
            
           </div>
           <footer>
-  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="related.html" class="btn btn-neutral float-left" title="Related Projects" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="related.html" class="btn btn-neutral float-left" title="Related Projects" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        
-        &copy; Copyright 2019, FlyEM
+        &#169; Copyright 2019, FlyEM.
 
     </p>
   </div>
     
     
     
-    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
-
         </div>
       </div>
 
