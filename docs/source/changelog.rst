@@ -13,7 +13,7 @@ Changelog
 - More FAQ entries
 
 
-0.4.13 / 2020-11-22
+0.4.13 / 2020-12-23
 -------------------
 
 - ``SynapseCriteria``: Changed the default value of ``primary_only`` to ``True``,
