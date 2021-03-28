@@ -260,18 +260,17 @@ class NeuronCriteria:
                 label = 'Segment'
         assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
 
-        assert not regex or len(instance) <= 1, \
-            "Please provide only one regex pattern for instance"
-        assert not regex or len(type) <= 1, \
-            "Please provide only one regex pattern for type"
+        if not regex and instance:
+            for i in instance:
+                assert isinstance(i, (str, None)), 'instance should be a string, or None'
+                assert instance is None or '.*' not in i, \
+                    f"instance appears to be a regular expression ('{i}'), but you didn't pass regex=True"
 
-        if not regex and instance and len(instance) == 1 and isinstance(instance[0], str):
-            assert '.*' not in instance[0], \
-                f"instance appears to be a regular expression ('{instance[0]}'), but you didn't pass regex=True"
-
-        if not regex and type and len(type) == 1 and isinstance(type[0], str):
-            assert '.*' not in type[0], \
-                f"type appears to be a regular expression ('{type[0]}'), but you didn't pass regex=True"
+        if not regex and type:
+            for t in type:
+                assert isinstance(t, (str, None)), 'type should be a string, or None'
+                assert type is None or '.*' not in t, \
+                    f"type appears to be a regular expression ('{t}'), but you didn't pass regex=True"
 
         assert roi_req in ('any', 'all')
 
@@ -441,12 +440,13 @@ class NeuronCriteria:
             var = f"{self.matchvar}_search_bodyIds"
             exprs[var] = (f"{[*values]} as {var}")
 
-        if len(self.type) > self.MAX_LITERAL_LENGTH:
+        # Never store regular expressions into a global
+        if not self.regex and len(self.type) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.type)]
             var = f"{self.matchvar}_search_types"
             exprs[var] = f"{[*values]} as {var}"
 
-        if len(self.instance) > self.MAX_LITERAL_LENGTH:
+        if not self.regex and len(self.instance) > self.MAX_LITERAL_LENGTH:
             values = [*filter(lambda s: s is not None, self.instance)]
             var = f"{self.matchvar}_search_instances"
             exprs[var] = f"{[*values]} as {var}"
@@ -516,13 +516,15 @@ class NeuronCriteria:
 
     def instance_expr(self):
         valuevar = None
-        if len(self.instance) > self.MAX_LITERAL_LENGTH:
+        # We never use a global 'valuevar' in the regex case
+        if not self.regex and len(self.instance) > self.MAX_LITERAL_LENGTH:
             valuevar = f"{self.matchvar}_search_instances"
         return where_expr('instance', self.instance, self.regex, self.matchvar, valuevar)
 
     def type_expr(self):
         valuevar = None
-        if len(self.type) > self.MAX_LITERAL_LENGTH:
+        # We never use a global 'valuevar' in the regex case
+        if not self.regex and len(self.type) > self.MAX_LITERAL_LENGTH:
             valuevar = f"{self.matchvar}_search_types"
         return where_expr('type', self.type, self.regex, self.matchvar, valuevar)
 
@@ -802,9 +804,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         f"Please pass a list or a variable name, not {values}"
 
     assert valuevar is None or isinstance(valuevar, str)
-
-    assert not regex or len(values) <= 1, \
-        f"Can't use regex mode with more than one value: {values}"
+    assert not regex or not valuevar, "valuevar is not allowed if using a regex"
 
     if len(values) == 0:
         return ""
@@ -825,18 +825,34 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
     if None not in values:
         if valuevar:
             return f"{matchvar}.{field} in {valuevar}"
+        elif regex:
+            assert all(isinstance(v, str) for v in values), \
+                "Expected all regex values to be strings"
+            r = '|'.join(f'({v})' for v in values)
+            return f"{matchvar}.{field} =~ '{r}'"
         else:
             return f"{matchvar}.{field} in {[*values]}"
 
     # ['some_val', None, 'some_other']
     values = [*filter(lambda v: v is not None, values)]
     if len(values) == 1:
-        if isinstance(values[0], str):
+        if regex:
+            assert isinstance(values[0], str), \
+                "Expected all regex values to be strings"
+            return f"{matchvar}.{field} =~ '{values[0]}' OR NOT exists({matchvar}.{field})"
+        elif isinstance(values[0], str):
             return f"{matchvar}.{field} = '{values[0]}' OR NOT exists({matchvar}.{field})"
         else:
             return f"{matchvar}.{field} = {values[0]} OR NOT exists({matchvar}.{field})"
     else:
-        if valuevar:
+        if regex:
+            # Combine the list fo regexes into a single regex
+            # of the form: '(regex1)|(regex2)|(regex3)'
+            assert all(isinstance(v, str) for v in values), \
+                "Expected all regex values to be strings"
+            r = '|'.join(f'({v})' for v in values)
+            return f"{matchvar}.{field} =~ '{r}' OR NOT exists({matchvar}.{field})"
+        elif valuevar:
             return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
         else:
             return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"

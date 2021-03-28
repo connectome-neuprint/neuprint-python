@@ -25,14 +25,12 @@ def test_NeuronCriteria(client):
     assert NC(instance="foo").basic_exprs() == ["n.instance = 'foo'"]
     assert NC(instance="foo", regex=True).basic_exprs() == ["n.instance =~ 'foo'"]
     assert NC(instance=["foo", "bar"]).basic_exprs() == ["n.instance in ['foo', 'bar']"]
-    with pytest.raises(AssertionError):
-        NC(instance=["foo", "bar"], regex=True).basic_exprs()
+    assert NC(instance=["foo", "bar"], regex=True).basic_exprs() == ["n.instance =~ '(foo)|(bar)'"]
 
     assert NC(type="foo").basic_exprs() == ["n.type = 'foo'"]
     assert NC(type="foo", regex=True).basic_exprs() == ["n.type =~ 'foo'"]
     assert NC(type=["foo", "bar"]).basic_exprs() == ["n.type in ['foo', 'bar']"]
-    with pytest.raises(AssertionError):
-        NC(type=["foo", "bar"], regex=True).basic_exprs()
+    assert NC(type=["foo", "bar"], regex=True).basic_exprs() == ["n.type =~ '(foo)|(bar)'"]
 
     assert NC(status="foo").basic_exprs() == ["n.status = 'foo'"]
     assert NC(status="foo", regex=True).basic_exprs() == ["n.status = 'foo'"] # not regex
@@ -89,3 +87,7 @@ def test_where_expr():
     assert where_expr('bodyId', [1,2], matchvar='m') == 'm.bodyId in [1, 2]'
     assert where_expr('bodyId', []) == ""
     assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"
+
+if __name__ == "__main__":
+    args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_neuroncriteria']
+    pytest.main(args)

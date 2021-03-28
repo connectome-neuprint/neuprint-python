@@ -55,6 +55,16 @@ def test_fetch_neurons(client):
     assert neurons.loc[0, 'type'] == "APL"
     assert neurons.loc[0, 'instance'] == "APL_R"
 
+    neurons, roi_counts = fetch_neurons(NC(type=['.*01', '.*02'], regex=True))
+    assert len(neurons), "Didn't find any neurons of the given type pattern"
+    assert all(lambda t: t.endswith('01') or t.endswith('02') for t in neurons['type'])
+    assert any(lambda t: t.endswith('01') for t in neurons['type'])
+    assert any(lambda t: t.endswith('02') for t in neurons['type'])
+
+    neurons, roi_counts = fetch_neurons(NC(instance=['.*_L', '.*_R'], regex=True))
+    assert len(neurons), "Didn't find any neurons of the given instance pattern"
+    assert all(lambda t: t.endswith('_L') or t.endswith('_R') for t in neurons['instance'])
+
     neurons, roi_counts = fetch_neurons(NC(status=['Traced', 'Orphan'], cropped=False))
     assert neurons.eval('status == "Traced" or status == "Orphan"').all()
     assert not neurons['cropped'].any()
@@ -196,6 +206,7 @@ def test_fetch_synapses_and_closest_mitochondria(client):
     syn_mito_distances = fetch_synapses_and_closest_mitochondria(NC(type='ExR2'), SC(type='pre'))
     assert len(syn_mito_distances), "Shouldn't be empty!"
 
+
 def test_fetch_synapse_connections(client):
     rois = ['PED(R)', 'SMP(R)']
     syn_df = fetch_synapse_connections(792368888, None, SC(rois=rois, primary_only=True), batch_size=2)
@@ -210,6 +221,6 @@ def test_fetch_synapse_connections(client):
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
-    #args += ['-k', 'fetch_mitochondria']
+    #args += ['-k', 'fetch_neurons']
     #args += ['-k', 'fetch_synapses_and_closest_mitochondria']
     pytest.main(args)
