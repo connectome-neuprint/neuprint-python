@@ -3,11 +3,11 @@
 <!DOCTYPE html>
 <html class="writer-html4" lang="en" >
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
   
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Admin Tools &mdash; neuprint-python 0.4.13+14.ge8200cb documentation</title>
+  <title>Admin Tools &mdash; neuprint-python 0.4.14 documentation</title>
   
 
   
@@ -17,10 +17,7 @@
 
   
   
-
   
-  
-
   
 
   
@@ -56,7 +53,7 @@
           
 
           
-            <a href="index.html" class="icon icon-home"> neuprint-python
+            <a href="index.html" class="icon icon-home" alt="Documentation Home"> neuprint-python
           
 
           
@@ -66,7 +63,7 @@
             
             
               <div class="version">
-                0.4.13+14.ge8200cb
+                0.4.14
               </div>
             
           
@@ -147,8 +144,6 @@
 
 
 
-
-
 <div role="navigation" aria-label="breadcrumbs navigation">
 
   <ul class="wy-breadcrumbs">
@@ -162,7 +157,7 @@
     
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/admin.rst.txt" rel="nofollow"> View page source</a>
           
         
@@ -206,7 +201,7 @@
 Using these tools requires admin privileges on the neuPrintHttp server.</p>
 <dl class="class">
 <dt id="neuprint.admin.Transaction">
-<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/admin.py#L8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.14/neuprint/admin.py#L8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>For admins only.
 Used to batch a set of operations into a single database transaction.</p>
 <p>This class is implemented as a context manager.</p>
@@ -230,14 +225,14 @@ Used to batch a set of operations into a single database transaction.</p>
 </table>
 <dl class="method">
 <dt id="neuprint.admin.Transaction.query">
-<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/admin.py#L49"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
+<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.14/neuprint/admin.py#L49"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a custom cypher query within the context
 of this transaction (allows writes).</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="neuprint.admin.Transaction.kill">
-<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/admin.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
+<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.14/neuprint/admin.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kills (rolls back) transaction.</p>
 </dd></dl>
 
@@ -250,29 +245,37 @@ of this transaction (allows writes).</p>
            
           </div>
           <footer>
+  
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="development.html" class="btn btn-neutral float-right" title="Development Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-        <a href="utils.html" class="btn btn-neutral float-left" title="Utilities" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+      
+        <a href="development.html" class="btn btn-neutral float-right" title="Development Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="utils.html" class="btn btn-neutral float-left" title="Utilities" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
     </div>
+  
 
   <hr/>
 
   <div role="contentinfo">
     <p>
-        &#169; Copyright 2019, FlyEM.
+        
+        &copy; Copyright 2019, FlyEM
 
     </p>
   </div>
     
     
     
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
     
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
     
     provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
+
         </div>
       </div>
 
