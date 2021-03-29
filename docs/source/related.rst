@@ -3,6 +3,7 @@
 Related Projects
 ================
 
+
 NeuPrint on github
 ------------------
 
@@ -13,6 +14,17 @@ repositories, including `neuprint-python <https://github.com/connectome-neuprint
 - `neuVid <https://github.com/connectome-neuprint/neuVid>`_ is a collection of scripts to generate animations of neuron meshes using Blender.
 - `react-skeleton <https://github.com/connectome-neuprint/react-skeleton>`_ is a ``React`` component to display
   neurons skeletons in 3D using `SharkViewer <https://github.com/JaneliaSciComp/SharkViewer>`_.
+
+
+Clio
+----
+
+The `Clio <https://clio.janelia.org>`_ project provides tools for creating your own annotations on
+public EM datasets, and sharing those annotations with others if you choose to.
+There's also a fun image search tool for finding interesting features in the raw EM data.
+Additionally, use Clio to make lightweight corrections to the segmentation for your own viewing,
+and submit those changes to be included in the public version of the segmentation, too.
+
 
 DVID
 ----
@@ -25,6 +37,7 @@ neuprintr
 ---------
 
 `neuprintr <http://natverse.org/neuprintr/>`_ provides R users with access to neuprint.
+
 
 NAVis
 -----
