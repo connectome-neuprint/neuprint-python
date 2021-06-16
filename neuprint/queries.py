@@ -1679,6 +1679,108 @@ def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, 
 
 
 @inject_client
+@neuroncriteria_args('source_criteria', 'target_criteria')
+def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_criteria, min_total_weight, *, client=None):
+    """
+    For a given set of source neurons and target neurons, find all
+    synapse-level connections between the sources and targets, along
+    with the nearest mitochondrion on the pre-synaptic side and the
+    post-synaptic side.
+
+    Returns a table similar to :py:func:`fetch_synapse_connections()`, but with
+    extra ``_pre`` and ``_post`` columns to describe the nearest mitochondria
+    to the pre/post synapse in the connection.
+    If a given synapse has no nearby mitochondrion, the corresponding
+    mito columns will be populated with ``NaN`` values. (This is typically
+    much more likely to occur on the post-synaptic side than the pre-synaptic side.)
+
+    Arguments are the same as :py:func:`fetch_synapse_connections()`
+
+    Note:
+        This function does not employ a custom cypher query to minimize the
+        data fetched from the server. Instead, it makes multiple calls to the
+        server and merges the results on the client.
+
+    Args:
+        source_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Criteria to by which to filter source (pre-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        target_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Criteria to by which to filter target (post-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            The same criteria is used to filter both ``pre`` and ``post`` sides
+            of the connection.
+            By default, ``SynapseCriteria(primary_only=True)`` is used.
+
+            If ``primary_only`` is specified in the criteria, then the resulting
+            ``roi_pre`` and ``roi_post`` columns will contain a single
+            string (or ``None``) in every row.
+
+            Otherwise, the roi columns will contain a list of ROIs for every row.
+            (Primary ROIs do not overlap, so every synapse resides in only one
+            (or zero) primary ROI.)
+            See :py:class:`.SynapseCriteria` for details.
+
+        min_total_weight:
+            If the total weight of the connection between two bodies is not at least
+            this strong, don't include the synapses for that connection in the results.
+
+            Note:
+                This filters for total connection weight, regardless of the weight
+                within any particular ROI.  So, if your ``SynapseCriteria`` limits
+                results to a particular ROI, but two bodies connect in multiple ROIs,
+                then the number of synapses returned for the two bodies may appear to
+                be less than ``min_total_weight``. That's because you filtered out
+                the synapses in other ROIs.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    """
+    SC = SynapseCriteria
+
+    # Fetch the synapses that connect sources and targets
+    # (subject to min_total_weight)
+    conn = fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, batch_size=1)
+
+    output_bodies = conn['bodyId_pre'].unique()
+    output_mito = fetch_synapses_and_closest_mitochondria(output_bodies, SC(type='pre'), batch_size=1)
+    output_mito = output_mito[[*'xyz', 'mitoType', 'distance', 'size', 'mx', 'my', 'mz']]
+    output_mito = output_mito.rename(columns={'size': 'mitoSize'})
+
+    input_bodies = conn['bodyId_post'].unique()
+    input_mito = fetch_synapses_and_closest_mitochondria(input_bodies, SC(type='post'), batch_size=1)
+    input_mito = input_mito[[*'xyz', 'mitoType', 'distance', 'size', 'mx', 'my', 'mz']]
+    input_mito = input_mito.rename(columns={'size': 'mitoSize'})
+
+    # This double-merge will add _pre and _post columns for the mito fields
+    conn_with_mito = conn
+    conn_with_mito = conn_with_mito.merge(output_mito,
+                                          'left',
+                                          left_on=['x_pre', 'y_pre', 'z_pre'],
+                                          right_on=['x', 'y', 'z']).drop(columns=[*'xyz'])
+
+    conn_with_mito = conn_with_mito.merge(input_mito,
+                                          'left',
+                                          left_on=['x_post', 'y_post', 'z_post'],
+                                          right_on=['x', 'y', 'z'],
+                                          suffixes=['_pre', '_post']).drop(columns=[*'xyz'])
+    return conn_with_mito
+
+
+@inject_client
 @neuroncriteria_args('neuron_criteria')
 def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, client=None):
     """
