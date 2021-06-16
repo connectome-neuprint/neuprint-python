@@ -310,7 +310,7 @@ def reorient_skeleton(skeleton_df, rowId=None, xyz=None, use_max_radius=False):
     """
     Change the root node of a skeleton.
 
-    In general, the root node of the skeletons in stored in neuprint is
+    In general, the root node of the skeletons stored in neuprint is
     not particularly significant, so the directionality of the nodes
     (parent to child or vice-versa) on any given neuron branch is arbitrary.
 
