@@ -5,7 +5,7 @@ Changelog
 -------------------
 - ``NeuronCriteria`` now accepts a boolean argument for ``soma``, indicating the presence or absence of a soma on the body.
 - Added ``fech_connection_mitochondria()`` for finding the nearest mitochondria on both sides of a tbar/psd pair. (#24)
-- Integreated with Zenodo for DOI generation.
+- Integrated with Zenodo for DOI generation.
 
 0.4.14 / 2021-03-27
 -------------------
