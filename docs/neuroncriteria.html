@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>NeuronCriteria &mdash; neuprint-python 0.4.14 documentation</title>
+  <title>NeuronCriteria &mdash; neuprint-python 0.4.14+10.gc5c01a0 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.14
+                0.4.14+10.gc5c01a0
               </div>
             
           
@@ -207,7 +207,7 @@
 <span id="id1"></span><h1>NeuronCriteria<a class="headerlink" href="#neuroncriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="neuprint.NeuronCriteria">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">NeuronCriteria</code><span class="sig-paren">(</span><em>matchvar='n'</em>, <em>*</em>, <em>bodyId=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>regex=False</em>, <em>cellBodyFiber=None</em>, <em>status=None</em>, <em>cropped=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>rois=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_roi_inputs=1</em>, <em>min_roi_outputs=1</em>, <em>label=None</em>, <em>roi_req='all'</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.14/neuprint/neuroncriteria.py#L103"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.NeuronCriteria" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">NeuronCriteria</code><span class="sig-paren">(</span><em>matchvar='n'</em>, <em>*</em>, <em>bodyId=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>regex=False</em>, <em>cellBodyFiber=None</em>, <em>status=None</em>, <em>cropped=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>rois=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_roi_inputs=1</em>, <em>min_roi_outputs=1</em>, <em>label=None</em>, <em>roi_req='all'</em>, <em>soma=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/neuroncriteria.py#L104"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.NeuronCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies which fields to filter by when searching for a Neuron (or Segment).
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>
@@ -285,13 +285,15 @@ If not provided, will be auto-set from <code class="docutils literal notranslate
 <code class="docutils literal notranslate"><span class="pre">inputRois</span></code> criteria.  Can only be used if you provided <code class="docutils literal notranslate"><span class="pre">inputRois</span></code>.</li>
 <li><strong>min_roi_outputs</strong> (<em>int</em>) – How many output (pre) synapses a neuron must have in each ROI to satisfy the
 <code class="docutils literal notranslate"><span class="pre">outputRois</span></code> criteria.   Can only be used if you provided <code class="docutils literal notranslate"><span class="pre">outputRois</span></code>.</li>
-<li><strong>roi_req</strong> (Either <code class="docutils literal notranslate"><span class="pre">'any'</span></code> or <code class="docutils literal notranslate"><span class="pre">'all'</span></code>) – Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
-When using ‘any’, each neuron must still match at least one input AND at least one output ROI.</li>
 <li><strong>label</strong> (Either <code class="docutils literal notranslate"><span class="pre">'Neuron'</span></code> or <code class="docutils literal notranslate"><span class="pre">'Segment'</span></code>) – Which node label to match with.
 (In neuprint, all <code class="docutils literal notranslate"><span class="pre">Neuron</span></code> nodes are also <code class="docutils literal notranslate"><span class="pre">Segment</span></code> nodes.)
 By default, <code class="docutils literal notranslate"><span class="pre">'Neuron'</span></code> is used, unless you provided a non-empty <code class="docutils literal notranslate"><span class="pre">bodyId</span></code> list.
 In that case, <code class="docutils literal notranslate"><span class="pre">'Segment'</span></code> is the default. (It’s assumed you’re really interested
 in the bodies you explicitly listed, whether or not they have the <code class="docutils literal notranslate"><span class="pre">'Neuron'</span></code> label.)</li>
+<li><strong>roi_req</strong> (Either <code class="docutils literal notranslate"><span class="pre">'any'</span></code> or <code class="docutils literal notranslate"><span class="pre">'all'</span></code>) – Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
+When using ‘any’, each neuron must still match at least one input AND at least one output ROI.</li>
+<li><strong>soma</strong> (Either <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">False</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, only return neurons with a <code class="docutils literal notranslate"><span class="pre">somaLocation</span></code>.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, return neurons eithout a <code class="docutils literal notranslate"><span class="pre">somaLocation</span></code>.</li>
 <li><strong>client</strong> (<a class="reference internal" href="client.html#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">neuprint.client.Client</span></code></a>) – Used to validate ROI names.
 If not provided, the global default <code class="docutils literal notranslate"><span class="pre">Client</span></code> will be used.</li>
 </ul>
@@ -303,7 +305,7 @@ If not provided, the global default <code class="docutils literal notranslate"><
 
 <dl class="data">
 <dt id="neuprint.SegmentCriteria">
-<code class="descclassname">neuprint.</code><code class="descname">SegmentCriteria</code><em class="property"> = &lt;class 'neuprint.neuroncriteria.NeuronCriteria'&gt;</em><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.14/neuprint/neuroncriteria.py#L103"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SegmentCriteria" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">SegmentCriteria</code><em class="property"> = &lt;class 'neuprint.neuroncriteria.NeuronCriteria'&gt;</em><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/neuroncriteria.py#L104"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SegmentCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Same as <code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code>.  This name is deprecated, but kept for backwards compatibility.</p>
 </dd></dl>
 

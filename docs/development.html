@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.14 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.14+10.gc5c01a0 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.14
+                0.4.14+10.gc5c01a0
               </div>
             
           
@@ -205,6 +205,12 @@ To prepare a release, follow these steps:</p>
 
 <span class="c1"># Update the change log!</span>
 code docs/source/changelog.rst
+
+<span class="c1"># Do the tests still pass?</span>
+pytest .
+
+<span class="c1"># Do the docs still build?</span>
+<span class="nb">cd</span> docs <span class="o">&amp;&amp;</span> make html <span class="o">&amp;&amp;</span> <span class="nb">cd</span> -
 
 <span class="c1"># Tag the git repo with the new version</span>
 git tag -a <span class="m">0</span>.3.1 -m <span class="m">0</span>.3.1
