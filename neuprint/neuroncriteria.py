@@ -13,6 +13,7 @@ import pandas as pd
 from .utils import make_args_iterable
 from .client import inject_client
 
+
 def neuroncriteria_args(*argnames):
     """
     Returns a decorator.
@@ -50,7 +51,7 @@ def copy_as_neuroncriteria(obj, client=None):
         None -> NC()
 
         int -> NC(bodyId)
-        [str,...] -> NC(bodyId)
+        [int,...] -> NC(bodyId)
         DataFrame['bodyId'] -> NC(bodyId)
 
         str -> NC(type, instance)
@@ -134,6 +135,7 @@ class NeuronCriteria:
                   min_pre=0, min_post=0,
                   rois=None, inputRois=None, outputRois=None, min_roi_inputs=1, min_roi_outputs=1,
                   label=None, roi_req='all',
+                  soma=None,
                   client=None ):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
@@ -222,16 +224,20 @@ class NeuronCriteria:
                 How many output (pre) synapses a neuron must have in each ROI to satisfy the
                 ``outputRois`` criteria.   Can only be used if you provided ``outputRois``.
 
-            roi_req (Either ``'any'`` or ``'all'``):
-                Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
-                When using 'any', each neuron must still match at least one input AND at least one output ROI.
-
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.
                 (In neuprint, all ``Neuron`` nodes are also ``Segment`` nodes.)
                 By default, ``'Neuron'`` is used, unless you provided a non-empty ``bodyId`` list.
                 In that case, ``'Segment'`` is the default. (It's assumed you're really interested
                 in the bodies you explicitly listed, whether or not they have the ``'Neuron'`` label.)
+
+            roi_req (Either ``'any'`` or ``'all'``):
+                Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
+                When using 'any', each neuron must still match at least one input AND at least one output ROI.
+
+            soma (Either ``True``, ``False``, or ``None``)
+                If ``True``, only return neurons with a ``somaLocation``.
+                If ``False``, return neurons eithout a ``somaLocation``.
 
             client (:py:class:`neuprint.client.Client`):
                 Used to validate ROI names.
@@ -279,6 +285,9 @@ class NeuronCriteria:
         assert min_roi_outputs <= 1 or outputRois, \
             "Can't stipulate min_roi_outputs without a list of outputRois"
 
+        assert soma in (True, False, None), \
+            f"soma must be True, False, or None, not {soma}"
+
         # If the user provided both intersecting rois and input/output rois,
         # force them to make the intersecting set a superset of the others.
         rois = {*rois}
@@ -321,6 +330,7 @@ class NeuronCriteria:
         self.regex = regex
         self.label = label
         self.roi_req = roi_req
+        self.soma = soma
 
 
     def __eq__(self, value):
@@ -341,7 +351,7 @@ class NeuronCriteria:
                  'bodyId', 'instance', 'type', 'status',
                  'cropped', 'min_pre', 'min_post', 'rois', 'inputRois',
                  'outputRois', 'min_roi_inputs', 'min_roi_outputs',
-                 'regex', 'label', 'roi_req']
+                 'regex', 'label', 'roi_req', 'soma']
 
         for at in params:
             me = getattr(self, at)
@@ -421,6 +431,9 @@ class NeuronCriteria:
         if self.roi_req != 'all':
             s += f', roi_req="{self.roi_req}"'
 
+        if self.soma is not None:
+            s += f', soma="{self.soma}"'
+
         s += ')'
 
         return s
@@ -487,7 +500,8 @@ class NeuronCriteria:
         the WHERE clause of a cypher query.
         """
         exprs = [self.bodyId_expr(), self.typeinst_expr(), self.cbf_expr(), self.status_expr(),
-                 self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr()]
+                 self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr(),
+                 self.soma_expr()]
         exprs = [*filter(None, exprs)]
         return exprs
 
@@ -560,7 +574,6 @@ class NeuronCriteria:
         roi_logic = {'any': 'OR', 'all': 'AND'}[self.roi_req]
         return "(" + f" {roi_logic} ".join(f"{self.matchvar}.`{roi}`" for roi in rois) + ")"
 
-
     def pre_expr(self):
         if self.min_pre:
             return f"{self.matchvar}.pre >= {self.min_pre}"
@@ -573,6 +586,13 @@ class NeuronCriteria:
         else:
             return ""
 
+    def soma_expr(self):
+        if self.soma is None:
+            return ""
+        if self.soma:
+            return f"{self.matchvar}.somaLocation IS NOT NULL"
+        else:
+            return f"{self.matchvar}.somaLocation IS NULL"
 
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
@@ -594,7 +614,6 @@ class NeuronCriteria:
             combined = basic_cond
 
         return indent(combined, prefix)[len(prefix):]
-
 
     @classmethod
     def combined_global_with(cls, neuron_conditions, vars=[], prefix=0):
