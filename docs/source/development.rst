@@ -21,6 +21,12 @@ To prepare a release, follow these steps:
     # Update the change log!
     code docs/source/changelog.rst
 
+    # Do the tests still pass?
+    pytest .
+
+    # Do the docs still build?
+    cd docs && make html && cd -
+
     # Tag the git repo with the new version
     git tag -a 0.3.1 -m 0.3.1
     git push --tags origin
