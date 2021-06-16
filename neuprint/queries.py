@@ -2018,7 +2018,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     # Fetch in batches
     syn_dfs = []
     conn_groups = [*conn_df.groupby('bodyId_pre')]
-    for group in iter_batches(conn_groups, batch_size):
+    for group in tqdm(iter_batches(conn_groups, batch_size)):
         _, group_dfs = zip(*group)
         batch_conn_df = pd.concat(group_dfs, ignore_index=True)
         source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
