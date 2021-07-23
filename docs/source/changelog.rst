@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.4.16 / 2021-
+-------------------
+- ``fetch_output_completeness`` now accepts a list of statuses to use, rather than assuming only ``"Traced"`` neurons are complete.
+
 0.4.15 / 2021-06-16
 -------------------
 - ``NeuronCriteria`` now accepts a boolean argument for ``soma``, indicating the presence or absence of a soma on the body.
