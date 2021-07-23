@@ -53,7 +53,7 @@ Create the Client
 
         from neuprint import Client
 
-        c = Client('neuprint.janelia.org', dataset='hemibrain', token='YOUR-TOKEN-HERE')
+        c = Client('neuprint.janelia.org', dataset='hemibrain:v1.2.1', token='YOUR-TOKEN-HERE')
         c.fetch_version()
 
 Alternatively, you can set your token in the following environment variable, in which case the ``token`` parameter can be omitted:
@@ -83,7 +83,7 @@ Also, ``neuprint-python`` comes with convenience functions to implement common q
            ...: q = """\
            ...:     MATCH (n :Neuron {`AB(R)`: true})
            ...:     WHERE n.pre > 10
-           ...:     RETURN n.bodyId AS bodyId, n.name AS name, n.pre AS numpre, n.post AS numpost
+           ...:     RETURN n.bodyId AS bodyId, n.type as type, n.instance AS instance, n.pre AS numpre, n.post AS numpost
            ...:     ORDER BY n.pre + n.post DESC
            ...: """
 
@@ -94,12 +94,12 @@ Also, ``neuprint-python`` comes with convenience functions to implement common q
 
         In [4]: results.head()
         Out[4]:
-               bodyId  name  numpre  numpost
-        0  5813027016  None    1720     6484
-        1  1008378448  None    1791     6276
-        2  1513363614  None     858     6508
-        3  5813057274  None    2001     5094
-        4  1131827390  None    2614     4421
+               bodyId    type                   instance  numpre  numpost
+        0  5813027016    FB4Y             FB4Y(EB/NO1)_R    1720     6508
+        1  1008378448    FB4Y             FB4Y(EB/NO1)_R    1791     6301
+        2  1513363614  LCNOpm        LCNOpm(LAL-NO3pm)_R     858     6501
+        3  5813057274    FB4Y             FB4Y(EB/NO1)_L    2001     5089
+        4  1131827390    FB4M  FB4M(PPM3-FB3/4-NO-DAN)_R    2614     4431
 
 Next Steps
 ----------
