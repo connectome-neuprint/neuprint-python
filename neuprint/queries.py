@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+from collections.abc import Container
 from textwrap import indent, dedent
 
 import numpy as np
@@ -2232,20 +2233,30 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
+def fetch_output_completeness(criteria, complete_statuses=['Traced'], batch_size=1000, *, client=None):
     """
     Compute an estimate of "output completeness" for a set of neurons.
     Output completeness is defined as the fraction of post-synaptic
-    connections which belong to Traced neurons.
+    connections which belong to 'complete' neurons, as defined by their status.
 
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Defines the set of neurons for which output completeness should be computed.
+
+        complete_statuses:
+            A list of neuron statuses should be considered complete for the purposes of this function.
+
     Returns:
         DataFrame with columns ``['bodyId', 'completeness', 'traced_weight', 'untraced_weight', 'total_weight']``
+
+        For the purposes of these results, any statuses in the
+        set of complete_statuses are considered 'traced'.
     """
     assert isinstance(criteria, NeuronCriteria)
     criteria.matchvar = 'n'
+
+    assert isinstance(complete_statuses, Container)
+    complete_statuses = list(complete_statuses)
 
     if batch_size is None:
         return _fetch_output_completeness(criteria, client)
@@ -2261,11 +2272,11 @@ def fetch_output_completeness(criteria, batch_size=1000, *, client=None):
     batch_results = []
     for start in trange(0, len(bodies), batch_size):
         criteria.bodyId = bodies[start:start+batch_size]
-        batch_results.append( _fetch_output_completeness(criteria, client) )
+        batch_results.append( _fetch_output_completeness(criteria, complete_statuses, client) )
     return pd.concat( batch_results, ignore_index=True )
 
 
-def _fetch_output_completeness(criteria, client=None):
+def _fetch_output_completeness(criteria, complete_statuses, client=None):
     q = f"""\
         {criteria.global_with(prefix=8)}
         MATCH (n:{criteria.label})
@@ -2277,7 +2288,9 @@ def _fetch_output_completeness(criteria, client=None):
 
         // Traced connection weights
         MATCH (n)-[e2:ConnectsTo]->(m:Segment)
-        WHERE m.status = 'Traced'
+        WHERE
+            m.status in {complete_statuses}
+            OR m.statusLabel in {complete_statuses}
 
         RETURN n.bodyId as bodyId,
                total_weight,
@@ -2292,7 +2305,7 @@ def _fetch_output_completeness(criteria, client=None):
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_downstream_orphan_tasks(criteria, *, client=None):
+def fetch_downstream_orphan_tasks(criteria, complete_statuses=['Traced'], *, client=None):
     """
     Fetch the set of "downstream orphans" for a given set of neurons.
 
@@ -2336,7 +2349,7 @@ def fetch_downstream_orphan_tasks(criteria, *, client=None):
 
     """
     # Find all downstream segments, along with the status of all upstream and downstream bodies.
-    status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment'), properties=['status'], client=client)
+    status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment'), properties=['status', 'statusLabel'], client=client)
 
     # That table is laid out per-ROI, but we don't care about ROI. Aggregate.
     conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
@@ -2349,11 +2362,11 @@ def fetch_downstream_orphan_tasks(criteria, *, client=None):
     conn_df = conn_df.merge(status_df, left_on='bodyId_post', right_on='bodyId').drop(columns={'bodyId'})
 
     # Drop non-orphans.
-    conn_df.query('status != "Traced"', inplace=True)
+    conn_df.query('status not in @complete_statuses and statusLabel not in @complete_statuses', inplace=True)
     conn_df.rename(columns={'status': 'status_post', 'weight': 'orphan_weight'}, inplace=True)
 
     # Calculate current output completeness
-    completeness_df = fetch_output_completeness(criteria, client=client)
+    completeness_df = fetch_output_completeness(criteria, complete_statuses, client=client)
     completeness_df = completeness_df.rename(columns={'completeness': 'orig_completeness',
                                                       'traced_weight': 'orig_traced_weight',
                                                       'untraced_weight': 'orig_untraced_weight'})
