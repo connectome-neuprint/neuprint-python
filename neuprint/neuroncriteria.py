@@ -127,9 +127,12 @@ class NeuronCriteria:
     """
 
     @inject_client
-    @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber', 'status', 'rois', 'inputRois', 'outputRois'])
+    @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber',
+                         'status', 'rois', 'inputRois', 'outputRois',
+                         'hemilineage', '_class', 'exitNerve'])
     def __init__( self, matchvar='n', *,
                   bodyId=None, instance=None, type=None, regex=False,
+                  _class=None, somaSide=None, exitNerve=None, hemilineage=None,
                   cellBodyFiber=None,
                   status=None, cropped=None,
                   min_pre=0, min_post=0,
@@ -184,6 +187,21 @@ class NeuronCriteria:
                 If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
                 regular expressions, rather than exact match strings.
 
+            _class (str or list of str):
+                Matches for the neuron ``class`` field.  To search for neurons
+                with no class at all, use ``_class=[None]``.
+
+            somaSide ('RHS' or 'LHS' or None):
+                Matches for the neuron ``somaSide`` field.
+
+            exitNerve (str or list of str):
+                Matches for the neuron ``exitNerve`` field.  To search for neurons
+                with no exit nerve at all, use ``exitNerve=[None]``.
+
+            hemilineage (str or list of str):
+                Matches for the neuron ``hemilineage`` field.  To search for neurons
+                with no hemilineage at all, use ``hemilineage=[None]``.
+
             cellBodyFiber (str or list of str):
                 Matches for the neuron ``cellBodyFiber`` field.  To search for neurons
                 with no CBF at all, use ``cellBodyFiber=[None]``.
@@ -237,11 +255,12 @@ class NeuronCriteria:
 
             soma (Either ``True``, ``False``, or ``None``)
                 If ``True``, only return neurons with a ``somaLocation``.
-                If ``False``, return neurons eithout a ``somaLocation``.
+                If ``False``, return neurons without a ``somaLocation``.
 
             client (:py:class:`neuprint.client.Client`):
                 Used to validate ROI names.
                 If not provided, the global default ``Client`` will be used.
+
         """
         # Validate that matchvar in various ways, to catch errors in which
         # the user has passed a bodyId or type, etc. in the wrong position.
@@ -286,7 +305,10 @@ class NeuronCriteria:
             "Can't stipulate min_roi_outputs without a list of outputRois"
 
         assert soma in (True, False, None), \
-            f"soma must be True, False, or None, not {soma}"
+            f"soma must be True, False or None, not {soma}"
+
+        assert somaSide in ("RHS", "LHS", None), \
+            f"somaSide must be 'LHS', 'RHS' or None, not {somaSide}"
 
         # If the user provided both intersecting rois and input/output rois,
         # force them to make the intersecting set a superset of the others.
@@ -331,7 +353,14 @@ class NeuronCriteria:
         self.label = label
         self.roi_req = roi_req
         self.soma = soma
+        self._class = _class
+        self.somaSide = somaSide
+        self.exitNerve = exitNerve
+        self.hemilineage = hemilineage
 
+        self.list_props = ['bodyId', 'status', 'cellBodyFiber', 'hemilineage',
+                           'exitNerve', '_class']
+        self.list_props_regex = ['type', 'instance']
 
     def __eq__(self, value):
         """
@@ -448,34 +477,25 @@ class NeuronCriteria:
     def global_vars(self):
         exprs = {}
 
-        if len(self.bodyId) > self.MAX_LITERAL_LENGTH:
-            values = [*filter(lambda s: s is not None, self.bodyId)]
-            var = f"{self.matchvar}_search_bodyIds"
-            exprs[var] = (f"{[*values]} as {var}")
+        for key in self.list_props:
+            values = getattr(self, key)
+            if len(values) > self.MAX_LITERAL_LENGTH:
+                if key.startswith('_'):
+                    key = key[1:]
+                values = [*filter(lambda s: s is not None, values)]
+                var = f"{self.matchvar}_search_{key}"
+                exprs[var] = (f"{[*values]} as {var}")
 
-        # Never store regular expressions into a global
-        if not self.regex and len(self.type) > self.MAX_LITERAL_LENGTH:
-            values = [*filter(lambda s: s is not None, self.type)]
-            var = f"{self.matchvar}_search_types"
-            exprs[var] = f"{[*values]} as {var}"
-
-        if not self.regex and len(self.instance) > self.MAX_LITERAL_LENGTH:
-            values = [*filter(lambda s: s is not None, self.instance)]
-            var = f"{self.matchvar}_search_instances"
-            exprs[var] = f"{[*values]} as {var}"
-
-        if len(self.status) > self.MAX_LITERAL_LENGTH:
-            values = [*filter(lambda s: s is not None, self.status)]
-            var = f"{self.matchvar}_search_statuses"
-            exprs[var] = f"{[*values]} as {var}"
-
-        if len(self.cellBodyFiber) > self.MAX_LITERAL_LENGTH:
-            values = [*filter(lambda s: s is not None, self.cellBodyFiber)]
-            var = f"{self.matchvar}_search_CBFs"
-            exprs[var] = f"{[*values]} as {var}"
+        for key in self.list_props:
+            values = getattr(self, key)
+            if not self.regex and len(values) > self.MAX_LITERAL_LENGTH:
+                if key.startswith('_'):
+                    key = key[1:]
+                values = [*filter(lambda s: s is not None, values)]
+                var = f"{self.matchvar}_search_{key}"
+                exprs[var] = (f"{[*values]} as {var}")
 
         return exprs
-
 
     def global_with(self, *vars, prefix=0):
         if isinstance(prefix, int):
@@ -491,7 +511,6 @@ class NeuronCriteria:
             return indent('WITH ' + full_list, prefix)[len(prefix):]
         return ""
 
-
     def basic_exprs(self):
         """
         Return the list of expressions that correspond
@@ -501,16 +520,71 @@ class NeuronCriteria:
         """
         exprs = [self.bodyId_expr(), self.typeinst_expr(), self.cbf_expr(), self.status_expr(),
                  self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr(),
-                 self.soma_expr()]
+                 self.soma_expr(), self.hemilineage_expr(), self.class_expr(),
+                 self.exitNerve_expr(), self.somaSide_expr()]
         exprs = [*filter(None, exprs)]
         return exprs
 
-
-    def bodyId_expr(self):
+    def _value_list_expr(self, key, value, regex=False):
+        """
+        Match key against a list of values. E.g. "bodyId in [1234, 5678]".
+        """
         valuevar = None
-        if len(self.bodyId) > self.MAX_LITERAL_LENGTH:
-            valuevar = f"{self.matchvar}_search_bodyIds"
-        return where_expr('bodyId', self.bodyId, False, self.matchvar, valuevar)
+        if not regex and len(value) > self.MAX_LITERAL_LENGTH:
+            valuevar = f"{self.matchvar}_search_{key}"
+        return where_expr(key, value, regex, self.matchvar, valuevar)
+
+    def _single_value_expr(self, key, value):
+        """
+        Match against key/value:
+            - True: key must exist
+            - False: key must not exist
+            - str: key must have given value
+        """
+        if value is None:
+            return ""
+        if not isinstance(value, bool):
+            return f"{self.matchvar}.{key} = '{value}'"
+        elif value:
+            return f"{self.matchvar}.{key} IS NOT NULL"
+        else:
+            return f"{self.matchvar}.{key} IS NULL"
+
+    def _tag_expr(self, key, value):
+        """
+        Match against tag, e.g. `.cropped`.
+        Non-existing tags are counted as False.
+        """
+        if value is None:
+            return ""
+
+        if value:
+            return f"{self.matchvar}.{key}"
+        else:
+            # Not all neurons might actually have the flag (e.g. `.cropped`),
+            # so simply checking for False values isn't enough.
+            # Must check exists().
+            return f"(NOT {self.matchvar}.{key} OR NOT exists({self.matchvar}.{key}))"
+
+    def _logic_tag_expr(self, tags, logic):
+        """
+        Match against logic list of tags, e.g. `.LH(R)` AND `.AL(R)`.
+        """
+        assert logic in ('AND', 'OR'), '`logic` must be either AND or OR'
+        if len(tags) == 0:
+            return ""
+
+        tags = sorted(tags)
+        return "(" + f" {logic} ".join(f"{self.matchvar}.`{v}`" for v in tags) + ")"
+
+    def _gt_eq_expr(self, key, value):
+        """
+        Match against key/value being greater or equal.
+        """
+        if value:
+            return f"{self.matchvar}.{key} >= {value}"
+        else:
+            return ""
 
     def typeinst_expr(self):
         """
@@ -528,71 +602,48 @@ class NeuronCriteria:
             return i
         return ""
 
+    def bodyId_expr(self):
+        return self._value_list_expr('bodyId', self.bodyId, False)
+
     def instance_expr(self):
-        valuevar = None
-        # We never use a global 'valuevar' in the regex case
-        if not self.regex and len(self.instance) > self.MAX_LITERAL_LENGTH:
-            valuevar = f"{self.matchvar}_search_instances"
-        return where_expr('instance', self.instance, self.regex, self.matchvar, valuevar)
+        return self._value_list_expr('instance', self.instance, self.regex)
 
     def type_expr(self):
-        valuevar = None
-        # We never use a global 'valuevar' in the regex case
-        if not self.regex and len(self.type) > self.MAX_LITERAL_LENGTH:
-            valuevar = f"{self.matchvar}_search_types"
-        return where_expr('type', self.type, self.regex, self.matchvar, valuevar)
+        return self._value_list_expr('type', self.type, self.regex)
 
     def cbf_expr(self):
-        valuevar = None
-        if len(self.cellBodyFiber) > self.MAX_LITERAL_LENGTH:
-            valuevar = f"{self.matchvar}_search_CBFs"
-        return where_expr('cellBodyFiber', self.cellBodyFiber, False, self.matchvar, valuevar)
+        return self._value_list_expr('cellBodyFiber', self.cellBodyFiber, False)
 
     def status_expr(self):
-        valuevar = None
-        if len(self.status) > self.MAX_LITERAL_LENGTH:
-            valuevar = f"{self.matchvar}_search_statuses"
-        return where_expr('status', self.status, False, self.matchvar, valuevar)
+        return self._value_list_expr('status', self.status, False)
+
+    def hemilineage_expr(self):
+        return self._value_list_expr('hemilineage', self.hemilineage, False)
+
+    def exitNerve_expr(self):
+        return self._value_list_expr('exitNerve', self.exitNerve, False)
+
+    def class_expr(self):
+        return self._value_list_expr('class', self._class, False)
 
     def cropped_expr(self):
-        if self.cropped is None:
-            return ""
-
-        if self.cropped:
-            return f"{self.matchvar}.cropped"
-        else:
-            # Not all neurons have the 'cropped' tag,
-            # so simply checking for False values isn't enough.
-            # Must check exists().
-            return f"(NOT {self.matchvar}.cropped OR NOT exists({self.matchvar}.cropped))"
+        return self._tag_expr('cropped', self.cropped)
 
     def rois_expr(self):
-        if len(self.rois) == 0:
-            return ""
-
-        rois = sorted(self.rois)
-        roi_logic = {'any': 'OR', 'all': 'AND'}[self.roi_req]
-        return "(" + f" {roi_logic} ".join(f"{self.matchvar}.`{roi}`" for roi in rois) + ")"
+        return self._logic_tag_expr(self.rois,
+                               {'any': 'OR', 'all': 'AND'}[self.roi_req])
 
     def pre_expr(self):
-        if self.min_pre:
-            return f"{self.matchvar}.pre >= {self.min_pre}"
-        else:
-            return ""
+        return self._gt_eq_expr('pre', self.min_pre)
 
     def post_expr(self):
-        if self.min_post:
-            return f"{self.matchvar}.post >= {self.min_post}"
-        else:
-            return ""
+        return self._gt_eq_expr('post', self.min_post)
 
     def soma_expr(self):
-        if self.soma is None:
-            return ""
-        if self.soma:
-            return f"{self.matchvar}.somaLocation IS NOT NULL"
-        else:
-            return f"{self.matchvar}.somaLocation IS NULL"
+        return self._single_value_expr('somaLocation', self.soma)
+
+    def somaSide_expr(self):
+        return self._single_value_expr('somaSide', self.somaSide)
 
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):

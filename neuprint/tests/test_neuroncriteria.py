@@ -46,7 +46,7 @@ def test_NeuronCriteria(client):
     assert NC(min_pre=5).basic_exprs() == ["n.pre >= 5"]
     assert NC(min_post=5).basic_exprs() == ["n.post >= 5"]
 
-    assert NC(bodyId=np.arange(1,6)).basic_exprs() == ["n.bodyId in n_search_bodyIds"]
+    assert NC(bodyId=np.arange(1,6)).basic_exprs() == ["n.bodyId in n_search_bodyId"]
 
     ##
     ## basic_conditions()
@@ -62,8 +62,8 @@ def test_NeuronCriteria(client):
     bodies = [1,2,3,4,5]
     nc = NC(bodyId=bodies)
     assert nc.global_with() == dedent(f"""\
-        WITH {bodies} as n_search_bodyIds""")
-    assert nc.basic_conditions(comments=False) == dedent("n.bodyId in n_search_bodyIds")
+        WITH {bodies} as n_search_bodyId""")
+    assert nc.basic_conditions(comments=False) == dedent("n.bodyId in n_search_bodyId")
 
     statuses = ['Traced', 'Orphan']
     nc = NC(status=statuses)
@@ -72,15 +72,15 @@ def test_NeuronCriteria(client):
     statuses = ['Traced', 'Orphan', 'Assign', 'Unimportant']
     nc = NC(status=statuses)
     assert nc.global_with() == dedent(f"""\
-        WITH {statuses} as n_search_statuses""")
-    assert nc.basic_conditions(comments=False) == "n.status in n_search_statuses"
+        WITH {statuses} as n_search_status""")
+    assert nc.basic_conditions(comments=False) == "n.status in n_search_status"
 
     # If None is included, then exists() should be checked.
     statuses = ['Traced', 'Orphan', 'Assign', None]
     nc = NC(status=statuses)
     assert nc.global_with() == dedent(f"""\
-        WITH ['Traced', 'Orphan', 'Assign'] as n_search_statuses""")
-    assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_statuses OR NOT exists(n.status)")
+        WITH ['Traced', 'Orphan', 'Assign'] as n_search_status""")
+    assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_status OR NOT exists(n.status)")
 
 def test_where_expr():
     assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
