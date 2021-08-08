@@ -357,3 +357,32 @@ class _iter_batches_with_len(_iter_batches):
         return int(np.ceil(len(self.base_iterator) / self.batch_size))
 
 
+def compile_columns(client, core_columns=[]):
+    """
+    Compile list of columns from available :Neuron keys (excluding ROIs).
+
+    Args:
+        client:
+            neu.Client to collect columns for.
+        core_columns:
+            List of core columns (optional). If provided, new columns will be
+            added to the end of the list and non-existing columns will be
+            dropped.
+
+    Returns:
+        columns:
+            List of key names.
+    """
+    # Fetch existing keys. This call is cached.
+    keys = client.fetch_neuron_keys()
+
+    # Drop ROIs
+    keys = [k for k in keys if k not in client.all_rois]
+
+    # Drop missing columns from core_columns
+    columns = [k for k in core_columns if k in keys]
+
+    # Add new keys (sort to make deterministic)
+    columns += [k for k in sorted(keys) if k not in columns]
+
+    return columns

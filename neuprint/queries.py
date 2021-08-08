@@ -15,15 +15,16 @@ from .client import inject_client, NeuprintTimeoutError
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 from .synapsecriteria import SynapseCriteria
 from .mitocriteria import MitoCriteria
-from .utils import make_args_iterable, tqdm, trange, iter_batches
+from .utils import make_args_iterable, tqdm, trange, iter_batches, compile_columns
 
 
-NEURON_COLS = ['bodyId', 'instance', 'type',
-               'pre', 'post', 'downstream', 'upstream', 'mito', 'size',
-               'status', 'cropped', 'statusLabel',
-               'cellBodyFiber',
-               'somaRadius', 'somaLocation',
-               'inputRois', 'outputRois', 'roiInfo']
+# Core set of columns
+CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
+                    'pre', 'post', 'downstream', 'upstream', 'mito', 'size',
+                    'status', 'cropped', 'statusLabel',
+                    'cellBodyFiber',
+                    'somaRadius', 'somaLocation',
+                    'inputRois', 'outputRois', 'roiInfo']
 
 
 @inject_client
@@ -346,7 +347,7 @@ def fetch_neurons(criteria, *, client=None):
     # Unlike in fetch_custom_neurons() below, here we specify the
     # return properties individually to avoid a large JSON payload.
     # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
-    props = list(NEURON_COLS)
+    props = compile_columns(client, core_columns=CORE_NEURON_COLS)
     props.remove('somaLocation')
     return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
@@ -422,6 +423,7 @@ def fetch_custom_neurons(q, *, client=None):
     results = client.fetch_custom(q)
 
     if len(results) == 0:
+        NEURON_COLS = compile_columns(client, core_columns=CORE_NEURON_COLS)
         neuron_df = pd.DataFrame([], columns=NEURON_COLS, dtype=object)
         roi_counts_df = pd.DataFrame([], columns=['bodyId', 'roi', 'pre', 'post'])
         return neuron_df, roi_counts_df
@@ -457,8 +459,8 @@ def _process_neuron_df(neuron_df, client):
     neuron_df = neuron_df[[*columns]]
 
     # Specify column order:
-    # Standard columns first, than any extra columns in the results (if any).
-    neuron_cols = [*filter(lambda c: c in neuron_df.columns, NEURON_COLS)]
+    # Standard columns first, then any extra columns in the results (if any).
+    neuron_cols = [*filter(lambda c: c in neuron_df.columns, CORE_NEURON_COLS)]
     extra_cols = {*neuron_df.columns} - {*neuron_cols}
     neuron_cols += [*extra_cols]
     neuron_df = neuron_df[[*neuron_cols]]
