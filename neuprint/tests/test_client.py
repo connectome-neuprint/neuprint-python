@@ -22,7 +22,6 @@ def test_members():
     assert len(df) == 1
     assert isinstance(df['rois'].iloc[0], list)
 
-
     assert isinstance(c.fetch_available(), list)
     assert isinstance(c.fetch_help(), str)
     assert c.fetch_server_info() is True
@@ -37,6 +36,7 @@ def test_members():
     assert isinstance(c.fetch_roi_connectivity(), pd.DataFrame)
     assert isinstance(c.fetch_roi_mesh('AB(R)'), bytes)
     assert isinstance(c.fetch_skeleton(EXAMPLE_BODY), pd.DataFrame)
+    assert isinstance(c.fetch_neuron_keys(), list)
 
 
 def test_fetch_skeleton():
