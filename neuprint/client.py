@@ -58,6 +58,8 @@ from textwrap import dedent, indent
 
 import pandas as pd
 
+from functools import lru_cache
+
 import urllib3
 from urllib3.util.retry import Retry
 from urllib3.exceptions import InsecureRequestWarning
@@ -474,6 +476,18 @@ class Client:
         Returns the version of the ``neuPrintHTTP`` server.
         """
         return self._fetch_json(f"{self.server}/api/version")['Version']
+
+    @lru_cache(None)
+    def fetch_neuron_keys(self):
+        """
+        Returns all available :Neuron properties in the database. Cached.
+        """
+        # Fetch available keys
+        c = """
+        MATCH (n :`Neuron`) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
+        """
+        raw = self.fetch_custom(c, format='json')
+        return [r[0] for r in raw['data']]
 
     ##
     ## DB-META
