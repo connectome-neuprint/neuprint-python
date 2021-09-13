@@ -1754,7 +1754,7 @@ def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_crit
 
     # Fetch the synapses that connect sources and targets
     # (subject to min_total_weight)
-    conn = fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, batch_size=1)
+    conn = fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, batch_size=10)
 
     output_bodies = conn['bodyId_pre'].unique()
     output_mito = fetch_synapses_and_closest_mitochondria(output_bodies, SC(type='pre'), batch_size=1)
@@ -2120,7 +2120,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
     # Fetch in batches
     syn_dfs = []
-    conn_groups = [*conn_df.groupby('bodyId_pre')]
+    conn_groups = [*conn_df.groupby(['bodyId_pre', 'bodyId_post'])]
     for group in tqdm(iter_batches(conn_groups, batch_size)):
         _, group_dfs = zip(*group)
         batch_conn_df = pd.concat(group_dfs, ignore_index=True)
