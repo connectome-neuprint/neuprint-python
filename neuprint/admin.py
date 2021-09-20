@@ -77,10 +77,12 @@ class Transaction:
 
 
     def __exit__(self, exc_type, exc_value, traceback):
+        if self.killed:
+            return
+
         if exc_type is None:
-            if not self.killed:
-                self._commit()
-        elif not self.killed and self.transaction_id is not None:
+            self._commit()
+        elif self.transaction_id is not None:
             self.kill()
 
 
