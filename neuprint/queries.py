@@ -2025,8 +2025,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         batch_size:
             To avoid timeouts and improve performance, the synapse connections
-            will be fetched in batches, split across N pre-synaptic bodies.
-            This argument sets the batch size N.
+            will be fetched in batches, where each batch consists of N connections
+            (N output-input pairs).
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
