@@ -538,7 +538,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     down_crit = copy.deepcopy(downstream_criteria)
 
     weight_type = "weight"
-    if weightHP is True:
+    if weightHP:
         weight_type = "weightHP"
     
     if up_crit is None:
@@ -1255,7 +1255,7 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
             [5778 rows x 4 columns]
     """
     weight_type = "weight"
-    if weightHP is True:
+    if weightHP:
         weight_type = "weightHP"
     
     if intermediate_criteria is None:
