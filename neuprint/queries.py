@@ -1966,7 +1966,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
 
 @inject_client
 @neuroncriteria_args('source_criteria', 'target_criteria')
-def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=10, *, client=None):
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=100, *, client=None):
     """
     Fetch synaptic-level connections between source and target neurons.
 
@@ -1990,7 +1990,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         target_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Criteria to by which to filter target (post-synaptic) neurons.
-            If omitted, all Neurons will be considered as possible sources.
+            If omitted, all Neurons will be considered as possible targets.
 
             Note:
                 Any ROI criteria specified in this argument does not affect
@@ -2025,8 +2025,11 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
 
         batch_size:
             To avoid timeouts and improve performance, the synapse connections
-            will be fetched in batches, where each batch consists of N connections
-            (N output-input pairs).
+            will be fetched in batches.  The batching strategy is to process
+            each body one at a time, and if it has lots of connection partners,
+            split the request across several batches to avoid timeouts that
+            could arise from a large request.
+            This argument specifies the maximum size of each batch in the inner loop.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -2118,25 +2121,34 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     conn_df = (roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
                           .sort_values(['bodyId_pre', 'bodyId_post']))
 
-    # Fetch in batches
-    syn_dfs = []
-    conn_groups = [*conn_df.groupby(['bodyId_pre', 'bodyId_post'])]
-    for group in tqdm(iter_batches(conn_groups, batch_size)):
-        _, group_dfs = zip(*group)
-        batch_conn_df = pd.concat(group_dfs, ignore_index=True)
-        source_criteria.bodyId = batch_conn_df['bodyId_pre'].unique()
-        target_criteria.bodyId = batch_conn_df['bodyId_post'].unique()
+    # Pick either 'pre' or 'post' column to process bodies one at a time.
+    # Then batch across the connections in an inner loop.
+    num_pre = conn_df['bodyId_pre'].nunique()
+    num_post = conn_df['bodyId_post'].nunique()
+    if num_pre < num_post:
+        grouping_col = 'bodyId_pre'
+    else:
+        grouping_col = 'bodyId_post'
 
-        batch_syn_df = _fetch_synapse_connections( source_criteria,
-                                                   target_criteria,
-                                                   synapse_criteria,
-                                                   min_total_weight,
-                                                   client )
-        syn_dfs.append(batch_syn_df)
+    syn_dfs = []
+    progress = tqdm(total=roi_conn_df['weight'].sum())
+    for _, group_df in conn_df.groupby(grouping_col):
+        for batch_df in tqdm(iter_batches(group_df, batch_size), leave=False):
+            source_criteria.bodyId = batch_df['bodyId_pre'].unique()
+            target_criteria.bodyId = batch_df['bodyId_post'].unique()
+
+            batch_syn_df = _fetch_synapse_connections( source_criteria,
+                                                       target_criteria,
+                                                       synapse_criteria,
+                                                       min_total_weight,
+                                                       client )
+            syn_dfs.append(batch_syn_df)
+            progress.update(len(batch_syn_df))
 
     syn_df = pd.concat(syn_dfs, ignore_index=True)
     hashable_cols = [col for col, dtype in syn_df.dtypes.items() if dtype != object]
-    assert syn_df.duplicated(hashable_cols).sum() == 0
+    assert syn_df.duplicated(hashable_cols).sum() == 0, \
+        "Somehow obtained duplicate synapse-synapse connections!"
     return syn_df
 
 
