@@ -128,13 +128,13 @@ class NeuronCriteria:
 
     @inject_client
     @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber',
-                         'status', 'rois', 'inputRois', 'outputRois',
+                         'status', 'statusLabel', 'rois', 'inputRois', 'outputRois',
                          'hemilineage', '_class', 'exitNerve'])
     def __init__( self, matchvar='n', *,
                   bodyId=None, instance=None, type=None, regex=False,
                   _class=None, somaSide=None, exitNerve=None, hemilineage=None,
                   cellBodyFiber=None,
-                  status=None, cropped=None,
+                  status=None, statusLabel=None, cropped=None,
                   min_pre=0, min_post=0,
                   rois=None, inputRois=None, outputRois=None, min_roi_inputs=1, min_roi_outputs=1,
                   label=None, roi_req='all',
@@ -209,6 +209,11 @@ class NeuronCriteria:
             status (str or list of str):
                 Matches for the neuron ``status`` field.  To search for neurons with no status
                 at all, use ``status=[None]``.
+
+            statusLabel (str or list of str):
+                Matches for the neuron ``statusLabel`` field. ``statusLabel`` is
+                typically more finegrained than ``status``. To search for neurons
+                with no status at all, use ``statusLabel=[None]``.
 
             cropped (bool):
                 If given, restrict results to neurons that are cropped or not.
@@ -341,6 +346,7 @@ class NeuronCriteria:
         self.type = type
         self.cellBodyFiber = cellBodyFiber
         self.status = status
+        self.statusLabel = statusLabel
         self.cropped = cropped
         self.min_pre = min_pre
         self.min_post = min_post
@@ -358,8 +364,8 @@ class NeuronCriteria:
         self.exitNerve = exitNerve
         self.hemilineage = hemilineage
 
-        self.list_props = ['bodyId', 'status', 'cellBodyFiber', 'hemilineage',
-                           'exitNerve', '_class']
+        self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber',
+                           'hemilineage', 'exitNerve', '_class']
         self.list_props_regex = ['type', 'instance']
 
     def __eq__(self, value):
@@ -377,7 +383,7 @@ class NeuronCriteria:
         # Compare attributes one by one
         # But don't count 'matchvar' as a parameter'.
         params = [#'matchvar',
-                 'bodyId', 'instance', 'type', 'status',
+                 'bodyId', 'instance', 'type', 'status', 'statusLabel',
                  'cropped', 'min_pre', 'min_post', 'rois', 'inputRois',
                  'outputRois', 'min_roi_inputs', 'min_roi_outputs',
                  'regex', 'label', 'roi_req', 'soma']
@@ -429,6 +435,11 @@ class NeuronCriteria:
             s += f', status="{self.status[0]}"'
         elif len(self.instance) > 1:
             s += f", status={list(self.status)}"
+
+        if len(self.statusLabel) == 1:
+            s += f', statusLabel="{self.statusLabel[0]}"'
+        elif len(self.instance) > 1:
+            s += f", statusLabel={list(self.statusLabel)}"
 
         if self.cropped is not None:
             s += f", cropped={self.cropped}"
@@ -518,7 +529,8 @@ class NeuronCriteria:
         They're intended be combined (via 'AND') in
         the WHERE clause of a cypher query.
         """
-        exprs = [self.bodyId_expr(), self.typeinst_expr(), self.cbf_expr(), self.status_expr(),
+        exprs = [self.bodyId_expr(), self.typeinst_expr(), self.cbf_expr(),
+                 self.status_expr(), self.statusLabel_expr(),
                  self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr(),
                  self.soma_expr(), self.hemilineage_expr(), self.class_expr(),
                  self.exitNerve_expr(), self.somaSide_expr()]
@@ -616,6 +628,9 @@ class NeuronCriteria:
 
     def status_expr(self):
         return self._value_list_expr('status', self.status, False)
+
+    def statusLabel_expr(self):
+        return self._value_list_expr('statusLabel', self.statusLabel, False)
 
     def hemilineage_expr(self):
         return self._value_list_expr('hemilineage', self.hemilineage, False)
