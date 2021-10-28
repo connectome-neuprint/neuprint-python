@@ -12,6 +12,29 @@ import numpy as np
 import pandas as pd
 
 
+class NotNull:
+    """Filter for existing properties.
+
+    Translates to::
+
+        WHERE neuron.{property} IS NOT NULL
+
+    """
+
+    pass
+
+
+class IsNull:
+    """Filter for missing properties.
+
+    Translates to::
+
+        WHERE neuron.{property} IS NULL
+
+    """
+
+    pass
+
 #
 # Import the notebook-aware version of tqdm if
 # we appear to be running within a notebook context.
