@@ -10,8 +10,10 @@ from collections.abc import Iterable, Collection
 import numpy as np
 import pandas as pd
 
-from .utils import make_args_iterable
+from .utils import make_args_iterable, IsNull, NotNull
 from .client import inject_client
+
+NoneType = type(None)
 
 
 def neuroncriteria_args(*argnames):
@@ -160,6 +162,17 @@ class NeuronCriteria:
             In either case, use use ``roi_req`` to specify whether a neuron must match just
             one (``any``) of the listed ROIs, or ``all`` of them.
 
+            **Matching against missing values (NULL)**
+
+            To search for missing values, you can use ``None``. For example, to
+            find neurons with no `type`, use ``type=[None]``.
+
+            **Matching against any value (NOT NULL)**
+
+            To search for any value, you can use ``neuprint.NotNull``. For
+            example, to find neurons that have a type (no matter what the
+            type is), use ``type=neu.NotNull``.
+
         Args:
             matchvar (str):
                 An arbitrary cypher variable name to use when this
@@ -292,14 +305,16 @@ class NeuronCriteria:
 
         if not regex and instance:
             for i in instance:
-                assert isinstance(i, (str, None)), 'instance should be a string, or None'
-                assert instance is None or '.*' not in i, \
+                assert isinstance(i, (str, NoneType)) or i in (IsNull, NotNull), \
+                    f'instance should be a string, IsNull, NotNull or None, got {i}'
+                assert not isinstance(i, str) or '.*' not in i, \
                     f"instance appears to be a regular expression ('{i}'), but you didn't pass regex=True"
 
         if not regex and type:
             for t in type:
-                assert isinstance(t, (str, None)), 'type should be a string, or None'
-                assert type is None or '.*' not in t, \
+                assert isinstance(t, (str, NoneType)) or t in (IsNull, NotNull), \
+                    f'type should be a string, IsNull, NotNull or None, got {t}'
+                assert not isinstance(t, str) or '.*' not in t, \
                     f"type appears to be a regular expression ('{t}'), but you didn't pass regex=True"
 
         assert roi_req in ('any', 'all')
@@ -884,6 +899,12 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
 
             In [11]: where_expr('bodyId', [123, None, 456], valuevar='bodies')
             Out[11]: 'n.bodyId in bodies OR NOT exists(n.bodyId)'
+
+            In [12]: where_expr('status', [IsNull])
+            Out[12]: 'n.status IS NULL'
+
+            In [13]: where_expr('status', [NotNull])
+            Out[13]: 'n.status NOT NULL'
     """
     assert isinstance(values, collections.abc.Iterable), \
         f"Please pass a list or a variable name, not {values}"
@@ -895,8 +916,11 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         return ""
 
     if len(values) == 1:
-        if values[0] is None:
+        if values[0] is None or values[0] == IsNull:
             return f"NOT exists({matchvar}.{field})"
+
+        if values[0] == NotNull:
+            return f"exists({matchvar}.{field})"
 
         if regex:
             return f"{matchvar}.{field} =~ '{values[0]}'"
@@ -906,8 +930,12 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
 
         return f"{matchvar}.{field} = {values[0]}"
 
+    if NotNull in values and len(values) > 1:
+        raise ValueError('`NotNull` can not be combined with other criteria '
+                         'for the same field.')
+
     # list of values
-    if None not in values:
+    if None not in values and IsNull not in values:
         if valuevar:
             return f"{matchvar}.{field} in {valuevar}"
         elif regex:
@@ -919,7 +947,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             return f"{matchvar}.{field} in {[*values]}"
 
     # ['some_val', None, 'some_other']
-    values = [*filter(lambda v: v is not None, values)]
+    values = [*filter(lambda v: v not in (None, IsNull), values)]
     if len(values) == 1:
         if regex:
             assert isinstance(values[0], str), \
