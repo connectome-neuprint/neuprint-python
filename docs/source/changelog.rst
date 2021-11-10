@@ -3,6 +3,8 @@ Changelog
 
 0.4.16 / 2021-
 -------------------
+- The per-ROI connection counts table returned by ``fetch_neurons()`` now includes rows for connections which fall outside of all primary ROIs.
+   These are indicated by the special ROI name ``NotPrimary``.
 - ``fetch_output_completeness`` now accepts a list of statuses to use, rather than assuming only ``"Traced"`` neurons are complete.
 - Added utility function ``skeleton_segments()``.
 

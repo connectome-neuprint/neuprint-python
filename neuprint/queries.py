@@ -290,6 +290,12 @@ def fetch_neurons(criteria, *, client=None):
            This is because ROIs form a hierarchical structure, so each synapse intersects
            more than one ROI. See :py:func:`.fetch_roi_hierarchy()` for more information.
 
+        .. note::
+
+            Connections which fall outside of all primary ROIs are listed via special entries
+            using ``NotPrimary`` in place of an ROI name.  The term ``NotPrimary`` is
+            introduced by this function. It isn't used internally by the neuprint database.
+
     See also:
 
         :py:func:`.fetch_custom_neurons()` produces similar output,
@@ -405,9 +411,13 @@ def fetch_custom_neurons(q, *, client=None):
             - ``somaLocation`` is provided as a list ``[x, y, z]``
             - New columns ``inputRoi`` and ``outputRoi`` contain lists of each neuron's ROIs.
 
-        In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table
+        In ``roi_counts_df``, the ``roiInfo`` has been loaded into a table
         of per-neuron-per-ROI synapse counts, with separate columns
         for ``pre`` (outputs) and ``post`` (inputs).
+
+        Connections which fall outside of all primary ROIs are listed via special entries
+        using ``NotPrimary`` in place of an ROI name.  The term ``NotPrimary`` is
+        introduced by this function. It isn't used internally by the neuprint database.
     """
     results = client.fetch_custom(q)
 
@@ -470,8 +480,22 @@ def _process_neuron_df(neuron_df, client):
 
             roi_counts.append( (row.bodyId, roi, pre, post, downstream, upstream, mito) )
 
-    cols = ['bodyId', 'roi', 'pre', 'post', 'downstream', 'upstream', 'mito']
-    roi_counts_df = pd.DataFrame(roi_counts, columns=cols)
+    fullcols = ['bodyId', 'roi', 'pre', 'post', 'downstream', 'upstream', 'mito']
+    nonroi_cols = list({*fullcols} - {'roi'})
+
+    # The 'NotPrimary' entries aren't stored by neuprint explicitly.
+    # We must compute them by subtracting the summed per-ROI counts
+    # from the overall counts in the neuron table.
+    roi_counts_df = pd.DataFrame(roi_counts, columns=fullcols)
+    roi_totals_df = roi_counts_df.query('roi in @client.primary_rois')[nonroi_cols].groupby('bodyId').sum()
+
+    not_primary_df = neuron_df[nonroi_cols].set_index('bodyId').fillna(0) - roi_totals_df.fillna(0)
+    not_primary_df['roi'] = 'NotPrimary'
+    not_primary_df = not_primary_df.reset_index()[fullcols]
+
+    roi_counts_df = pd.concat((roi_counts_df, not_primary_df), ignore_index=True)
+    roi_counts_df = roi_counts_df.sort_values(['bodyId', 'roi']).reset_index(drop=True)
+
     return neuron_df, roi_counts_df
 
 
