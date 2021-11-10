@@ -4,11 +4,12 @@ Changelog
 0.4.16 / 2021-
 -------------------
 - ``fetch_output_completeness`` now accepts a list of statuses to use, rather than assuming only ``"Traced"`` neurons are complete.
+- Added utility function ``skeleton_segments()``.
 
 0.4.15 / 2021-06-16
 -------------------
 - ``NeuronCriteria`` now accepts a boolean argument for ``soma``, indicating the presence or absence of a soma on the body.
-- Added ``fech_connection_mitochondria()`` for finding the nearest mitochondria on both sides of a tbar/psd pair. (#24)
+- Added ``fetch_connection_mitochondria()`` for finding the nearest mitochondria on both sides of a tbar/psd pair. (#24)
 - Integrated with Zenodo for DOI generation.
 
 0.4.14 / 2021-03-27

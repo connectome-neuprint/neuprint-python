@@ -26,6 +26,7 @@ Skeletons
     skeleton_swc_to_df
     skeleton_df_to_swc
     skeleton_df_to_nx
+    skeleton_segments
 
 Reference
 ---------
@@ -36,4 +37,5 @@ Reference
 .. autofunction:: skeleton_swc_to_df
 .. autofunction:: skeleton_df_to_swc
 .. autofunction:: skeleton_df_to_nx
+.. autofunction:: skeleton_segments
 
