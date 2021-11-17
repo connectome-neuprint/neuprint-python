@@ -53,8 +53,7 @@ after_success:
   - set -e
   - export PYTHONPATH=$(pwd)
   - cd docs && make html && cd -
-  - if [[ "${TRAVIS_BRANCH}" == "master" ]]; then
+  - if [[ "${TRAVIS_BRANCH}" == "docs" ]]; then
       doctr deploy --no-require-master --built-docs docs/build/html docs;
     else
       doctr deploy --no-require-master --built-docs docs/build/html "docs-$TRAVIS_BRANCH";
-    fi

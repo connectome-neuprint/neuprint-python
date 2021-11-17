@@ -5,8 +5,8 @@ Development Notes
 
 Notes for maintaining ``neuprint-python``.
 
-Packaging
----------
+Packaging and Release
+---------------------
 
 ``neuprint-python`` is packaged for both ``conda`` (on the `flyem-forge channel <https://anaconda.org/flyem-forge/neuprint-python/files>`_)
 and ``pip`` (on `PyPI <https://pypi.org/project/neuprint-python/>`_).
@@ -28,15 +28,21 @@ To prepare a release, follow these steps:
     cd docs && make html && cd -
 
     # Tag the git repo with the new version
-    git tag -a 0.3.1 -m 0.3.1
+    NEW_TAG=0.3.1
+    git tag -a ${NEW_TAG} -m ${NEW_TAG}
     git push --tags origin
 
     # Build and upload the conda package
     conda build conda-recipe
-    anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-0.3.1-py_0.tar.bz2
+    anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-${NEW_TAG}-py_0.tar.bz2
 
     # Build and upload the PyPI package
     ./upload-to-pypi.sh
+
+    # Update the docs branch (see explanation below)
+    git branch -D docs
+    git branch docs ${NEW_TAG}
+    git push -f origin docs
 
 
 Dependencies
@@ -80,7 +86,16 @@ To build the docs locally:
     open build/html/index.html
 
 The Travis-CI build will automatically deploy the docs to github pages using `doctr <https://github.com/drdoctr/doctr/>`_,
-every time you push to the the master branch.
+every time you push to the the ``docs`` branch.  To sync that branch with a recent tag, try:
+
+.. code-block:: bash
+
+    cd neuprint-python
+    LATEST_TAG=$(git tag -l --sort=v:refname | tail -n1)
+    git branch -D docs
+    git branch docs ${LATEST_TAG}
+    git push -f origin docs
+
 The docs are also built for development branches, but they're deployed to a special location:
 ``https://connectome-neuprint.github.io/neuprint-python/docs-<BRANCH_NAME>``
 
