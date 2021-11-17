@@ -131,10 +131,10 @@ class NeuronCriteria:
     @inject_client
     @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber',
                          'status', 'statusLabel', 'rois', 'inputRois', 'outputRois',
-                         'hemilineage', '_class', 'exitNerve'])
+                         'hemilineage', 'class_', 'exitNerve'])
     def __init__( self, matchvar='n', *,
                   bodyId=None, instance=None, type=None, regex=False,
-                  _class=None, somaSide=None, exitNerve=None, hemilineage=None,
+                  class_=None, somaSide=None, exitNerve=None, hemilineage=None,
                   cellBodyFiber=None,
                   status=None, statusLabel=None, cropped=None,
                   min_pre=0, min_post=0,
@@ -200,9 +200,9 @@ class NeuronCriteria:
                 If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
                 regular expressions, rather than exact match strings.
 
-            _class (str or list of str):
+            class_ (str or list of str):
                 Matches for the neuron ``class`` field.  To search for neurons
-                with no class at all, use ``_class=[None]``.
+                with no class at all, use ``class_=[None]``.
 
             somaSide ('RHS' or 'LHS' or None):
                 Matches for the neuron ``somaSide`` field.
@@ -374,13 +374,13 @@ class NeuronCriteria:
         self.label = label
         self.roi_req = roi_req
         self.soma = soma
-        self._class = _class
+        self.class_ = class_
         self.somaSide = somaSide
         self.exitNerve = exitNerve
         self.hemilineage = hemilineage
 
         self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber',
-                           'hemilineage', 'exitNerve', '_class']
+                           'hemilineage', 'exitNerve', 'class_']
         self.list_props_regex = ['type', 'instance']
 
     def __eq__(self, value):
@@ -419,7 +419,6 @@ class NeuronCriteria:
                 return False
         # If all comparisons have passed, return True
         return True
-
 
     def __repr__(self):
         # Show all non-default constructor args
@@ -493,12 +492,10 @@ class NeuronCriteria:
 
         return s
 
-
     MAX_LITERAL_LENGTH = 3
     assert MAX_LITERAL_LENGTH >= 3, \
         ("The logic in where_expr() assumes valuevars "
          "have length 3 (assuming one could be None).")
-
 
     def global_vars(self):
         exprs = {}
@@ -506,8 +503,8 @@ class NeuronCriteria:
         for key in self.list_props:
             values = getattr(self, key)
             if len(values) > self.MAX_LITERAL_LENGTH:
-                if key.startswith('_'):
-                    key = key[1:]
+                if key.endswith('_'):
+                    key = key[:-1]
                 values = [*filter(lambda s: s is not None, values)]
                 var = f"{self.matchvar}_search_{key}"
                 exprs[var] = (f"{[*values]} as {var}")
@@ -515,8 +512,8 @@ class NeuronCriteria:
         for key in self.list_props:
             values = getattr(self, key)
             if not self.regex and len(values) > self.MAX_LITERAL_LENGTH:
-                if key.startswith('_'):
-                    key = key[1:]
+                if key.endswith('_'):
+                    key = key[:-1]
                 values = [*filter(lambda s: s is not None, values)]
                 var = f"{self.matchvar}_search_{key}"
                 exprs[var] = (f"{[*values]} as {var}")
@@ -654,7 +651,7 @@ class NeuronCriteria:
         return self._value_list_expr('exitNerve', self.exitNerve, False)
 
     def class_expr(self):
-        return self._value_list_expr('class', self._class, False)
+        return self._value_list_expr('class', self.class_, False)
 
     def cropped_expr(self):
         return self._tag_expr('cropped', self.cropped)
@@ -748,7 +745,6 @@ class NeuronCriteria:
 
         return indent(combined, prefix)[len(prefix):]
 
-
     def basic_conditions(self, prefix=0, comments=True):
         """
         Construct a WHERE clause based on the basic conditions
@@ -769,7 +765,6 @@ class NeuronCriteria:
         clauses += f"\nAND ".join(exprs)
 
         return indent(clauses, prefix)[len(prefix):]
-
 
     def directed_rois_condition(self, *vars, prefix=0, comments=True):
         """
@@ -836,7 +831,7 @@ class NeuronCriteria:
             WITH {vars}, inputRois, outputRois, matchingInputRois, collect(roi) as matchingOutputRois, size(collect(roi)) as numMatchingOutputRois
             WHERE numMatchingOutputRois >= {min_output_matches}
             """)
-            #RETURN n, matchingInputRois, matchingOutputRois
+        #RETURN n, matchingInputRois, matchingOutputRois
 
         if not comments:
             conditions = '\n'.join(filter(lambda s: '//' not in s, conditions.split('\n')))
