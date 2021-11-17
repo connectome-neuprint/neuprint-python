@@ -697,7 +697,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             If not provided, the global default :py:class:`.Client` will be used.
 
     Returns:
-        Two DataFrames, ``(traced_neurons_df, roi_conn_df)``, containing a
+        Two DataFrames, ``(neurons_df, roi_conn_df)``, containing a
         table of neuron IDs and the per-ROI connection table, respectively.
         See caveat above concerning non-primary ROIs.
 
