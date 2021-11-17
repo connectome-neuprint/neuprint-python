@@ -1705,7 +1705,7 @@ def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, 
 
 @inject_client
 @neuroncriteria_args('source_criteria', 'target_criteria')
-def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_criteria, min_total_weight, *, client=None):
+def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_criteria=None, min_total_weight=1, *, client=None):
     """
     For a given set of source neurons and target neurons, find all
     synapse-level connections between the sources and targets, along
