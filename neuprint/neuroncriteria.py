@@ -162,16 +162,19 @@ class NeuronCriteria:
             In either case, use use ``roi_req`` to specify whether a neuron must match just
             one (``any``) of the listed ROIs, or ``all`` of them.
 
+        .. note::
+
             **Matching against missing values (NULL)**
 
-            To search for missing values, you can use ``None``. For example, to
-            find neurons with no `type`, use ``type=[None]``.
+            To search for neurons which are missing given property entirely,
+            you can use a list containing ``None``, or the special value ``neuprint.IsNull``.
+            For example, to find neurons with no `type`, use ``type=[None]`` or ``type=IsNull``.
 
             **Matching against any value (NOT NULL)**
 
-            To search for any value, you can use ``neuprint.NotNull``. For
+            To search for any non-null value, you can use ``neuprint.NotNull``. For
             example, to find neurons that have a type (no matter what the
-            type is), use ``type=neu.NotNull``.
+            type is), use ``type=NotNull``.
 
         Args:
             matchvar (str):
