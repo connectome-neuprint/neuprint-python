@@ -468,6 +468,9 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
                 continue
             neuron_df.loc[is_dict, c] = neuron_df.loc[is_dict, c].map(lambda x: x.get('coordinates', x))
 
+    if 'mito' not in neuron_df.columns:
+        neuron_df['mito'] = 0
+
     # Return roi info as a separate table
     roi_counts = []
     for row in neuron_df.itertuples():
