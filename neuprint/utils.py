@@ -12,6 +12,29 @@ import numpy as np
 import pandas as pd
 
 
+class NotNull:
+    """Filter for existing properties.
+
+    Translates to::
+
+        WHERE neuron.{property} IS NOT NULL
+
+    """
+
+    pass
+
+
+class IsNull:
+    """Filter for missing properties.
+
+    Translates to::
+
+        WHERE neuron.{property} IS NULL
+
+    """
+
+    pass
+
 #
 # Import the notebook-aware version of tqdm if
 # we appear to be running within a notebook context.
@@ -357,3 +380,32 @@ class _iter_batches_with_len(_iter_batches):
         return int(np.ceil(len(self.base_iterator) / self.batch_size))
 
 
+def compile_columns(client, core_columns=[]):
+    """
+    Compile list of columns from available :Neuron keys (excluding ROIs).
+
+    Args:
+        client:
+            neu.Client to collect columns for.
+        core_columns:
+            List of core columns (optional). If provided, new columns will be
+            added to the end of the list and non-existing columns will be
+            dropped.
+
+    Returns:
+        columns:
+            List of key names.
+    """
+    # Fetch existing keys. This call is cached.
+    keys = client.fetch_neuron_keys()
+
+    # Drop ROIs
+    keys = [k for k in keys if k not in client.all_rois]
+
+    # Drop missing columns from core_columns
+    columns = [k for k in core_columns if k in keys]
+
+    # Add new keys (sort to make deterministic)
+    columns += [k for k in sorted(keys) if k not in columns]
+
+    return columns

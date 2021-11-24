@@ -15,15 +15,16 @@ from .client import inject_client, NeuprintTimeoutError
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 from .synapsecriteria import SynapseCriteria
 from .mitocriteria import MitoCriteria
-from .utils import make_args_iterable, tqdm, trange, iter_batches
+from .utils import make_args_iterable, tqdm, trange, iter_batches, compile_columns
 
 
-NEURON_COLS = ['bodyId', 'instance', 'type',
-               'pre', 'post', 'downstream', 'upstream', 'mito', 'size',
-               'status', 'cropped', 'statusLabel',
-               'cellBodyFiber',
-               'somaRadius', 'somaLocation',
-               'inputRois', 'outputRois', 'roiInfo']
+# Core set of columns
+CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
+                    'pre', 'post', 'downstream', 'upstream', 'mito', 'size',
+                    'status', 'cropped', 'statusLabel',
+                    'cellBodyFiber',
+                    'somaRadius', 'somaLocation',
+                    'inputRois', 'outputRois', 'roiInfo']
 
 
 @inject_client
@@ -275,7 +276,7 @@ def fetch_neurons(criteria, *, client=None):
 
             - ROI boolean columns are removed
             - ``roiInfo`` is parsed as json data
-            - ``somaLocation`` is provided as a list ``[x, y, z]``
+            - coordinates (such as ``somaLocation``) are provided as a list ``[x, y, z]``
             - New columns ``input_rois`` and ``output_rois`` contain lists of each neuron's ROIs.
 
         In ``roi_counts_df``, the ``roiInfo`` has been loadded into a table
@@ -346,8 +347,7 @@ def fetch_neurons(criteria, *, client=None):
     # Unlike in fetch_custom_neurons() below, here we specify the
     # return properties individually to avoid a large JSON payload.
     # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
-    props = list(NEURON_COLS)
-    props.remove('somaLocation')
+    props = compile_columns(client, core_columns=CORE_NEURON_COLS)
     return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
 
@@ -355,11 +355,7 @@ def fetch_neurons(criteria, *, client=None):
         {criteria.global_with(prefix=8)}
         MATCH (n :{criteria.label})
         {criteria.all_conditions(prefix=8)}
-        RETURN {return_exprs},
-               CASE
-                 WHEN n.somaLocation IS NULL
-                 THEN NULL ELSE [n.somaLocation.x, n.somaLocation.y, n.somaLocation.z]
-               END as somaLocation
+        RETURN {return_exprs}
         ORDER BY n.bodyId
     """
     neuron_df = client.fetch_custom(q)
@@ -408,7 +404,7 @@ def fetch_custom_neurons(q, *, client=None):
 
             - ROI boolean columns are removed
             - ``roiInfo`` is parsed as json data
-            - ``somaLocation`` is provided as a list ``[x, y, z]``
+            - coordinates (such as ``somaLocation``) are provided as a list ``[x, y, z]``
             - New columns ``inputRoi`` and ``outputRoi`` contain lists of each neuron's ROIs.
 
         In ``roi_counts_df``, the ``roiInfo`` has been loaded into a table
@@ -422,26 +418,18 @@ def fetch_custom_neurons(q, *, client=None):
     results = client.fetch_custom(q)
 
     if len(results) == 0:
+        NEURON_COLS = compile_columns(client, core_columns=CORE_NEURON_COLS)
         neuron_df = pd.DataFrame([], columns=NEURON_COLS, dtype=object)
         roi_counts_df = pd.DataFrame([], columns=['bodyId', 'roi', 'pre', 'post'])
         return neuron_df, roi_counts_df
 
     neuron_df = pd.DataFrame(results['n'].tolist())
 
-    # If somaLocation is already provided as a top-level column in the query results,
-    # we assume the user's cypher query already converted it to [x,y,z] form.
-    if 'somaLocation' in results:
-        neuron_df['somaLocation'] = results['somaLocation']
-    elif 'somaLocation' in neuron_df:
-        no_soma = neuron_df['somaLocation'].isnull()
-        neuron_df.loc[no_soma, 'somaLocation'] = None
-        neuron_df.loc[~no_soma, 'somaLocation'] = neuron_df.loc[~no_soma, 'somaLocation'].apply(lambda sl: sl.get('coordinates'))
-
     neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
     return neuron_df, roi_counts_df
 
 
-def _process_neuron_df(neuron_df, client):
+def _process_neuron_df(neuron_df, client, parse_locs=True):
     """
     Given a DataFrame of neuron properties, parse the roiInfo into
     inputRois and outputRois, and a secondary DataFrame for per-ROI
@@ -457,8 +445,8 @@ def _process_neuron_df(neuron_df, client):
     neuron_df = neuron_df[[*columns]]
 
     # Specify column order:
-    # Standard columns first, than any extra columns in the results (if any).
-    neuron_cols = [*filter(lambda c: c in neuron_df.columns, NEURON_COLS)]
+    # Standard columns first, then any extra columns in the results (if any).
+    neuron_cols = [*filter(lambda c: c in neuron_df.columns, CORE_NEURON_COLS)]
     extra_cols = {*neuron_df.columns} - {*neuron_cols}
     neuron_cols += [*extra_cols]
     neuron_df = neuron_df[[*neuron_cols]]
@@ -467,6 +455,21 @@ def _process_neuron_df(neuron_df, client):
     neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: ujson.loads(s))
     neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
     neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
+
+    # Find location columns
+    if parse_locs:
+        for c in neuron_df.columns:
+            # Skip non-object columns
+            if not neuron_df[c].dtype == 'object':
+                continue
+            # Skip any columns without dictionaries for values
+            is_dict = neuron_df[c].map(lambda x: isinstance(x, dict))
+            if not any(is_dict):
+                continue
+            neuron_df.loc[is_dict, c] = neuron_df.loc[is_dict, c].map(lambda x: x.get('coordinates', x))
+
+    if 'mito' not in neuron_df.columns:
+        neuron_df['mito'] = 0
 
     # Return roi info as a separate table
     roi_counts = []

@@ -3,16 +3,23 @@ Changelog
 
 0.4.16 / 2021-
 -------------------
+- ``NeuronCriteria`` has new fields to support upcoming datasets: ``somaSide``, ``class_``, ``statusLabel``, ``hemilineage``, ``exitNerve``.
+- ``NeuronCriteria`` now permits you to search for neurons that contain (or lack) a particular property via a special value ``NotNull`` (or ``IsNull``).
+- ``fetch_neurons()`` now returns all neuron properties.
+- ``fetch_neurons()`` now returns special rows for NotPrimary connection counts.
 - The per-ROI connection counts table returned by ``fetch_neurons()`` now includes rows for connections which fall outside of all primary ROIs.
-   These are indicated by the special ROI name ``NotPrimary``.
+  These are indicated by the special ROI name ``NotPrimary``.
+- ``fetch_synapse_connections()`` uses a more fine-grained batching strategy, splitting the query across more requests to avoid timeouts.
 - ``fetch_output_completeness`` now accepts a list of statuses to use, rather than assuming only ``"Traced"`` neurons are complete.
 - Added utility function ``skeleton_segments()``.
+
 
 0.4.15 / 2021-06-16
 -------------------
 - ``NeuronCriteria`` now accepts a boolean argument for ``soma``, indicating the presence or absence of a soma on the body.
 - Added ``fetch_connection_mitochondria()`` for finding the nearest mitochondria on both sides of a tbar/psd pair. (#24)
 - Integrated with Zenodo for DOI generation.
+
 
 0.4.14 / 2021-03-27
 -------------------
