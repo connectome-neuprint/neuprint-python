@@ -10,6 +10,8 @@ Changelog
 - The per-ROI connection counts table returned by ``fetch_neurons()`` now includes rows for connections which fall outside of all primary ROIs.
   These are indicated by the special ROI name ``NotPrimary``.
 - ``fetch_synapse_connections()`` uses a more fine-grained batching strategy, splitting the query across more requests to avoid timeouts.
+- Fixed a bug in ``fetch_shortest_paths()`` which caused it to generate invalid cypher if the ``intermediate_criteria``
+  used a list of bodyIds (or statuses, or rois, etc.) with more than three items.
 - ``fetch_output_completeness`` now accepts a list of statuses to use, rather than assuming only ``"Traced"`` neurons are complete.
 - Added utility function ``skeleton_segments()``.
 

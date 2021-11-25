@@ -1297,7 +1297,8 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
     q = f"""\
         call apoc.cypher.runTimeboxed(
-            "MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
+            "{intermediate_criteria.global_with(prefix=12)}
+            MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
                    (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
                    p = allShortestPaths((src)-[:ConnectsTo*]->(dest))
 
