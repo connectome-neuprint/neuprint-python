@@ -2,11 +2,7 @@ import os
 import platform
 
 from .client import Client, default_client, set_default_client
-from .neuroncriteria import NeuronCriteria
-
-#: Same as ``NeuronCriteria``.  This name is deprecated, but kept for backwards compatibility.
-SegmentCriteria = NeuronCriteria
-
+from .neuroncriteria import NeuronCriteria, SegmentCriteria
 from .mitocriteria import MitoCriteria
 from .synapsecriteria import SynapseCriteria
 from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_rois, fetch_roi_hierarchy,

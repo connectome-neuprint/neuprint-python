@@ -358,7 +358,8 @@ class Client:
         if DEFAULT_NEUPRINT_CLIENT is None:
             set_default_client(self)
 
-        from .queries import fetch_meta, _all_rois_from_meta
+        from .queries.general import fetch_meta
+        from .queries.rois import _all_rois_from_meta
         # Pre-cache these metadata fields,
         # to avoid re-fetching them for many queries that need them.
         self.meta = fetch_meta(client=self)
