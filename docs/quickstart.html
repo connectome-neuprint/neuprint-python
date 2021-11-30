@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Quickstart &mdash; neuprint-python 0.4.15 documentation</title>
+  <title>Quickstart &mdash; neuprint-python 0.4.16 documentation</title>
   
 
   
@@ -32,6 +32,7 @@
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -63,7 +64,7 @@
             
             
               <div class="version">
-                0.4.15
+                0.4.16
               </div>
             
           
@@ -232,7 +233,7 @@
 <blockquote>
 <div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">Client</span>
 
-<span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain&#39;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s1">&#39;YOUR-TOKEN-HERE&#39;</span><span class="p">)</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="s1">&#39;hemibrain:v1.2.1&#39;</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="s1">&#39;YOUR-TOKEN-HERE&#39;</span><span class="p">)</span>
 <span class="n">c</span><span class="o">.</span><span class="n">fetch_version</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -257,7 +258,7 @@ For information about the neuprint data model, see the <a class="reference exter
 <span class="gp">   ...: </span><span class="n">q</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
 <span class="gp">   ...: </span><span class="s2">    MATCH (n :Neuron {`AB(R)`: true})</span>
 <span class="gp">   ...: </span><span class="s2">    WHERE n.pre &gt; 10</span>
-<span class="gp">   ...: </span><span class="s2">    RETURN n.bodyId AS bodyId, n.name AS name, n.pre AS numpre, n.post AS numpost</span>
+<span class="gp">   ...: </span><span class="s2">    RETURN n.bodyId AS bodyId, n.type as type, n.instance AS instance, n.pre AS numpre, n.post AS numpost</span>
 <span class="gp">   ...: </span><span class="s2">    ORDER BY n.pre + n.post DESC</span>
 <span class="gp">   ...: </span><span class="s2">&quot;&quot;&quot;</span>
 
@@ -268,12 +269,12 @@ For information about the neuprint data model, see the <a class="reference exter
 
 <span class="gp">In [4]: </span><span class="n">results</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 <span class="gh">Out[4]:</span>
-<span class="go">       bodyId  name  numpre  numpost</span>
-<span class="go">0  5813027016  None    1720     6484</span>
-<span class="go">1  1008378448  None    1791     6276</span>
-<span class="go">2  1513363614  None     858     6508</span>
-<span class="go">3  5813057274  None    2001     5094</span>
-<span class="go">4  1131827390  None    2614     4421</span>
+<span class="go">       bodyId    type                   instance  numpre  numpost</span>
+<span class="go">0  5813027016    FB4Y             FB4Y(EB/NO1)_R    1720     6508</span>
+<span class="go">1  1008378448    FB4Y             FB4Y(EB/NO1)_R    1791     6301</span>
+<span class="go">2  1513363614  LCNOpm        LCNOpm(LAL-NO3pm)_R     858     6501</span>
+<span class="go">3  5813057274    FB4Y             FB4Y(EB/NO1)_L    2001     5089</span>
+<span class="go">4  1131827390    FB4M  FB4M(PPM3-FB3/4-NO-DAN)_R    2614     4431</span>
 </pre></div>
 </div>
 </div></blockquote>

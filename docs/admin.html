@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Admin Tools &mdash; neuprint-python 0.4.15 documentation</title>
+  <title>Admin Tools &mdash; neuprint-python 0.4.16 documentation</title>
   
 
   
@@ -32,6 +32,7 @@
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -63,7 +64,7 @@
             
             
               <div class="version">
-                0.4.15
+                0.4.16
               </div>
             
           
@@ -201,7 +202,7 @@
 Using these tools requires admin privileges on the neuPrintHttp server.</p>
 <dl class="class">
 <dt id="neuprint.admin.Transaction">
-<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.15/neuprint/admin.py#L8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.admin.</code><code class="descname">Transaction</code><span class="sig-paren">(</span><em>dataset</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.16/neuprint/admin.py#L8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction" title="Permalink to this definition">¶</a></dt>
 <dd><p>For admins only.
 Used to batch a set of operations into a single database transaction.</p>
 <p>This class is implemented as a context manager.</p>
@@ -225,14 +226,14 @@ Used to batch a set of operations into a single database transaction.</p>
 </table>
 <dl class="method">
 <dt id="neuprint.admin.Transaction.query">
-<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.15/neuprint/admin.py#L49"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
+<code class="descname">query</code><span class="sig-paren">(</span><em>cypher</em>, <em>format='pandas'</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.16/neuprint/admin.py#L49"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.query" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a custom cypher query within the context
 of this transaction (allows writes).</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="neuprint.admin.Transaction.kill">
-<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.15/neuprint/admin.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
+<code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.16/neuprint/admin.py#L61"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.admin.Transaction.kill" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kills (rolls back) transaction.</p>
 </dd></dl>
 

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.15 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.16 documentation</title>
   
 
   
@@ -32,6 +32,7 @@
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script type="text/javascript" src="https://unpkg.com/@jupyter-widgets/html-manager@^0.18.0/dist/embed-amd.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -63,7 +64,7 @@
             
             
               <div class="version">
-                0.4.15
+                0.4.16
               </div>
             
           
@@ -93,7 +94,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Development Notes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#packaging">Packaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#packaging-and-release">Packaging and Release</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#interactive-tutorial">Interactive Tutorial</a></li>
@@ -195,8 +196,8 @@
 <div class="section" id="development-notes">
 <span id="development"></span><h1>Development Notes<a class="headerlink" href="#development-notes" title="Permalink to this headline">¶</a></h1>
 <p>Notes for maintaining <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>.</p>
-<div class="section" id="packaging">
-<h2>Packaging<a class="headerlink" href="#packaging" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="packaging-and-release">
+<h2>Packaging and Release<a class="headerlink" href="#packaging-and-release" title="Permalink to this headline">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> is packaged for both <code class="docutils literal notranslate"><span class="pre">conda</span></code> (on the <a class="reference external" href="https://anaconda.org/flyem-forge/neuprint-python/files">flyem-forge channel</a>)
 and <code class="docutils literal notranslate"><span class="pre">pip</span></code> (on <a class="reference external" href="https://pypi.org/project/neuprint-python/">PyPI</a>).</p>
 <p>The package version is automatically inferred from the git tag.
@@ -213,15 +214,21 @@ pytest .
 <span class="nb">cd</span> docs <span class="o">&amp;&amp;</span> make html <span class="o">&amp;&amp;</span> <span class="nb">cd</span> -
 
 <span class="c1"># Tag the git repo with the new version</span>
-git tag -a <span class="m">0</span>.3.1 -m <span class="m">0</span>.3.1
+<span class="nv">NEW_TAG</span><span class="o">=</span><span class="m">0</span>.3.1
+git tag -a <span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span> -m <span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>
 git push --tags origin
 
 <span class="c1"># Build and upload the conda package</span>
 conda build conda-recipe
-anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span class="k">)</span>/conda-bld/noarch/neuprint-python-0.3.1-py_0.tar.bz2
+anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span class="k">)</span>/conda-bld/noarch/neuprint-python-<span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>-py_0.tar.bz2
 
 <span class="c1"># Build and upload the PyPI package</span>
 ./upload-to-pypi.sh
+
+<span class="c1"># Update the docs branch (see explanation below)</span>
+git branch -D docs
+git branch docs <span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>
+git push -f origin docs
 </pre></div>
 </div>
 </div>
@@ -231,13 +238,16 @@ anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span c
 You should also update <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> so that our binder container will acquire the new dependencies
 when users try out the interactive <a class="reference internal" href="notebooks/QueryTutorial.html"><span class="doc">tutorial</span></a>.  After publishing a new conda package with the updated dependencies,
 follow these steps <strong>on a Linux machine</strong>:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1"># update-deps.sh</span>
+
+<span class="nb">set</span> -e
 
 <span class="c1"># Create an environment with the binder dependencies</span>
 <span class="nv">TUTORIAL_DEPS</span><span class="o">=</span><span class="s2">&quot;ipywidgets bokeh holoviews hvplot&quot;</span>
 <span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice umap-learn scikit-learn matplotlib&quot;</span>
 <span class="nv">BINDER_DEPS</span><span class="o">=</span><span class="s2">&quot;neuprint-python jupyterlab </span><span class="si">${</span><span class="nv">TUTORIAL_DEPS</span><span class="si">}</span><span class="s2"> </span><span class="si">${</span><span class="nv">SIMULATION_DEPS</span><span class="si">}</span><span class="s2">&quot;</span>
-conda create -n neuprint-python -c flyem-forge -c conda-forge <span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
+conda create -y -n neuprint-python -c flyem-forge -c conda-forge <span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
 
 <span class="c1"># Export to environment.yml, but relax the neuprint-python version requirement</span>
 conda env <span class="nb">export</span> -n neuprint-python &gt; environment.yml
@@ -258,8 +268,15 @@ open build/html/index.html
 </pre></div>
 </div>
 <p>The Travis-CI build will automatically deploy the docs to github pages using <a class="reference external" href="https://github.com/drdoctr/doctr/">doctr</a>,
-every time you push to the the master branch.
-The docs are also built for development branches, but they’re deployed to a special location:
+every time you push to the the <code class="docutils literal notranslate"><span class="pre">docs</span></code> branch.  To sync that branch with a recent tag, try:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
+<span class="nv">LATEST_TAG</span><span class="o">=</span><span class="k">$(</span>git tag -l --sort<span class="o">=</span>v:refname <span class="p">|</span> tail -n1<span class="k">)</span>
+git branch -D docs
+git branch docs <span class="si">${</span><span class="nv">LATEST_TAG</span><span class="si">}</span>
+git push -f origin docs
+</pre></div>
+</div>
+<p>The docs are also built for development branches, but they’re deployed to a special location:
 <code class="docutils literal notranslate"><span class="pre">https://connectome-neuprint.github.io/neuprint-python/docs-&lt;BRANCH_NAME&gt;</span></code></p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
