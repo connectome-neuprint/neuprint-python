@@ -1,0 +1,500 @@
+import sys
+import copy
+from textwrap import dedent
+
+import numpy as np
+import pandas as pd
+
+from ..client import inject_client
+from ..neuroncriteria import NeuronCriteria, neuroncriteria_args
+from ..synapsecriteria import SynapseCriteria
+from ..utils import tqdm, iter_batches
+from .connectivity import fetch_adjacencies
+
+
+@inject_client
+@neuroncriteria_args('neuron_criteria')
+def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, client=None):
+    """
+    Fetch synapses from a neuron or selection of neurons.
+
+    Args:
+
+        neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Determines which bodies to fetch synapses for.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            See :py:class:`.SynapseCriteria` for details.
+
+            If the criteria specifies ``primary_only=True`` only primary ROIs will be returned in the results.
+            If a synapse does not intersect any primary ROI, it will be listed with an roi of ``None``.
+            (Since 'primary' ROIs do not overlap, each synapse will be listed only once.)
+            Otherwise, all ROI names will be included in the results.
+            In that case, some synapses will be listed multiple times -- once per intersecting ROI.
+            If a synapse does not intersect any ROI, it will be listed with an roi of ``None``.
+
+        batch_size:
+            To improve performance and avoid timeouts, the synapses for multiple bodies
+            will be fetched in batches, where each batch corresponds to N bodies.
+            This argument sets the batch size N.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+
+        DataFrame in which each row represent a single synapse.
+        Unless ``primary_only`` was specified, some synapses may be listed more than once,
+        if they reside in more than one overlapping ROI.
+
+    Example:
+
+        .. code-block:: ipython
+
+            In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_synapses
+               ...: fetch_synapses(NC(type='ADL.*', regex=True, rois=['FB']),
+               ...:                SC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
+            Out[1]:
+                    bodyId  type     roi      x      y      z  confidence
+            0   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            1   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            2   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            3   5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            4   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            5   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            6   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            7   5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            8   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            9   5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            10  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            11  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            12  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            13  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            14  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            15  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            16  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            17  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            18  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            19  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            20  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            21  5812983094   pre   LH(R)   5434  21270  19201    0.995000
+            22  5812983094   pre   LH(R)   5447  21281  19155    0.991000
+            23  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            24  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            25  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            26  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            27  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            28  5812983094   pre  SIP(R)  15300  25268  14043    0.992000
+            29   764377593  post   LH(R)   8043  21587  15146    0.804000
+            30   764377593  post   LH(R)   8057  21493  15140    0.906482
+            31   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+            32   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+            33   859152522  post  SIP(R)  13349  25337  13653    0.818386
+            34   859152522  post  SIP(R)  12793  26362  14202    0.926918
+            35   859152522   pre  SIP(R)  13275  25499  13629    0.997000
+
+    """
+    neuron_criteria.matchvar = 'n'
+    q = f"""
+        {neuron_criteria.global_with(prefix=8)}
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions(prefix=8)}
+        RETURN n.bodyId as bodyId
+    """
+    bodies = client.fetch_custom(q)['bodyId'].values
+
+    batch_dfs = []
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+        batch_criteria = copy.copy(neuron_criteria)
+        batch_criteria.bodyId = batch_bodies
+        batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
+        batch_dfs.append( batch_df )
+
+    if batch_dfs:
+        return pd.concat( batch_dfs, ignore_index=True )
+
+    # Return empty results, but with correct dtypes
+    dtypes = {'bodyId': np.dtype('int64'),
+              'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
+              'roi': np.dtype('O'),
+              'x': np.dtype('int32'),
+              'y': np.dtype('int32'),
+              'z': np.dtype('int32'),
+              'confidence': np.dtype('float32')}
+
+    return pd.DataFrame([], columns=dtypes.keys()).astype(dtypes)
+
+
+def _fetch_synapses(neuron_criteria, synapse_criteria, client):
+    neuron_criteria.matchvar = 'n'
+
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria()
+
+    if synapse_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    # If the user specified rois to filter synapses by, but hasn't specified rois
+    # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
+    if synapse_criteria.rois and not neuron_criteria.rois:
+        neuron_criteria.rois = {*synapse_criteria.rois}
+        neuron_criteria.roi_req = 'any'
+
+    # Fetch results
+    cypher = dedent(f"""\
+        {neuron_criteria.global_with(prefix=8)}
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions('n', prefix=8)}
+
+        MATCH (n)-[:Contains]->(ss:SynapseSet),
+              (ss)-[:Contains]->(s:Synapse)
+
+        {synapse_criteria.condition('n', 's', prefix=8)}
+        // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
+        WITH DISTINCT n, s
+
+        RETURN n.bodyId as bodyId,
+               s.type as type,
+               s.confidence as confidence,
+               s.location.x as x,
+               s.location.y as y,
+               s.location.z as z,
+               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for body, syn_type, conf, x, y, z, syn_info in data:
+        # Exclude non-primary ROIs if necessary
+        syn_rois = return_rois & {*syn_info.keys()}
+        # Fixme: Filter for the user's ROIs (drop duplicates)
+        for roi in syn_rois:
+            syn_table.append((body, syn_type, roi, x, y, z, conf))
+
+        if not syn_rois:
+            syn_table.append((body, syn_type, None, x, y, z, conf))
+
+    syn_df = pd.DataFrame(syn_table, columns=['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence'])
+
+    # Save RAM with smaller dtypes and interned strings
+    syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
+    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['x'] = syn_df['x'].astype(np.int32)
+    syn_df['y'] = syn_df['y'].astype(np.int32)
+    syn_df['z'] = syn_df['z'].astype(np.int32)
+    syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    return syn_df
+
+
+@inject_client
+@neuroncriteria_args('source_criteria', 'target_criteria')
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=10_000, *, client=None):
+    """
+    Fetch synaptic-level connections between source and target neurons.
+
+    Note:
+        Use this function if you need information about individual synapse connections,
+        such as their exact positions or confidence scores.
+        If you're just interested in aggregate neuron-to-neuron connection info
+        (including connection strengths and ROI intersections), see
+        :py:func:`fetch_simple_connections()` and :py:func:`fetch_adjacencies()`,
+        which are faster and have more condensed outputs than this function.
+
+    Note:
+        If you experience timeouts while running this function,
+        try reducing the ``batch_size`` setting.
+
+    Args:
+
+        source_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Criteria to by which to filter source (pre-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible sources.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        target_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Criteria to by which to filter target (post-synaptic) neurons.
+            If omitted, all Neurons will be considered as possible targets.
+
+            Note:
+                Any ROI criteria specified in this argument does not affect
+                which synapses are returned, only which bodies are inspected.
+
+        synapse_criteria (SynapseCriteria):
+            Optional. Allows you to filter synapses by roi, type, confidence.
+            The same criteria is used to filter both ``pre`` and ``post`` sides
+            of the connection.
+            By default, ``SynapseCriteria(primary_only=True)`` is used.
+
+            If ``primary_only`` is specified in the criteria, then the resulting
+            ``roi_pre`` and ``roi_post`` columns will contain a single
+            string (or ``None``) in every row.
+
+            Otherwise, the roi columns will contain a list of ROIs for every row.
+            (Primary ROIs do not overlap, so every synapse resides in only one
+            (or zero) primary ROI.)
+            See :py:class:`.SynapseCriteria` for details.
+
+        min_total_weight:
+            If the total weight of the connection between two bodies is not at least
+            this strong, don't include the synapses for that connection in the results.
+
+            Note:
+                This filters for total connection weight, regardless of the weight
+                within any particular ROI.  So, if your ``SynapseCriteria`` limits
+                results to a particular ROI, but two bodies connect in multiple ROIs,
+                then the number of synapses returned for the two bodies may appear to
+                be less than ``min_total_weight``. That's because you filtered out
+                the synapses in other ROIs.
+
+        batch_size:
+            To avoid timeouts and improve performance, the synapse connections
+            will be fetched in batches.  The batching strategy is to process
+            each body one at a time, and if it has lots of connection partners,
+            split the request across several batches to avoid timeouts that
+            could arise from a large request.
+            This argument specifies the maximum size of each batch in the inner loop.
+            Larger batches are more efficient to fetch, but increase the likelihood
+            of timeouts.
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+
+        DataFrame in which each row represents a single synaptic connection
+        between an upstream (pre-synaptic) body and downstream (post-synaptic) body.
+
+        Synapse locations are listed in columns ``[x_pre, y_pre, z_pre]`` and
+        ``[x_post, y_post, z_post]`` for the upstream and downstream synapses,
+        respectively.
+
+        The ``roi_pre`` and ``roi_post`` columns will contain either strings
+        or lists-of-strings, depending on the ``primary_only`` synapse criteria as
+        described above.
+
+    Example:
+
+        .. code-block:: ipython
+
+            In [1]: from neuprint import fetch_synapse_connections, SynapseCriteria as SC
+               ...: fetch_synapse_connections(792368888, None, SC(rois=['PED(R)', 'SMP(R)'], primary_only=True))
+            Out[1]:
+                bodyId_pre  bodyId_post roi_pre roi_post  x_pre  y_pre  z_pre  x_post  y_post  z_post  confidence_pre  confidence_post
+            0    792368888    754547386  PED(R)   PED(R)  14013  27747  19307   13992   27720   19313           0.996         0.401035
+            1    792368888    612742248  PED(R)   PED(R)  14049  27681  19417   14044   27662   19408           0.921         0.881487
+            2    792368888   5901225361  PED(R)   PED(R)  14049  27681  19417   14055   27653   19420           0.921         0.436177
+            3    792368888   5813117385  SMP(R)   SMP(R)  23630  29443  16297   23634   29437   16279           0.984         0.970746
+            4    792368888   5813083733  SMP(R)   SMP(R)  23630  29443  16297   23634   29419   16288           0.984         0.933871
+            5    792368888   5813058320  SMP(R)   SMP(R)  18662  34144  12692   18655   34155   12697           0.853         0.995000
+            6    792368888   5812981989  PED(R)   PED(R)  14331  27921  20099   14351   27928   20085           0.904         0.877373
+            7    792368888   5812981381  PED(R)   PED(R)  14331  27921  20099   14301   27919   20109           0.904         0.567321
+            8    792368888   5812981381  PED(R)   PED(R)  14013  27747  19307   14020   27747   19285           0.996         0.697836
+            9    792368888   5812979314  PED(R)   PED(R)  14331  27921  20099   14329   27942   20109           0.904         0.638362
+            10   792368888    424767514  PED(R)   PED(R)  14331  27921  20099   14324   27934   20085           0.904         0.985734
+            11   792368888    424767514  PED(R)   PED(R)  14013  27747  19307   14020   27760   19294           0.996         0.942831
+            12   792368888    424767514  PED(R)   PED(R)  14049  27681  19417   14040   27663   19420           0.921         0.993586
+            13   792368888    331662710  SMP(R)   SMP(R)  23630  29443  16297   23644   29429   16302           0.984         0.996389
+            14   792368888   1196854070  PED(R)   PED(R)  14331  27921  20099   14317   27935   20101           0.904         0.968408
+            15   792368888   1131831702  SMP(R)   SMP(R)  23630  29443  16297   23651   29434   16316           0.984         0.362952
+    """
+    assert source_criteria is not None or target_criteria is not None, \
+        "Please specify either source or target search criteria (or both)."
+
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria(primary_only=True)
+
+    def prepare_nc(nc, matchvar):
+        nc.matchvar = matchvar
+
+        # If the user specified rois to filter synapses by, but hasn't specified rois
+        # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
+        if synapse_criteria.rois and not nc.rois:
+            nc.rois = {*synapse_criteria.rois}
+            nc.roi_req = 'any'
+
+        return nc
+
+    source_criteria = prepare_nc(source_criteria, 'n')
+    target_criteria = prepare_nc(target_criteria, 'm')
+
+    # Fetch the list of neuron-neuron pairs in advance so we can break into batches.
+    _neuron_df, roi_conn_df = fetch_adjacencies( source_criteria,
+                                                 target_criteria,
+                                                 synapse_criteria.rois,
+                                                 1,
+                                                 min_total_weight,
+                                                 properties=[] )
+
+    if len(roi_conn_df) == 0:
+        # Return empty dataframe, but with the correct dtypes
+        dtypes = {
+            'bodyId_pre': np.dtype('int64'),
+            'bodyId_post': np.dtype('int64'),
+            'roi_pre': np.dtype('O'),
+            'roi_post': np.dtype('O'),
+            'x_pre': np.dtype('int32'),
+            'y_pre': np.dtype('int32'),
+            'z_pre': np.dtype('int32'),
+            'x_post': np.dtype('int32'),
+            'y_post': np.dtype('int32'),
+            'z_post': np.dtype('int32'),
+            'confidence_pre': np.dtype('float32'),
+            'confidence_post': np.dtype('float32')
+        }
+        return pd.DataFrame([], columns=dtypes.keys()).astype(dtypes)
+
+    conn_df = (roi_conn_df.drop_duplicates(['bodyId_pre', 'bodyId_post'])
+                          .sort_values(['bodyId_pre', 'bodyId_post']))
+
+    # Pick either 'pre' or 'post' column to process bodies one at a time.
+    # Then batch across the connections in an inner loop.
+    num_pre = conn_df['bodyId_pre'].nunique()
+    num_post = conn_df['bodyId_post'].nunique()
+    if num_pre < num_post:
+        grouping_col = 'bodyId_pre'
+    else:
+        grouping_col = 'bodyId_post'
+
+    syn_dfs = []
+    with tqdm(total=roi_conn_df['weight'].sum()) as progress:
+        for _, group_df in conn_df.groupby(grouping_col):
+            batches = iter_batches(group_df, batch_size)
+            for batch_df in tqdm(batches, leave=False):
+                src_crit = copy.copy(source_criteria)
+                tgt_crit = copy.copy(target_criteria)
+
+                if grouping_col == 'bodyId_pre':
+                    assert batch_df['bodyId_pre'].nunique() == 1
+                    src_crit.bodyId = batch_df['bodyId_pre'].unique()
+                    # Filter target criteria further only if connections
+                    # are being fetched in multiple batches.
+                    # Otherwise, the explicit body list is unnecessary and slows down the query.
+                    if len(batches) > 1:
+                        tgt_crit.bodyId = batch_df['bodyId_post'].unique()
+                else:
+                    assert batch_df['bodyId_post'].nunique() == 1
+                    tgt_crit.bodyId = batch_df['bodyId_post'].unique()
+                    # Filter source criteria further only if connections
+                    # are being fetched in multiple batches.
+                    # Otherwise, the explicit body list is unnecessary and slows down the query.
+                    if len(batches) > 1:
+                        src_crit.bodyId = batch_df['bodyId_pre'].unique()
+
+                batch_syn_df = _fetch_synapse_connections( src_crit,
+                                                        tgt_crit,
+                                                        synapse_criteria,
+                                                        min_total_weight,
+                                                        client )
+                syn_dfs.append(batch_syn_df)
+                progress.update(len(batch_syn_df))
+
+    syn_df = pd.concat(syn_dfs, ignore_index=True)
+    hashable_cols = [col for col, dtype in syn_df.dtypes.items() if dtype != object]
+    assert syn_df.duplicated(hashable_cols).sum() == 0, \
+        "Somehow obtained duplicate synapse-synapse connections!"
+    return syn_df
+
+
+def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client):
+    if synapse_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    source_syn_crit = copy.copy(synapse_criteria)
+    target_syn_crit = copy.copy(synapse_criteria)
+
+    source_syn_crit.matchvar = 'ns'
+    target_syn_crit.matchvar = 'ms'
+
+    source_syn_crit.type = 'pre'
+    target_syn_crit.type = 'post'
+
+    criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
+    combined_conditions = NeuronCriteria.combined_conditions(
+        [source_criteria, target_criteria],
+        ['n', 'e', 'm', 'ns', 'ms', *criteria_globals],
+        prefix=8)
+
+    # Fetch results
+    cypher = dedent(f"""\
+        {NeuronCriteria.combined_global_with((source_criteria, target_criteria), prefix=8)}
+        MATCH (n:{source_criteria.label})-[e:ConnectsTo]->(m:{target_criteria.label}),
+              (n)-[:Contains]->(nss:SynapseSet)-[:ConnectsTo]->(mss:SynapseSet)<-[:Contains]-(m),
+              (nss)-[:Contains]->(ns:Synapse)-[:SynapsesTo]->(ms:Synapse)<-[:Contains]-(mss)
+
+        {combined_conditions}
+
+        // Note: Semantically, the word 'DISTINCT' is unnecessary here,
+        // but its presence makes this query run faster.
+        WITH DISTINCT n, m, ns, ms, e
+        WHERE e.weight >= {min_total_weight}
+
+        {source_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
+        {target_syn_crit.condition('n', 'm', 'ns', 'ms', prefix=8)}
+
+        RETURN n.bodyId as bodyId_pre,
+               m.bodyId as bodyId_post,
+               ns.location.x as ux,
+               ns.location.y as uy,
+               ns.location.z as uz,
+               ms.location.x as dx,
+               ms.location.y as dy,
+               ms.location.z as dz,
+               ns.confidence as confidence_pre,
+               ms.confidence as confidence_post,
+               apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as info_pre,
+               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as info_post
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post in data:
+        # Exclude non-primary ROIs if necessary
+        pre_rois = return_rois & {*info_pre.keys()}
+        post_rois = return_rois & {*info_post.keys()}
+
+        # Intern the ROIs to save RAM
+        pre_rois = sorted(map(sys.intern, pre_rois))
+        post_rois = sorted(map(sys.intern, post_rois))
+
+        pre_rois = pre_rois or [None]
+        post_rois = post_rois or [None]
+
+        # Should be (at most) one ROI when primary_only=True,
+        # so only show that one (not a list)
+        if synapse_criteria.primary_only:
+            pre_rois = pre_rois[0]
+            post_rois = post_rois[0]
+
+        syn_table.append((bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
+
+    syn_df = pd.DataFrame(syn_table, columns=['bodyId_pre', 'bodyId_post',
+                                              'roi_pre', 'roi_post',
+                                              'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post',
+                                              'confidence_pre', 'confidence_post'])
+
+    # Save RAM with smaller dtypes
+    syn_df['x_pre'] = syn_df['x_pre'].astype(np.int32)
+    syn_df['y_pre'] = syn_df['y_pre'].astype(np.int32)
+    syn_df['z_pre'] = syn_df['z_pre'].astype(np.int32)
+    syn_df['x_post'] = syn_df['x_post'].astype(np.int32)
+    syn_df['y_post'] = syn_df['y_post'].astype(np.int32)
+    syn_df['z_post'] = syn_df['z_post'].astype(np.int32)
+    syn_df['confidence_pre'] = syn_df['confidence_pre'].astype(np.float32)
+    syn_df['confidence_post'] = syn_df['confidence_post'].astype(np.float32)
+
+    return syn_df

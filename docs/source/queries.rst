@@ -23,12 +23,21 @@ query language, you can write your own queries using
 :py:func:`fetch_custom <fetch_custom>`.
 But the functions in this file offer a convenient API for common queries.
 
-Built-in Queries
-----------------
+Server Built-in Queries
+-----------------------
 
-See the :ref:`Client` class reference for neuprint's built-in
+See the :ref:`Client` class reference for the neuprint server's built-in
 (non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
 and server metadata.
+
+.. note::
+
+    The functions below are all available via the ``neuprint`` top-level namespace.
+    You need not pay attention to the fine-grained module names below.
+
+    .. code-block:: python
+
+        from neuprint import fetch_neurons, fetch_adjacencies, NeuronCriteria as NC
 
 General
 -------
@@ -100,6 +109,24 @@ Reconstruction Tools
 Reference
 ---------
 
-.. automodule:: neuprint.queries
+
+.. automodule:: neuprint.general
    :members:
 
+.. automodule:: neuprint.queries.rois
+   :members:
+
+.. automodule:: neuprint.queries.neurons
+   :members:
+
+.. automodule:: neuprint.queries.connectivity
+   :members:
+
+.. automodule:: neuprint.queries.synapses
+   :members:
+
+.. automodule:: neuprint.queries.mito
+   :members:
+
+.. automodule:: neuprint.queries.recon
+   :members:
