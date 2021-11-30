@@ -2161,35 +2161,37 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         grouping_col = 'bodyId_post'
 
     syn_dfs = []
-    progress = tqdm(total=roi_conn_df['weight'].sum())
-    for _, group_df in conn_df.groupby(grouping_col):
-        batches = iter_batches(group_df, batch_size)
-        for batch_df in tqdm(batches, leave=False):
-            src_crit = copy.copy(source_criteria)
-            tgt_crit = copy.copy(target_criteria)
+    with tqdm(total=roi_conn_df['weight'].sum()) as progress:
+        for _, group_df in conn_df.groupby(grouping_col):
+            batches = iter_batches(group_df, batch_size)
+            for batch_df in tqdm(batches, leave=False):
+                src_crit = copy.copy(source_criteria)
+                tgt_crit = copy.copy(target_criteria)
 
-            if grouping_col == 'bodyId_pre':
-                assert batch_df['bodyId_pre'].nunique() == 1
-                src_crit.bodyId = batch_df['bodyId_pre'].unique()
-                # Filter target criteria further only if connections
-                # are being fetched in multiple batches.
-                if len(batches) > 1:
-                    tgt_crit.bodyId = batch_df['bodyId_post'].unique()
-            else:
-                assert batch_df['bodyId_post'].nunique() == 1
-                tgt_crit.bodyId = batch_df['bodyId_post'].unique()
-                # Filter source criteria further only if connections
-                # are being fetched in multiple batches.
-                if len(batches) > 1:
+                if grouping_col == 'bodyId_pre':
+                    assert batch_df['bodyId_pre'].nunique() == 1
                     src_crit.bodyId = batch_df['bodyId_pre'].unique()
+                    # Filter target criteria further only if connections
+                    # are being fetched in multiple batches.
+                    # Otherwise, the explicit body list is unnecessary and slows down the query.
+                    if len(batches) > 1:
+                        tgt_crit.bodyId = batch_df['bodyId_post'].unique()
+                else:
+                    assert batch_df['bodyId_post'].nunique() == 1
+                    tgt_crit.bodyId = batch_df['bodyId_post'].unique()
+                    # Filter source criteria further only if connections
+                    # are being fetched in multiple batches.
+                    # Otherwise, the explicit body list is unnecessary and slows down the query.
+                    if len(batches) > 1:
+                        src_crit.bodyId = batch_df['bodyId_pre'].unique()
 
-            batch_syn_df = _fetch_synapse_connections( src_crit,
-                                                       tgt_crit,
-                                                       synapse_criteria,
-                                                       min_total_weight,
-                                                       client )
-            syn_dfs.append(batch_syn_df)
-            progress.update(len(batch_syn_df))
+                batch_syn_df = _fetch_synapse_connections( src_crit,
+                                                        tgt_crit,
+                                                        synapse_criteria,
+                                                        min_total_weight,
+                                                        client )
+                syn_dfs.append(batch_syn_df)
+                progress.update(len(batch_syn_df))
 
     syn_df = pd.concat(syn_dfs, ignore_index=True)
     hashable_cols = [col for col, dtype in syn_df.dtypes.items() if dtype != object]
