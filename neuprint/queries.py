@@ -505,7 +505,7 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
 @inject_client
 @make_args_iterable(['rois'])
 @neuroncriteria_args('upstream_criteria', 'downstream_criteria')
-def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1,
+def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, weightHP=False, min_weight=1,
                              properties=['type', 'instance'],
                              *, client=None):
     """
@@ -565,6 +565,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     up_crit = copy.deepcopy(upstream_criteria)
     down_crit = copy.deepcopy(downstream_criteria)
 
+    weight_type = "weight"
+    if weightHP:
+        weight_type = "weightHP"
+    
     if up_crit is None:
         up_crit = NC(label='Neuron')
     if down_crit is None:
@@ -578,7 +582,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     if min_weight > 1:
         weight_expr = dedent(f"""\
             WITH n, m, e
-            WHERE e.weight >= {min_weight}
+            WHERE e.{weight_type} >= {min_weight}
             """)
         weight_expr = indent(weight_expr, ' '*8)[8:]
     else:
@@ -591,7 +595,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
     return_props = ['n.bodyId as bodyId_pre',
                     'm.bodyId as bodyId_post',
-                    'e.weight as weight']
+                    'e.{weight_type} as weight']
 
     for p in properties:
         if p == 'roiInfo':
@@ -614,7 +618,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         {combined_conditions}
         {weight_expr}
         RETURN {return_props_str}
-        ORDER BY e.weight DESC,
+        ORDER BY e.{weight_type} DESC,
                  n.bodyId,
                  m.bodyId
     """
@@ -1224,7 +1228,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
 
 @inject_client
 def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
-                         intermediate_criteria=None,
+                         intermediate_criteria=None, weightHP=False, 
                          timeout=5.0, *, client=None):
     """
     Find all neurons along the shortest path between two neurons.
@@ -1278,6 +1282,10 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
             [5778 rows x 4 columns]
     """
+    weight_type = "weight"
+    if weightHP:
+        weight_type = "weightHP"
+    
     if intermediate_criteria is None:
         intermediate_criteria = NeuronCriteria(status="Traced", client=client)
     else:
@@ -1302,11 +1310,11 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
                    (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
                    p = allShortestPaths((src)-[:ConnectsTo*]->(dest))
 
-            WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
+            WHERE     ALL (x in relationships(p) WHERE x.{weight_type} >= {min_weight})
                   AND ALL (n in nodes(p) {nodes_where})
 
             RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
-                   [x in relationships(p) | x.weight] AS weights",
+                   [x in relationships(p) | x.{weight_type}] AS weights",
 
             {{}},{timeout_ms}) YIELD value
             RETURN value.path as path, value.weights AS weights
