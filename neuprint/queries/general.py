@@ -3,7 +3,7 @@ from ..client import inject_client
 
 @inject_client
 def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
-    """
+    '''
     Make a custom cypher query.
 
     Alternative form of :py:meth:`.Client.fetch_custom()`, as a free function.
@@ -32,7 +32,21 @@ def fetch_custom(cypher, dataset="", format='pandas', *, client=None):
 
     Returns:
         Either json or DataFrame, depending on ``format``.
-    """
+
+    .. code-block:: ipython
+
+        In [4]: from neuprint import fetch_custom
+           ...:
+           ...: q = """\\
+           ...: MATCH (n:Neuron)
+           ...: WHERE n.bodyId = 5813027016
+           ...: RETURN n.type, n.instance
+           ...: """
+           ...: fetch_custom(q)
+        Out[4]:
+          n.type      n.instance
+        0   FB4Y  FB4Y(EB/NO1)_R
+    '''
     return client.fetch_custom(cypher, dataset, format)
 
 
@@ -49,10 +63,12 @@ def fetch_meta(*, client=None):
 
     .. code-block:: ipython
 
-        In [1]: meta = fetch_meta()
+        In [1]: from neuprint import fetch_meta
 
-        In [2]: list(meta.keys())
-        Out[2]:
+        In [2]: meta = fetch_meta()
+
+        In [3]: list(meta.keys())
+        Out[3]:
         ['dataset',
          'info',
          'lastDatabaseEdit',

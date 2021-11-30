@@ -639,10 +639,12 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
 
         .. code-block:: ipython
 
-            In [1]: neurons_df, roi_conn_df = fetch_traced_adjacencies('exported-connections')
+            In [1]: from neuprint import fetch_traced_adjacencies
 
-            In [2]: roi_conn_df.head()
-            Out[2]:
+            In [2]: neurons_df, roi_conn_df = fetch_traced_adjacencies('exported-connections')
+
+            In [3]: roi_conn_df.head()
+            Out[3]:
                    bodyId_pre  bodyId_post        roi  weight
             0      5813009352    516098538     SNP(R)       2
             1      5813009352    516098538     SLP(R)       2
@@ -650,11 +652,11 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             3       326119769    516098538     SLP(R)       1
             4       915960391    202916528         FB       1
 
-            In [3]: # Obtain total weights (instead of per-connection-per-ROI weights)
+            In [4]: # Obtain total weights (instead of per-connection-per-ROI weights)
                ...: conn_groups = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)
                ...: total_conn_df = conn_groups['weight'].sum()
                ...: total_conn_df.head()
-            Out[3]:
+            Out[4]:
                bodyId_pre  bodyId_post  weight
             0   202916528    203253253       2
             1   202916528    203257652       2
@@ -769,7 +771,8 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
         .. code-block:: ipython
 
-            In [1]: fetch_shortest_paths(329566174, 294792184, min_weight=10)
+            In [1]: from neuprint import fetch_shortest_paths
+               ...: fetch_shortest_paths(329566174, 294792184, min_weight=10)
             Out[1]:
                   path     bodyId                       type  weight
             0        0  329566174                    OA-VPM3       0
