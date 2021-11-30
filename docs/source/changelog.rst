@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.16 / 2021-
+0.4.16 / 2021-11-30
 -------------------
 - ``NeuronCriteria`` has new fields to support upcoming datasets: ``somaSide``, ``class_``, ``statusLabel``, ``hemilineage``, ``exitNerve``.
 - ``NeuronCriteria`` now permits you to search for neurons that contain (or lack) a particular property via a special value ``NotNull`` (or ``IsNull``).
