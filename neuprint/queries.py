@@ -2006,6 +2006,10 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         :py:func:`fetch_simple_connections()` and :py:func:`fetch_adjacencies()`,
         which are faster and have more condensed outputs than this function.
 
+    Note:
+        If you experience timeouts while running this function,
+        try reducing the ``batch_size`` setting.
+
     Args:
 
         source_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
