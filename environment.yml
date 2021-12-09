@@ -24,9 +24,9 @@ dependencies:
   - ca-certificates=2021.10.8=ha878542_0
   - certifi=2021.10.8=py39hf3d152e_1
   - cffi=1.15.0=py39h4bc2ebd_0
-  - charset-normalizer=2.0.8=pyhd8ed1ab_0
+  - charset-normalizer=2.0.9=pyhd8ed1ab_0
   - colorama=0.4.4=pyh9f0ad1d_0
-  - colorcet=2.0.6=pyhd8ed1ab_0
+  - colorcet=3.0.0=pyhd8ed1ab_0
   - cryptography=36.0.0=py39h95dcef6_0
   - cycler=0.11.0=pyhd8ed1ab_0
   - dbus=1.13.6=h48d8840_2
@@ -36,11 +36,11 @@ dependencies:
   - entrypoints=0.3=pyhd8ed1ab_1003
   - expat=2.4.1=h9c3ff4c_0
   - fontconfig=2.13.1=hba837de_1005
-  - fonttools=4.28.2=py39h3811e60_0
+  - fonttools=4.28.3=py39h3811e60_0
   - freetype=2.10.4=h0708190_1
   - gettext=0.19.8.1=h73d1719_1008
-  - glib=2.70.1=h780b84a_0
-  - glib-tools=2.70.1=h780b84a_0
+  - glib=2.70.2=h780b84a_0
+  - glib-tools=2.70.2=h780b84a_0
   - gst-plugins-base=1.18.5=hf529b03_2
   - gstreamer=1.18.5=h9f60fe5_2
   - holoviews=1.14.6=pyhd8ed1ab_0
@@ -49,8 +49,8 @@ dependencies:
   - idna=3.1=pyhd3deb0d_0
   - importlib-metadata=4.8.2=py39hf3d152e_0
   - importlib_resources=5.4.0=pyhd8ed1ab_0
-  - ipykernel=6.5.0=py39hef51801_1
-  - ipython=7.30.0=py39hf3d152e_0
+  - ipykernel=6.6.0=py39hef51801_0
+  - ipython=7.30.1=py39hf3d152e_0
   - ipython_genutils=0.2.0=py_1
   - ipywidgets=7.6.5=pyhd8ed1ab_0
   - jbig=2.1=h7f98852_2003
@@ -59,10 +59,10 @@ dependencies:
   - joblib=1.1.0=pyhd8ed1ab_0
   - jpeg=9d=h36c2ea0_0
   - json5=0.9.5=pyh9f0ad1d_0
-  - jsonschema=4.2.1=pyhd8ed1ab_0
+  - jsonschema=4.2.1=pyhd8ed1ab_1
   - jupyter_client=7.1.0=pyhd8ed1ab_0
   - jupyter_core=4.9.1=py39hf3d152e_1
-  - jupyter_server=1.12.1=pyhd8ed1ab_0
+  - jupyter_server=1.13.0=pyhd8ed1ab_0
   - jupyterlab=3.2.4=pyhd8ed1ab_0
   - jupyterlab_pygments=0.1.2=pyh9f0ad1d_0
   - jupyterlab_server=2.8.2=pyhd8ed1ab_0
@@ -85,7 +85,7 @@ dependencies:
   - libgcc-ng=11.2.0=h1d223b6_11
   - libgfortran-ng=11.2.0=h69a702a_11
   - libgfortran5=11.2.0=h5c6108e_11
-  - libglib=2.70.1=h174f98d_0
+  - libglib=2.70.2=h174f98d_0
   - libgomp=11.2.0=h1d223b6_11
   - libiconv=1.16=h516909a_0
   - liblapack=3.9.0=12_linux64_openblas
@@ -94,7 +94,7 @@ dependencies:
   - libopenblas=0.3.18=pthreads_h8fe5266_0
   - libopus=1.3.1=h7f98852_1
   - libpng=1.6.37=h21135ba_2
-  - libpq=13.5=hd57d9b9_0
+  - libpq=13.5=hd57d9b9_1
   - libsodium=1.0.18=h36c2ea0_1
   - libstdcxx-ng=11.2.0=he4da1e4_11
   - libtiff=4.3.0=h6f004c6_2
@@ -121,7 +121,7 @@ dependencies:
   - nbconvert=6.3.0=py39hf3d152e_1
   - nbformat=5.1.3=pyhd8ed1ab_0
   - ncurses=6.2=h58526e2_4
-  - nest-asyncio=1.5.1=pyhd8ed1ab_0
+  - nest-asyncio=1.5.4=pyhd8ed1ab_0
   - networkx=2.6.3=pyhd8ed1ab_1
   - neuprint-python
   - ngspice=32=6
@@ -129,7 +129,7 @@ dependencies:
   - ngspice-lib=32=hcee41ef_6
   - notebook=6.4.6=pyha770c72_0
   - nspr=4.32=h9c3ff4c_1
-  - nss=3.72=hb5efdd6_0
+  - nss=3.73=hb5efdd6_0
   - numba=0.54.1=py39h56b8d98_0
   - numpy=1.20.3=py39hdbf815f_1
   - olefile=0.46=pyh9f0ad1d_1
@@ -141,14 +141,14 @@ dependencies:
   - pandocfilters=1.5.0=pyhd8ed1ab_0
   - panel=0.12.4=pyhd8ed1ab_0
   - param=1.12.0=pyh6c4a22f_0
-  - parso=0.8.2=pyhd8ed1ab_0
+  - parso=0.8.3=pyhd8ed1ab_0
   - pcre=8.45=h9c3ff4c_0
   - pexpect=4.8.0=pyh9f0ad1d_2
   - pickleshare=0.7.5=py_1003
   - pillow=8.4.0=py39ha612740_0
   - pip=21.3.1=pyhd8ed1ab_0
   - prometheus_client=0.12.0=pyhd8ed1ab_0
-  - prompt-toolkit=3.0.22=pyha770c72_0
+  - prompt-toolkit=3.0.23=pyha770c72_0
   - pthread-stubs=0.4=h36c2ea0_1001
   - ptyprocess=0.7.0=pyhd3deb0d_0
   - pycparser=2.21=pyhd8ed1ab_0
@@ -190,14 +190,14 @@ dependencies:
   - tornado=6.1=py39h3811e60_2
   - tqdm=4.62.3=pyhd8ed1ab_0
   - traitlets=5.1.1=pyhd8ed1ab_0
-  - typing_extensions=4.0.0=pyha770c72_0
+  - typing_extensions=4.0.1=pyha770c72_0
   - tzdata=2021e=he74cb21_0
   - ujson=4.2.0=py39he80948d_1
   - umap-learn=0.5.2=py39hf3d152e_0
   - urllib3=1.26.7=pyhd8ed1ab_0
   - wcwidth=0.2.5=pyh9f0ad1d_2
   - webencodings=0.5.1=py_1
-  - websocket-client=1.2.1=py39hf3d152e_0
+  - websocket-client=1.2.3=pyhd8ed1ab_0
   - wheel=0.37.0=pyhd8ed1ab_1
   - widgetsnbextension=3.5.2=py39hf3d152e_1
   - xorg-kbproto=1.0.7=h7f98852_1002
