@@ -35,6 +35,8 @@ os.chdir(os.path.dirname(__file__) + '/../..')
 version = versioneer.get_version()
 os.chdir(os.path.dirname(__file__))
 
+latest_tag = version.split('+')[0]
+
 # The full version, including alpha/beta/rc tags
 release = version
 
@@ -63,7 +65,7 @@ extensions = [
 nbsphinx_execute = 'always'
 os.environ['RUNNING_IN_SPHINX'] = '1'
 
-nbsphinx_prolog = """
+nbsphinx_prolog = f"""
 
 ..
    (The following |br| definition is the only way
@@ -79,12 +81,12 @@ nbsphinx_prolog = """
     `try out yourself`_. |br|
     (The original version is `here`_.)
 
-    .. _try out yourself: https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2F{{ env.doc2path(env.docname, base=None) }}
+    .. _try out yourself: https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/{latest_tag}?filepath=docs%2Fsource%2F{{{{ env.doc2path(env.docname, base=None) }}}}
 
-    .. _here: https://github.com/connectome-neuprint/neuprint-python/tree/master/docs/source/{{ env.doc2path(env.docname, base=None) }}
+    .. _here: https://github.com/connectome-neuprint/neuprint-python/tree/{latest_tag}/docs/source/{{{{ env.doc2path(env.docname, base=None) }}}}
 
     .. image:: https://mybinder.org/badge_logo.svg
-     :target: https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/master?filepath=docs%2Fsource%2F{{ env.doc2path(env.docname, base=None) }}
+     :target: https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/{latest_tag}?filepath=docs%2Fsource%2F{{{{ env.doc2path(env.docname, base=None) }}}}
 
 ----
 """
