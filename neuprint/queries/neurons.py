@@ -232,10 +232,10 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
             if neuron_df[c].dtype != 'object':
                 continue
             # Skip columns which contain no dictionaries
-            is_dict = neuron_df[c].map(lambda x: isinstance(x, dict))
+            is_dict = [isinstance(x, dict) for x in neuron_df[c]]
             if not any(is_dict):
                 continue
-            neuron_df.loc[is_dict, c] = neuron_df.loc[is_dict, c].map(lambda x: x.get('coordinates', x))
+            neuron_df.loc[is_dict, c] = neuron_df.loc[is_dict, c].apply(lambda x: x.get('coordinates', x))
 
     # Return roi info as a separate table.
     # (Note: Some columns aren't present in old neuprint databases.)
