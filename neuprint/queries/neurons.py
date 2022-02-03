@@ -229,44 +229,41 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
     # Find location columns
     if parse_locs:
         for c in neuron_df.columns:
-            # Skip non-object columns
-            if not neuron_df[c].dtype == 'object':
+            if neuron_df[c].dtype != 'object':
                 continue
-            # Skip any columns without dictionaries for values
+            # Skip columns which contain no dictionaries
             is_dict = neuron_df[c].map(lambda x: isinstance(x, dict))
             if not any(is_dict):
                 continue
             neuron_df.loc[is_dict, c] = neuron_df.loc[is_dict, c].map(lambda x: x.get('coordinates', x))
 
-    if 'mito' not in neuron_df.columns:
-        neuron_df['mito'] = 0
+    # Return roi info as a separate table.
+    # (Note: Some columns aren't present in old neuprint databases.)
+    countcols = ['pre', 'post', 'downstream', 'upstream', 'mito']
+    countcols = [c for c in countcols if c in neuron_df.columns]
+    fullcols = ['bodyId', 'roi', *countcols]
+    nonroi_cols = ['bodyId', *countcols]
 
-    # Return roi info as a separate table
-    roi_counts = []
-    for row in neuron_df.itertuples():
-        for roi, counts in row.roiInfo.items():
-            pre = counts.get('pre', 0)
-            post = counts.get('post', 0)
-            downstream = counts.get('downstream', 0)
-            upstream = counts.get('upstream', 0)
-            mito = counts.get('mito', 0)
-
-            roi_counts.append( (row.bodyId, roi, pre, post, downstream, upstream, mito) )
-
-    fullcols = ['bodyId', 'roi', 'pre', 'post', 'downstream', 'upstream', 'mito']
-    nonroi_cols = list({*fullcols} - {'roi'})
+    roi_counts = [
+        {'bodyId': bodyId, 'roi': roi, **counts}
+        for bodyId, roiInfo in zip(neuron_df['bodyId'], neuron_df['roiInfo'])
+        for roi, counts in roiInfo.items()
+    ]
+    roi_counts_df = pd.DataFrame(roi_counts, columns=fullcols)
+    roi_counts_df = roi_counts_df.fillna(0).astype({c: int for c in countcols})
 
     # The 'NotPrimary' entries aren't stored by neuprint explicitly.
     # We must compute them by subtracting the summed per-ROI counts
     # from the overall counts in the neuron table.
-    roi_counts_df = pd.DataFrame(roi_counts, columns=fullcols)
     roi_totals_df = roi_counts_df.query('roi in @client.primary_rois')[nonroi_cols].groupby('bodyId').sum()
+    roi_totals_df = roi_totals_df.reindex(neuron_df['bodyId'])
 
     not_primary_df = neuron_df[nonroi_cols].set_index('bodyId').fillna(0) - roi_totals_df.fillna(0)
+    not_primary_df = not_primary_df.astype(int)
     not_primary_df['roi'] = 'NotPrimary'
     not_primary_df = not_primary_df.reset_index()[fullcols]
 
     roi_counts_df = pd.concat((roi_counts_df, not_primary_df), ignore_index=True)
-    roi_counts_df = roi_counts_df.sort_values(['bodyId', 'roi']).reset_index(drop=True)
+    roi_counts_df = roi_counts_df.sort_values(['bodyId', 'roi'], ignore_index=True)
 
     return neuron_df, roi_counts_df
