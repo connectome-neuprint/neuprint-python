@@ -45,6 +45,22 @@ Where are the release notes for the *data*?
 Please see the `neuprint dataset release notes and errata <https://neuprint.janelia.org/releasenotes>`_.
 
 
+Where can I find general information about the FlyEM Hemibrain dataset?
+-----------------------------------------------------------------------
+
+See the `hemibrain description page <https://www.janelia.org/project-team/flyem/hemibrain>`_.
+
+
+I just want the complete connection table for the FlyEM Hemibrain. Can I download that separately?
+--------------------------------------------------------------------------------------------------
+
+Yes, the complete connection table for all ``Traced`` neurons is available for download.
+To find the latest version, see the `hemibrain description page <https://www.janelia.org/project-team/flyem/hemibrain>`_,
+and find the link to the "compact connection matrix summary".
+`Here's a link <https://storage.cloud.google.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz>`
+to the table we released for version v1.2 (the most recent release at the time of this writing).
+
+
 How can I download the exact Hemibrain ROI shapes?
 --------------------------------------------------
 
