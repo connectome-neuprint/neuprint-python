@@ -17,7 +17,8 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
                              properties=['type', 'instance'],
                              *, client=None):
     """
-    Find connections to/from small set(s) of neurons.
+    Find connections to/from small set(s) of neurons.  Most users
+    should prefer ``fetch_adjacencies()`` instead of this function.
 
     Finds all connections from a set of "upstream" neurons,
     or to a set of "downstream" neurons,
@@ -40,6 +41,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             How to filter for neurons on the postsynaptic side of connections.
         rois:
             Limit results to neuron pairs that connect in at least one of the given ROIs.
+            Note that the total weight of each connection may include connections outside of the listed ROIs, too.
         min_weight:
             Exclude connections whose total weight (across all ROIs) falls below this threshold.
         properties:
