@@ -217,7 +217,7 @@ def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance'])
     return conn_df
 
 
-def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight', sort_by=None):
+def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight', sort_by=None, make_square=False):
     """
     Given a weighted connection table, produce a weighted adjacency matrix.
 
@@ -245,6 +245,10 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
             How to sort the rows and columns of the result.
             Can be two strings, e.g. ``("type_pre", "type_post")``,
             or a single string, e.g. ``"type"`` in which case the suffixes are assumed.
+
+        make_square:
+            If True, insert rows and columns to ensure that the same IDs exist in the rows and columns.
+            Inserted entries will have value 0.0
 
     Returns:
         DataFrame, shape NxM, where N is the number of unique values in
@@ -316,6 +320,11 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
         pre_order = conn_df[col_pre].unique()
         post_order = conn_df[col_post].unique()
         matrix = matrix.reindex(index=pre_order, columns=post_order)
+
+    if make_square:
+        matrix, _ = matrix.align(matrix.T).fillna(0.0).astype(matrix.dtype)
+        matrix = matrix.rename_axis('bodyId_pre', axis=0).rename_axis('bodyId_post', axis=1)
+        matrix = matrix.loc[sorted(matrix.index), sorted(matrix.columns)]
 
     return matrix
 
