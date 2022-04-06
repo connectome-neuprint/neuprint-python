@@ -12,6 +12,7 @@
 
 .. _queries:
 
+==============
 Common Queries
 ==============
 
@@ -24,7 +25,8 @@ query language, you can write your own queries using
 But the functions in this file offer a convenient API for common queries.
 
 Server Built-in Queries
------------------------
+=======================
+
 
 See the :ref:`Client` class reference for the neuprint server's built-in
 (non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
@@ -40,7 +42,7 @@ and server metadata.
         from neuprint import fetch_neurons, fetch_adjacencies, NeuronCriteria as NC
 
 General
--------
+=======
 
 .. autosummary::
 
@@ -48,7 +50,7 @@ General
     fetch_meta
 
 ROIs
-----
+====
 
 .. autosummary::
 
@@ -62,7 +64,7 @@ ROIs
     - :py:meth:`.Client.fetch_roi_connectivity()`
 
 Neurons
--------
+=======
 
 .. autosummary::
 
@@ -70,7 +72,7 @@ Neurons
     fetch_custom_neurons
 
 Connectivity
-------------
+============
 
 .. autosummary::
 
@@ -81,7 +83,7 @@ Connectivity
     fetch_shortest_paths
 
 Synapses
---------
+========
 
 .. autosummary::
 
@@ -89,7 +91,7 @@ Synapses
     fetch_synapse_connections
 
 Mitochondria
-------------
+============
 
 .. autosummary::
 
@@ -98,7 +100,7 @@ Mitochondria
     fetch_connection_mitochondria
 
 Reconstruction Tools
---------------------
+====================
 
 .. autosummary::
 
@@ -107,26 +109,53 @@ Reconstruction Tools
 
 
 Reference
----------
+=========
 
+.. I can't figure out how to make automodule display these in the 'bysource' order, so I'm specifying the order explicitly.
 
-.. automodule:: neuprint.general
-   :members:
+General
+-------
 
-.. automodule:: neuprint.queries.rois
-   :members:
+.. autofunction:: fetch_custom
+.. autofunction:: fetch_meta
 
-.. automodule:: neuprint.queries.neurons
-   :members:
+ROIs
+----
 
-.. automodule:: neuprint.queries.connectivity
-   :members:
+.. autofunction:: fetch_all_rois
+.. autofunction:: fetch_primary_rois
+.. autofunction:: fetch_roi_hierarchy
 
-.. automodule:: neuprint.queries.synapses
-   :members:
+Neurons
+-------
 
-.. automodule:: neuprint.queries.mito
-   :members:
+.. autofunction:: fetch_neurons
+.. autofunction:: fetch_custom_neurons
 
-.. automodule:: neuprint.queries.recon
-   :members:
+Connectivity
+------------
+
+.. autofunction:: fetch_simple_connections
+.. autofunction:: fetch_adjacencies
+.. autofunction:: fetch_traced_adjacencies
+.. autofunction:: fetch_common_connectivity
+.. autofunction:: fetch_shortest_paths
+
+Synapses
+--------
+
+.. autofunction:: fetch_synapses
+.. autofunction:: fetch_synapse_connections
+
+Mitochondria
+------------
+
+.. autofunction:: fetch_mitochondria
+.. autofunction:: fetch_synapses_and_closest_mitochondria
+.. autofunction:: fetch_connection_mitochondria
+
+Reconstruction Tools
+--------------------
+
+.. autofunction:: fetch_output_completeness
+.. autofunction:: fetch_downstream_orphan_tasks
