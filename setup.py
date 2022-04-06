@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import versioneer
 
@@ -19,7 +19,7 @@ setup(
     author="Stuart Berg",
     author_email='bergs@hhmi.janelia.org',
     url='https://github.com/connectome-neuprint/neuprint-python',
-    packages=['neuprint', 'neuprint.tests'],
+    packages=find_packages(),
     entry_points={},
     install_requires=requirements,
     keywords='neuprint-python',
