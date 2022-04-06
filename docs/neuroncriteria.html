@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>NeuronCriteria &mdash; neuprint-python 0.4.16 documentation</title>
+  <title>NeuronCriteria &mdash; neuprint-python 0.4.17 documentation</title>
   
 
   
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4.16
+                0.4.17
               </div>
             
           
@@ -208,7 +208,7 @@
 <span id="id1"></span><h1>NeuronCriteria<a class="headerlink" href="#neuroncriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="neuprint.NeuronCriteria">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">NeuronCriteria</code><span class="sig-paren">(</span><em>matchvar='n'</em>, <em>*</em>, <em>bodyId=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>regex=False</em>, <em>class_=None</em>, <em>somaSide=None</em>, <em>exitNerve=None</em>, <em>hemilineage=None</em>, <em>cellBodyFiber=None</em>, <em>status=None</em>, <em>statusLabel=None</em>, <em>cropped=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>rois=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_roi_inputs=1</em>, <em>min_roi_outputs=1</em>, <em>label=None</em>, <em>roi_req='all'</em>, <em>soma=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.16/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.NeuronCriteria" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">NeuronCriteria</code><span class="sig-paren">(</span><em>matchvar='n'</em>, <em>*</em>, <em>bodyId=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>regex=False</em>, <em>class_=None</em>, <em>somaSide=None</em>, <em>exitNerve=None</em>, <em>hemilineage=None</em>, <em>cellBodyFiber=None</em>, <em>status=None</em>, <em>statusLabel=None</em>, <em>cropped=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>rois=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_roi_inputs=1</em>, <em>min_roi_outputs=1</em>, <em>label=None</em>, <em>roi_req='all'</em>, <em>soma=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.17/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.NeuronCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies which fields to filter by when searching for a Neuron (or Segment).
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>
@@ -327,8 +327,28 @@ If not provided, the global default <code class="docutils literal notranslate"><
 
 <dl class="data">
 <dt id="neuprint.SegmentCriteria">
-<code class="descclassname">neuprint.</code><code class="descname">SegmentCriteria</code><em class="property"> = &lt;class 'neuprint.neuroncriteria.NeuronCriteria'&gt;</em><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.16/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SegmentCriteria" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same as <code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code>.  This name is deprecated, but kept for backwards compatibility.</p>
+<code class="descclassname">neuprint.</code><code class="descname">SegmentCriteria</code><em class="property"> = &lt;class 'neuprint.neuroncriteria.NeuronCriteria'&gt;</em><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.17/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SegmentCriteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specifies which fields to filter by when searching for a Neuron (or Segment).
+This class does not send queries itself, but you use it to specify search
+criteria for various query functions.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>For simple queries involving only particular bodyId(s) or type(s)/instance(s),
+you can usually just pass the <code class="docutils literal notranslate"><span class="pre">bodyId</span></code> or <code class="docutils literal notranslate"><span class="pre">type</span></code> to the query function,
+without constructing a full <code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code>.</p>
+<div class="last highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">fetch_neurons</span><span class="p">,</span> <span class="n">NeuronCriteria</span> <span class="k">as</span> <span class="n">NC</span>
+
+<span class="c1"># Equivalent</span>
+<span class="n">neuron_df</span><span class="p">,</span> <span class="n">conn_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="n">bodyId</span><span class="o">=</span><span class="mi">329566174</span><span class="p">))</span>
+<span class="n">neuron_df</span><span class="p">,</span> <span class="n">conn_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="mi">329566174</span><span class="p">)</span>
+
+<span class="c1"># Equivalent</span>
+<span class="c1"># (Criteria is satisfied if either type or instance matches.)</span>
+<span class="n">neuron_df</span><span class="p">,</span> <span class="n">conn_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">NC</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;OA-VPM3&quot;</span><span class="p">,</span> <span class="n">instance</span><span class="o">=</span><span class="s2">&quot;OA-VPM3&quot;</span><span class="p">))</span>
+<span class="n">neuron_df</span><span class="p">,</span> <span class="n">conn_df</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="s2">&quot;OA-VPM3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 </dd></dl>
 
 </div>

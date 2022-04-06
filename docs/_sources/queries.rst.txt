@@ -12,6 +12,7 @@
 
 .. _queries:
 
+==============
 Common Queries
 ==============
 
@@ -23,15 +24,25 @@ query language, you can write your own queries using
 :py:func:`fetch_custom <fetch_custom>`.
 But the functions in this file offer a convenient API for common queries.
 
-Built-in Queries
-----------------
+Server Built-in Queries
+=======================
 
-See the :ref:`Client` class reference for neuprint's built-in
+
+See the :ref:`Client` class reference for the neuprint server's built-in
 (non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
 and server metadata.
 
+.. note::
+
+    The functions below are all available via the ``neuprint`` top-level namespace.
+    You need not pay attention to the fine-grained module names below.
+
+    .. code-block:: python
+
+        from neuprint import fetch_neurons, fetch_adjacencies, NeuronCriteria as NC
+
 General
--------
+=======
 
 .. autosummary::
 
@@ -39,7 +50,7 @@ General
     fetch_meta
 
 ROIs
-----
+====
 
 .. autosummary::
 
@@ -53,7 +64,7 @@ ROIs
     - :py:meth:`.Client.fetch_roi_connectivity()`
 
 Neurons
--------
+=======
 
 .. autosummary::
 
@@ -61,7 +72,7 @@ Neurons
     fetch_custom_neurons
 
 Connectivity
-------------
+============
 
 .. autosummary::
 
@@ -72,7 +83,7 @@ Connectivity
     fetch_shortest_paths
 
 Synapses
---------
+========
 
 .. autosummary::
 
@@ -80,7 +91,7 @@ Synapses
     fetch_synapse_connections
 
 Mitochondria
-------------
+============
 
 .. autosummary::
 
@@ -89,7 +100,7 @@ Mitochondria
     fetch_connection_mitochondria
 
 Reconstruction Tools
---------------------
+====================
 
 .. autosummary::
 
@@ -98,8 +109,53 @@ Reconstruction Tools
 
 
 Reference
----------
+=========
 
-.. automodule:: neuprint.queries
-   :members:
+.. I can't figure out how to make automodule display these in the 'bysource' order, so I'm specifying the order explicitly.
 
+General
+-------
+
+.. autofunction:: fetch_custom
+.. autofunction:: fetch_meta
+
+ROIs
+----
+
+.. autofunction:: fetch_all_rois
+.. autofunction:: fetch_primary_rois
+.. autofunction:: fetch_roi_hierarchy
+
+Neurons
+-------
+
+.. autofunction:: fetch_neurons
+.. autofunction:: fetch_custom_neurons
+
+Connectivity
+------------
+
+.. autofunction:: fetch_simple_connections
+.. autofunction:: fetch_adjacencies
+.. autofunction:: fetch_traced_adjacencies
+.. autofunction:: fetch_common_connectivity
+.. autofunction:: fetch_shortest_paths
+
+Synapses
+--------
+
+.. autofunction:: fetch_synapses
+.. autofunction:: fetch_synapse_connections
+
+Mitochondria
+------------
+
+.. autofunction:: fetch_mitochondria
+.. autofunction:: fetch_synapses_and_closest_mitochondria
+.. autofunction:: fetch_connection_mitochondria
+
+Reconstruction Tools
+--------------------
+
+.. autofunction:: fetch_output_completeness
+.. autofunction:: fetch_downstream_orphan_tasks
