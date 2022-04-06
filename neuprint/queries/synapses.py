@@ -234,8 +234,9 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         synapse_criteria (SynapseCriteria):
             Optional. Allows you to filter synapses by roi, type, confidence.
             The same criteria is used to filter both ``pre`` and ``post`` sides
-            of the connection.
-            By default, ``SynapseCriteria(primary_only=True)`` is used.
+            of the connection, except for the ``rois`` -- see note below.
+            By default, ``SynapseCriteria(primary_only=True)`` is used,
+            with no additional filters.
 
             If ``primary_only`` is specified in the criteria, then the resulting
             ``roi_pre`` and ``roi_post`` columns will contain a single
@@ -245,6 +246,18 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             (Primary ROIs do not overlap, so every synapse resides in only one
             (or zero) primary ROI.)
             See :py:class:`.SynapseCriteria` for details.
+
+            Note:
+                Any `rois`` specified in your ``synapse_criteria`` will be used to filter
+                the target (post-synaptic) side of the synapse connection, but not
+                the pre-synaptic side.  So in the rare cases where the pre and post synapses
+                reside on different sides of an ROI boundary, the connection is associated
+                with the post-synaptic ROI.
+
+                That's consistent with neuprint's conventions for ROI assignment in the
+                neuron-to-neuron ``ConnectsTo:`` relationship, and thus ensures that this function
+                returns synapse counts that are consistent with :py:func:`.fetch_adjacencies()`.
+
 
         min_total_weight:
             If the total weight of the connection between two bodies is not at least
@@ -393,10 +406,10 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                         src_crit.bodyId = batch_df['bodyId_pre'].unique()
 
                 batch_syn_df = _fetch_synapse_connections( src_crit,
-                                                        tgt_crit,
-                                                        synapse_criteria,
-                                                        min_total_weight,
-                                                        client )
+                                                           tgt_crit,
+                                                           synapse_criteria,
+                                                           min_total_weight,
+                                                           client )
                 syn_dfs.append(batch_syn_df)
                 progress.update(len(batch_syn_df))
 
@@ -421,6 +434,12 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
 
     source_syn_crit.type = 'pre'
     target_syn_crit.type = 'post'
+
+    # We apply ROI filtering to the PSD side only,
+    # for consistency with the way neuprint assigns ROIs to
+    # connections in the neuron ``ConnectsTo:`` relationship.
+    # That way, this function and ``fetch_adjacencies()`` return consistent results.
+    source_syn_crit.rois = None
 
     criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
     combined_conditions = NeuronCriteria.combined_conditions(

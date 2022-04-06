@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.4.17 / 2022-
+-------------------
+
+- **[CHANGE IN RETURNED RESULTS]** ``fetch_synapse_connections()`` now applies ROI filtering criteria to only the post-synaptic points,
+  for consistency with ``fetch_adjacencies()``.  (See note in the docs.)
+  This means that the number of synapses returned by ``fetch_synapse_connections()`` is now slightly different than it was in previous
+  versions of ``neuprint-python``.
+
+
 0.4.16 / 2021-11-30
 -------------------
 - ``NeuronCriteria`` has new fields to support upcoming datasets: ``somaSide``, ``class_``, ``statusLabel``, ``hemilineage``, ``exitNerve``.
