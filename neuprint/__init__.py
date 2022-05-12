@@ -9,7 +9,7 @@ from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_r
                        fetch_neurons, fetch_custom_neurons, fetch_simple_connections, fetch_adjacencies,
                        fetch_traced_adjacencies, fetch_common_connectivity, fetch_shortest_paths,
                        fetch_mitochondria, fetch_synapses_and_closest_mitochondria, fetch_connection_mitochondria,
-                       fetch_synapses, fetch_synapse_connections, fetch_output_completeness,
+                       fetch_synapses, fetch_mean_synapses, fetch_synapse_connections, fetch_output_completeness,
                        fetch_downstream_orphan_tasks )
 from .utils import merge_neuron_properties, connection_table_to_matrix, IsNull, NotNull
 from .simulation import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm_LOW, Rm_MED, Rm_HIGH )

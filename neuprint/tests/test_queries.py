@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 import pandas as pd
 
 from neuprint import Client, default_client, set_default_client
@@ -9,7 +10,7 @@ from neuprint import (NeuronCriteria as NC,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
                       fetch_adjacencies, fetch_shortest_paths,
                       fetch_mitochondria, fetch_synapses_and_closest_mitochondria,
-                      fetch_synapses, fetch_synapse_connections)
+                      fetch_synapses, fetch_mean_synapses, fetch_synapse_connections)
 
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
@@ -196,10 +197,32 @@ def test_fetch_synapses(client):
     syn_df = fetch_synapses(nc, sc)
     assert set(syn_df['roi']) == {'FB', 'LAL(R)'}
 
+    # Ensure proper body set used.
     neuron_df, _count_df = fetch_neurons(nc)
     syn_df = syn_df.merge(neuron_df[['bodyId', 'type']], 'left', on='bodyId', suffixes=['_syn', '_body'])
     assert syn_df['type_body'].isnull().sum() == 0
     assert syn_df['type_body'].apply(lambda s: s.startswith('ExR')).all()
+
+
+def test_fetch_mean_synapses(client):
+    nc = NC(type='ExR.*', regex=True, rois=['EB'])
+    sc = SC(rois=['FB', 'LAL(R)'], primary_only=True)
+    mean_df = fetch_mean_synapses(nc, sc)
+    mean_df = mean_df.sort_values(['bodyId', 'roi', 'type'], ignore_index=True)
+    assert set(mean_df['roi']) == {'FB', 'LAL(R)'}
+
+    # Ensure proper body set used.
+    neuron_df, _count_df = fetch_neurons(nc)
+    mean_df = mean_df.merge(neuron_df[['bodyId', 'type']], 'left', on='bodyId', suffixes=['_syn', '_body'])
+    assert mean_df['type_body'].isnull().sum() == 0
+    assert mean_df['type_body'].apply(lambda s: s.startswith('ExR')).all()
+
+    # Compare with locally averaged results
+    syn_df = fetch_synapses(nc, sc)
+    expected_df = syn_df.groupby(['bodyId', 'roi', 'type'], observed=True).agg({'x': ['count', 'mean'], 'y': 'mean', 'z': 'mean', 'confidence': 'mean'}).reset_index()
+    expected_df.columns = ['bodyId', 'roi', 'type', 'count', *'xyz', 'confidence']
+    expected_df = expected_df.sort_values(['bodyId', 'roi', 'type'], ignore_index=True)
+    assert np.allclose(mean_df[[*'xyz', 'confidence']].values, expected_df[[*'xyz', 'confidence']].values)
 
 
 def test_fetch_synapses_and_closest_mitochondria(client):
@@ -223,4 +246,5 @@ if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
     #args += ['-k', 'fetch_neurons']
     #args += ['-k', 'fetch_synapses_and_closest_mitochondria']
+    #args += ['-k', 'fetch_mean_synapses']
     pytest.main(args)
