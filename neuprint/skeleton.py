@@ -392,3 +392,69 @@ def skeleton_segments(skeleton_df):
     segment_df['volume'] = segment_df.eval(e)
 
     return segment_df
+
+
+def attach_synapses_to_skeleton(skeleton_df, synapses_df):
+    """
+    Attach a neuron's synapses to its skeleton as new skeleton nodes.
+
+    Synapses are attached to their nearest skeleton node (in euclidean terms).
+    Note that skeleton nodes are sometimes somewhat far apart, so the nearest node
+    to a given synapse may not be close to the nearest point on the nearest line segment.
+
+    Args:
+        skeleton_df:
+            A DataFrame containing a neuron skeleton,
+            as produced by ``fetch_skeleton()``
+
+        synapses_df:
+            A DataFrame of synapse points, as produced by ``fetch_synapses()``.
+
+    Returns:
+        DataFrame
+        Rows are appended to the skeleton (one per synapse), and a new column is
+        added to distinguish between nodes which belonged to the original skeleton
+        ('neurite') and those which were added for synapses ('pre' or 'post').
+
+    Example:
+
+        .. code-block:: ipython
+
+                In [4]: from neuprint import fetch_skeleton, fetch_synapses, attach_synapses
+                   ...: body = 1136399017
+                   ...: skeleton = fetch_skeleton(body, heal=True)
+                   ...: synapses = fetch_synapses(body)
+                   ...: attach_synapses_to_skeleton(skeleton, synapses)
+
+                Out[4]:
+                    rowId             x             y             z     radius  link structure
+                0         1  12798.000000  30268.000000  15812.000000  21.000000    -1   neurite
+                1         2  12746.700195  30370.699219  15788.700195  55.464100     1   neurite
+                2         3  12727.200195  30411.199219  15767.599609  68.081200     2   neurite
+                3         4  12705.299805  30475.599609  15716.400391  58.952702     3   neurite
+                4         5  12687.400391  30499.500000  15692.500000  50.619999     4   neurite
+                ...     ...           ...           ...           ...        ...   ...       ...
+                2032   2033  12073.000000  32575.000000  14386.000000   0.000000   651      post
+                2033   2034  10072.000000  32572.000000  14464.000000   0.000000   685      post
+                2034   2035  10647.000000  31797.000000  14057.000000   0.000000   760      post
+                2035   2036  11203.000000  30673.000000  14839.000000   0.000000  1086      post
+                2036   2037  11116.000000  30613.000000  14707.000000   0.000000  1068      post
+
+                [2037 rows x 7 columns]
+    """
+    skeleton_df = skeleton_df.copy(deep=False)
+    synapses_df = synapses_df.copy(deep=False)
+
+    kd = cKDTree(skeleton_df[[*'xyz']].values)
+    _, indexes = kd.query(synapses_df[[*'xyz']].values)
+    synapses_df['link'] = skeleton_df.loc[indexes, 'rowId'].values
+    skeleton_df['structure'] = 'neurite'
+
+    synapses_df['rowId'] = synapses_df.index + skeleton_df['rowId'].max() + 1
+    synapses_df['structure'] = synapses_df['type']
+    synapses_df['radius'] = 0.0
+
+    relevant_cols = ['rowId', *'xyz', 'radius', 'link', 'structure']
+    combined = pd.concat((skeleton_df, synapses_df[relevant_cols]), ignore_index=True)
+    combined['structure'] = pd.Categorical(combined['structure'])
+    return combined

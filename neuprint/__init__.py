@@ -14,7 +14,7 @@ from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_r
 from .utils import merge_neuron_properties, connection_table_to_matrix, IsNull, NotNull
 from .simulation import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm_LOW, Rm_MED, Rm_HIGH )
 from .skeleton import ( fetch_skeleton, skeleton_df_to_nx, skeleton_swc_to_df, skeleton_df_to_swc, heal_skeleton,
-                        reorient_skeleton, calc_segment_distances, skeleton_segments)
+                        reorient_skeleton, calc_segment_distances, skeleton_segments, attach_synapses_to_skeleton)
 
 from ._version import get_versions
 __version__ = get_versions()['version']
