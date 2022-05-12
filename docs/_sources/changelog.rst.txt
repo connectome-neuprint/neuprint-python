@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.19 / 2022-05-12
+-------------------
+
+- Added ``fetch_mean_synapses()``
+- Added ``attach_synapses_to_skeleton()``
+
 0.4.18 / 2022-04-06
 -------------------
 

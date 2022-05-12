@@ -88,6 +88,7 @@ Synapses
 .. autosummary::
 
     fetch_synapses
+    fetch_mean_synapses
     fetch_synapse_connections
 
 Mitochondria
@@ -145,6 +146,7 @@ Synapses
 --------
 
 .. autofunction:: fetch_synapses
+.. autofunction:: fetch_mean_synapses
 .. autofunction:: fetch_synapse_connections
 
 Mitochondria

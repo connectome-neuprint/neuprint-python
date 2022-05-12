@@ -27,6 +27,7 @@ Skeletons
     skeleton_df_to_swc
     skeleton_df_to_nx
     skeleton_segments
+    attach_synapses_to_skeleton
 
 Reference
 ---------
@@ -38,4 +39,5 @@ Reference
 .. autofunction:: skeleton_df_to_swc
 .. autofunction:: skeleton_df_to_nx
 .. autofunction:: skeleton_segments
+.. autofunction:: attach_synapses_to_skeleton
 
