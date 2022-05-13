@@ -721,7 +721,7 @@ class Client:
             df = skeleton_swc_to_df(swc)
 
         if heal:
-            df = heal_skeleton(df, heal)
+            df = heal_skeleton(df, heal, -1)
             if export_path or format == 'swc':
                 swc = skeleton_df_to_swc(df)
 

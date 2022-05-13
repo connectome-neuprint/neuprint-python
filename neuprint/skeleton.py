@@ -55,13 +55,18 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True, with_distances=Fa
     else:
         g.add_nodes_from(df['rowId'].sort_values())
 
+    # Instead of assuming that the root node refers to a special parent (e.g. -1),
+    # we determine the root_parents by inspection.
+    root_parents = pd.Index(df['link'].unique()).difference(df['rowId'].unique())
+    root_parents
+
     if with_distances:
         edges_df = df[['rowId', 'link']].copy()
         edges_df['distance'] = calc_segment_distances(df)
-        edges_df = edges_df.query('link != -1').sort_values(['rowId', 'link'])
+        edges_df = edges_df.query('link not in @root_parents').sort_values(['rowId', 'link'])
         g.add_weighted_edges_from(edges_df.itertuples(index=False), 'distance')
     else:
-        edges_df = df.query('link != -1')[['rowId', 'link']]
+        edges_df = df.query('link not in @root_parents')[['rowId', 'link']]
         edges_df = edges_df.sort_values(['rowId', 'link'])
         g.add_edges_from(edges_df.values)
 
@@ -157,7 +162,7 @@ def skeleton_df_to_swc(df, export_path=None):
     return swc
 
 
-def heal_skeleton(skeleton_df, max_distance=np.inf):
+def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
     """
     Attempt to repair a fragmented skeleton into a single connected component.
 
@@ -188,6 +193,9 @@ def heal_skeleton(skeleton_df, max_distance=np.inf):
             cannot be connected to the rest of the skeleton because it's
             too far away, the skeleton will remain fragmented.
 
+        root_parent:
+            Typically, root nodes point to a special ID, e.g. -1.
+            If this ID is known, then 
     Returns:
         DataFrame, with ``link`` column updated with updated edges.
     """
@@ -197,7 +205,17 @@ def heal_skeleton(skeleton_df, max_distance=np.inf):
     if not max_distance:
         max_distance = 0.0
 
-    skeleton_df = skeleton_df.sort_values('rowId').reset_index(drop=True)
+    if root_parent is None:
+        root_parent = -1
+    else:
+        # Fast path to exit early if we can easily check the number of roots.
+        num_roots = skeleton_df.eval(f'rowId == {root_parent}').sum()
+        if num_roots == 1:
+            # There's only one root and therefore only one component.
+            # No healing necessary.
+            return skeleton_df
+
+    skeleton_df = skeleton_df.sort_values('rowId', ignore_index=True)
     g = skeleton_df_to_nx(skeleton_df, False, False)
 
     # Extract each fragment's rows and construct a KD-Tree
@@ -207,7 +225,6 @@ def heal_skeleton(skeleton_df, max_distance=np.inf):
         if len(cc) == len(skeleton_df):
             # There's only one component -- no healing necessary
             return skeleton_df
-
         df = skeleton_df.query('rowId in @cc')
         kd = cKDTree(df[[*'xyz']].values)
         fragments.append( Fragment(frag_id, df, kd) )
@@ -255,20 +272,20 @@ def heal_skeleton(skeleton_df, max_distance=np.inf):
     root = skeleton_df['rowId'].iloc[0]
 
     # Replace 'link' (parent) column using MST edges
-    _reorient_skeleton(skeleton_df, root, g)
-    assert (skeleton_df['link'] == -1).sum() == 1
-    assert skeleton_df['link'].iloc[0] == -1
+    _reorient_skeleton(skeleton_df, root, root_parent, g=g)
+    assert (skeleton_df['link'] == root_parent).sum() == 1
+    assert skeleton_df['link'].iloc[0] == root_parent
 
     # Delete edges that violated max_distance
     for a,b in omit_edges:
         q = '(rowId == @a and link == @b) or (rowId == @b and link == @a)'
         idx = skeleton_df.query(q).index
-        skeleton_df.loc[idx, 'link'] = -1
+        skeleton_df.loc[idx, 'link'] = root_parent
 
     return skeleton_df
 
 
-def _reorient_skeleton(skeleton_df, root, g=None):
+def _reorient_skeleton(skeleton_df, root, root_parent=-1, g=None):
     """
     Replace the 'link' column in each row of the skeleton dataframe
     so that its parent corresponds to a depth-first traversal from
@@ -303,7 +320,7 @@ def _reorient_skeleton(skeleton_df, root, g=None):
     edges = edges.set_index('rowId')['link']
 
     # Replace 'link' (parent) column using DFS edges
-    skeleton_df['link'] = skeleton_df['rowId'].map(edges).fillna(-1).astype(int)
+    skeleton_df['link'] = skeleton_df['rowId'].map(edges).fillna(root_parent).astype(int)
 
 
 def reorient_skeleton(skeleton_df, rowId=None, xyz=None, use_max_radius=False):
