@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>NeuronCriteria &mdash; neuprint-python 0.4.19 documentation</title>
+  <title>NeuronCriteria &mdash; neuprint-python 0.4.20 documentation</title>
   
 
   
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4.19
+                0.4.20
               </div>
             
           
@@ -208,7 +208,7 @@
 <span id="id1"></span><h1>NeuronCriteria<a class="headerlink" href="#neuroncriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="neuprint.NeuronCriteria">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">NeuronCriteria</code><span class="sig-paren">(</span><em>matchvar='n'</em>, <em>*</em>, <em>bodyId=None</em>, <em>instance=None</em>, <em>type=None</em>, <em>regex=False</em>, <em>class_=None</em>, <em>somaSide=None</em>, <em>exitNerve=None</em>, <em>hemilineage=None</em>, <em>cellBodyFiber=None</em>, <em>status=None</em>, <em>statusLabel=None</em>, <em>cropped=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>rois=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_roi_inputs=1</em>, <em>min_roi_outputs=1</em>, <em>label=None</em>, <em>roi_req='all'</em>, <em>soma=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.19/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.NeuronCriteria" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">NeuronCriteria</code><span class="sig-paren">(</span><em>matchvar='n'</em>, <em>*</em>, <em>bodyId=None</em>, <em>type=None</em>, <em>instance=None</em>, <em>regex='guess'</em>, <em>class_=None</em>, <em>somaSide=None</em>, <em>exitNerve=None</em>, <em>hemilineage=None</em>, <em>cellBodyFiber=None</em>, <em>status=None</em>, <em>statusLabel=None</em>, <em>cropped=None</em>, <em>min_pre=0</em>, <em>min_post=0</em>, <em>rois=None</em>, <em>inputRois=None</em>, <em>outputRois=None</em>, <em>min_roi_inputs=1</em>, <em>min_roi_outputs=1</em>, <em>label=None</em>, <em>roi_req='all'</em>, <em>soma=None</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.20/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.NeuronCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies which fields to filter by when searching for a Neuron (or Segment).
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>
@@ -267,16 +267,21 @@ To help catch errors (such as accidentally passing a <code class="docutils liter
 <code class="docutils literal notranslate"><span class="pre">instance</span></code> name in the wrong argument position), we require that
 <code class="docutils literal notranslate"><span class="pre">matchvar</span></code> begin with a lowercase letter.</li>
 <li><strong>bodyId</strong> (<em>int</em><em> or </em><em>list of ints</em>) – List of bodyId values.</li>
-<li><strong>instance</strong> (<em>str</em><em> or </em><em>list of str</em>) – If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the instance will be matched as a regular expression.
-Otherwise, only exact matches are found. To search for neurons with no instance
-at all, use <code class="docutils literal notranslate"><span class="pre">instance=[None]</span></code>. If both <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code> criteria are
-supplied, any neuron that matches EITHER criteria will match the overall criteria.</li>
-<li><strong>type</strong> (<em>str</em><em> or </em><em>list of str</em>) – If <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>, then the type will be matched as a regular expression.
-Otherwise, only exact matches are found. To search for neurons with no type
-at all, use <code class="docutils literal notranslate"><span class="pre">type=[None]</span></code>. If both <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code> criteria are
-supplied, any neuron that matches EITHER criteria will match the overall criteria.</li>
+<li><strong>type</strong> (<em>str</em><em> or </em><em>list of str</em>) – Cell type.  Matches depend on the the <code class="docutils literal notranslate"><span class="pre">regex</span></code> argument.
+To search for neurons with no type at all, use <code class="docutils literal notranslate"><span class="pre">type=[None]</span></code>.
+If both <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code> criteria are supplied, any neuron that
+matches EITHER criteria will match the overall criteria.</li>
+<li><strong>instance</strong> (<em>str</em><em> or </em><em>list of str</em>) – Cell instance (specific cell name).  Matches depend on the the <code class="docutils literal notranslate"><span class="pre">regex</span></code> argument.
+To search for neurons with no instance at all, use <code class="docutils literal notranslate"><span class="pre">instance=[None]</span></code>.
+If both <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code> criteria are supplied, any neuron that
+matches EITHER criteria will match the overall criteria.</li>
 <li><strong>regex</strong> (<em>bool</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the <code class="docutils literal notranslate"><span class="pre">instance</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> arguments will be interpreted as
-regular expressions, rather than exact match strings.</li>
+regular expressions, rather than exact match strings.
+If <code class="docutils literal notranslate"><span class="pre">False</span></code>, only exact matches will be found.
+By default, the matching method will be automatically chosen by inspecting the
+<code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code> strings.  If they contain regex-like characters,
+then we assume you intend regex matching. (You can see which method was chosen by
+checking the <code class="docutils literal notranslate"><span class="pre">regex</span></code> field after the <code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code> is constructed.)</li>
 <li><strong>class</strong> (<em>str</em><em> or </em><em>list of str</em>) – Matches for the neuron <code class="docutils literal notranslate"><span class="pre">class</span></code> field.  To search for neurons
 with no class at all, use <code class="docutils literal notranslate"><span class="pre">class_=[None]</span></code>.</li>
 <li><strong>somaSide</strong> (<em>'RHS'</em><em> or </em><em>'LHS'</em><em> or </em><em>None</em>) – Matches for the neuron <code class="docutils literal notranslate"><span class="pre">somaSide</span></code> field.</li>
@@ -327,7 +332,7 @@ If not provided, the global default <code class="docutils literal notranslate"><
 
 <dl class="data">
 <dt id="neuprint.SegmentCriteria">
-<code class="descclassname">neuprint.</code><code class="descname">SegmentCriteria</code><em class="property"> = &lt;class 'neuprint.neuroncriteria.NeuronCriteria'&gt;</em><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.19/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SegmentCriteria" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.</code><code class="descname">SegmentCriteria</code><em class="property"> = &lt;class 'neuprint.neuroncriteria.NeuronCriteria'&gt;</em><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.20/neuprint/neuroncriteria.py#L106"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.SegmentCriteria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specifies which fields to filter by when searching for a Neuron (or Segment).
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>

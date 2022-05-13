@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.4.20 / 2022-05-13
+-------------------
+
+- By default, ``NeuronCriteria`` will now guess whether the ``type`` and ``instance`` contain
+  a regular expression or not, so you don't need to explicitly pass ``regex=True``.
+  Override the guess by specifying ``regex=True`` or ``regex=False``.
+- Now ``heal_skeleton()`` is slightly faster in the case where no healing was necessary.
+
 0.4.19 / 2022-05-12
 -------------------
 
