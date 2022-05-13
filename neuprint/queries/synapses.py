@@ -234,9 +234,9 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
 
         .. code-block:: ipython
 
-            In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_mean_synapses
+            In [1]: from neuprint import fetch_mean_synapses, SynapseCriteria as SC
                ...: fetch_mean_synapses('LC10', SC(type='pre', rois=['LO(R)', 'AOTU(R)']))
-            Out[11]:
+            Out[1]:
                     bodyId      roi type  count             x             y             z  confidence
             0    1017448980  AOTU(R)  pre    141  10691.737305  30304.355469  15508.099609    0.956000
             1    1017448980    LO(R)  pre      2   8530.500000  18898.000000  34857.000000    0.954500
