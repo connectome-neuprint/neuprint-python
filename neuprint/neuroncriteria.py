@@ -133,7 +133,7 @@ class NeuronCriteria:
                          'status', 'statusLabel', 'rois', 'inputRois', 'outputRois',
                          'hemilineage', 'class_', 'exitNerve'])
     def __init__( self, matchvar='n', *,
-                  bodyId=None, instance=None, type=None, regex=False,
+                  bodyId=None, type=None, instance=None, regex='guess',
                   class_=None, somaSide=None, exitNerve=None, hemilineage=None,
                   cellBodyFiber=None,
                   status=None, statusLabel=None, cropped=None,
@@ -187,21 +187,26 @@ class NeuronCriteria:
             bodyId (int or list of ints):
                 List of bodyId values.
 
-            instance (str or list of str):
-                If ``regex=True``, then the instance will be matched as a regular expression.
-                Otherwise, only exact matches are found. To search for neurons with no instance
-                at all, use ``instance=[None]``. If both ``type`` and ``instance`` criteria are
-                supplied, any neuron that matches EITHER criteria will match the overall criteria.
-
             type (str or list of str):
-                If ``regex=True``, then the type will be matched as a regular expression.
-                Otherwise, only exact matches are found. To search for neurons with no type
-                at all, use ``type=[None]``. If both ``type`` and ``instance`` criteria are
-                supplied, any neuron that matches EITHER criteria will match the overall criteria.
+                Cell type.  Matches depend on the the ``regex`` argument.
+                To search for neurons with no type at all, use ``type=[None]``.
+                If both ``type`` and ``instance`` criteria are supplied, any neuron that
+                matches EITHER criteria will match the overall criteria.
+
+            instance (str or list of str):
+                Cell instance (specific cell name).  Matches depend on the the ``regex`` argument.
+                To search for neurons with no instance at all, use ``instance=[None]``.
+                If both ``type`` and ``instance`` criteria are supplied, any neuron that
+                matches EITHER criteria will match the overall criteria.
 
             regex (bool):
                 If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
                 regular expressions, rather than exact match strings.
+                If ``False``, only exact matches will be found.
+                By default, the matching method will be automatically chosen by inspecting the
+                ``type`` and ``instance`` strings.  If they contain regex-like characters,
+                then we assume you intend regex matching. (You can see which method was chosen by
+                checking the ``regex`` field after the ``NeuronCriteria`` is constructed.)
 
             class_ (str or list of str):
                 Matches for the neuron ``class`` field.  To search for neurons
@@ -306,19 +311,27 @@ class NeuronCriteria:
                 label = 'Segment'
         assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
 
-        if not regex and instance:
-            for i in instance:
-                assert isinstance(i, (str, NoneType)) or i in (IsNull, NotNull), \
-                    f'instance should be a string, IsNull, NotNull or None, got {i}'
-                assert not isinstance(i, str) or '.*' not in i, \
-                    f"instance appears to be a regular expression ('{i}'), but you didn't pass regex=True"
+        assert regex in (True, False, 'guess')
 
-        if not regex and type:
+        for i in instance:
+            assert isinstance(i, (str, NoneType)) or i in (IsNull, NotNull), \
+                f'instance should be a string, IsNull, NotNull or None, got {i}'
+
+        for t in type:
+            assert isinstance(t, (str, NoneType)) or t in (IsNull, NotNull), \
+                f'type should be a string, IsNull, NotNull or None, got {t}'
+
+        if regex == 'guess':
+            rgx = re.compile(r'[\\\.\?\[\]\+\^\$\*]')
+            instance_is_regex = False
+            for i in instance:
+                instance_is_regex |= isinstance(i, str) and bool(rgx.search(i or ''))
+
+            type_is_regex = False
             for t in type:
-                assert isinstance(t, (str, NoneType)) or t in (IsNull, NotNull), \
-                    f'type should be a string, IsNull, NotNull or None, got {t}'
-                assert not isinstance(t, str) or '.*' not in t, \
-                    f"type appears to be a regular expression ('{t}'), but you didn't pass regex=True"
+                type_is_regex |= isinstance(t, str) and bool(rgx.search(t or ''))
+
+            regex = type_is_regex or instance_is_regex
 
         assert roi_req in ('any', 'all')
 
@@ -440,8 +453,8 @@ class NeuronCriteria:
         elif len(self.instance) > 1:
             s += f", type={list(self.type)}"
 
-        if self.regex:
-            s += ", regex=True"
+        if len(self.type) or len(self.instance):
+            s += f", regex={self.regex}"
 
         if len(self.cellBodyFiber) == 1:
             s += f', cellBodyFiber="{self.cellBodyFiber[0]}"'

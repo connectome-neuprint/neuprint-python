@@ -260,7 +260,7 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
         .. code-block:: ipython
 
             In [1]: from neuprint import fetch_simple_connections, NeuronCriteria as NC
-               ...: kc_criteria = NC(type='KC.*', regex=True)
+               ...: kc_criteria = NC(type='KC.*')
                ...: conn_df = fetch_simple_connections(kc_criteria, kc_criteria)
             In [1]: conn_df.head()
             Out[1]:

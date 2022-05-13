@@ -59,7 +59,7 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
             In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_synapses
                ...:
                ...: # Consider only neurons which innervate EB
-               ...: nc = NC(type='ExR.*', regex=True, rois=['EB'])
+               ...: nc = NC(type='ExR.*', rois=['EB'])
                ...:
                ...: # But return only large mitos from those neurons that reside in the FB or LAL(R)
                ...: mc = MC(rois=['FB', 'LAL(R)'], size=100_000)

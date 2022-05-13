@@ -82,8 +82,7 @@ def fetch_neurons(criteria, *, client=None):
             In [2]: neurons_df, roi_counts_df = fetch_neurons(
                ...:     NC(inputRois=['SIP(R)', 'aL(R)'],
                ...:        status='Traced',
-               ...:        type='MBON.*',
-               ...:        regex=True))
+               ...:        type='MBON.*'))
 
             In [3]: neurons_df.iloc[:5, :11]
             Out[3]:

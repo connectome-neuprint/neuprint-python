@@ -22,6 +22,16 @@ def test_NeuronCriteria(client):
     assert NC('m', bodyId=123).basic_exprs() == ["m.bodyId = 123"]
     assert NC(bodyId=[123, 456]).basic_exprs() == ["n.bodyId in [123, 456]"]
 
+    assert NC(type='foo.*').regex
+    assert not NC(type='foo').regex
+    assert NC(instance='foo.*').regex
+    assert not NC(instance='foo').regex
+
+    # Cell types really contain parentheses sometimes,
+    # so we don't want to automatically upgrade to regex mode for parentheses.
+    assert not NC(type='foo(bar)').regex
+    assert not NC(instance='foo(bar)').regex
+
     assert NC(instance="foo").basic_exprs() == ["n.instance = 'foo'"]
     assert NC(instance="foo", regex=True).basic_exprs() == ["n.instance =~ 'foo'"]
     assert NC(instance=["foo", "bar"]).basic_exprs() == ["n.instance in ['foo', 'bar']"]
@@ -33,7 +43,7 @@ def test_NeuronCriteria(client):
     assert NC(type=["foo", "bar"], regex=True).basic_exprs() == ["n.type =~ '(foo)|(bar)'"]
 
     assert NC(status="foo").basic_exprs() == ["n.status = 'foo'"]
-    assert NC(status="foo", regex=True).basic_exprs() == ["n.status = 'foo'"] # not regex
+    assert NC(status="foo", regex=True).basic_exprs() == ["n.status = 'foo'"]  # not regex (status doesn't use regex)
     assert NC(status=["foo", "bar"]).basic_exprs() == ["n.status in ['foo', 'bar']"]
     assert NC(status=["foo", "bar"], regex=True).basic_exprs() == ["n.status in ['foo', 'bar']"]
 

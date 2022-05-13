@@ -57,7 +57,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
         .. code-block:: ipython
 
             In [1]: from neuprint import NeuronCriteria as NC, SynapseCriteria as SC, fetch_synapses
-               ...: fetch_synapses(NC(type='ADL.*', regex=True, rois=['FB']),
+               ...: fetch_synapses(NC(type='ADL.*', rois=['FB']),
                ...:                SC(rois=['LH(R)', 'SIP(R)'], primary_only=True))
             Out[1]:
                     bodyId  type     roi      x      y      z  confidence
