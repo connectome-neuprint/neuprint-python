@@ -57,7 +57,7 @@ I just want the complete connection table for the FlyEM Hemibrain. Can I downloa
 Yes, the complete connection table for all ``Traced`` neurons is available for download.
 To find the latest version, see the `hemibrain description page <https://www.janelia.org/project-team/flyem/hemibrain>`_,
 and find the link to the "compact connection matrix summary".
-`Here's a link <https://storage.cloud.google.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz>`
+`Here's a link <https://storage.cloud.google.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz>`_
 to the table we released for version v1.2 (the most recent release at the time of this writing).
 
 
