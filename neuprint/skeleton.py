@@ -209,7 +209,7 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
         root_parent = -1
     else:
         # Fast path to exit early if we can easily check the number of roots.
-        num_roots = skeleton_df.eval(f'rowId == {root_parent}').sum()
+        num_roots = skeleton_df.eval(f'link == {root_parent}').sum()
         if num_roots == 1:
             # There's only one root and therefore only one component.
             # No healing necessary.
