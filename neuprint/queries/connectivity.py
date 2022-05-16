@@ -6,8 +6,8 @@ import ujson
 import pandas as pd
 
 from ..client import inject_client, NeuprintTimeoutError
-from ..neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 from ..utils import make_args_iterable, trange
+from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 
 
 @inject_client

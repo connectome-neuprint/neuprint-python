@@ -10,8 +10,8 @@ from collections.abc import Iterable, Collection
 import numpy as np
 import pandas as pd
 
-from .utils import make_args_iterable, IsNull, NotNull
-from .client import inject_client
+from ..utils import make_args_iterable, IsNull, NotNull
+from ..client import inject_client
 
 NoneType = type(None)
 
@@ -105,6 +105,8 @@ def copy_as_neuroncriteria(obj, client=None):
 
 class NeuronCriteria:
     """
+    Neuron selection criteria.
+
     Specifies which fields to filter by when searching for a Neuron (or Segment).
     This class does not send queries itself, but you use it to specify search
     criteria for various query functions.

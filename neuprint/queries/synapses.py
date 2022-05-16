@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 
 from ..client import inject_client
-from ..neuroncriteria import NeuronCriteria, neuroncriteria_args
-from ..synapsecriteria import SynapseCriteria
 from ..utils import tqdm, iter_batches
+from .neuroncriteria import NeuronCriteria, neuroncriteria_args
+from .synapsecriteria import SynapseCriteria
 from .connectivity import fetch_adjacencies
 
 

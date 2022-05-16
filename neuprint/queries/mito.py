@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 
 from ..client import inject_client
-from ..neuroncriteria import neuroncriteria_args
-from ..synapsecriteria import SynapseCriteria
-from ..mitocriteria import MitoCriteria
 from ..utils import tqdm, iter_batches
+from .neuroncriteria import neuroncriteria_args
+from .synapsecriteria import SynapseCriteria
+from .mitocriteria import MitoCriteria
 from .synapses import fetch_synapse_connections
 
 

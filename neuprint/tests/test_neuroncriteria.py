@@ -2,7 +2,7 @@ from textwrap import dedent
 import numpy as np
 import pytest
 from neuprint import Client, default_client, set_default_client, NeuronCriteria as NC
-from neuprint.neuroncriteria import  where_expr
+from neuprint.queries.neuroncriteria import  where_expr
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 

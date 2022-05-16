@@ -3,9 +3,8 @@ from collections.abc import Container
 import pandas as pd
 
 from ..client import inject_client
-from ..neuroncriteria import NeuronCriteria, neuroncriteria_args
 from ..utils import trange
-
+from .neuroncriteria import NeuronCriteria, neuroncriteria_args
 from .general import fetch_custom
 from .connectivity import fetch_adjacencies
 

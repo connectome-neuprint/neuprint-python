@@ -1,3 +1,6 @@
+from .neuroncriteria import NeuronCriteria, SegmentCriteria
+from .mitocriteria import MitoCriteria
+from .synapsecriteria import SynapseCriteria
 from .general import fetch_custom, fetch_meta
 from .rois import fetch_all_rois, fetch_primary_rois,fetch_roi_hierarchy
 from .neurons import fetch_neurons, fetch_custom_neurons

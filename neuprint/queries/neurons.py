@@ -3,8 +3,8 @@ import ujson
 
 from textwrap import indent
 from ..client import inject_client
-from ..neuroncriteria import neuroncriteria_args
 from ..utils import compile_columns
+from .neuroncriteria import neuroncriteria_args
 
 # Core set of columns
 CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
