@@ -223,7 +223,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         .. code-block:: ipython
 
             In [1]: from neuprint import Client
-               ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0.1')
+               ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.2.1')
 
             In [2]: from neuprint import fetch_adjacencies
                ...: sources = [329566174, 425790257, 424379864, 329599710]
@@ -682,7 +682,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
 
     This is the Python equivalent to the Neuprint Explorer `Common Connectivity`_ page.
 
-    .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=commonconnectivity&q=1
+    .. _Common Connectivity: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.2.1&qt=commonconnectivity&q=1
 
 
     Args:

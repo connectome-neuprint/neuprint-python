@@ -16,7 +16,7 @@ Client
 
 
 :py:class:`Client` methods correspond directly to built-in
-`neuprintHTTP API endpoints <https://neuprint.janelia.org/help/api?dataset=hemibrain%3Av1.0.1&qt=findneurons&q=1>`_.
+`neuprintHTTP API endpoints <https://neuprint.janelia.org/help/api?dataset=hemibrain%3Av1.2.1&qt=findneurons&q=1>`_.
 
 
 .. autosummary::

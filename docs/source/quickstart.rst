@@ -31,7 +31,7 @@ All communication with the ``neuPrintHTTP`` server is done via a :py:class:`Clie
 To create a :py:class:`Client`, you must provide three things:
 
     - The neuprint server address (e.g. ``neuprint.janelia.org``)
-    - Which dataset you'll be fetching from (e.g. ``hemibrain:v1.0``)
+    - Which dataset you'll be fetching from (e.g. ``hemibrain:v1.2.1``)
     - Your personal authentication token
 
 To obtain your authorization token, follow these steps:

@@ -15,7 +15,7 @@ Example:
         In [1]: from neuprint import Client, fetch_custom, fetch_neurons
 
         In [2]: # Create a default client. Will be implicitly used for all subsequent queries.
-           ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.0')
+           ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.2.1')
 
         In [3]: fetch_custom("""\\
            ...:     MATCH (n: Neuron)
@@ -111,7 +111,7 @@ def setup_debug_logging():
                ...:
                ...: setup_debug_logging()
                ...: neuron_df, roi_df = fetch_neurons(NC(type='MBON.*', rois=['MB(R)']))
-            [2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset 'hemibrain:v1.0':
+            [2020-01-30 08:48:20,367] DEBUG Performing cypher query against dataset 'hemibrain:v1.2.1':
                 MATCH (n :Neuron)
                 // -- Basic conditions for segment 'n' --
                 WHERE

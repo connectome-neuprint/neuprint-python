@@ -29,7 +29,7 @@ def fetch_neurons(criteria, *, client=None):
     Returns data in the the same format as :py:func:`fetch_custom_neurons()`,
     but doesn't require you to write cypher.
 
-    .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.0&qt=findneurons&q=1
+    .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.2.1&qt=findneurons&q=1
 
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
