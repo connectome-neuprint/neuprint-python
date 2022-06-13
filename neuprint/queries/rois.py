@@ -14,14 +14,16 @@ def fetch_all_rois(*, client=None):
 
 
 def _all_rois_from_meta(meta):
-    official_rois = {*meta['roiInfo'].keys()}
+    rois = {*meta['roiInfo'].keys()}
 
-    # These two ROIs are special:
-    # For historical reasons, they exist as tags,
-    # but are not listed in the Meta roiInfo.
-    hidden_rois = {'FB-column3', 'AL-DC3'}
+    if meta['dataset'] == 'hemibrain':
+        # These ROIs are special:
+        # For historical reasons, they exist as tags,
+        # but are not (always) listed in the Meta roiInfo.
+        rois |= {'FB-column3', 'AL-DC3'}
+        rois |= {f"AL-DC{i}(R)" for i in [1,2,3,4]}
 
-    return sorted(official_rois | hidden_rois)
+    return sorted(rois)
 
 
 @inject_client
