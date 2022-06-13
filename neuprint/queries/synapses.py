@@ -397,7 +397,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             See :py:class:`.SynapseCriteria` for details.
 
             Note:
-                Any `rois`` specified in your ``synapse_criteria`` will be used to filter
+                Any ``rois`` specified in your ``synapse_criteria`` will be used to filter
                 the target (post-synaptic) side of the synapse connection, but not
                 the pre-synaptic side.  So in the rare cases where the pre and post synapses
                 reside on different sides of an ROI boundary, the connection is associated

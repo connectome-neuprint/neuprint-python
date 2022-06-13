@@ -437,7 +437,7 @@ def attach_synapses_to_skeleton(skeleton_df, synapses_df):
 
         .. code-block:: ipython
 
-                In [4]: from neuprint import fetch_skeleton, fetch_synapses, attach_synapses
+                In [4]: from neuprint import fetch_skeleton, fetch_synapses, attach_synapses_to_skeleton
                    ...: body = 1136399017
                    ...: skeleton = fetch_skeleton(body, heal=True)
                    ...: synapses = fetch_synapses(body)

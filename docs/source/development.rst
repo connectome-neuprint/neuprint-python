@@ -124,7 +124,7 @@ Consider sparing your users from that by clicking the binder button yourself aft
 Tests
 -----
 
-The tests require ``pytest``, and they rely on the public ``hemibrain:v1.0.1`` dataset on ``neuprint.janelia.org``,
+The tests require ``pytest``, and they rely on the public ``hemibrain:v1.2.1`` dataset on ``neuprint.janelia.org``,
 which means you must define ``NEUPRINT_APPLICATION_CREDENTIALS`` in your environment before running them.
 
 To run the tests:
