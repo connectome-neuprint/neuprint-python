@@ -339,10 +339,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         matchvar = criteria.matchvar
 
         return_props = [f'{matchvar}.{prop} as {prop}' for prop in properties]
-        return_props = indent(',\n'.join(return_props), ' '*23)[23:]
-
-        value_props = [f'value.{prop} as {prop}' for prop in properties]
-        value_props = indent(',\n'.join(value_props), ' '*19)[19:]
+        return_props = indent(',\n'.join(return_props), ' '*19)[19:]
 
         q = f"""\
             {criteria.global_with(prefix=12)}
