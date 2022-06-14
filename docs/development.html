@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Development Notes &mdash; neuprint-python 0.4.21+6.gf90d94c.dirty documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.4.22 documentation</title>
   
 
   
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4.21+6.gf90d94c.dirty
+                0.4.22
               </div>
             
           
@@ -206,6 +206,7 @@ To prepare a release, follow these steps:</p>
 
 <span class="c1"># Update the change log!</span>
 code docs/source/changelog.rst
+git commit -m <span class="s2">&quot;Updated changelog&quot;</span> docs/source/changelog.rst
 
 <span class="c1"># Do the tests still pass?</span>
 pytest .
@@ -225,10 +226,8 @@ anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span c
 <span class="c1"># Build and upload the PyPI package</span>
 ./upload-to-pypi.sh
 
-<span class="c1"># Update the docs branch (see explanation below)</span>
-git branch -D docs
-git branch docs <span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>
-git push -f origin docs
+<span class="c1"># Deploy the docs</span>
+./docs/deploy-docs.sh
 </pre></div>
 </div>
 </div>
@@ -267,23 +266,11 @@ make html
 open build/html/index.html
 </pre></div>
 </div>
-<p>The Travis-CI build will automatically deploy the docs to github pages using <a class="reference external" href="https://github.com/drdoctr/doctr/">doctr</a>,
-every time you push to the the <code class="docutils literal notranslate"><span class="pre">docs</span></code> branch.  To sync that branch with a recent tag, try:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
-<span class="nv">LATEST_TAG</span><span class="o">=</span><span class="k">$(</span>git tag -l --sort<span class="o">=</span>v:refname <span class="p">|</span> tail -n1<span class="k">)</span>
-git branch -D docs
-git branch docs <span class="si">${</span><span class="nv">LATEST_TAG</span><span class="si">}</span>
-git push -f origin docs
+<p>We publish the docs via <a class="reference external" href="https://pages.github.com/">github pages</a>.
+Use the script <code class="docutils literal notranslate"><span class="pre">docs/deploy-docs.sh</span></code> to build and publish the docs to GitHub in the <cite>gh-pages</cite> branch.
+(At some point in the future, we may automate this via a CI system.)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./docs/deploy-docs.sh
 </pre></div>
-</div>
-<p>The docs are also built for development branches, but they’re deployed to a special location:
-<code class="docutils literal notranslate"><span class="pre">https://connectome-neuprint.github.io/neuprint-python/docs-&lt;BRANCH_NAME&gt;</span></code></p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">The docs are rebuilt and published every time you push to the master branch.
-If you push (and document) API-breaking changes without publishing new packages,
-the documentation will not correspond to the <code class="docutils literal notranslate"><span class="pre">conda</span></code> and <code class="docutils literal notranslate"><span class="pre">pip</span></code> packages!
-Only push to master when you’re ready to deploy new packages.</p>
 </div>
 </div>
 <div class="section" id="interactive-tutorial">
