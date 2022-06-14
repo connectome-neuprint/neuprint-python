@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.22 / 2022-06-14
+-------------------
+
+- Fixed a crash that could occur if you supplied more than three regular expressions for ``type`` or ``instance``.
+- Fixed a problem involving 'hidden' ROIs in the hemibrain v1.0.
+
 0.4.21 / 2022-05-14
 -------------------
 

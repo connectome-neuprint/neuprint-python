@@ -20,6 +20,7 @@ To prepare a release, follow these steps:
 
     # Update the change log!
     code docs/source/changelog.rst
+    git commit -m "Updated changelog" docs/source/changelog.rst
 
     # Do the tests still pass?
     pytest .
