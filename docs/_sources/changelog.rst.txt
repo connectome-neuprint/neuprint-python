@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.4.23 / 2022-06-14
+-------------------
+
+- In ``fetch_adjacencies()`` (and ``fetch_simple_connections()``), we now ensure that no 0-weight "connections" are returned.
+
+   .. note::
+
+      In recent neuprint databases, some ``:ConnectsTo`` relationships may have a ``weight`` of ``0``.
+      In such cases, the relationship will have a non-zero ``weightHR`` (high-recall weight), but all of the relevant
+      synapses are low-confidence, hence the "default" ``weight`` of ``0``.
+      We now exclude such connections from our results.
+
 0.4.22 / 2022-06-14
 -------------------
 
