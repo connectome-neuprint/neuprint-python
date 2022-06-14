@@ -7,7 +7,7 @@ API
    :maxdepth: 2
 
    client
-   queriesapi
+   queries
    simulation
    skeleton
    utils

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>MitoCriteria &mdash; neuprint-python 0.4.21 documentation</title>
+  <title>MitoCriteria &mdash; neuprint-python 0.4.21+6.gf90d94c.dirty documentation</title>
   
 
   
@@ -38,9 +38,7 @@
 
     
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Simulation" href="simulation.html" />
-    <link rel="prev" title="SynapseCriteria" href="synapsecriteria.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -64,7 +62,7 @@
             
             
               <div class="version">
-                0.4.21
+                0.4.21+6.gf90d94c.dirty
               </div>
             
           
@@ -89,24 +87,10 @@
               
             
             
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="queriesapi.html">Queries API</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="queries.html">Common Queries</a></li>
-<li class="toctree-l3"><a class="reference internal" href="neuroncriteria.html">NeuronCriteria</a></li>
-<li class="toctree-l3"><a class="reference internal" href="synapsecriteria.html">SynapseCriteria</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">MitoCriteria</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="skeleton.html">Skeletons</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
@@ -157,10 +141,6 @@
     
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="api.html">API</a> &raquo;</li>
-        
-          <li><a href="queriesapi.html">Queries API</a> &raquo;</li>
-        
       <li>MitoCriteria</li>
     
     
@@ -207,9 +187,10 @@
 <div class="section" id="mitocriteria">
 <span id="id1"></span><h1>MitoCriteria<a class="headerlink" href="#mitocriteria" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
-<dt id="neuprint.MitoCriteria">
-<em class="property">class </em><code class="descclassname">neuprint.</code><code class="descname">MitoCriteria</code><span class="sig-paren">(</span><em>matchvar='m'</em>, <em>*</em>, <em>rois=None</em>, <em>mitoType=None</em>, <em>size=0</em>, <em>primary_only=True</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.21/neuprint/mitocriteria.py#L6"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.MitoCriteria" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specifies which fields to filter by when searching for mitochondria.
+<dt id="neuprint.queries.MitoCriteria">
+<em class="property">class </em><code class="descclassname">neuprint.queries.</code><code class="descname">MitoCriteria</code><span class="sig-paren">(</span><em>matchvar='m'</em>, <em>*</em>, <em>rois=None</em>, <em>mitoType=None</em>, <em>size=0</em>, <em>primary_only=True</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/queries/mitocriteria.py#L7"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.MitoCriteria" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mitochondrion selection criteria.</p>
+<p>Specifies which fields to filter by when searching for mitochondria.
 This class does not send queries itself, but you use it to specify search
 criteria for various query functions.</p>
 <p>Except for <code class="docutils literal notranslate"><span class="pre">matchvar</span></code>, all parameters must be passed as keyword arguments.</p>
@@ -254,15 +235,6 @@ If not provided, the global default <a class="reference internal" href="client.h
            
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="simulation.html" class="btn btn-neutral float-right" title="Simulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="synapsecriteria.html" class="btn btn-neutral float-left" title="SynapseCriteria" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>

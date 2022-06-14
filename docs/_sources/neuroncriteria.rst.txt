@@ -1,4 +1,4 @@
-.. currentmodule:: neuprint
+.. currentmodule:: neuprint.queries
 
 .. _neuroncriteria:
 

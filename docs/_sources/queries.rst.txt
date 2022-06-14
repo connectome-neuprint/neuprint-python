@@ -12,9 +12,9 @@
 
 .. _queries:
 
-==============
-Common Queries
-==============
+=======
+Queries
+=======
 
 Convenience functions for common queries.
 
@@ -68,6 +68,7 @@ Neurons
 
 .. autosummary::
 
+    NeuronCriteria
     fetch_neurons
     fetch_custom_neurons
 
@@ -87,6 +88,7 @@ Synapses
 
 .. autosummary::
 
+    SynapseCriteria
     fetch_synapses
     fetch_mean_synapses
     fetch_synapse_connections
@@ -96,6 +98,7 @@ Mitochondria
 
 .. autosummary::
 
+    MitoCriteria
     fetch_mitochondria
     fetch_synapses_and_closest_mitochondria
     fetch_connection_mitochondria
