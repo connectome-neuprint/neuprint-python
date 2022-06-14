@@ -39,10 +39,8 @@ To prepare a release, follow these steps:
     # Build and upload the PyPI package
     ./upload-to-pypi.sh
 
-    # Update the docs branch (see explanation below)
-    git branch -D docs
-    git branch docs ${NEW_TAG}
-    git push -f origin docs
+    # Deploy the docs
+    ./docs/deploy-docs.sh
 
 
 Dependencies
@@ -88,26 +86,13 @@ To build the docs locally:
     make html
     open build/html/index.html
 
-The Travis-CI build will automatically deploy the docs to github pages using `doctr <https://github.com/drdoctr/doctr/>`_,
-every time you push to the the ``docs`` branch.  To sync that branch with a recent tag, try:
+We publish the docs via `github pages <https://pages.github.com/>`_.
+Use the script ``docs/deploy-docs.sh`` to build and publish the docs to GitHub in the `gh-pages` branch.
+(At some point in the future, we may automate this via a CI system.)
 
 .. code-block:: bash
 
-    cd neuprint-python
-    LATEST_TAG=$(git tag -l --sort=v:refname | tail -n1)
-    git branch -D docs
-    git branch docs ${LATEST_TAG}
-    git push -f origin docs
-
-The docs are also built for development branches, but they're deployed to a special location:
-``https://connectome-neuprint.github.io/neuprint-python/docs-<BRANCH_NAME>``
-
-.. warning::
-
-    The docs are rebuilt and published every time you push to the master branch.
-    If you push (and document) API-breaking changes without publishing new packages,
-    the documentation will not correspond to the ``conda`` and ``pip`` packages!
-    Only push to master when you're ready to deploy new packages.
+    ./docs/deploy-docs.sh
 
 
 Interactive Tutorial
