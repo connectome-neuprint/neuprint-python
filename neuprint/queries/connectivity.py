@@ -85,15 +85,6 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
     assert up_crit is not None or down_crit is not None, "No criteria specified"
 
-    if min_weight > 1:
-        weight_expr = dedent(f"""\
-            WITH n, m, e
-            WHERE e.weight >= {min_weight}
-            """)
-        weight_expr = indent(weight_expr, ' '*8)[8:]
-    else:
-        weight_expr = ""
-
     rois = {*rois}
     if rois:
         invalid_rois = {*rois} - {*client.all_rois}
@@ -122,7 +113,10 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         MATCH (n:{up_crit.label})-[e:ConnectsTo]->(m:{down_crit.label})
 
         {combined_conditions}
-        {weight_expr}
+
+        WITH n, m, e
+        WHERE e.weight >= {min_weight}
+
         RETURN {return_props_str}
         ORDER BY e.weight DESC,
                  n.bodyId,
@@ -420,18 +414,13 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     ##
 
     def _fetch_connections():
-        if not rois or min_total_weight <= 1:
+        if rois:
+            min_edge_weight = min_total_weight
+        else:
             # If rois aren't specified, then we'll include 'NotPrimary' counts,
             # and that means we can't filter by weight in the query.
-            # We'll filter afterwards.
-            weight_condition = ""
-        else:
-            weight_condition = dedent(f"""\
-                // -- Filter by total connection weight --
-                WITH n,m,e
-                WHERE e.weight >= {min_total_weight}
-            """)
-            weight_condition = indent(weight_condition, prefix=20*' ')[20:]
+            # We'll filter afterwards, but here we can at least filter out 0-weight edges.
+            min_edge_weight = 1
 
         # Fetch connections by batching either the source list
         # or the target list, not both.
@@ -461,7 +450,10 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                     WITH {','.join([*'nme', *criteria_globals])}, true as _
 
                     {targets.all_conditions(*'nme', prefix=20)}
-                    {weight_condition}
+
+                    // -- Filter by total connection weight --
+                    WITH n,m,e
+                    WHERE e.weight >= {min_edge_weight}
 
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
@@ -491,7 +483,11 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                     WITH {','.join([*'nme', *criteria_globals])}, true as _
 
                     {sources.all_conditions(*'nme', prefix=20)}
-                    {weight_condition}
+
+                    // -- Filter by total connection weight --
+                    WITH n,m,e
+                    WHERE e.weight >= {min_edge_weight}
+
                     RETURN n.bodyId as bodyId_pre,
                            m.bodyId as bodyId_post,
                            e.weight as weight,
@@ -567,7 +563,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     if rois:
         roi_conn_df.query('roi in @rois and weight > 0', inplace=True)
 
-    if min_total_weight > 1:
+    if min_total_weight >= 1:
         total_weights_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
         keep_conns = total_weights_df.query('weight >= @min_total_weight')[['bodyId_pre', 'bodyId_post']]
         roi_conn_df = roi_conn_df.merge(keep_conns, 'inner', on=['bodyId_pre', 'bodyId_post'])
