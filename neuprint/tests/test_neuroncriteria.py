@@ -2,7 +2,7 @@ from textwrap import dedent
 import numpy as np
 import pytest
 from neuprint import Client, default_client, set_default_client, NeuronCriteria as NC
-from neuprint.queries.neuroncriteria import  where_expr
+from neuprint.queries.neuroncriteria import where_expr
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 
@@ -65,10 +65,12 @@ def test_NeuronCriteria(client):
     assert NC().all_conditions() == ""
     assert NC.combined_conditions([NC(), NC(), NC()]) == ""
 
-
+    # If 3 or fewer items are supplied, then they are used inline within the WHERE clause.
     bodies = [1,2,3]
     assert NC(bodyId=bodies).basic_conditions(comments=False) == "n.bodyId in [1, 2, 3]"
 
+    # If more than 3 items are specified, then the items are stored in a global variable
+    # which is referred to within the WHERE clause.
     bodies = [1,2,3,4,5]
     nc = NC(bodyId=bodies)
     assert nc.global_with() == dedent(f"""\
@@ -88,15 +90,48 @@ def test_NeuronCriteria(client):
     # If None is included, then exists() should be checked.
     statuses = ['Traced', 'Orphan', 'Assign', None]
     nc = NC(status=statuses)
-    assert nc.global_with() == dedent(f"""\
+    assert nc.global_with() == dedent("""\
         WITH ['Traced', 'Orphan', 'Assign'] as n_search_status""")
     assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_status OR NOT exists(n.status)")
+
+    types = ['aaa', 'bbb', 'ccc']
+    nc = NC(type=types)
+    assert nc.basic_conditions(comments=False) == f"n.type in {types}"
+
+    types = ['aaa', 'bbb', 'ccc', 'ddd']
+    nc = NC(type=types)
+    assert nc.global_with() == dedent(f"""\
+        WITH {types} as n_search_type""")
+    assert nc.basic_conditions(comments=False) == "n.type in n_search_type"
+
+    instances = ['aaa', 'bbb', 'ccc']
+    nc = NC(instance=instances)
+    assert nc.basic_conditions(comments=False) == f"n.instance in {instances}"
+
+    instances = ['aaa', 'bbb', 'ccc', 'ddd']
+    nc = NC(instance=instances)
+    assert nc.global_with() == dedent(f"""\
+        WITH {instances} as n_search_instance""")
+    assert nc.basic_conditions(comments=False) == "n.instance in n_search_instance"
+
+    # Special case:
+    # If both type and instance are supplied, then we combine them with 'OR'
+    typeinst = ['aaa', 'bbb', 'ccc']
+    nc = NC(type=typeinst, instance=typeinst)
+    assert nc.basic_conditions(comments=False) == f"(n.type in {typeinst} OR n.instance in {typeinst})"
+
+    typeinst = ['aaa', 'bbb', 'ccc', 'ddd']
+    nc = NC(type=typeinst, instance=typeinst)
+    assert nc.basic_conditions(comments=False) == "(n.type in n_search_type OR n.instance in n_search_instance)"
+
 
 def test_where_expr():
     assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
     assert where_expr('bodyId', [1,2], matchvar='m') == 'm.bodyId in [1, 2]'
     assert where_expr('bodyId', []) == ""
     assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"
+    assert where_expr('instance', ['foo.*', 'bar.*', 'baz.*'], regex=True, matchvar='m') == "m.instance =~ '(foo.*)|(bar.*)|(baz.*)'"
+
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_neuroncriteria']

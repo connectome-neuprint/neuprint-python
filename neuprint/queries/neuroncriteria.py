@@ -518,18 +518,15 @@ class NeuronCriteria:
     def global_vars(self):
         exprs = {}
 
-        for key in self.list_props:
+        if self.regex:
+            list_props = self.list_props
+        else:
+            # No regex: Treat instance and type as ordinary strings
+            list_props = self.list_props + self.list_props_regex
+
+        for key in list_props:
             values = getattr(self, key)
             if len(values) > self.MAX_LITERAL_LENGTH:
-                if key.endswith('_'):
-                    key = key[:-1]
-                values = [*filter(lambda s: s is not None, values)]
-                var = f"{self.matchvar}_search_{key}"
-                exprs[var] = (f"{[*values]} as {var}")
-
-        for key in self.list_props:
-            values = getattr(self, key)
-            if not self.regex and len(values) > self.MAX_LITERAL_LENGTH:
                 if key.endswith('_'):
                     key = key[:-1]
                 values = [*filter(lambda s: s is not None, values)]
@@ -901,23 +898,26 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             In [7]: where_expr('status', ['Orph.*'], regex=True)
             Out[7]: "n.status =~ 'Orph.*'"
 
-            In [8]: where_expr('bodyId', [123])
-            Out[8]: 'n.bodyId = 123'
+            In [8]: where_expr('instance', ['foo.*', 'bar.*', 'baz.*'], regex=True)
+            Out[8]: "n.instance =~ '(foo.*)|(bar.*)|(baz.*)'"
 
-            In [9]: where_expr('bodyId', [123, 456])
-            Out[9]: 'n.bodyId in [123, 456]'
+            In [9]: where_expr('bodyId', [123])
+            Out[9]: 'n.bodyId = 123'
 
-            In [10]: where_expr('bodyId', [123, 456, 789], valuevar='bodies')
-            Out[10]: 'n.bodyId in bodies'
+            In [10]: where_expr('bodyId', [123, 456])
+            Out[10]: 'n.bodyId in [123, 456]'
 
-            In [11]: where_expr('bodyId', [123, None, 456], valuevar='bodies')
-            Out[11]: 'n.bodyId in bodies OR NOT exists(n.bodyId)'
+            In [11]: where_expr('bodyId', [123, 456, 789], valuevar='bodies')
+            Out[11]: 'n.bodyId in bodies'
 
-            In [12]: where_expr('status', [IsNull])
-            Out[12]: 'n.status IS NULL'
+            In [12]: where_expr('bodyId', [123, None, 456], valuevar='bodies')
+            Out[12]: 'n.bodyId in bodies OR NOT exists(n.bodyId)'
 
-            In [13]: where_expr('status', [NotNull])
-            Out[13]: 'n.status NOT NULL'
+            In [13]: where_expr('status', [IsNull])
+            Out[13]: 'n.status IS NULL'
+
+            In [14]: where_expr('status', [NotNull])
+            Out[14]: 'n.status NOT NULL'
     """
     assert isinstance(values, collections.abc.Iterable), \
         f"Please pass a list or a variable name, not {values}"
