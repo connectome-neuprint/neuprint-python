@@ -381,7 +381,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                 which synapses are returned, only which bodies are inspected.
 
         synapse_criteria (SynapseCriteria):
-            Optional. Allows you to filter synapses by roi, type, confidence.
+            Optional. Allows you to filter synapses by roi or confidence.
             The same criteria is used to filter both ``pre`` and ``post`` sides
             of the connection, except for the ``rois`` -- see note below.
             By default, ``SynapseCriteria(primary_only=True)`` is used,
