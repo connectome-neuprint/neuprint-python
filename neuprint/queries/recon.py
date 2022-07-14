@@ -130,7 +130,7 @@ def fetch_downstream_orphan_tasks(criteria, complete_statuses=['Traced'], *, cli
     status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment'), properties=['status', 'statusLabel'], client=client)
 
     # That table is laid out per-ROI, but we don't care about ROI. Aggregate.
-    conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight'].sum()
+    conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'])['weight'].sum().reset_index()
 
     # Sort connections from strong to weak.
     conn_df.sort_values(['bodyId_pre', 'weight', 'bodyId_post'], ascending=[True, False, True], inplace=True)

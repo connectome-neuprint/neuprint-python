@@ -300,8 +300,7 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
     col_pre, col_post = group_cols
     dtype = conn_df[weight_col].dtype
 
-    grouped = conn_df.groupby([col_pre, col_post], as_index=False, sort=False)
-    agg_weights_df = grouped[weight_col].sum()
+    agg_weights_df = conn_df.groupby([col_pre, col_post], sort=False)[weight_col].sum().reset_index()
     matrix = agg_weights_df.pivot(col_pre, col_post, weight_col)
     matrix = matrix.fillna(0).astype(dtype)
 
