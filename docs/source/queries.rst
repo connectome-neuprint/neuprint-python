@@ -27,19 +27,9 @@ But the functions in this file offer a convenient API for common queries.
 Server Built-in Queries
 =======================
 
-
 See the :ref:`Client` class reference for the neuprint server's built-in
 (non-cypher) queries, such as **skeletons**, **ROI meshes**, **ROI connectivity**,
 and server metadata.
-
-.. note::
-
-    The functions below are all available via the ``neuprint`` top-level namespace.
-    You need not pay attention to the fine-grained module names below.
-
-    .. code-block:: python
-
-        from neuprint import fetch_neurons, fetch_adjacencies, NeuronCriteria as NC
 
 General
 =======
