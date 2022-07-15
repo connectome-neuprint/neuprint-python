@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.24 / 2022-07-14
+-------------------
+
+- Implemented a workaround to avoid a pandas bug in certain cases involving empty dataframes.
+
+
 0.4.23 / 2022-06-14
 -------------------
 
