@@ -534,9 +534,6 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     primary_totals = primary_roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'])['weight'].sum().reset_index()
 
     totals_df = connections_df.merge(primary_totals, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_all', '_primary'])
-    print(connections_df)
-    print(primary_totals)
-    print(totals_df)
     totals_df.fillna(0, inplace=True)
     totals_df['weight_notprimary'] = totals_df.eval('weight_all - weight_primary').astype(int)
     totals_df['roi'] = 'NotPrimary'
@@ -568,8 +565,6 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         roi_conn_df.query('roi in @rois and weight > 0', inplace=True)
 
     if min_total_weight >= 1:
-        print('---')
-        print(roi_conn_df)
         total_weights_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'])['weight'].sum().reset_index()
         keep_conns = total_weights_df.query('weight >= @min_total_weight')[['bodyId_pre', 'bodyId_post']]
         roi_conn_df = roi_conn_df.merge(keep_conns, 'inner', on=['bodyId_pre', 'bodyId_post'])

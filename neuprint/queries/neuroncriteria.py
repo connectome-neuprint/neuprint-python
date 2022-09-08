@@ -156,7 +156,7 @@ class NeuronCriteria:
 
             The ``inputRois`` and ``outputRois`` arguments allow you to put requirements
             on whether or not neurons have inputs or outputs in the listed ROIs.
-            It results a more expensive query, but its more powerful.
+            It results a more expensive query, but it's more powerful.
             It also enables you to require a minimum number of connections in the given
             ``inputRois`` or ``outputRois`` using the ``min_roi_inputs`` and ``min_roi_outputs``
             criteria.
