@@ -1,11 +1,16 @@
 Changelog
 =========
 
+0.4.25 / 2022-09-15
+-------------------
+
+- In live-updated neuprint databases, it is possible that an edge's ``weight`` can become out-of-sync with its ``roiInfo`` totals.
+  That inconsistency triggered an assertion in ``fetch_adjacencies()``, but now it will emit a warning instead.
+
 0.4.24 / 2022-07-14
 -------------------
 
 - Implemented a workaround to avoid a pandas bug in certain cases involving empty dataframes.
-
 
 0.4.23 / 2022-06-14
 -------------------

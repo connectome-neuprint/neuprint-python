@@ -1,5 +1,6 @@
 import os
 import copy
+import warnings
 from textwrap import indent, dedent
 
 import ujson
@@ -558,7 +559,15 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                             .sum()
                             .reset_index())
     compare_df = connections_df.merge(summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
-    assert compare_df.fillna(0).eval('weight_orig == weight_summed').all()
+    compare_df = compare_df.fillna(0)[['weight_orig', 'weight_summed']]
+    mismatches = compare_df.eval('weight_orig != weight_summed')
+    if mismatches.any():
+        warnings.warn(
+            "There appears to be an inconsistency in the neuprint data.\n"
+            "Detected edge(s) in which the aggregate 'weight' does not match the sum of the roiInfo 'post' counts.\n"
+            "Please report this to the neuprint administrators.\n"
+            f"{compare_df.loc[mismatches]}"
+        )
 
     # Filter for the user's ROIs, if any
     if rois:
