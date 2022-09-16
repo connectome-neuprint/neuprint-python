@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Queries &mdash; neuprint-python 0.4.24 documentation</title>
+  <title>Queries &mdash; neuprint-python 0.4.25 documentation</title>
   
 
   
@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.4.24
+                0.4.25
               </div>
             
           
@@ -389,7 +389,7 @@ and server metadata.</p>
 <h3>General<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_custom">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom</code><span class="sig-paren">(</span><em>cypher</em>, <em>dataset=''</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/general.py#L4"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom</code><span class="sig-paren">(</span><em>cypher</em>, <em>dataset=''</em>, <em>format='pandas'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/general.py#L4"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make a custom cypher query.</p>
 <p>Alternative form of <a class="reference internal" href="client.html#neuprint.client.Client.fetch_custom" title="neuprint.client.Client.fetch_custom"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code></a>, as a free function.
 That is, <code class="docutils literal notranslate"><span class="pre">fetch_custom(...,</span> <span class="pre">client=c)</span></code> is equivalent to <code class="docutils literal notranslate"><span class="pre">c.fetch_custom(...)</span></code>.</p>
@@ -434,7 +434,7 @@ or return the server’s raw json response as a Python dict.</li>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_meta">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_meta</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/general.py#L53"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_meta" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_meta</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/general.py#L53"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_meta" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the dataset metadata.
 Parses json fields as needed.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -481,20 +481,20 @@ Parses json fields as needed.</p>
 <h3>ROIs<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_all_rois">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_all_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/rois.py#L7"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_all_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_all_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/rois.py#L7"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_all_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>List all ROIs in the dataset.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_primary_rois">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/rois.py#L29"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_primary_rois</code><span class="sig-paren">(</span><em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/rois.py#L29"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_primary_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>List ‘primary’ ROIs in the dataset.
 Primary ROIs do not overlap with each other.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_roi_hierarchy">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_roi_hierarchy</code><span class="sig-paren">(</span><em>include_subprimary=True</em>, <em>mark_primary=True</em>, <em>format='dict'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/rois.py#L40"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_roi_hierarchy" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_roi_hierarchy</code><span class="sig-paren">(</span><em>include_subprimary=True</em>, <em>mark_primary=True</em>, <em>format='dict'</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/rois.py#L40"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_roi_hierarchy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the ROI hierarchy nesting relationships.</p>
 <p>Most ROIs in neuprint are part of a hierarchy of nested regions.
 The structure of the hierarchy is stored in the dataset metadata,
@@ -555,7 +555,7 @@ depending on your chosen <code class="docutils literal notranslate"><span class=
 <h3>Neurons<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_neurons">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_neurons</code><span class="sig-paren">(</span><em>criteria</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/neurons.py#L18"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_neurons" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_neurons</code><span class="sig-paren">(</span><em>criteria</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/neurons.py#L18"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_neurons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return properties and per-ROI synapse counts for a set of neurons.</p>
 <p>Searches for a set of Neurons (or Segments) that match the given <a class="reference internal" href="neuroncriteria.html#neuprint.queries.NeuronCriteria" title="neuprint.queries.NeuronCriteria"><code class="xref py py-class docutils literal notranslate"><span class="pre">NeuronCriteria</span></code></a>.
 Returns their properties, including the distibution of their synapses in all brain regions.</p>
@@ -650,7 +650,7 @@ but permits you to supply your own cypher query directly.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_custom_neurons">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom_neurons</code><span class="sig-paren">(</span><em>q</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/neurons.py#L135"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom_neurons" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_custom_neurons</code><span class="sig-paren">(</span><em>q</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/neurons.py#L135"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_custom_neurons" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return properties and per-ROI synapse counts for a set of neurons,
 using your own cypher query.</p>
 <p>Use a custom query to fetch a neuron table, with nicer output
@@ -708,7 +708,7 @@ introduced by this function. It isn’t used internally by the neuprint database
 <h3>Connectivity<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_simple_connections">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_simple_connections</code><span class="sig-paren">(</span><em>upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/connectivity.py#L13"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_simple_connections" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_simple_connections</code><span class="sig-paren">(</span><em>upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/connectivity.py#L14"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_simple_connections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find connections to/from small set(s) of neurons.  Most users
 should prefer <code class="docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code> instead of this function.</p>
 <p>Finds all connections from a set of “upstream” neurons,
@@ -765,7 +765,7 @@ One row per connection, with columns for upstream (pre-synaptic) and downstream 
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_adjacencies">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1, include_nonprimary=False, export_dir=None, batch_size=200, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/connectivity.py#L137"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_adjacencies</code><span class="sig-paren">(</span><em>sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1, include_nonprimary=False, export_dir=None, batch_size=200, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/connectivity.py#L138"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_adjacencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find connections to/from large sets of neurons, with per-ROI connection strengths.</p>
 <p>Fetches the adjacency table for connections between sets of neurons, broken down by ROI.
 Unless <code class="docutils literal notranslate"><span class="pre">include_nonprimary=True</span></code>, only primary ROIs are included in the per-ROI connection table.
@@ -892,7 +892,7 @@ See caveat above concerning non-primary ROIs.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_traced_adjacencies">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/connectivity.py#L629"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_traced_adjacencies</code><span class="sig-paren">(</span><em>export_dir=None</em>, <em>batch_size=200</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/connectivity.py#L633"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_traced_adjacencies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function that calls <a class="reference internal" href="#neuprint.queries.fetch_adjacencies" title="neuprint.queries.fetch_adjacencies"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code></a>
 for all <code class="docutils literal notranslate"><span class="pre">Traced</span></code>, non-<code class="docutils literal notranslate"><span class="pre">cropped</span></code> neurons.</p>
 <div class="admonition note">
@@ -931,7 +931,7 @@ and the results are somewhat large (~300 MB).</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_common_connectivity">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_common_connectivity</code><span class="sig-paren">(</span><em>criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/connectivity.py#L672"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_common_connectivity" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_common_connectivity</code><span class="sig-paren">(</span><em>criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/connectivity.py#L676"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_common_connectivity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find shared connections among a set of neurons.</p>
 <p>Given a set of neurons that match the given criteria, find neurons
 that connect to ALL of the neurons in the set, i.e. connections
@@ -965,7 +965,7 @@ columns.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_shortest_paths">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_shortest_paths</code><span class="sig-paren">(</span><em>upstream_bodyId</em>, <em>downstream_bodyId</em>, <em>min_weight=1</em>, <em>intermediate_criteria=None</em>, <em>timeout=5.0</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/connectivity.py#L736"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_shortest_paths" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_shortest_paths</code><span class="sig-paren">(</span><em>upstream_bodyId</em>, <em>downstream_bodyId</em>, <em>min_weight=1</em>, <em>intermediate_criteria=None</em>, <em>timeout=5.0</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/connectivity.py#L740"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_shortest_paths" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find all neurons along the shortest path between two neurons.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1019,7 +1019,7 @@ body from the previous body in the path.</p>
 <h3>Synapses<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_synapses">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>batch_size=10</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/synapses.py#L15"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>batch_size=10</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/synapses.py#L15"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch synapses from a neuron or selection of neurons.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1104,7 +1104,7 @@ if they reside in more than one overlapping ROI.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_mean_synapses">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_mean_synapses</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>batch_size=100</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/synapses.py#L198"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_mean_synapses" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_mean_synapses</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>batch_size=100</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/synapses.py#L198"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_mean_synapses" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch per-ROI average synapse position and confidence for a set of neurons.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1158,7 +1158,7 @@ confidence for a particular body, ROI, and synapse type (pre/post).</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_synapse_connections">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapse_connections</code><span class="sig-paren">(</span><em>source_criteria=None</em>, <em>target_criteria=None</em>, <em>synapse_criteria=None</em>, <em>min_total_weight=1</em>, <em>batch_size=10000</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/synapses.py#L347"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapse_connections" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapse_connections</code><span class="sig-paren">(</span><em>source_criteria=None</em>, <em>target_criteria=None</em>, <em>synapse_criteria=None</em>, <em>min_total_weight=1</em>, <em>batch_size=10000</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/synapses.py#L347"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapse_connections" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch synaptic-level connections between source and target neurons.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -1286,7 +1286,7 @@ described above.</p>
 <h3>Mitochondria<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_mitochondria">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_mitochondria</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>mito_criteria=None</em>, <em>batch_size=10</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/mito.py#L16"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_mitochondria" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_mitochondria</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>mito_criteria=None</em>, <em>batch_size=10</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/mito.py#L16"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_mitochondria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch mitochondria from a neuron or selection of neurons.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1352,7 +1352,7 @@ may be listed more than once, if they reside in more than one overlapping ROI.</
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_synapses_and_closest_mitochondria">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses_and_closest_mitochondria</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>*</em>, <em>batch_size=10</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/mito.py#L185"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses_and_closest_mitochondria" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_synapses_and_closest_mitochondria</code><span class="sig-paren">(</span><em>neuron_criteria</em>, <em>synapse_criteria=None</em>, <em>*</em>, <em>batch_size=10</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/mito.py#L185"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_synapses_and_closest_mitochondria" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch a set of synapses from a selection of neurons and also return
 their nearest mitocondria (by path-length within the neuron segment).</p>
 <div class="admonition note">
@@ -1428,7 +1428,7 @@ not nanometers.  See release notes concerning the estimated error of these measu
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_connection_mitochondria">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_connection_mitochondria</code><span class="sig-paren">(</span><em>source_criteria</em>, <em>target_criteria</em>, <em>synapse_criteria=None</em>, <em>min_total_weight=1</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/mito.py#L389"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_connection_mitochondria" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_connection_mitochondria</code><span class="sig-paren">(</span><em>source_criteria</em>, <em>target_criteria</em>, <em>synapse_criteria=None</em>, <em>min_total_weight=1</em>, <em>*</em>, <em>client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/mito.py#L389"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_connection_mitochondria" title="Permalink to this definition">¶</a></dt>
 <dd><p>For a given set of source neurons and target neurons, find all
 synapse-level connections between the sources and targets, along
 with the nearest mitochondrion on the pre-synaptic side and the
@@ -1504,7 +1504,7 @@ the synapses in other ROIs.</p>
 <h3>Reconstruction Tools<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="neuprint.queries.fetch_output_completeness">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_output_completeness</code><span class="sig-paren">(</span><em>criteria, complete_statuses=['Traced'], batch_size=1000, *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/recon.py#L12"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_output_completeness" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_output_completeness</code><span class="sig-paren">(</span><em>criteria, complete_statuses=['Traced'], batch_size=1000, *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/recon.py#L12"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_output_completeness" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute an estimate of “output completeness” for a set of neurons.
 Output completeness is defined as the fraction of post-synaptic
 connections which belong to ‘complete’ neurons, as defined by their status.</p>
@@ -1530,7 +1530,7 @@ set of complete_statuses are considered ‘traced’.</p>
 
 <dl class="function">
 <dt id="neuprint.queries.fetch_downstream_orphan_tasks">
-<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_downstream_orphan_tasks</code><span class="sig-paren">(</span><em>criteria, complete_statuses=['Traced'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.24/neuprint/queries/recon.py#L84"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_downstream_orphan_tasks" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">neuprint.queries.</code><code class="descname">fetch_downstream_orphan_tasks</code><span class="sig-paren">(</span><em>criteria, complete_statuses=['Traced'], *, client=None</em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.25/neuprint/queries/recon.py#L84"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#neuprint.queries.fetch_downstream_orphan_tasks" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch the set of “downstream orphans” for a given set of neurons.</p>
 <p>Returns a single DataFrame, where the downstream orphans have
 been sorted by the weight of the connection, and their cumulative

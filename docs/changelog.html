@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Changelog &mdash; neuprint-python 0.4.24 documentation</title>
+  <title>Changelog &mdash; neuprint-python 0.4.25 documentation</title>
   
 
   
@@ -63,7 +63,7 @@
             
             
               <div class="version">
-                0.4.24
+                0.4.25
               </div>
             
           
@@ -96,22 +96,23 @@
 <li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id1">0.4.24 / 2022-07-14</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">0.4.23 / 2022-06-14</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id3">0.4.22 / 2022-06-14</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id4">0.4.21 / 2022-05-14</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id5">0.4.20 / 2022-05-13</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id6">0.4.19 / 2022-05-12</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id7">0.4.18 / 2022-04-06</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id8">0.4.17 / 2022-04-06</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id9">0.4.16 / 2021-11-30</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id10">0.4.15 / 2021-06-16</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id11">0.4.14 / 2021-03-27</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id12">0.4.13 / 2020-12-23</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id13">0.4.12 / 2020-11-21</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id14">0.4.11 / 2020-06-30</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id15">0.4.10 / 2020-06-30</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id16">0.4.9 / 2020-04-29</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.4.25 / 2022-09-15</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.4.24 / 2022-07-14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">0.4.23 / 2022-06-14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">0.4.22 / 2022-06-14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">0.4.21 / 2022-05-14</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">0.4.20 / 2022-05-13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">0.4.19 / 2022-05-12</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">0.4.18 / 2022-04-06</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">0.4.17 / 2022-04-06</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id10">0.4.16 / 2021-11-30</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">0.4.15 / 2021-06-16</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">0.4.14 / 2021-03-27</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">0.4.13 / 2020-12-23</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">0.4.12 / 2020-11-21</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">0.4.11 / 2020-06-30</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id16">0.4.10 / 2020-06-30</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id17">0.4.9 / 2020-04-29</a></li>
 </ul>
 </li>
 </ul>
@@ -206,13 +207,20 @@
 <div class="section" id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id1">
-<h2>0.4.24 / 2022-07-14<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>0.4.25 / 2022-09-15<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>In live-updated neuprint databases, it is possible that an edge’s <code class="docutils literal notranslate"><span class="pre">weight</span></code> can become out-of-sync with its <code class="docutils literal notranslate"><span class="pre">roiInfo</span></code> totals.
+That inconsistency triggered an assertion in <code class="docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code>, but now it will emit a warning instead.</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>0.4.24 / 2022-07-14<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Implemented a workaround to avoid a pandas bug in certain cases involving empty dataframes.</li>
 </ul>
 </div>
-<div class="section" id="id2">
-<h2>0.4.23 / 2022-06-14<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h2>0.4.23 / 2022-06-14<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <ul>
 <li><p class="first">In <code class="docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code> (and <code class="docutils literal notranslate"><span class="pre">fetch_simple_connections()</span></code>), we now ensure that no 0-weight “connections” are returned.</p>
 <blockquote>
@@ -227,42 +235,42 @@ We now exclude such connections from our results.</p>
 </li>
 </ul>
 </div>
-<div class="section" id="id3">
-<h2>0.4.22 / 2022-06-14<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h2>0.4.22 / 2022-06-14<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Fixed a crash that could occur if you supplied more than three regular expressions for <code class="docutils literal notranslate"><span class="pre">type</span></code> or <code class="docutils literal notranslate"><span class="pre">instance</span></code>.</li>
 <li>Fixed a problem involving ‘hidden’ ROIs in the hemibrain v1.0.</li>
 </ul>
 </div>
-<div class="section" id="id4">
-<h2>0.4.21 / 2022-05-14<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h2>0.4.21 / 2022-05-14<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Now <code class="docutils literal notranslate"><span class="pre">heal_skeleton()</span></code> is slightly faster in the case where no healing was necessary.</li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h2>0.4.20 / 2022-05-13<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id6">
+<h2>0.4.20 / 2022-05-13<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>By default, <code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code> will now guess whether the <code class="docutils literal notranslate"><span class="pre">type</span></code> and <code class="docutils literal notranslate"><span class="pre">instance</span></code> contain
 a regular expression or not, so you don’t need to explicitly pass <code class="docutils literal notranslate"><span class="pre">regex=True</span></code>.
 Override the guess by specifying <code class="docutils literal notranslate"><span class="pre">regex=True</span></code> or <code class="docutils literal notranslate"><span class="pre">regex=False</span></code>.</li>
 </ul>
 </div>
-<div class="section" id="id6">
-<h2>0.4.19 / 2022-05-12<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id7">
+<h2>0.4.19 / 2022-05-12<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Added <code class="docutils literal notranslate"><span class="pre">fetch_mean_synapses()</span></code></li>
 <li>Added <code class="docutils literal notranslate"><span class="pre">attach_synapses_to_skeleton()</span></code></li>
 </ul>
 </div>
-<div class="section" id="id7">
-<h2>0.4.18 / 2022-04-06<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id8">
+<h2>0.4.18 / 2022-04-06<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Fixed broken package distribution.</li>
 </ul>
 </div>
-<div class="section" id="id8">
-<h2>0.4.17 / 2022-04-06<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id9">
+<h2>0.4.17 / 2022-04-06<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><strong>[CHANGE IN RETURNED RESULTS]</strong> <code class="docutils literal notranslate"><span class="pre">fetch_synapse_connections()</span></code> now applies ROI filtering criteria to only the post-synaptic points,
 for consistency with <code class="docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code>.  (See note in the docs.)
@@ -271,8 +279,8 @@ versions of <code class="docutils literal notranslate"><span class="pre">neuprin
 <li>In <code class="docutils literal notranslate"><span class="pre">fetch_neurons()</span></code>, better handling of old neuprint datasets which lack some fields (e.g. <code class="docutils literal notranslate"><span class="pre">upstream</span></code>, <code class="docutils literal notranslate"><span class="pre">downstream</span></code>, <code class="docutils literal notranslate"><span class="pre">mito</span></code>).</li>
 </ul>
 </div>
-<div class="section" id="id9">
-<h2>0.4.16 / 2021-11-30<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id10">
+<h2>0.4.16 / 2021-11-30<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code> has new fields to support upcoming datasets: <code class="docutils literal notranslate"><span class="pre">somaSide</span></code>, <code class="docutils literal notranslate"><span class="pre">class_</span></code>, <code class="docutils literal notranslate"><span class="pre">statusLabel</span></code>, <code class="docutils literal notranslate"><span class="pre">hemilineage</span></code>, <code class="docutils literal notranslate"><span class="pre">exitNerve</span></code>.</li>
 <li><code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code> now permits you to search for neurons that contain (or lack) a particular property via a special value <code class="docutils literal notranslate"><span class="pre">NotNull</span></code> (or <code class="docutils literal notranslate"><span class="pre">IsNull</span></code>).</li>
@@ -287,16 +295,16 @@ used a list of bodyIds (or statuses, or rois, etc.) with more than three items.<
 <li>Added utility function <code class="docutils literal notranslate"><span class="pre">skeleton_segments()</span></code>.</li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h2>0.4.15 / 2021-06-16<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id11">
+<h2>0.4.15 / 2021-06-16<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><code class="docutils literal notranslate"><span class="pre">NeuronCriteria</span></code> now accepts a boolean argument for <code class="docutils literal notranslate"><span class="pre">soma</span></code>, indicating the presence or absence of a soma on the body.</li>
 <li>Added <code class="docutils literal notranslate"><span class="pre">fetch_connection_mitochondria()</span></code> for finding the nearest mitochondria on both sides of a tbar/psd pair. (#24)</li>
 <li>Integrated with Zenodo for DOI generation.</li>
 </ul>
 </div>
-<div class="section" id="id11">
-<h2>0.4.14 / 2021-03-27<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id12">
+<h2>0.4.14 / 2021-03-27<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Updated to changes in the neuPrint mitochondria data model.
 Older versions of <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> cannot query for mitochondria any more.</li>
@@ -308,8 +316,8 @@ Older versions of <code class="docutils literal notranslate"><span class="pre">n
 <li>More FAQ entries</li>
 </ul>
 </div>
-<div class="section" id="id12">
-<h2>0.4.13 / 2020-12-23<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id13">
+<h2>0.4.13 / 2020-12-23<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><code class="docutils literal notranslate"><span class="pre">SynapseCriteria</span></code>: Changed the default value of <code class="docutils literal notranslate"><span class="pre">primary_only</span></code> to <code class="docutils literal notranslate"><span class="pre">True</span></code>,
 since it may been counter-intuitive to obtain duplicate results by default.</li>
@@ -317,8 +325,8 @@ since it may been counter-intuitive to obtain duplicate results by default.</li>
 <li>Added mitochondria queries</li>
 </ul>
 </div>
-<div class="section" id="id13">
-<h2>0.4.12 / 2020-11-21<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id14">
+<h2>0.4.12 / 2020-11-21<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Better handling when adjacency queries return empty results</li>
 <li>Simulation: Minor change to subprocess communication implementation</li>
@@ -327,22 +335,22 @@ since it may been counter-intuitive to obtain duplicate results by default.</li>
 <li>fetch_synapse_connections(): Fix pandas error in assertion</li>
 </ul>
 </div>
-<div class="section" id="id14">
-<h2>0.4.11 / 2020-06-30<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h2>0.4.11 / 2020-06-30<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Fixed <code class="docutils literal notranslate"><span class="pre">ngspice</span></code> install instructions.</li>
 </ul>
 </div>
-<div class="section" id="id15">
-<h2>0.4.10 / 2020-06-30<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id16">
+<h2>0.4.10 / 2020-06-30<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Moved skeleton-related functions into their own module, and added a few more skeleton utilty functions</li>
 <li>Simulation: Support Windows</li>
 <li><code class="docutils literal notranslate"><span class="pre">heal_skeleton():</span></code> Allow caller to specify a maximum distance for repaired skeleton segments (#12)</li>
 </ul>
 </div>
-<div class="section" id="id16">
-<h2>0.4.9 / 2020-04-29<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id17">
+<h2>0.4.9 / 2020-04-29<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li>Added simulation functions and tutorial</li>
 </ul>
