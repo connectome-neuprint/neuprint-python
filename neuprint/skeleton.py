@@ -391,6 +391,22 @@ def skeleton_segments(skeleton_df):
     """
     assert isinstance(skeleton_df, pd.DataFrame)
 
+    segment_df = _skeleton_segments(skeleton_df)
+    segment_df['avg_radius'] = segment_df.eval('(radius + radius_parent) / 2')
+
+    # Volume of a truncated cone:
+    # V = π * h * (R² * r² + R*r) / 3
+    PI = np.pi  # noqa
+    e = '@PI * length * (radius_parent**2 + radius**2 + radius*radius_parent) / 3'
+    segment_df['volume'] = segment_df.eval(e)
+
+    return segment_df
+
+
+def _skeleton_segments(skeleton_df):
+    """
+    Compute the table of child-to-parent points and segment lengths.
+    """
     segment_df = skeleton_df.merge(skeleton_df[['rowId', 'link', *'xyz', 'radius']],
                                    'inner',
                                    left_on='link',
@@ -400,24 +416,100 @@ def skeleton_segments(skeleton_df):
     child_points = segment_df[[*'xyz']].values
     parent_points = segment_df[['x_parent', 'y_parent', 'z_parent']].values
     segment_df['length'] = np.linalg.norm(child_points - parent_points, axis=1)
-    segment_df['avg_radius'] = segment_df.eval('(radius + radius_parent) / 2')
-
-    # Volume of a truncated cone:
-    # V = π * h * (R² * r² + R*r) / 3
-    PI = np.pi
-    e = '@PI * length * (radius_parent**2 + radius**2 + radius*radius_parent) / 3'
-    segment_df['volume'] = segment_df.eval(e)
-
     return segment_df
+
+
+def upsample_skeleton(skeleton_df, max_segment_length):
+    """
+    Insert new nodes into a skeleton make it "higher resolution".
+    For all child-parent segments with length greater than the given
+    maximum length, subdivide each segment into N smaller equal-length
+    segments, such that all of the new segments are (ideally) not
+    larger than the given max.
+
+    The 'radius' column is interpolated between the child and parent
+    radius values.
+
+    Note:
+        By default, skeletons use float32 to store point coordinates.
+        Due to rounding errors, the final segment lengths after upsampling
+        may still be slightly larger than the requested max!
+        If you need better precision, cast your skeleton coordinates
+        to float64 first:
+
+        .. code-block:: python
+
+            sk = sk.astype({k: np.float64 for k in 'xyz'})
+
+    Returns:
+        DataFrame.  In the result, all previously existing nodes will
+        retain their original rowIds and coordinates, but their 'link'
+        (parent) and radii may have changed.
+    """
+    if len(skeleton_df) in (0, 1) or (skeleton_df['link'] == -1).all():
+        # Can't upsample a skeleton with no child-parent segments
+        return skeleton_df
+
+    seg_df = _skeleton_segments(skeleton_df)
+    seg_df = seg_df.loc[seg_df['length'] > max_segment_length]
+
+    if len(seg_df) == 0:
+        return skeleton_df
+
+    I0 = seg_df['rowId']
+    I1 = seg_df['rowId_parent']
+    next_id = 1 + skeleton_df['rowId'].max()
+
+    # It's best to minimize the number of times we call np.linspace(),
+    # so we interpolate points and radii in conjunction with a single array.
+    PR0 = seg_df[[*'xyz', 'radius']].values
+    PR1 = seg_df[['x_parent', 'y_parent', 'z_parent', 'radius_parent']].values
+
+    D = seg_df['length']
+
+    new_nodes = []
+    for i0, i1, pr0, pr1, d in zip(I0, I1, PR0, PR1, D):
+        # Number of nodes from child (i0) to parent (i1)
+        # excluding the parent (which we won't edit).
+        n = int(np.ceil(d / max_segment_length))
+
+        # IDs of the original child and new intermediates going towards
+        # the original parent, but not the parent itself.
+        I = [i0, *range(next_id, next_id + n - 1)]  # noqa
+        next_id += n - 1
+
+        PR = np.linspace(pr0, pr1, n, endpoint=False)
+        P, R = PR[:, :3], PR[:, 3]
+
+        # 'link' (parent id)
+        L = I[1:] + [i1]
+        assert len(P) == len(R) == len(I) == len(L)
+        new_nodes.append((I, *PR.T, L))
+
+    new_nodes = [np.concatenate(a) for a in [*zip(*new_nodes)]]
+    new_df = pd.DataFrame(dict(zip(['rowId', *'xyz', 'radius', 'link'], new_nodes)))
+
+    # Expand the DataFrame to make room for the new rows,
+    # then copy them over.
+    all_rowIds = np.sort(pd.concat((skeleton_df['rowId'], new_df['rowId'])).unique())
+    dtypes = skeleton_df.dtypes
+    skeleton_df = skeleton_df.set_index('rowId').reindex(all_rowIds)
+    skeleton_df.update(new_df.set_index('rowId'))
+
+    # Restore to standard column form.
+    return skeleton_df.reset_index().astype(dtypes)
 
 
 def attach_synapses_to_skeleton(skeleton_df, synapses_df):
     """
     Attach a neuron's synapses to its skeleton as new skeleton nodes.
-
     Synapses are attached to their nearest skeleton node (in euclidean terms).
-    Note that skeleton nodes are sometimes somewhat far apart, so the nearest node
-    to a given synapse may not be close to the nearest point on the nearest line segment.
+
+    Note:
+        Skeletons are often "low resolution" so some nodes can be relatively far apart.
+        As a consequence, the nearest node to a given synapse may not be close
+        to the nearest point on the nearest line segment to the synapse.
+        To combat this problem, see `py:func:upsample_skeleton()`.
 
     Args:
         skeleton_df:
