@@ -277,10 +277,16 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
     assert skeleton_df['link'].iloc[0] == root_parent
 
     # Delete edges that violated max_distance
-    for a,b in omit_edges:
-        q = '(rowId == @a and link == @b) or (rowId == @b and link == @a)'
-        idx = skeleton_df.query(q).index
-        skeleton_df.loc[idx, 'link'] = root_parent
+    if omit_edges:
+        # Make sure this is invariant to edge direction (check both directions).
+        omit_edges = omit_edges + [(b, a) for (a, b) in omit_edges]
+        omit_df = pd.DataFrame(omit_edges, columns=['rowId', 'link'])
+        omit_df['omit_link'] = -1
+
+        # Remove links for omitted edges (convert child node to a new root).
+        skeleton_df = skeleton_df.merge(omit_df, 'left', on=['rowId', 'link'])
+        skeleton_df['link'].update(skeleton_df['omit_link'])
+        del skeleton_df['omit_link']
 
     return skeleton_df
 
