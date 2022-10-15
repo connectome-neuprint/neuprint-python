@@ -195,7 +195,9 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
 
         root_parent:
             Typically, root nodes point to a special ID, e.g. -1.
-            If this ID is known, then 
+            If this ID is known, then it saves us time when deciding
+            if no healing is necessary.
+
     Returns:
         DataFrame, with ``link`` column updated with updated edges.
     """
@@ -209,7 +211,7 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
         root_parent = -1
     else:
         # Fast path to exit early if we can easily check the number of roots.
-        num_roots = skeleton_df.eval(f'link == {root_parent}').sum()
+        num_roots = (skeleton_df['link'] == root_parent).sum()
         if num_roots == 1:
             # There's only one root and therefore only one component.
             # No healing necessary.
@@ -235,8 +237,8 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
 
     # We could use the full graph and connect all
     # fragment pairs at their nearest neighbors,
-    # but it's faster to treat each fragment as a
-    # single node and run MST on that quotient graph,
+    # but it's faster to treat each entire fragment as
+    # a single node and run MST on that quotient graph,
     # which is tiny.
     frag_graph = nx.Graph()
     for frag_a, frag_b in combinations(fragments, 2):
@@ -473,7 +475,7 @@ def upsample_skeleton(skeleton_df, max_segment_length):
 
     D = seg_df['length']
 
-    new_nodes = []
+    segment_nodes = []
     for i0, i1, pr0, pr1, d in zip(I0, I1, PR0, PR1, D):
         # Number of nodes from child (i0) to parent (i1)
         # excluding the parent (which we won't edit).
@@ -484,16 +486,18 @@ def upsample_skeleton(skeleton_df, max_segment_length):
         I = [i0, *range(next_id, next_id + n - 1)]  # noqa
         next_id += n - 1
 
-        PR = np.linspace(pr0, pr1, n, endpoint=False)
-        P, R = PR[:, :3], PR[:, 3]
-
-        # 'link' (parent id)
+        # 'link' (parent id) for the original child and new intermediates
         L = I[1:] + [i1]
-        assert len(P) == len(R) == len(I) == len(L)
-        new_nodes.append((I, *PR.T, L))
 
-    new_nodes = [np.concatenate(a) for a in [*zip(*new_nodes)]]
-    new_df = pd.DataFrame(dict(zip(['rowId', *'xyz', 'radius', 'link'], new_nodes)))
+        # Interpolate points and radii
+        PR = np.linspace(pr0, pr1, n, endpoint=False)
+
+        assert len(PR) == len(I) == len(L)
+        segment_nodes.append((I, *PR.T, L))
+
+    segment_cols = [*zip(*segment_nodes)]
+    full_cols = [np.concatenate(a) for a in segment_cols]
+    new_df = pd.DataFrame(dict(zip(['rowId', *'xyz', 'radius', 'link'], full_cols)))
 
     # Expand the DataFrame to make room for the new rows,
     # then copy them over.
@@ -557,19 +561,23 @@ def attach_synapses_to_skeleton(skeleton_df, synapses_df):
 
                 [2037 rows x 7 columns]
     """
-    skeleton_df = skeleton_df.copy(deep=False)
-    synapses_df = synapses_df.copy(deep=False)
+    skeleton_df = skeleton_df.copy(deep=False).reset_index(drop=True)
+    synapses_df = synapses_df.copy(deep=False).reset_index(drop=True)
 
-    kd = cKDTree(skeleton_df[[*'xyz']].values)
-    _, indexes = kd.query(synapses_df[[*'xyz']].values)
-    synapses_df['link'] = skeleton_df.loc[indexes, 'rowId'].values
     skeleton_df['structure'] = 'neurite'
-
-    synapses_df['rowId'] = synapses_df.index + skeleton_df['rowId'].max() + 1
     synapses_df['structure'] = synapses_df['type']
     synapses_df['radius'] = 0.0
 
+    kd = cKDTree(skeleton_df[[*'xyz']].values)
+    _, indexes = kd.query(synapses_df[[*'xyz']].values)
+
+    synapses_df['link'] = skeleton_df.loc[indexes, 'rowId'].values
+    synapses_df['rowId'] = synapses_df.index + skeleton_df['rowId'].max() + 1
+
     relevant_cols = ['rowId', *'xyz', 'radius', 'link', 'structure']
-    combined = pd.concat((skeleton_df, synapses_df[relevant_cols]), ignore_index=True)
+    synapses_df = synapses_df[relevant_cols]
+    skeleton_df = skeleton_df[relevant_cols]
+
+    combined = pd.concat((skeleton_df, synapses_df), ignore_index=True)
     combined['structure'] = pd.Categorical(combined['structure'])
     return combined
