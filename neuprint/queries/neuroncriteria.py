@@ -700,7 +700,7 @@ class NeuronCriteria:
                     values = values.tolist()
                 values = [v for v in values if v is not None]
                 var = f"{self.matchvar}_search_{key}"
-                exprs[var] = (f"{values} as {var}")
+                exprs[var] = (f"{values} as `{var}`")
 
         return exprs
 
@@ -1104,18 +1104,18 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
 
     if len(values) == 1:
         if values[0] is None or values[0] == IsNull:
-            return f"NOT exists({matchvar}.{field})"
+            return f"NOT exists({matchvar}.`{field}`)"
 
         if values[0] == NotNull:
-            return f"exists({matchvar}.{field})"
+            return f"exists({matchvar}.`{field}`)"
 
         if regex:
-            return f"{matchvar}.{field} =~ '{values[0]}'"
+            return f"{matchvar}.`{field}` =~ '{values[0]}'"
 
         if isinstance(values[0], str):
-            return f"{matchvar}.{field} = '{values[0]}'"
+            return f"{matchvar}.`{field}` = '{values[0]}'"
 
-        return f"{matchvar}.{field} = {values[0]}"
+        return f"{matchvar}.`{field}` = {values[0]}"
 
     if NotNull in values and len(values) > 1:
         raise ValueError('`NotNull` can not be combined with other criteria '
@@ -1124,14 +1124,14 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
     # list of values
     if None not in values and IsNull not in values:
         if valuevar:
-            return f"{matchvar}.{field} in {valuevar}"
+            return f"{matchvar}.`{field}` in {valuevar}"
         elif regex:
             assert all(isinstance(v, str) for v in values), \
                 "Expected all regex values to be strings"
             r = '|'.join(f'({v})' for v in values)
-            return f"{matchvar}.{field} =~ '{r}'"
+            return f"{matchvar}.`{field}` =~ '{r}'"
         else:
-            return f"{matchvar}.{field} in {values}"
+            return f"{matchvar}.`{field}` in {values}"
 
     # ['some_val', None, 'some_other']
     values = [v for v in values if v not in (None, IsNull)]
@@ -1139,11 +1139,11 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         if regex:
             assert isinstance(values[0], str), \
                 "Expected all regex values to be strings"
-            return f"{matchvar}.{field} =~ '{values[0]}' OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.`{field}` =~ '{values[0]}' OR NOT exists({matchvar}.`{field}`)"
         elif isinstance(values[0], str):
-            return f"{matchvar}.{field} = '{values[0]}' OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.`{field}` = '{values[0]}' OR NOT exists({matchvar}.`{field}`)"
         else:
-            return f"{matchvar}.{field} = {values[0]} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.`{field}` = {values[0]} OR NOT exists({matchvar}.`{field}`)"
     else:
         if regex:
             # Combine the list of regexes into a single regex
@@ -1151,8 +1151,8 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             assert all(isinstance(v, str) for v in values), \
                 "Expected all regex values to be strings"
             r = '|'.join(f'({v})' for v in values)
-            return f"{matchvar}.{field} =~ '{r}' OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.`{field}` =~ '{r}' OR NOT exists({matchvar}.`{field}`)"
         elif valuevar:
-            return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.`{field}` in {valuevar} OR NOT exists({matchvar}.`{field}`)"
         else:
-            return f"{matchvar}.{field} in {values} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.`{field}` in {values} OR NOT exists({matchvar}.`{field}`)"
