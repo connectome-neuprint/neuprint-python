@@ -22,7 +22,7 @@ def fetch_skeleton(body, heal=False, export_path=None, format='pandas', with_dis
     return client.fetch_skeleton(body, heal, export_path, format, with_distances)
 
 
-def skeleton_df_to_nx(df, with_attributes=True, directed=True, with_distances=False):
+def skeleton_df_to_nx(df, with_attributes=True, directed=True, with_distances=False, virtual_roots=False, root_dist=np.inf):
     """
     Create a ``networkx.Graph`` from a skeleton DataFrame.
 
@@ -41,6 +41,13 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True, with_distances=Fa
             If True, add an edge attribute 'distance' indicating the
             euclidean distance between skeleton nodes.
 
+        virtual_roots:
+            If True, include nodes for the 'virtual roots', i.e. node -1.
+
+        root_dist:
+            If virtual_roots are requested, this value will be stored as
+            the 'distance' of the virtual segment(s) connecting them.
+
     Returns:
         ``nx.DiGraph`` or ``nx.Graph``
     """
@@ -55,29 +62,41 @@ def skeleton_df_to_nx(df, with_attributes=True, directed=True, with_distances=Fa
     else:
         g.add_nodes_from(df['rowId'].sort_values())
 
-    # Instead of assuming that the root node refers to a special parent (e.g. -1),
-    # we determine the root_parents by inspection.
-    root_parents = pd.Index(df['link'].unique()).difference(df['rowId'].unique())
-    root_parents
+    if not virtual_roots:
+        # Instead of assuming that the root node refers to a special parent (e.g. -1),
+        # we determine the root_parents by inspection.
+        root_parents = pd.Index(df['link'].unique()).difference(df['rowId'].unique())
+        root_parents
 
     if with_distances:
         edges_df = df[['rowId', 'link']].copy()
-        edges_df['distance'] = calc_segment_distances(df)
-        edges_df = edges_df.query('link not in @root_parents').sort_values(['rowId', 'link'])
+        edges_df['distance'] = calc_segment_distances(df, root_dist)
+        if not virtual_roots:
+            edges_df = edges_df.query('link not in @root_parents')
+        edges_df = edges_df.sort_values(['rowId', 'link'])
         g.add_weighted_edges_from(edges_df.itertuples(index=False), 'distance')
     else:
-        edges_df = df.query('link not in @root_parents')[['rowId', 'link']]
+        if not virtual_roots:
+            edges_df = df.query('link not in @root_parents')
+        edges_df = edges_df[['rowId', 'link']]
         edges_df = edges_df.sort_values(['rowId', 'link'])
         g.add_edges_from(edges_df.values)
 
     return g
 
 
-def calc_segment_distances(df):
+def calc_segment_distances(df, root_dist=np.inf):
     """
     For each node (row) in the given skeleton DataFrame,
     compute euclidean distance from the node to its parent (link) node.
-    Root nodes (i.e. when link == -1) will be assigned a distance of np.inf.
+
+    Args:
+        df:
+            DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
+
+        root_dist:
+            By default, root nodes (i.e. when link == -1) will be assigned a distance of np.inf,
+            but you can override that with this setting (e.g. to 0.0).
 
     Returns:
         np.ndarray
@@ -90,8 +109,29 @@ def calc_segment_distances(df):
 
     diff = edges_df[[*'xyz']] - edges_df[['x_link', 'y_link', 'z_link']].values
     distances = np.linalg.norm(diff, axis=1).astype(np.float32)
-    distances[np.isnan(distances)] = np.inf
+    distances[np.isnan(distances)] = root_dist
     return distances
+
+
+def distances_from_root(df):
+    """
+    Calculate the distance from the root node(s) to all nodes in the skeleton.
+    Return those distances as a new column in the skeleton DataFrame.
+
+    All root nodes will be used, as long as they all have virtual root of -1.
+
+    Args:
+        df:
+            DataFrame as returned by :py:meth:`.Client.fetch_skeleton()`
+
+    Returns:
+        DataFrame
+    """
+    g = skeleton_df_to_nx(df, directed=False, with_distances=True, virtual_roots=True, root_dist=0.0)
+    d = nx.shortest_path_length(g, -1, weight='distance')
+    d = pd.Series(d, name='distance').rename_axis('rowId')
+    df = df.merge(d, 'left', on='rowId')
+    return df
 
 
 def skeleton_swc_to_df(swc):
