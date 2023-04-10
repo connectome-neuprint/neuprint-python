@@ -479,7 +479,7 @@ class Client:
         return self._fetch_json(f"{self.server}/api/version")['Version']
 
     @lru_cache(None)
-    def fetch_neuron_keys(self):        
+    def fetch_neuron_keys(self):
         """
         Returns all available :Neuron properties in the database. Cached.
         """
@@ -496,7 +496,7 @@ class Client:
         else:
             # use neuronProperties to report neuron keys
             neuron_props_val = df_results.iloc[0][0]
-            neuron_props_json = json.loads(neuron_props_val)
+            neuron_props_json = ujson.loads(neuron_props_val)
             neuron_props = list(neuron_props_json.keys())
             return neuron_props
     ##
