@@ -479,17 +479,26 @@ class Client:
         return self._fetch_json(f"{self.server}/api/version")['Version']
 
     @lru_cache(None)
-    def fetch_neuron_keys(self):
+    def fetch_neuron_keys(self):        
         """
         Returns all available :Neuron properties in the database. Cached.
         """
-        # Fetch available keys
-        c = """
-        MATCH (n :`Neuron`) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
-        """
-        raw = self.fetch_custom(c, format='json')
-        return [r[0] for r in raw['data']]
-
+        b = "MATCH (n:`Meta`) RETURN n.neuronProperties"
+        df_results = self.fetch_custom(b)
+        neuron_props_val = df_results.iloc[0][0]
+        if neuron_props_val is None:
+            # Fetch available keys
+            c = """
+            MATCH (n :`Neuron`) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
+            """
+            raw = self.fetch_custom(c, format='json')
+            return [r[0] for r in raw['data']]
+        else:
+            # use neuronProperties to report neuron keys
+            neuron_props_val = df_results.iloc[0][0]
+            neuron_props_json = json.loads(neuron_props_val)
+            neuron_props = list(neuron_props_json.keys())
+            return neuron_props
     ##
     ## DB-META
     ##
