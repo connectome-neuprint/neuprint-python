@@ -133,16 +133,17 @@ class NeuronCriteria:
     @inject_client
     @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber',
                          'status', 'statusLabel', 'rois', 'inputRois', 'outputRois',
-                         'hemilineage', 'class_', 'exitNerve'])
+                         'hemilineage', 'class_', 'exitNerve', 'entryNerve',  'group', 'longTract'])
     def __init__( self, matchvar='n', *,
                   bodyId=None, type=None, instance=None, regex='guess',
-                  class_=None, somaSide=None, exitNerve=None, hemilineage=None,
-                  cellBodyFiber=None,
+                  class_=None, somaSide=None, exitNerve=None, entryNerve=None, 
+                  hemilineage=None, cellBodyFiber=None, 
                   status=None, statusLabel=None, cropped=None,
                   min_pre=0, min_post=0,
                   rois=None, inputRois=None, outputRois=None, min_roi_inputs=1, min_roi_outputs=1,
-                  label=None, roi_req='all',
-                  soma=None,
+                  label=None, roi_req='all', systematicType=None, synonyms=None, 
+                  soma=None, group=None, longTract=None, predictedNt=None,
+                  target=None, somaNeuromere=None, birthtime=None, serial=None, serialMotif=None, 
                   client=None ):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
@@ -195,6 +196,10 @@ class NeuronCriteria:
                 If both ``type`` and ``instance`` criteria are supplied, any neuron that
                 matches EITHER criteria will match the overall criteria.
 
+            systematicType (str or list of str):
+                Matches for neuron ``systematicType`` field. To search for neurons
+                with no group at all, use ``systematicType=[None]``.
+
             instance (str or list of str):
                 Cell instance (specific cell name).  Matches depend on the the ``regex`` argument.
                 To search for neurons with no instance at all, use ``instance=[None]``.
@@ -214,8 +219,36 @@ class NeuronCriteria:
                 Matches for the neuron ``class`` field.  To search for neurons
                 with no class at all, use ``class_=[None]``.
 
-            somaSide ('RHS' or 'LHS' or None):
+            subclass (str or list of str):
+                Matches for the neuron ``subclass`` field.  To search for neurons
+                with no class at all, use ``subclass_=[None]``.
+
+            somaSide ('RHS' or 'LHS' or None or list of the latter):
                 Matches for the neuron ``somaSide`` field.
+
+            group (int or list of int)
+                Matches for neuron ``group`` field. To search for neurons 
+                with no group at all, use ``group=[None]``.
+
+            target (str or list of str)
+                Matches for neuron ``target`` field. To search for neurons
+                with no target at all, use ``target=[None]``.
+
+            synonyms (str or list of str)
+                Matches for neuron ``synonyms`` field. To search for neurons
+                with no synonyms at all, use ``synonyms=[None]``.
+
+            predictedNt (str or list of str)
+                Matches for neuron ``predictedNt`` field. To search for neurons
+                with no predictedNt at all, use ``predictedNt=[None]``.
+
+            birthtime (str)
+                Matches for neuron ``birthtime`` field. To search for neurons
+                with no birthtime at all, use ``birthtime=[None]``.
+
+            entryNerve (str or list of str):
+                Matches for the neuron ``entryNerve`` field.  To search for neurons
+                with no entryNerve at all, use ``entryNerve=[None]``.
 
             exitNerve (str or list of str):
                 Matches for the neuron ``exitNerve`` field.  To search for neurons
@@ -228,6 +261,22 @@ class NeuronCriteria:
             cellBodyFiber (str or list of str):
                 Matches for the neuron ``cellBodyFiber`` field.  To search for neurons
                 with no CBF at all, use ``cellBodyFiber=[None]``.
+
+            longTract (str or list of str)
+                Matches for the neuron ``longTract`` field.  To search for neurons
+                with no longTract at all, use ``longTract=[None]``.
+
+            serial (int or list of int)
+                Matches for the neuron ``serial`` field.  To search for neurons
+                with no serial at all, use ``serial=[None]``
+
+            serialMotif (str or list of str)
+                Matches for the neuron ``serialMotif`` field.  To search for neurons
+                with no serialMotif at all, use ``serialMotif=[None]``.
+
+            somaNeuromere (str or list of str)
+                Matches for the neuron ``somaNeuromere`` field.  To search for neurons
+                with no somaNeuromere at all, use ``somaNeuromere=[None]``.
 
             status (str or list of str):
                 Matches for the neuron ``status`` field.  To search for neurons with no status
@@ -348,6 +397,9 @@ class NeuronCriteria:
         assert somaSide in ("RHS", "LHS", None), \
             f"somaSide must be 'LHS', 'RHS' or None, not {somaSide}"
 
+        assert birthtime in ("early secondary","primary","secondary", None), \
+            f"birthtime must be 'early secondary', 'primary', 'secondary', or None not {birthtime}"
+        
         # If the user provided both intersecting rois and input/output rois,
         # force them to make the intersecting set a superset of the others.
         rois = {*rois}
@@ -377,6 +429,7 @@ class NeuronCriteria:
         self.bodyId = bodyId
         self.instance = instance
         self.type = type
+        self.systematicType=systematicType
         self.cellBodyFiber = cellBodyFiber
         self.status = status
         self.statusLabel = statusLabel
@@ -393,12 +446,23 @@ class NeuronCriteria:
         self.roi_req = roi_req
         self.soma = soma
         self.class_ = class_
+        self.subclass = subclass
+        self.group = group
         self.somaSide = somaSide
+        self.entryNerve = entryNerve
         self.exitNerve = exitNerve
         self.hemilineage = hemilineage
-
-        self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber',
-                           'hemilineage', 'exitNerve', 'class_']
+        self.longTract = longTract
+        self.predictedNt=predictedNt
+        self.birthtime=birthtime
+        self.target = target
+        self.somaNeuromere =somaNeuromere
+        self.serial=serial
+        self.serialMotif=serialMotif
+        self.synonyms=synonyms
+        
+        self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber', 'systematicType', 'hemilineage', 'target', 'somaNeuromere', 'predictedNt'
+                           'entryNerve', 'exitNerve', 'class_', 'subclass', 'somaSide', 'group', 'longTract', 'synonyms', 'serial', 'serialMotif']
         self.list_props_regex = ['type', 'instance']
 
     def __eq__(self, value):
@@ -450,32 +514,100 @@ class NeuronCriteria:
         elif len(self.instance) > 1:
             s += f", instance={list(self.instance)}"
 
+        if len(self.group) == 1:
+            s += f', group="{self.group[0]}"'
+        elif len(self.group) > 1:
+            s += f", group={list(self.group)}"
+            
         if len(self.type) == 1:
             s += f', type="{self.type[0]}"'
-        elif len(self.instance) > 1:
+        elif len(self.type) > 1:
             s += f", type={list(self.type)}"
 
         if len(self.type) or len(self.instance):
             s += f", regex={self.regex}"
 
+        if len(self.systematicType) == 1:
+            s += f', systematicType="{self.systematicType[0]}"'
+        elif len(self.systematicType) > 1:
+            s += f", systematicType={list(self.systematicType)}"
+
+        if len(self.synonyms) == 1:
+            s += f', synonyms="{self.synonyms[0]}"'
+        elif len(self.synonyms) > 1:
+            s += f", synonyms={list(self.synonyms)}"
+            
         if len(self.cellBodyFiber) == 1:
             s += f', cellBodyFiber="{self.cellBodyFiber[0]}"'
-        elif len(self.instance) > 1:
+        elif len(self.cellBodyFiber) > 1:
             s += f", cellBodyFiber={list(self.cellBodyFiber)}"
 
+        if len(self.longTract) == 1:
+            s += f', self.longTract="{self.longTract[0]}"'
+        elif len(self.longTract) > 1:
+            s += f", longTract={list(self.longTract)}"
+
+        if len(self.subclass) == 1:
+            s += f', self.subclass="{self.subclass[0]}"'
+        elif len(self.subclass) > 1:
+            s += f", subclass={list(self.subclass)}"
+            
         if len(self.status) == 1:
             s += f', status="{self.status[0]}"'
-        elif len(self.instance) > 1:
+        elif len(self.status) > 1:
             s += f", status={list(self.status)}"
 
         if len(self.statusLabel) == 1:
             s += f', statusLabel="{self.statusLabel[0]}"'
-        elif len(self.instance) > 1:
+        elif len(self.statusLabel) > 1:
             s += f", statusLabel={list(self.statusLabel)}"
 
+        if len(self.entryNerve) == 1:
+            s += f', entryNerve="{self.entryNerve[0]}"'
+        elif len(self.entryNerve) > 1:
+            s += f", entryNerve={list(self.entryNerve)}"
+
+        if len(self.exitNerve) == 1:
+            s += f', exitNerve="{self.exitNerve[0]}"'    
+        elif len(self.exitNerve) > 1:
+            s += f", exitNerve={list(self.exitNerve)}"
+            
+        if len(self.target) == 1:
+            s += f', target="{self.target[0]}"'
+        elif len(self.target) > 1:
+            s += f", target={list(self.target)}"        
+            
+        if len(self.somaSide) == 1:
+            s += f', somaSide="{self.somaSide[0]}"'
+        elif len(self.somaSide) > 1:
+            s += f", somaSide={list(self.somaSide)}"
+
+        if len(self.somaNeuromere) == 1:
+            s += f', somaNeuromere="{self.somaNeuromere[0]}"'
+        elif len(self.somaNeuromere) > 1:
+            s += f", somaNeuromere={list(self.somaNeuromere)}"
+
+        if len(self.serial) == 1:
+            s += f', serial="{self.serial[0]}"'
+        elif len(self.serial) > 1:
+            s += f", serial={list(self.serial)}"
+
+        if len(self.serialMotif) == 1:
+            s += f', serialMotif="{self.serialMotif[0]}"'
+        elif len(self.serialMotif) > 1:
+            s += f", serialMotif={list(self.serialMotif)}"
+            
         if self.cropped is not None:
             s += f", cropped={self.cropped}"
 
+        if len(self.predictedNt) == 1:
+            s += f', predictedNt="{self.predictedNt[0]}"'
+        elif len(self.predictedNt) > 1:
+            s += f", predictedNt={list(self.predictedNt)}"
+            
+        if self.birthtime is not None:
+            s += f", self.birthtime={self.birthtime}"
+            
         if self.min_pre != 0:
             s += f", min_pre={self.min_pre}"
 
@@ -496,7 +628,7 @@ class NeuronCriteria:
 
         if self.min_roi_outputs != 1:
             s += f", min_roi_outputs={self.min_roi_outputs}"
-
+            
         if self.label != 'Neuron':
             s += f', label="{self.label}"'
 
@@ -560,7 +692,10 @@ class NeuronCriteria:
                  self.status_expr(), self.statusLabel_expr(),
                  self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr(),
                  self.soma_expr(), self.hemilineage_expr(), self.class_expr(),
-                 self.exitNerve_expr(), self.somaSide_expr()]
+                 self.entryNerve_expr(), self.exitNerve_expr(), self.somaSide_expr(),
+                 self.systematicType_expr(), self.group_expr(), self.subclass_expr(),
+                 self.synonyms_expr(), self.predictedNt_expr(), ,self.longTract_expr(),
+                 self.birthtime_expr(), self.serial_expr(), self.serialMotif_expr(),self.target_expr()]
         exprs = [*filter(None, exprs)]
         return exprs
 
@@ -650,6 +785,9 @@ class NeuronCriteria:
     def type_expr(self):
         return self._value_list_expr('type', self.type, self.regex)
 
+    def systematicType_expr(self):
+        return self._value_list_expr('systematicType', self.systematicType, False)
+        
     def cbf_expr(self):
         return self._value_list_expr('cellBodyFiber', self.cellBodyFiber, False)
 
@@ -662,12 +800,30 @@ class NeuronCriteria:
     def hemilineage_expr(self):
         return self._value_list_expr('hemilineage', self.hemilineage, False)
 
+    def entryNerve_expr(self):
+        return self._value_list_expr('entryNerve', self.entryNerve, False)
+        
     def exitNerve_expr(self):
         return self._value_list_expr('exitNerve', self.exitNerve, False)
 
+    def group_expr(self):
+        return self._value_list_expr('group', self.group, False)
+
+    def longTract_expr(self):
+        return self._value_list_expr('longTract', self.longTract, False)
+
+    def synonyms_expr(self):
+        return self._value_list_expr('synonyms', self.synonyms, False)
+    
     def class_expr(self):
         return self._value_list_expr('class', self.class_, False)
 
+    def subclass_expr(self):
+        return self._value_list_expr('subclass', self.subclass, False)
+
+    def target_expr(self):
+        return self._value_list_expr('target', self.target, False)
+        
     def cropped_expr(self):
         return self._tag_expr('cropped', self.cropped)
 
@@ -685,8 +841,21 @@ class NeuronCriteria:
         return self._single_value_expr('somaLocation', self.soma)
 
     def somaSide_expr(self):
-        return self._single_value_expr('somaSide', self.somaSide)
+        return self._value_list_expr('somaSide', self.type, False)
+        #return self._single_value_expr('somaSide', self.somaSide)
 
+    def serial_expr(self):
+        return self._value_list_expr('serial', self.type, False)
+
+    def serialMotif_expr(self):
+        return self._value_list_expr('serialMotif', self.type, False)
+        
+    def predictedNt_expr(self):
+        return self._value_list_expr('predictedNt', self.type, False)
+
+    def birthtime_expr(self):
+        return self._single_value_expr('birthtime', self.birthtime)
+    
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
             prefix = ' '*prefix
