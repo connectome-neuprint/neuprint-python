@@ -242,7 +242,7 @@ class NeuronCriteria:
                 Matches for neuron ``predictedNt`` field. To search for neurons
                 with no predictedNt at all, use ``predictedNt=[None]``.
 
-            birthtime (str)
+            birthtime (str or list of str)
                 Matches for neuron ``birthtime`` field. To search for neurons
                 with no birthtime at all, use ``birthtime=[None]``.
 
@@ -393,12 +393,6 @@ class NeuronCriteria:
 
         assert soma in (True, False, None), \
             f"soma must be True, False or None, not {soma}"
-
-        assert somaSide in ("RHS", "LHS", None), \
-            f"somaSide must be 'LHS', 'RHS' or None, not {somaSide}"
-
-        assert birthtime in ("early secondary","primary","secondary", None), \
-            f"birthtime must be 'early secondary', 'primary', 'secondary', or None not {birthtime}"
         
         # If the user provided both intersecting rois and input/output rois,
         # force them to make the intersecting set a superset of the others.
@@ -605,8 +599,10 @@ class NeuronCriteria:
         elif len(self.predictedNt) > 1:
             s += f", predictedNt={list(self.predictedNt)}"
             
-        if self.birthtime is not None:
-            s += f", self.birthtime={self.birthtime}"
+        if len(self.birthtime) == 1:
+            s += f', birthtime="{self.birthtime[0]}"'
+	elif len(self.birthtime) > 1:
+            s += f", birthtime={list(self.birthtime)}"    
             
         if self.min_pre != 0:
             s += f", min_pre={self.min_pre}"
@@ -842,7 +838,6 @@ class NeuronCriteria:
 
     def somaSide_expr(self):
         return self._value_list_expr('somaSide', self.type, False)
-        #return self._single_value_expr('somaSide', self.somaSide)
 
     def serial_expr(self):
         return self._value_list_expr('serial', self.type, False)
@@ -854,7 +849,7 @@ class NeuronCriteria:
         return self._value_list_expr('predictedNt', self.type, False)
 
     def birthtime_expr(self):
-        return self._single_value_expr('birthtime', self.birthtime)
+        return self._value_list_expr('birthtime', self.type, False)
     
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
