@@ -455,8 +455,8 @@ class NeuronCriteria:
         self.serialMotif=serialMotif
         self.synonyms=synonyms
         
-        self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber', 'systematicType', 'hemilineage', 'target', 'somaNeuromere', 'predictedNt'
-                           'entryNerve', 'exitNerve', 'class_', 'subclass', 'somaSide', 'group', 'longTract', 'synonyms', 'serial', 'serialMotif']
+        self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber', 'systematicType', 'hemilineage', 'target', 'somaNeuromere', 'predictedNt',
+                           'entryNerve', 'exitNerve', 'class_', 'subclass', 'somaSide', 'group', 'longTract', 'synonyms', 'serial', 'serialMotif', 'birthtime']
         self.list_props_regex = ['type', 'instance']
 
     def __eq__(self, value):
