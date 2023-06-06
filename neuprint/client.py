@@ -339,32 +339,31 @@ class Client:
         if not verify:
             urllib3.disable_warnings(InsecureRequestWarning)
 
-        all_datasets = [*self.fetch_datasets().keys()]
-        if len(all_datasets) == 0:
-            raise RuntimeError(f"The neuprint server {self.server} has no datasets!")
-
-        if len(all_datasets) == 1 and not dataset:
-            self.dataset = all_datasets[0]
-            logger.info(f"Initializing neuprint.Client with dataset: {self.dataset}")
-        elif dataset in all_datasets:
-            self.dataset = dataset
-        else:
-            raise RuntimeError(f"Dataset '{dataset}' does not exist on"
-                               f" the neuprint server ({self.server}).\n"
-                               f"Available datasets: {all_datasets}")
+        try:
+            self.dataset = self._select_dataset(dataset, clear_cache=False)
+        except Exception:
+            # One more try, in case we were using an outdated dataset list.
+            self.dataset = self._select_dataset(dataset, clear_cache=True)
 
         # Set this as the default client if there isn't one already
         global DEFAULT_NEUPRINT_CLIENT
         if DEFAULT_NEUPRINT_CLIENT is None:
             set_default_client(self)
 
-        from .queries.general import fetch_meta
-        from .queries.rois import _all_rois_from_meta
-        # Pre-cache these metadata fields,
-        # to avoid re-fetching them for many queries that need them.
-        self.meta = fetch_meta(client=self)
-        self.primary_rois = sorted(self.meta['primaryRois'])
-        self.all_rois = _all_rois_from_meta(self.meta)
+    def _select_dataset(self, dataset, clear_cache):
+        all_datasets = [*self.fetch_datasets(clear_cache).keys()]
+        if len(all_datasets) == 0:
+            raise RuntimeError(f"The neuprint server {self.server} has no datasets!")
+
+        if len(all_datasets) == 1 and not dataset:
+            logger.info(f"Initializing neuprint.Client with dataset: {dataset}")
+            return all_datasets[0]
+        elif dataset in all_datasets:
+            return dataset
+
+        raise RuntimeError(f"Dataset '{dataset}' does not exist on"
+                            f" the neuprint server ({self.server}).\n"
+                            f"Available datasets: {all_datasets}")
 
     def __repr__(self):
         s = f'Client("{self.server}", "{self.dataset}"'
@@ -389,6 +388,27 @@ class Client:
     def _fetch_json(self, url, json=None, ispost=False):
         r = self._fetch(url, json=json, ispost=ispost)
         return ujson.loads(r.content)
+
+    ##
+    ## Cached properties
+    ##
+
+    @property
+    @lru_cache
+    def meta(self):
+        from .queries.general import fetch_meta
+        return fetch_meta(client=self)
+
+    @property
+    @lru_cache
+    def primary_rois(self):
+        return sorted(self.meta['primaryRois'])
+
+    @property
+    @lru_cache
+    def all_rois(self):
+        from .queries.rois import _all_rois_from_meta
+        return _all_rois_from_meta(self.meta)
 
     ##
     ## CUSTOM QUERIES
@@ -478,7 +498,7 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/version")['Version']
 
-    @lru_cache(None)
+    @lru_cache
     def fetch_neuron_keys(self):
         """
         Returns all available :Neuron properties in the database. Cached.
@@ -509,11 +529,30 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/database")
 
-    def fetch_datasets(self):
+    DATASETS_CACHE = {}
+
+    def fetch_datasets(self, clear_cache=False):
         """
         Fetch basic information about the available datasets on the server.
+
+        Args:
+            clear_cache:
+                The result from each unique neuprint server is cached locally
+                and re-used by all Clients, but you can invalidate the entire
+                cache by setting clear_cache to True.
+
+        Returns:
+            dict, keyed by dataset name
         """
-        return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
+        if clear_cache:
+            Client.DATASETS_CACHE.clear()
+
+        try:
+            return Client.DATASETS_CACHE[self.server]
+        except KeyError:
+            datasets = self._fetch_json(f"{self.server}/api/dbmeta/datasets")
+            Client.DATASETS_CACHE[self.server] = datasets
+            return datasets
 
     def fetch_instances(self):
         """
