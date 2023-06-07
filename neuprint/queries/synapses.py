@@ -475,7 +475,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         "Please specify either source or target search criteria (or both)."
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria(primary_only=True)
+        synapse_criteria = SynapseCriteria()
 
     def prepare_nc(nc, matchvar):
         nc.matchvar = matchvar
@@ -495,7 +495,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     _neuron_df, roi_conn_df = fetch_adjacencies( source_criteria,
                                                  target_criteria,
                                                  synapse_criteria.rois,
-                                                 1,
+                                                 min(1, min_total_weight),
                                                  min_total_weight,
                                                  properties=[] )
 

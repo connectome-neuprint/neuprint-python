@@ -15,7 +15,7 @@ class SynapseCriteria:
 
     @inject_client
     @make_args_iterable(['rois'])
-    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=0.0, primary_only=True, client=None):
+    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=None, primary_only=True, client=None):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
 
@@ -33,6 +33,9 @@ class SynapseCriteria:
 
             confidence (float, 0.0-1.0):
                 Limit results to synapses of at least this confidence rating.
+                By default, use the dataset's default synapse confidence threshold,
+                which will include the same synapses that were counted in each
+                neuron-neuron ``weight`` (as opposed to ``weightHP`` or ``weightHR``).
 
             primary_only (boolean):
                 If True, only include primary ROI names in the results.
@@ -56,6 +59,9 @@ class SynapseCriteria:
         type = type or None
         assert type in ('pre', 'post', None), \
             f"Invalid synapse type: {type}.  Choices are 'pre' and 'post'."
+
+        if confidence is None:
+            confidence = client.meta.get('postHighAccuracyThreshold', 0.0)
 
         self.matchvar = matchvar
         self.rois = rois
