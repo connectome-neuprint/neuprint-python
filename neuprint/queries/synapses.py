@@ -655,6 +655,9 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
                                               'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post',
                                               'confidence_pre', 'confidence_post'])
 
+    syn_df['bodyId_pre'] = syn_df['bodyId_pre'].astype(np.int64)
+    syn_df['bodyId_post'] = syn_df['bodyId_post'].astype(np.int64)
+
     # Save RAM with smaller dtypes
     syn_df['x_pre'] = syn_df['x_pre'].astype(np.int32)
     syn_df['y_pre'] = syn_df['y_pre'].astype(np.int32)
