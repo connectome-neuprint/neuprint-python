@@ -372,6 +372,12 @@ class Client:
         s += ")"
         return s
 
+    def __eq__(self, other):
+        return (
+            self.server == other.server and  # noqa
+            self.dataset == other.dataset
+        )
+
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
         if ispost:

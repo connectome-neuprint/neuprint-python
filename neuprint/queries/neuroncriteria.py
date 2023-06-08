@@ -1,3 +1,4 @@
+import os
 import re
 import copy
 import inspect
@@ -131,21 +132,88 @@ class NeuronCriteria:
     """
 
     @inject_client
-    @make_args_iterable(['bodyId', 'instance', 'type', 'cellBodyFiber',
-                         'status', 'statusLabel', 'rois', 'inputRois', 'outputRois',
-                         'hemilineage', 'class_', 'exitNerve'])
-    def __init__( self, matchvar='n', *,
-                  bodyId=None, type=None, instance=None, regex='guess',
-                  class_=None, somaSide=None, exitNerve=None, hemilineage=None,
-                  cellBodyFiber=None,
-                  status=None, statusLabel=None, cropped=None,
-                  min_pre=0, min_post=0,
-                  rois=None, inputRois=None, outputRois=None, min_roi_inputs=1, min_roi_outputs=1,
-                  label=None, roi_req='all',
-                  soma=None,
-                  client=None ):
+    @make_args_iterable([
+        'bodyId',
+
+        # Regex-optional
+        'type', 'instance',
+        # special: 'regex'
+
+        # ROI
+        'rois', 'inputRois', 'outputRois',
+        # special: roi_req, min_roi_inputs, min_roi_outputs
+
+        # integer
+        'group', 'serial',
+
+        # boolean
+        # 'cropped',
+
+        # Exact string fields (alphabetical order)
+        'birthtime', 'cellBodyFiber', 'class_',
+        'entryNerve', 'exitNerve', 'hemilineage', 
+        'longTract', 'modality', 'origin',
+        'predictedNt', 'serialMotif', 'somaNeuromere',
+        'somaSide', 'status', 'statusLabel',
+        'subclass', 'synonyms', 'systematicType',
+        'target',
+
+        # Special
+        # label, min_pre, min_post
+
+        # Null/NotNull
+        # somaLocation, tosomaLocation,
+
+        # Deprecated
+        # soma
+    ])
+    def __init__(
+        self, matchvar='n', *,
+        bodyId=None,
+
+        # Regex-optional
+        type=None, instance=None,
+        regex='guess',
+
+        # status (exact string)
+        status=None, statusLabel=None,
+
+        # ROI
+        rois=None, inputRois=None, outputRois=None,
+        roi_req='all', min_roi_inputs=1, min_roi_outputs=1,
+
+        # integer
+        group=None, serial=None,
+
+        # boolean
+        cropped=None,
+
+        # Other exact string fields (alphabetical)
+        birthtime=None, cellBodyFiber=None, class_=None,
+        entryNerve=None, exitNerve=None, hemilineage=None,
+        longTract=None, modality=None, origin=None,
+        predictedNt=None, serialMotif=None, somaNeuromere=None,
+        somaSide=None, subclass=None, synonyms=None,
+        systematicType=None, target=None,
+
+        # Special
+        label=None, min_pre=0, min_post=0,
+
+        # IsNull/NotNull
+        somaLocation=None, tosomaLocation=None, rootLocation=None,
+
+        # Deprecated
+        soma=None,
+
+        client=None
+    ):
         """
-        Except for ``matchvar``, all parameters must be passed as keyword arguments.
+        All criteria must be passed as keyword arguments.
+
+        .. note::
+            Only ``bodyId``, ``type``, ``instance``, and ROI-related criteria are
+            applicable to all datasets.  The applicability of all other criteria depends
+            on the dataset being accessed (e.g. hemibrain,  manc, etc.).
 
         .. note::
 
@@ -156,7 +224,7 @@ class NeuronCriteria:
 
             The ``inputRois`` and ``outputRois`` arguments allow you to put requirements
             on whether or not neurons have inputs or outputs in the listed ROIs.
-            It results a more expensive query, but it's more powerful.
+            It produces a more expensive query, but it's more selective.
             It also enables you to require a minimum number of connections in the given
             ``inputRois`` or ``outputRois`` using the ``min_roi_inputs`` and ``min_roi_outputs``
             criteria.
@@ -182,22 +250,18 @@ class NeuronCriteria:
             matchvar (str):
                 An arbitrary cypher variable name to use when this
                 ``NeuronCriteria`` is used to construct cypher queries.
-                To help catch errors (such as accidentally passing a ``type`` or
-                ``instance`` name in the wrong argument position), we require that
-                ``matchvar`` begin with a lowercase letter.
+                Must begin with a lowercase letter.
 
             bodyId (int or list of ints):
                 List of bodyId values.
 
             type (str or list of str):
                 Cell type.  Matches depend on the the ``regex`` argument.
-                To search for neurons with no type at all, use ``type=[None]``.
                 If both ``type`` and ``instance`` criteria are supplied, any neuron that
                 matches EITHER criteria will match the overall criteria.
 
             instance (str or list of str):
                 Cell instance (specific cell name).  Matches depend on the the ``regex`` argument.
-                To search for neurons with no instance at all, use ``instance=[None]``.
                 If both ``type`` and ``instance`` criteria are supplied, any neuron that
                 matches EITHER criteria will match the overall criteria.
 
@@ -210,44 +274,15 @@ class NeuronCriteria:
                 then we assume you intend regex matching. (You can see which method was chosen by
                 checking the ``regex`` field after the ``NeuronCriteria`` is constructed.)
 
-            class_ (str or list of str):
-                Matches for the neuron ``class`` field.  To search for neurons
-                with no class at all, use ``class_=[None]``.
-
-            somaSide ('RHS' or 'LHS' or None):
-                Matches for the neuron ``somaSide`` field.
-
-            exitNerve (str or list of str):
-                Matches for the neuron ``exitNerve`` field.  To search for neurons
-                with no exit nerve at all, use ``exitNerve=[None]``.
-
-            hemilineage (str or list of str):
-                Matches for the neuron ``hemilineage`` field.  To search for neurons
-                with no hemilineage at all, use ``hemilineage=[None]``.
-
-            cellBodyFiber (str or list of str):
-                Matches for the neuron ``cellBodyFiber`` field.  To search for neurons
-                with no CBF at all, use ``cellBodyFiber=[None]``.
-
             status (str or list of str):
-                Matches for the neuron ``status`` field.  To search for neurons with no status
-                at all, use ``status=[None]``.
-
+                Indicates the status of the neuron's reconstruction quality.
+                Typically, named/annotated neurons have ``Traced`` status,
+                the best quality.
             statusLabel (str or list of str):
-                Matches for the neuron ``statusLabel`` field. ``statusLabel`` is
-                typically more finegrained than ``status``. To search for neurons
-                with no status at all, use ``statusLabel=[None]``.
-
-            cropped (bool):
-                If given, restrict results to neurons that are cropped or not.
-
-            min_pre (int):
-                Exclude neurons that don't have at least this many t-bars (outputs) overall,
-                regardless of how many t-bars exist in any particular ROI.
-
-            min_post (int):
-                Exclude neurons that don't have at least this many PSDs (inputs) overall,
-                regardless of how many PSDs exist in any particular ROI.
+               ``statusLabel`` is typically more fine-grained than ``status``,
+               and mostly of interest during the construction of the connectome,
+               not for end-users.  The possible values of ``statusLabel`` do not
+               correspond one-to-one to those of ``status``.
 
             rois (str or list of str):
                 ROIs that merely intersect the neuron, without specifying whether
@@ -270,6 +305,41 @@ class NeuronCriteria:
                 How many output (pre) synapses a neuron must have in each ROI to satisfy the
                 ``outputRois`` criteria.   Can only be used if you provided ``outputRois``.
 
+            roi_req (Either ``'any'`` or ``'all'``):
+                Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
+                When using 'any', each neuron must still match at least one input AND at least one output ROI.
+
+            group (int or list of int)
+                In some datasets, the ``group`` ID is used to associate neurons morphological type,
+                including left-right homologues. Neurons with the same group ID have matching morphology.
+
+            serial (int or list of int)
+                Similar to ``group``, but used for associating neurons across segmental neuropils in the nerve cord.
+                Neurons with the same ``serial`` ID are analogous to one another, but in different leg segments.
+
+            cropped (bool):
+                If given, restrict results to neurons that are cropped or not.
+
+            birthtime (str or list of str):
+            cellBodyFiber (str or list of str):
+            class\\_ (str or list of str):
+                Matches for the neuron ``class`` field.
+            entryNerve (str or list of str):
+            exitNerve (str or list of str):
+            hemilineage (str or list of str):
+            longTract (str or list of str):
+            modality (str or list of str):
+            origin (str or list of str):
+            predictedNt (str or list of str):
+            serialMotif (str or list of str):
+            somaNeuromere (str or list of str):
+            somaSide  (str or list of str):
+                Valid choices are 'RHS', 'LHS', 'Midline'
+            subclass (str or list of str):
+            synonyms (str or list of str):
+            systematicType (str or list of str):
+            target (str or list of str):
+
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.
                 (In neuprint, all ``Neuron`` nodes are also ``Segment`` nodes.)
@@ -277,19 +347,125 @@ class NeuronCriteria:
                 In that case, ``'Segment'`` is the default. (It's assumed you're really interested
                 in the bodies you explicitly listed, whether or not they have the ``'Neuron'`` label.)
 
-            roi_req (Either ``'any'`` or ``'all'``):
-                Whether a neuron must intersect all of the listed input/output ROIs, or any of the listed input/output ROIs.
-                When using 'any', each neuron must still match at least one input AND at least one output ROI.
+            min_pre (int):
+                Exclude neurons that don't have at least this many t-bars (outputs) overall,
+                regardless of how many t-bars exist in any particular ROI.
+
+            min_post (int):
+                Exclude neurons that don't have at least this many PSDs (inputs) overall,
+                regardless of how many PSDs exist in any particular ROI.
+
+            somaLocation:
+                The ``somaLocation`` property of ``:Neuron`` objects contains
+                the ``[X,Y,Z]`` coordinate (in voxels) of the cell body.
+                ``NeuronCriteria`` does not allow you to match a specific coordinate,
+                but you may set this argument to ``NotNull` (or ```IsNull``) to
+                search for cells with (or without) a recorded cell body.
+
+            tosomaLocation:
+                Neurons which could not be successfully attached to their cell body do not have
+                a recorded ``somaLocation``.  Instead, they have an annotaiton on the cell body
+                fiber, on the severed end extending out toward the cell body.
+                Like ``somaLocation``, you can't match a specific coordinate using ``NeuronCriteria``,
+                but you can use ``NotNull``/``IsNull``.
+
+            rootLocation:
+                Some (but not all) Neurons which have no soma in the tissue sample are tagged with
+                a ``rootLocation``, indicating where they enter/exit the sample.
+                Like ``somaLocation``, you can't match a specific coordinate using ``NeuronCriteria``,
+                but you can use ``NotNull``/``IsNull``.
 
             soma (Either ``True``, ``False``, or ``None``)
-                If ``True``, only return neurons with a ``somaLocation``.
-                If ``False``, return neurons without a ``somaLocation``.
+                DEPRECATED.  Use ``somaLocation=NotNull`` or ``somaLocation=IsNull``.
 
             client (:py:class:`neuprint.client.Client`):
                 Used to validate ROI names.
                 If not provided, the global default ``Client`` will be used.
-
         """
+        self.matchvar = self._init_matchvar(matchvar)
+        self.bodyId = self._init_integer_arg(bodyId, 'bodyId')
+
+        # regex-optional
+        self.type = self._init_type(type)
+        self.instance = self._init_instance(instance)
+        self.regex = self._init_regex(regex, type, instance)
+
+        # Status (exact string)
+        self.status = status
+        self.statusLabel = statusLabel
+
+        # ROI
+        (self.roi_req, self.min_roi_inputs, self.min_roi_outputs,
+         self.rois, self.inputRois, self.outputRois) = (
+            self._init_rois(
+                roi_req, min_roi_inputs, min_roi_outputs,
+                rois, inputRois, outputRois, client
+            )
+        )
+
+        # integer
+        self.group = self._init_integer_arg(group, 'group')
+        self.serial = self._init_integer_arg(serial, 'serial')
+
+        # boolean
+        self.cropped = cropped
+
+        # NotNull/IsNull
+        self.somaLocation = self._init_location_arg(somaLocation, 'somaLocation')
+        self.tosomaLocation = self._init_location_arg(tosomaLocation, 'tosomaLocation')
+        self.rootLocation = self._init_location_arg(rootLocation, 'rootLocation')
+
+        # Other exact string fields (alphabetical order)
+        self.birthtime = birthtime
+        self.cellBodyFiber = cellBodyFiber
+        self.class_ = class_
+        self.entryNerve = entryNerve
+        self.exitNerve = exitNerve
+        self.hemilineage = hemilineage
+        self.longTract = longTract
+        self.modality = modality
+        self.origin = origin
+        self.predictedNt = predictedNt
+        self.serialMotif = serialMotif
+        self.somaNeuromere = somaNeuromere
+        self.somaSide = somaSide
+        self.subclass = subclass
+        self.synonyms = synonyms
+        self.systematicType = systematicType
+        self.target = target
+
+        # Special
+        self.label = self._init_label(label, bodyId)
+        self.min_pre = min_pre
+        self.min_post = min_post
+
+        # Deprecated
+        self.soma = self._init_soma(soma, somaLocation)
+
+        # These are the properties for which we can encode the possible values
+        # in a cypher list literal and use syntax like "WHERE prop in prop_list".
+        # Does not include ROIs (since they are stored as multiple boolean properties).
+        self.list_props = [
+            'bodyId',
+
+            # integer
+            'group', 'serial',
+
+            # status (exact string)
+            'status', 'statusLabel',
+
+            # Other exact string fields (alphabetical order)
+            'birthtime', 'cellBodyFiber', 'class_',
+            'entryNerve', 'exitNerve', 'hemilineage',
+            'longTract', 'modality', 'origin',
+            'predictedNt', 'serialMotif', 'somaNeuromere',
+            'somaSide', 'subclass', 'synonyms',
+            'systematicType', 'target',
+        ]
+        self.list_props_regex = ['type', 'instance']
+
+    @classmethod
+    def _init_matchvar(cls, matchvar):
         # Validate that matchvar in various ways, to catch errors in which
         # the user has passed a bodyId or type, etc. in the wrong position.
         assert isinstance(matchvar, str), \
@@ -302,59 +478,79 @@ class NeuronCriteria:
         assert re.match('^[a-zA-Z0-9]+$', matchvar), \
             (f"matchvar contains invalid characters: '{matchvar}'. "
              "Did you mean to pass this as a type or instance?")
+        return matchvar
 
-        assert len(bodyId) == 0 or np.issubdtype(np.asarray(bodyId).dtype, np.integer), \
-            "bodyId should be an integer or list of integers"
+    @classmethod
+    def _init_integer_arg(cls, arg, name):
+        assert len(arg) == 0 or np.issubdtype(np.asarray(arg).dtype, np.integer), \
+            f"{name} should be an integer or list of integers"
+        return arg
 
+    @classmethod
+    def _init_location_arg(cls, arg, name):
+        assert arg in (IsNull, NotNull, None), \
+            (f"This function doesn't allow you to search for an exact {name}.\n"
+             f"You can only check for the presence or absence of the {name} property via IsNull or NotNull.\n"
+             f"If you need to search for a particular cell via th {name} property, write a custom Cypher query.")
+        return arg
+
+    @classmethod
+    def _init_label(cls, label, bodyId):
         if not label:
             if len(bodyId) == 0:
                 label = 'Neuron'
             else:
                 label = 'Segment'
         assert label in ('Neuron', 'Segment'), f"Invalid label: {label}"
+        return label
 
-        assert regex in (True, False, 'guess')
-
-        for i in instance:
-            assert isinstance(i, (str, NoneType)) or i in (IsNull, NotNull), \
-                f'instance should be a string, IsNull, NotNull or None, got {i}'
-
+    @classmethod
+    def _init_type(cls, type):
         for t in type:
             assert isinstance(t, (str, NoneType)) or t in (IsNull, NotNull), \
                 f'type should be a string, IsNull, NotNull or None, got {t}'
+        return type
 
-        if regex == 'guess':
-            rgx = re.compile(r'[\\\.\?\[\]\+\^\$\*]')
-            instance_is_regex = False
-            for i in instance:
-                instance_is_regex |= isinstance(i, str) and bool(rgx.search(i or ''))
+    @classmethod
+    def _init_instance(cls, instance):
+        for i in instance:
+            assert isinstance(i, (str, NoneType)) or i in (IsNull, NotNull), \
+                f'instance should be a string, IsNull, NotNull or None, got {i}'
+        return instance
 
-            type_is_regex = False
-            for t in type:
-                type_is_regex |= isinstance(t, str) and bool(rgx.search(t or ''))
+    @classmethod
+    def _init_regex(cls, regex, type, instance):
+        assert regex in (True, False, 'guess')
+        if regex != 'guess':
+            return regex
 
-            regex = type_is_regex or instance_is_regex
+        rgx = re.compile(r'[\\\.\?\[\]\+\^\$\*]')
+        instance_is_regex = False
+        for i in instance:
+            instance_is_regex |= isinstance(i, str) and bool(rgx.search(i or ''))
 
+        type_is_regex = False
+        for t in type:
+            type_is_regex |= isinstance(t, str) and bool(rgx.search(t or ''))
+
+        regex = type_is_regex or instance_is_regex
+        return regex
+
+    @classmethod
+    def _init_rois(cls, roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois, client):
         assert roi_req in ('any', 'all')
-
         assert min_roi_inputs <= 1 or inputRois, \
             "Can't stipulate min_roi_inputs without a list of inputRois"
         assert min_roi_outputs <= 1 or outputRois, \
             "Can't stipulate min_roi_outputs without a list of outputRois"
-
-        assert soma in (True, False, None), \
-            f"soma must be True, False or None, not {soma}"
-
-        assert somaSide in ("RHS", "LHS", None), \
-            f"somaSide must be 'LHS', 'RHS' or None, not {somaSide}"
 
         # If the user provided both intersecting rois and input/output rois,
         # force them to make the intersecting set a superset of the others.
         rois = {*rois}
         inputRois = {*inputRois}
         outputRois = {*outputRois}
-        assert not rois or rois >= {*inputRois}, "Queried intersecting rois must be a superset of the inputRois"
-        assert not rois or rois >= {*outputRois}, "Queried intersecting rois must be a superset of the outputRois"
+        assert not rois or rois >= inputRois, "Queried intersecting rois must be a superset of the inputRois"
+        assert not rois or rois >= outputRois, "Queried intersecting rois must be a superset of the outputRois"
 
         # Make sure intersecting is a superset of inputRois and outputRois
         rois |= {*inputRois, *outputRois}
@@ -373,33 +569,16 @@ class NeuronCriteria:
         if unknown_generic_rois:
             raise RuntimeError(f"Unrecognized output ROIs: {unknown_generic_rois}")
 
-        self.matchvar = matchvar
-        self.bodyId = bodyId
-        self.instance = instance
-        self.type = type
-        self.cellBodyFiber = cellBodyFiber
-        self.status = status
-        self.statusLabel = statusLabel
-        self.cropped = cropped
-        self.min_pre = min_pre
-        self.min_post = min_post
-        self.rois = rois
-        self.inputRois = inputRois
-        self.outputRois = outputRois
-        self.min_roi_inputs = min_roi_inputs
-        self.min_roi_outputs = min_roi_outputs
-        self.regex = regex
-        self.label = label
-        self.roi_req = roi_req
-        self.soma = soma
-        self.class_ = class_
-        self.somaSide = somaSide
-        self.exitNerve = exitNerve
-        self.hemilineage = hemilineage
+        return roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois
 
-        self.list_props = ['bodyId', 'status', 'statusLabel', 'cellBodyFiber',
-                           'hemilineage', 'exitNerve', 'class_']
-        self.list_props_regex = ['type', 'instance']
+    @classmethod
+    def _init_soma(cls, soma, somaLocation):
+        assert soma in (True, False, None), \
+            f"soma must be True, False or None, not {soma}"
+        assert (soma is None) or (somaLocation is not None), \
+            ("Can't use both 'soma' and 'somaLocation' arguments; "
+             "Since 'soma' is deprecated, just use e.g. somaLocation=NotNull")
+        return soma
 
     def __eq__(self, value):
         """
@@ -415,15 +594,13 @@ class NeuronCriteria:
 
         # Compare attributes one by one
         # But don't count 'matchvar' as a parameter'.
-        params = [#'matchvar',
-                 'bodyId', 'instance', 'type', 'status', 'statusLabel',
-                 'cropped', 'min_pre', 'min_post', 'rois', 'inputRois',
-                 'outputRois', 'min_roi_inputs', 'min_roi_outputs',
-                 'regex', 'label', 'roi_req', 'soma']
+        # (DO include the client)
+        params = inspect.signature(NeuronCriteria).parameters.keys()
+        params = {*params} - {'matchvar'}
 
-        for at in params:
-            me = getattr(self, at)
-            other = getattr(value, at)
+        for p in params:
+            me = getattr(self, p)
+            other = getattr(value, p)
 
             # If not the same type, return False
             if type(me) != type(other):
@@ -431,10 +608,11 @@ class NeuronCriteria:
 
             # If iterable (e.g. ROIs or body IDs) we don't care about order
             if isinstance(me, Iterable):
-                if not all([v in other for v in me]):
+                if set(me) != set(other):
                     return False
             elif me != other:
                 return False
+
         # If all comparisons have passed, return True
         return True
 
@@ -442,39 +620,20 @@ class NeuronCriteria:
         # Show all non-default constructor args
         s = f'NeuronCriteria("{self.matchvar}"'
 
-        if len(self.bodyId):
-            s += f", bodyId={list(self.bodyId)}"
+        list_props = [self.list_props[0], *self.list_props_regex, *self.list_props[1:]]
 
-        if len(self.instance) == 1:
-            s += f', instance="{self.instance[0]}"'
-        elif len(self.instance) > 1:
-            s += f", instance={list(self.instance)}"
+        if self.label != 'Neuron':
+            s += f', label="{self.label}"'
 
-        if len(self.type) == 1:
-            s += f', type="{self.type[0]}"'
-        elif len(self.instance) > 1:
-            s += f", type={list(self.type)}"
+        for attr in list_props:
+            val = getattr(self, attr)
+            if len(val) == 1:
+                s += f', {attr}="{val[0]}"'
+            elif len(self.instance) > 1:
+                s += f", {attr}={list(val)}"
 
         if len(self.type) or len(self.instance):
             s += f", regex={self.regex}"
-
-        if len(self.cellBodyFiber) == 1:
-            s += f', cellBodyFiber="{self.cellBodyFiber[0]}"'
-        elif len(self.instance) > 1:
-            s += f", cellBodyFiber={list(self.cellBodyFiber)}"
-
-        if len(self.status) == 1:
-            s += f', status="{self.status[0]}"'
-        elif len(self.instance) > 1:
-            s += f", status={list(self.status)}"
-
-        if len(self.statusLabel) == 1:
-            s += f', statusLabel="{self.statusLabel[0]}"'
-        elif len(self.instance) > 1:
-            s += f", statusLabel={list(self.statusLabel)}"
-
-        if self.cropped is not None:
-            s += f", cropped={self.cropped}"
 
         if self.min_pre != 0:
             s += f", min_pre={self.min_pre}"
@@ -497,14 +656,13 @@ class NeuronCriteria:
         if self.min_roi_outputs != 1:
             s += f", min_roi_outputs={self.min_roi_outputs}"
 
-        if self.label != 'Neuron':
-            s += f', label="{self.label}"'
-
         if self.roi_req != 'all':
             s += f', roi_req="{self.roi_req}"'
 
-        if self.soma is not None:
-            s += f', soma="{self.soma}"'
+        for attr in ['cropped', 'somaLocation', 'tosomaLocation', 'rootLocation', 'soma']:
+            val = getattr(self, attr)
+            if val is not None:
+                s += f", {attr}={val}"
 
         s += ')'
 
@@ -556,13 +714,45 @@ class NeuronCriteria:
         They're intended be combined (via 'AND') in
         the WHERE clause of a cypher query.
         """
-        exprs = [self.bodyId_expr(), self.typeinst_expr(), self.cbf_expr(),
-                 self.status_expr(), self.statusLabel_expr(),
-                 self.cropped_expr(), self.rois_expr(), self.pre_expr(), self.post_expr(),
-                 self.soma_expr(), self.hemilineage_expr(), self.class_expr(),
-                 self.exitNerve_expr(), self.somaSide_expr()]
-        exprs = [*filter(None, exprs)]
-        return exprs
+        # Most expressions are simple exact value matches.
+        exprs = {}
+        for prop in self.list_props:
+            val = getattr(self, prop)
+            if prop.endswith('_'):
+                key = prop[:-1]
+            else:
+                key = prop
+            expr = self._value_list_expr(key, val, False)
+            exprs[(prop,)] = expr
+
+        # These are other types of expressions.
+        exprs |= {
+            ('type', 'instance', 'regex'): self.typeinst_expr(),
+            ('cropped',): self._tag_expr('cropped', self.cropped),
+            ('somaLocation',): self._nullcheck_expr('somaLocation', self.somaLocation),
+            ('tosomaLocation',): self._nullcheck_expr('tosomaLocation', self.tosomaLocation),
+            ('rootLocation',): self._nullcheck_expr('rootLocation', self.rootLocation),
+            ('soma',): self._single_value_expr('somaLocation', self.soma),  # deprecated arg
+            ('min_pre',): self._gt_eq_expr('pre', self.min_pre),
+            ('min_post',): self._gt_eq_expr('post', self.min_post),
+            ('rois', 'inputRois', 'outputRois', 'roi_req', 'min_roi_inputs', 'min_roi_outputs'): self.rois_expr(),
+            # No expression for label;
+            # enclosing queries are responsible for inserting label into their MATCH statement.
+            ('label',): "",
+        }
+
+        # Since we've got a lot of criteria to generate expressions for,
+        # let's verify that we remembered to implement expressions for every
+        # argument in the NeuronCriteria constructor.
+        if 'PYTEST_CURRENT_TEST' in os.environ:
+            sig = inspect.signature(NeuronCriteria)
+            criteria_args = set(sig.parameters.keys()) - {'matchvar', 'client'}
+            missing_exprs = criteria_args - set(chain(*exprs.keys()))
+            assert not missing_exprs, \
+                ("NeuronCriteria.basic_exprs() doesn't have a Cypher expression "
+                f"for all criteria!  Missing: {missing_exprs}'")
+
+        return [*filter(None, exprs.values())]
 
     def _value_list_expr(self, key, value, regex=False):
         """
@@ -588,6 +778,15 @@ class NeuronCriteria:
             return f"{self.matchvar}.{key} IS NOT NULL"
         else:
             return f"{self.matchvar}.{key} IS NULL"
+
+    def _nullcheck_expr(self, key, value):
+        if value is None:
+            return ""
+        if value == IsNull:
+            return f"NOT exists({self.matchvar}.{key})"
+
+        if value == NotNull:
+            return f"exists({self.matchvar}.{key})"
 
     def _tag_expr(self, key, value):
         """
@@ -630,8 +829,8 @@ class NeuronCriteria:
         Unlike all other fields, type and instance OR'd together.
         Either match satisfies the criteria.
         """
-        t = self.type_expr()
-        i = self.instance_expr()
+        t = self._value_list_expr('type', self.type, self.regex)
+        i = self._value_list_expr('instance', self.instance, self.regex)
 
         if t and i:
             return f"({t} OR {i})"
@@ -641,51 +840,10 @@ class NeuronCriteria:
             return i
         return ""
 
-    def bodyId_expr(self):
-        return self._value_list_expr('bodyId', self.bodyId, False)
-
-    def instance_expr(self):
-        return self._value_list_expr('instance', self.instance, self.regex)
-
-    def type_expr(self):
-        return self._value_list_expr('type', self.type, self.regex)
-
-    def cbf_expr(self):
-        return self._value_list_expr('cellBodyFiber', self.cellBodyFiber, False)
-
-    def status_expr(self):
-        return self._value_list_expr('status', self.status, False)
-
-    def statusLabel_expr(self):
-        return self._value_list_expr('statusLabel', self.statusLabel, False)
-
-    def hemilineage_expr(self):
-        return self._value_list_expr('hemilineage', self.hemilineage, False)
-
-    def exitNerve_expr(self):
-        return self._value_list_expr('exitNerve', self.exitNerve, False)
-
-    def class_expr(self):
-        return self._value_list_expr('class', self.class_, False)
-
-    def cropped_expr(self):
-        return self._tag_expr('cropped', self.cropped)
-
     def rois_expr(self):
-        return self._logic_tag_expr(self.rois,
-                               {'any': 'OR', 'all': 'AND'}[self.roi_req])
-
-    def pre_expr(self):
-        return self._gt_eq_expr('pre', self.min_pre)
-
-    def post_expr(self):
-        return self._gt_eq_expr('post', self.min_post)
-
-    def soma_expr(self):
-        return self._single_value_expr('somaLocation', self.soma)
-
-    def somaSide_expr(self):
-        return self._single_value_expr('somaSide', self.somaSide)
+        return self._logic_tag_expr(
+            self.rois,
+            {'any': 'OR', 'all': 'AND'}[self.roi_req])
 
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
