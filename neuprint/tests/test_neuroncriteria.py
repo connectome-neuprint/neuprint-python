@@ -10,7 +10,7 @@ from neuprint.tests import NEUPRINT_SERVER, DATASET
 def client():
     c = Client(NEUPRINT_SERVER, DATASET)
     set_default_client(c)
-    assert default_client() is c
+    assert default_client() == c
     return c
 
 

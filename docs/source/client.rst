@@ -12,7 +12,10 @@ Client
 
     default_client
     set_default_client
+    clear_default_client
+    list_all_clients
     setup_debug_logging
+    disable_debug_logging
 
 
 :py:class:`Client` methods correspond directly to built-in
@@ -46,4 +49,7 @@ Client
 
 .. autofunction:: default_client
 .. autofunction:: set_default_client
+.. autofunction:: clear_default_client
+.. autofunction:: list_all_clients
 .. autofunction:: setup_debug_logging
+.. autofunction:: disable_debug_logging

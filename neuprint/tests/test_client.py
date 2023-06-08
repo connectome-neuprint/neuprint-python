@@ -9,12 +9,13 @@ EXAMPLE_BODY = 5813037876 # Delta6G, Delta6G_04, Traced, non-cropped
 
 def test_members():
     set_default_client(None)
-    assert default_client() is None
+    with pytest.raises(RuntimeError):
+        default_client()
     c = Client(NEUPRINT_SERVER, DATASET)
     assert c.server == f'https://{NEUPRINT_SERVER}'
     assert c.dataset == DATASET
 
-    assert default_client() is c
+    assert default_client() == c
 
     df = c.fetch_custom("MATCH (m:Meta) RETURN m.primaryRois as rois")
     assert isinstance(df, pd.DataFrame)
@@ -71,8 +72,8 @@ def test_keyvalue():
 
 
 def test_inject_client():
-    c = Client(NEUPRINT_SERVER, DATASET)
-    c2 = Client(NEUPRINT_SERVER, DATASET)
+    c = Client(NEUPRINT_SERVER, DATASET, verify=True)
+    c2 = Client(NEUPRINT_SERVER, DATASET, verify=False)
 
     set_default_client(c)
 
@@ -81,14 +82,15 @@ def test_inject_client():
         return client
 
     # Uses default client unless client was specified
-    assert f() is c
-    assert f(client=c2) is c2
+    assert f() == c
+    assert f(client=c2) == c2
 
     with pytest.raises(AssertionError):
         # Wrong signature -- asserts
         @inject_client
         def f2(client):
             pass
+
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_client']

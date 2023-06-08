@@ -1,7 +1,7 @@
 import os
 import platform
 
-from .client import Client, default_client, set_default_client
+from .client import Client, default_client, set_default_client, clear_default_client, list_all_clients
 from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_rois, fetch_roi_hierarchy,
                        fetch_neurons, fetch_custom_neurons, fetch_simple_connections, fetch_adjacencies,
                        fetch_traced_adjacencies, fetch_common_connectivity, fetch_shortest_paths,
