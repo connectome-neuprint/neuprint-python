@@ -97,6 +97,10 @@ autoclass_content = 'both'
 # Don't alphabetically sort functions
 autodoc_member_order = 'groupwise'
 
+# Combine class docstrings and class __init__ docstrings
+# (e.g. see NeuronCriteria)
+autoapi_python_class_content = 'both'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -152,15 +156,12 @@ html_theme_options = {
 
     }
 
-# Copied from dask docs.
-html_context = {
-    "css_files": ["_static/theme_overrides.css"]  # override wide tables in RTD theme
-}
-
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_css_files = ['theme_overrides.css']
+
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
