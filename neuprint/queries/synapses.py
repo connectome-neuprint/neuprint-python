@@ -590,7 +590,10 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     # That way, this function and ``fetch_adjacencies()`` return consistent results.
     source_syn_crit.rois = None
 
-    criteria_globals = [*source_criteria.global_vars().keys(), *target_criteria.global_vars().keys()]
+    criteria_globals = [
+        *source_criteria.global_vars().keys(),
+        *target_criteria.global_vars().keys()
+    ]
     combined_conditions = NeuronCriteria.combined_conditions(
         [source_criteria, target_criteria],
         ['n', 'e', 'm', 'ns', 'ms', *criteria_globals],

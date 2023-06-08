@@ -15,7 +15,7 @@ class SynapseCriteria:
 
     @inject_client
     @make_args_iterable(['rois'])
-    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=None, primary_only=True, client=None):
+    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=None, primary_only=True, client=None):  # noqa
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
 
@@ -69,18 +69,17 @@ class SynapseCriteria:
         self.confidence = confidence
         self.primary_only = primary_only
 
-
-    def condition(self, *vars, prefix='', comments=True):
+    def condition(self, *matchvars, prefix='', comments=True):
         """
         Construct a cypher WITH..WHERE clause to filter for synapse criteria.
 
         Any match variables you wish to "carry through" for subsequent clauses
         in your query must be named in the ``vars`` arguments.
         """
-        if not vars:
-            vars = [self.matchvar]
+        if not matchvars:
+            matchvars = [self.matchvar]
 
-        assert self.matchvar in vars, \
+        assert self.matchvar in matchvars, \
             ("Please pass all match vars, including the one that "
              f"belongs to this criteria ('{self.matchvar}').")
 
@@ -103,7 +102,7 @@ class SynapseCriteria:
             return ""
 
         cond = dedent(f"""\
-            WITH {', '.join(vars)}
+            WITH {', '.join(matchvars)}
             WHERE {' AND '.join(exprs)}
             """)
 
@@ -113,14 +112,12 @@ class SynapseCriteria:
         cond = indent(cond, prefix)[len(prefix):]
         return cond
 
-
     def __eq__(self, other):
         return (    (self.matchvar == other.matchvar)
                 and (self.rois == other.rois)
                 and (self.type == other.type)
                 and (self.confidence == other.confidence)
                 and (self.primary_only == other.primary_only))
-
 
     def __repr__(self):
         s = f"SynapseCriteria('{self.matchvar}'"
