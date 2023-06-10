@@ -27,6 +27,7 @@ Skeletons
     skeleton_df_to_swc
     skeleton_df_to_nx
     skeleton_segments
+    upsample_skeleton
     attach_synapses_to_skeleton
 
 Reference
@@ -39,5 +40,6 @@ Reference
 .. autofunction:: skeleton_df_to_swc
 .. autofunction:: skeleton_df_to_nx
 .. autofunction:: skeleton_segments
+.. autofunction:: upsample_skeleton
 .. autofunction:: attach_synapses_to_skeleton
 
