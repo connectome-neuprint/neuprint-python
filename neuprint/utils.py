@@ -321,7 +321,9 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
         matrix = matrix.reindex(index=pre_order, columns=post_order)
 
     if make_square:
-        matrix, _ = matrix.align(matrix.T).fillna(0.0).astype(matrix.dtype)
+        matrix, _ = matrix.align(matrix.T)
+        matrix = matrix.fillna(0.0).astype(matrix.dtypes)
+
         matrix = matrix.rename_axis('bodyId_pre', axis=0).rename_axis('bodyId_post', axis=1)
         matrix = matrix.loc[sorted(matrix.index), sorted(matrix.columns)]
 
