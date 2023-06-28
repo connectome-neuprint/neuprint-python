@@ -780,13 +780,13 @@ class NeuronCriteria:
             return f"{self.matchvar}.{key} IS NULL"
 
     def _nullcheck_expr(self, key, value):
-        if value is None:
-            return ""
+        assert value in (None, IsNull, NotNull)
         if value == IsNull:
             return f"NOT exists({self.matchvar}.{key})"
-
-        if value == NotNull:
+        elif value == NotNull:
             return f"exists({self.matchvar}.{key})"
+        else:
+            return ""
 
     def _tag_expr(self, key, value):
         """
@@ -935,7 +935,7 @@ class NeuronCriteria:
         if comments:
             clauses += f"// -- Basic conditions for segment '{self.matchvar}' --\n"
 
-        clauses += f"\nAND ".join(exprs)
+        clauses += "\nAND ".join(exprs)
 
         return indent(clauses, prefix)[len(prefix):]
 
@@ -1004,7 +1004,7 @@ class NeuronCriteria:
             WITH {vars}, inputRois, outputRois, matchingInputRois, collect(roi) as matchingOutputRois, size(collect(roi)) as numMatchingOutputRois
             WHERE numMatchingOutputRois >= {min_output_matches}
             """)
-        #RETURN n, matchingInputRois, matchingOutputRois
+        # RETURN n, matchingInputRois, matchingOutputRois
 
         if not comments:
             conditions = '\n'.join(filter(lambda s: '//' not in s, conditions.split('\n')))
@@ -1130,7 +1130,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             return f"{matchvar}.{field} = {values[0]} OR NOT exists({matchvar}.{field})"
     else:
         if regex:
-            # Combine the list fo regexes into a single regex
+            # Combine the list of regexes into a single regex
             # of the form: '(regex1)|(regex2)|(regex3)'
             assert all(isinstance(v, str) for v in values), \
                 "Expected all regex values to be strings"
