@@ -301,7 +301,7 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
     dtype = conn_df[weight_col].dtype
 
     agg_weights_df = conn_df.groupby([col_pre, col_post], sort=False)[weight_col].sum().reset_index()
-    matrix = agg_weights_df.pivot(col_pre, col_post, weight_col)
+    matrix = agg_weights_df.pivot(index=col_pre, columns=col_post, values=weight_col)
     matrix = matrix.fillna(0).astype(dtype)
 
     if sort_by:
@@ -321,9 +321,14 @@ def connection_table_to_matrix(conn_df, group_cols='bodyId', weight_col='weight'
         matrix = matrix.reindex(index=pre_order, columns=post_order)
 
     if make_square:
-        matrix, _ = matrix.align(matrix.T).fillna(0.0).astype(matrix.dtype)
-        matrix = matrix.rename_axis('bodyId_pre', axis=0).rename_axis('bodyId_post', axis=1)
-        matrix = matrix.loc[sorted(matrix.index), sorted(matrix.columns)]
+        matrix, _ = matrix.align(matrix.T)
+        matrix = matrix.fillna(0.0).astype(matrix.dtypes)
+
+        matrix = matrix.rename_axis(col_pre, axis=0).rename_axis(col_post, axis=1)
+        matrix = matrix.loc[
+            sorted(matrix.index, key=lambda s: s if s else ""),
+            sorted(matrix.columns, key=lambda s: s if s else "")
+        ]
 
     return matrix
 
