@@ -26,7 +26,7 @@ class SynapseCriteria:
 
             rois (str or list):
                 Optional.
-                If provided, limit the results to synapses that reside within the given roi(s).
+                If provided, limit the results to synapses that reside within any of the given roi(s).
 
             type:
                 If provided, limit results to either 'pre' or 'post' synapses.
