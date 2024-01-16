@@ -808,8 +808,13 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
     timeout_ms = int(1000*timeout)
 
     nodes_where = intermediate_criteria.all_conditions(comments=False)
-    nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
-    nodes_where = nodes_where.replace('\n', '')
+    if nodes_where:
+        nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
+        nodes_where = nodes_where.replace('\n', '')
+    else:
+        # Even if there are no constraints whatsoever, we still need
+        # an expression to serve as the predicate in the query below.
+        nodes_where = "WHERE TRUE"
 
     q = f"""\
         call apoc.cypher.runTimeboxed(
