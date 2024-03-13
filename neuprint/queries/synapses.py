@@ -497,6 +497,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                  synapse_criteria.rois,
                                                  min(1, min_total_weight),
                                                  min_total_weight,
+                                                 include_nonprimary=not synapse_criteria.primary_only,
                                                  properties=[] )
 
     if len(roi_conn_df) == 0:
