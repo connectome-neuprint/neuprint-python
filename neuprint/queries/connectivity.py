@@ -848,3 +848,129 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
                              'type': table_types,
                              'weight': table_weights})
     return paths_df
+
+
+
+@inject_client
+def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
+                          intermediate_criteria=None,
+                          timeout=5.0, *, client=None):
+    """
+    Find all neurons along paths of a specific length between two neurons.
+
+    Args:
+        upstream_bodyId:
+            The starting neuron.
+
+        downstream_bodyId:
+            The destination neuron.
+
+        path_length:
+            The exact length of the path (number of relationships).
+
+        min_weight:
+            Minimum connection strength for each step in the path.
+
+        intermediate_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
+            Filtering criteria for neurons on path.
+            All intermediate neurons in the path must satisfy this criteria.
+            By default, ``NeuronCriteria(status="Traced")`` is used.
+
+        timeout:
+            Give up after this many seconds, in which case an **empty DataFrame is returned.**
+            No exception is raised!
+
+        client:
+            If not provided, the global default :py:class:`.Client` will be used.
+
+    Returns:
+        All paths are concatenated into a single DataFrame.
+        The `path` column indicates which path that row belongs to.
+        The `weight` column indicates the connection strength to that
+        body from the previous body in the path.
+
+    Example:
+        .. code-block:: ipython
+
+            In [1]: from neuprint import fetch_paths
+               ...: fetch_paths(329566174, 799586652, path_length=2, min_weight=10, timeout=3)
+            Out[1]:
+            	path	bodyId	   type	   weight	path_length
+            0	0	329566174	OA-VPM3	       0	      2
+            1	0	326817334	SMP012	       13	      2
+            2	0	799586652	MBON05	       13	      2
+            3	1	329566174	OA-VPM3	        0	      2
+            4	1	425790257	APL	           50	      2
+            5	1	799586652	MBON05	      613	      2
+            6	2	329566174	OA-VPM3	        0	      2
+            7	2	486880919	SMP012	       23	      2
+            8	2	799586652	MBON05	       13	      2
+            9	3	329566174	OA-VPM3	        0	      2
+            10	3	1224137495	KCg-s3	       10         2
+            11	3	799586652	MBON05	       80	      2
+            12	4	329566174	OA-VPM3	        0	      2
+            13	4	5813032771	KCg-s2	       14	      2
+            14	4	799586652	MBON05	      174	      2
+            15	5	329566174	OA-VPM3	        0	      2
+            16	5	5813105172	DPM	           11	      2
+            17	5	799586652	MBON05	     1065	      2
+
+    """
+    if intermediate_criteria is None:
+        intermediate_criteria = NeuronCriteria(status="Traced", client=client)
+    else:
+        intermediate_criteria = copy_as_neuroncriteria(intermediate_criteria)
+
+    assert len(intermediate_criteria.inputRois) == 0 and len(intermediate_criteria.outputRois) == 0, \
+        "This function doesn't support search criteria that specifies inputRois or outputRois. "\
+        "You can specify generic (intersecting) rois, though."
+
+    intermediate_criteria.matchvar = 'n'
+
+    timeout_ms = int(1000 * timeout)
+
+    nodes_where = intermediate_criteria.all_conditions(comments=False)
+    nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
+    nodes_where = nodes_where.replace('\n', '')
+
+    q = f"""\
+        call apoc.cypher.runTimeboxed(
+            "{intermediate_criteria.global_with(prefix=12)}
+            MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
+                   (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
+                   p = (src)-[:ConnectsTo*{path_length}]->(dest)
+
+            WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
+                  AND ALL (n in nodes(p) {nodes_where})
+
+            RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
+                   [x in relationships(p) | x.weight] AS weights",
+
+            {{}},{timeout_ms}) YIELD value
+            RETURN value.path as path, value.weights AS weights
+    """
+    results_df = client.fetch_custom(q)
+
+    table_indexes = []
+    table_bodies = []
+    table_types = []
+    table_weights = []
+
+    for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
+        bodies, types = zip(*path)
+        weights = [0, *weights]
+
+        table_indexes += len(bodies) * [path_index]
+        table_bodies += bodies
+        table_types += types
+        table_weights += weights
+
+    paths_df = pd.DataFrame({'path': table_indexes,
+                             'bodyId': table_bodies,
+                             'type': table_types,
+                             'weight': table_weights})
+
+    # add a column for the path length
+    paths_df['path_length'] = path_length
+
+    return paths_df
