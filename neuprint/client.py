@@ -606,7 +606,7 @@ class Client:
         """
         b = "MATCH (n:`Meta`) RETURN n.neuronProperties"
         df_results = self.fetch_custom(b)
-        neuron_props_val = df_results.iloc[0][0]
+        neuron_props_val = df_results.iloc[0, 0]
         if neuron_props_val is None:
             # Fetch available keys
             c = """
@@ -616,7 +616,7 @@ class Client:
             return [r[0] for r in raw['data']]
         else:
             # use neuronProperties to report neuron keys
-            neuron_props_val = df_results.iloc[0][0]
+            neuron_props_val = df_results.iloc[0, 0]
             neuron_props_json = ujson.loads(neuron_props_val)
             neuron_props = list(neuron_props_json.keys())
             return neuron_props
