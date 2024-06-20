@@ -60,6 +60,10 @@ class SynapseCriteria:
         assert type in ('pre', 'post', None), \
             f"Invalid synapse type: {type}.  Choices are 'pre' and 'post'."
 
+        nonprimary = {*rois} - {*client.primary_rois}
+        assert not nonprimary or not primary_only, \
+            f"You listed non-primary ROIs ({nonprimary}) but did not specify include_nonprimary=True"
+
         if confidence is None:
             confidence = client.meta.get('postHighAccuracyThreshold', 0.0)
 
