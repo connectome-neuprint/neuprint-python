@@ -137,7 +137,7 @@ def _fetch_mitos(neuron_criteria, mito_criteria, client):
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions('n', prefix=8)}
 
-        MATCH (n)-[:Contains]->(:ElementSet)-[:Contains]->(m:Element)
+        MATCH (n)-[:Contains]->(:ElementSet {{type: "mitochondrion"}})-[:Contains]->(m:Element {{type: "mitochondrion"}})
 
         {mito_criteria.condition('n', 'm', prefix=8)}
 
