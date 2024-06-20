@@ -55,9 +55,9 @@ def fetch_neurons(criteria, *, client=None):
 
         .. note::
 
-           The ``roi_counts_df``, the sum of the ``pre`` and ``post`` counts will be more than
+           In ``roi_counts_df``, the sum of the ``pre`` and ``post`` counts will be more than
            the total ``pre`` and ``post`` values returned in ``neuron_df``.
-           That is, synapses are double-counted in ``roi_counts_df``.
+           That is, synapses are double-counted (or triple-counted, etc.) in ``roi_counts_df``.
            This is because ROIs form a hierarchical structure, so each synapse intersects
            more than one ROI. See :py:func:`.fetch_roi_hierarchy()` for more information.
 
