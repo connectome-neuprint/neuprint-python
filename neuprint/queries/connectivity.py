@@ -77,9 +77,9 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     down_crit = copy.deepcopy(downstream_criteria)
 
     if up_crit is None:
-        up_crit = NC(label='Neuron')
+        up_crit = NC(label='Neuron', client=client)
     if down_crit is None:
-        down_crit = NC(label='Neuron')
+        down_crit = NC(label='Neuron', client=client)
 
     up_crit.matchvar = 'n'
     down_crit.matchvar = 'm'
@@ -603,7 +603,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     batches = []
     for start in trange(0, len(missing_bodies), 10_000):
         batch_bodies = missing_bodies[start:start+10_000]
-        batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label))
+        batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label, client=client))
         batches.append( batch_df )
 
     neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
