@@ -304,7 +304,7 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
 def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, client):
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
@@ -464,12 +464,12 @@ def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_crit
     conn = fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, batch_size=10)
 
     output_bodies = conn['bodyId_pre'].unique()
-    output_mito = fetch_synapses_and_closest_mitochondria(output_bodies, SC(type='pre'), batch_size=1)
+    output_mito = fetch_synapses_and_closest_mitochondria(output_bodies, SC(type='pre', client=client), batch_size=1)
     output_mito = output_mito[[*'xyz', 'mitoType', 'distance', 'size', 'mx', 'my', 'mz']]
     output_mito = output_mito.rename(columns={'size': 'mitoSize'})
 
     input_bodies = conn['bodyId_post'].unique()
-    input_mito = fetch_synapses_and_closest_mitochondria(input_bodies, SC(type='post'), batch_size=1)
+    input_mito = fetch_synapses_and_closest_mitochondria(input_bodies, SC(type='post', client=client), batch_size=1)
     input_mito = input_mito[[*'xyz', 'mitoType', 'distance', 'size', 'mx', 'my', 'mz']]
     input_mito = input_mito.rename(columns={'size': 'mitoSize'})
 

@@ -134,7 +134,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
     neuron_criteria.matchvar = 'n'
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
@@ -303,7 +303,7 @@ def _fetch_mean_synapses_per_roi(neuron_criteria, synapse_criteria, client):
     neuron_criteria.matchvar = 'n'
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     if synapse_criteria.rois:
         rois = synapse_criteria.rois
@@ -366,7 +366,7 @@ def _fetch_mean_synapses_per_whole_neuron(neuron_criteria, synapse_criteria, cli
     neuron_criteria.matchvar = 'n'
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     # If the user specified rois to filter synapses by, but hasn't specified rois
     # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
@@ -538,7 +538,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         "Please specify either source or target search criteria (or both)."
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     def prepare_nc(nc, matchvar):
         nc.matchvar = matchvar
