@@ -14,7 +14,7 @@ from .connectivity import fetch_adjacencies
 
 @inject_client
 @neuroncriteria_args('neuron_criteria')
-def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, client=None):
+def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, nt=False, *, client=None):
     """
     Fetch synapses from a neuron or selection of neurons.
 
@@ -42,6 +42,9 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
             To improve performance and avoid timeouts, the synapses for multiple bodies
             will be fetched in batches, where each batch corresponds to N bodies.
             This argument sets the batch size N.
+
+        nt:
+            If True, add neurotransmitter predictions. Note that post-synapses have no preditions.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -112,7 +115,10 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
     for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
-        batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
+        if nt:
+            batch_df = _fetch_synapses_nt(batch_criteria, synapse_criteria, client)
+        else:
+            batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
         batch_dfs.append( batch_df )
 
     if batch_dfs:
@@ -183,6 +189,82 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
             syn_table.append((body, syn_type, None, x, y, z, conf))
 
     syn_df = pd.DataFrame(syn_table, columns=['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence'])
+
+    # Save RAM with smaller dtypes and interned strings
+    syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
+    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['x'] = syn_df['x'].astype(np.int32)
+    syn_df['y'] = syn_df['y'].astype(np.int32)
+    syn_df['z'] = syn_df['z'].astype(np.int32)
+    syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    return syn_df
+
+
+def _fetch_synapses_nt(neuron_criteria, synapse_criteria, client):
+    neuron_criteria.matchvar = 'n'
+
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria()
+
+    if synapse_criteria.primary_only:
+        return_rois = {*client.primary_rois}
+    else:
+        return_rois = {*client.all_rois}
+
+    # If the user specified rois to filter synapses by, but hasn't specified rois
+    # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
+    if synapse_criteria.rois and not neuron_criteria.rois:
+        neuron_criteria.rois = {*synapse_criteria.rois}
+        neuron_criteria.roi_req = 'any'
+
+    # Fetch results
+    cypher = dedent(f"""\
+        {neuron_criteria.global_with(prefix=8)}
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions('n', prefix=8)}
+
+        MATCH (n)-[:Contains]->(ss:SynapseSet),
+              (ss)-[:Contains]->(s:Synapse)
+
+        {synapse_criteria.condition('n', 's', prefix=8)}
+        // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
+        WITH DISTINCT n, s
+
+        RETURN n.bodyId as bodyId,
+                s.type as type,
+                s.confidence as confidence,
+                s.location.x as x,
+                s.location.y as y,
+                s.location.z as z,
+                apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info,
+                s.ntAcetylcholineProb as ntAcetylcholineProb,
+                s.ntGlutamateProb as ntGlutamateProb,
+                s.ntGabaProb as ntGabaProb,
+                s.ntHistamineProb as ntHistamineProb,
+                s.ntDopamineProb as ntDopamineProb,
+                s.ntOctopamineProb as ntOctopamineProb,
+                s.ntSerotoninProb as ntSerotoninProb
+    """)
+    data = client.fetch_custom(cypher, format='json')['data']
+
+    # Assemble DataFrame
+    syn_table = []
+    for body, syn_type, conf, x, y, z, syn_info, ntAch, ntGlu, ntGABA, ntHis, ntDop, ntOct, ntSer in data:
+        # Exclude non-primary ROIs if necessary
+        syn_rois = return_rois & {*syn_info.keys()}
+        # Fixme: Filter for the user's ROIs (drop duplicates)
+        for roi in syn_rois:
+            syn_table.append((body, syn_type, roi, x, y, z, conf, ntAch, ntGlu, ntGABA, ntHis, ntDop, ntOct, ntSer))
+
+        if not syn_rois:
+            syn_table.append((body, syn_type, None, x, y, z, conf, ntAch, ntGlu, ntGABA, ntHis, ntDop, ntOct, ntSer))
+
+    syn_df = pd.DataFrame(
+        syn_table,
+        columns=['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence', 'ntAcetylcholineProb',
+                 'ntGlutamateProb', 'ntGabaProb', 'ntHistamineProb', 'ntDopamineProb',
+                 'ntOctopamineProb', 'ntSerotoninProb'])
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
