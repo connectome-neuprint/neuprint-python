@@ -50,7 +50,9 @@ def fetch_output_completeness(criteria, complete_statuses=['Traced'], batch_size
     batch_results = []
     for start in trange(0, len(bodies), batch_size):
         criteria.bodyId = bodies[start:start+batch_size]
-        batch_results.append( _fetch_output_completeness(criteria, complete_statuses, client) )
+        _df = _fetch_output_completeness(criteria, complete_statuses, client)
+        if len(_df) > 0:
+            batch_results.append( _df )
     return pd.concat( batch_results, ignore_index=True )
 
 

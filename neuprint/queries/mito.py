@@ -97,7 +97,8 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_mitos(batch_criteria, mito_criteria, client)
-        batch_dfs.append( batch_df )
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )
@@ -273,7 +274,8 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_synapses_and_closest_mitochondria(batch_criteria, synapse_criteria, client)
-        batch_dfs.append( batch_df )
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )

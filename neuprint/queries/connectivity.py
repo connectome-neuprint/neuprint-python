@@ -461,7 +461,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                            e.weight as weight,
                            e.roiInfo as roiInfo
                 """
-                conn_tables.append(client.fetch_custom(q))
+                t = client.fetch_custom(q)
+                if len(t) > 0:
+                    conn_tables.append(t)
         else:
             # Break targets into batches
             for batch_start in trange(0, len(targets_df), batch_size):
@@ -494,7 +496,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                            e.weight as weight,
                            e.roiInfo as roiInfo
                 """
-                conn_tables.append(client.fetch_custom(q))
+                t = client.fetch_custom(q)
+                if len(t) > 0:
+                    conn_tables.append(t)
 
         # Combine batches
         connections_df = pd.concat(conn_tables, ignore_index=True)

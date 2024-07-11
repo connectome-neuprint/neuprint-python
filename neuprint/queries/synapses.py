@@ -113,7 +113,8 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
-        batch_dfs.append( batch_df )
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )
@@ -279,7 +280,9 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
             batch_df = _fetch_mean_synapses_per_roi(batch_criteria, synapse_criteria, client)
         else:
             batch_df = _fetch_mean_synapses_per_whole_neuron(batch_criteria, synapse_criteria, client)
-        batch_dfs.append( batch_df )
+
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )
@@ -623,7 +626,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                            synapse_criteria,
                                                            min_total_weight,
                                                            client )
-                syn_dfs.append(batch_syn_df)
+                if len(batch_syn_df) > 0:
+                    syn_dfs.append(batch_syn_df)
                 progress.update(len(batch_syn_df))
 
     syn_df = pd.concat(syn_dfs, ignore_index=True)
