@@ -14,6 +14,7 @@ from .simulation import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm
 from .skeleton import ( fetch_skeleton, skeleton_df_to_nx, skeleton_swc_to_df, skeleton_df_to_swc, heal_skeleton,
                         reorient_skeleton, calc_segment_distances, skeleton_segments, upsample_skeleton,
                         attach_synapses_to_skeleton)
+from .wrangle import syndist_matrix, bilateral_syndist, assign_sides_in_groups
 
 from . import _version
 __version__ = _version.get_versions()['version']
