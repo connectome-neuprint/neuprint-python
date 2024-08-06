@@ -564,7 +564,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                  min(1, min_total_weight),
                                                  min_total_weight,
                                                  include_nonprimary=not synapse_criteria.primary_only,
-                                                 properties=[] )
+                                                 properties=[],
+                                                 client=client )
 
     if len(roi_conn_df) == 0:
         # Return empty dataframe, but with the correct dtypes
