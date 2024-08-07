@@ -17,7 +17,7 @@ CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_neurons(criteria, *, client=None):
+def fetch_neurons(criteria=None, *, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
 
@@ -34,6 +34,7 @@ def fetch_neurons(criteria, *, client=None):
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Only Neurons which satisfy all components of the given criteria are returned.
+            If no criteria is specified then the default ``NeuronCriteria()`` is used.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
