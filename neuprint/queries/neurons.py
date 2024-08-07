@@ -265,4 +265,7 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
     roi_counts_df = pd.concat((roi_counts_df, not_primary_df), ignore_index=True)
     roi_counts_df = roi_counts_df.sort_values(['bodyId', 'roi'], ignore_index=True)
 
+    # Drop the rows with all-zero counts (introduced via the NotPrimary rows we added)
+    roi_counts_df = roi_counts_df.loc[roi_counts_df[countcols].any(axis=1)].copy()
+
     return neuron_df, roi_counts_df
