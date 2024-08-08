@@ -585,6 +585,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     # This is necessary, even if min_roi_weight == 1, to filter out zeros
     # that can occur in the case of weak inter-ROI connnections.
     roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
+    roi_conn_df.reset_index(drop=True, inplace=True)
 
     ##
     ## Construct neurons_df
