@@ -276,8 +276,8 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
     fragments = sorted(fragments, key=lambda frag: -len(frag.df))
 
     # We could use the full graph and connect all
-    # fragment pairs at their nearest neighbors,
-    # but it's faster to treat each entire fragment as
+    # fragments to their nearest neighbors within other fragments,
+    # but it's faster to treat each whole fragment as
     # a single node and run MST on that quotient graph,
     # which is tiny.
     frag_graph = nx.Graph()
