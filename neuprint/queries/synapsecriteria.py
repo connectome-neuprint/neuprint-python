@@ -26,7 +26,7 @@ class SynapseCriteria:
 
             rois (str or list):
                 Optional.
-                If provided, limit the results to synapses that reside within the given roi(s).
+                If provided, limit the results to synapses that reside within any of the given roi(s).
 
             type:
                 If provided, limit results to either 'pre' or 'post' synapses.
@@ -59,6 +59,10 @@ class SynapseCriteria:
         type = type or None
         assert type in ('pre', 'post', None), \
             f"Invalid synapse type: {type}.  Choices are 'pre' and 'post'."
+
+        nonprimary = {*rois} - {*client.primary_rois}
+        assert not nonprimary or not primary_only, \
+            f"You listed non-primary ROIs ({nonprimary}) but did not specify include_nonprimary=True"
 
         if confidence is None:
             confidence = client.meta.get('postHighAccuracyThreshold', 0.0)

@@ -140,7 +140,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, client):
     neuron_criteria.matchvar = 'n'
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
@@ -279,9 +279,9 @@ def _fetch_synapses_nt(neuron_criteria, synapse_criteria, client):
 
 @inject_client
 @neuroncriteria_args('neuron_criteria')
-def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, *, client=None):
+def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, *, by_roi=True, client=None):
     """
-    Fetch per-ROI average synapse position and confidence for a set of neurons.
+    Fetch average synapse position and confidence for each neuron in set of neurons.
 
     Args:
 
@@ -303,6 +303,16 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
             To improve performance and avoid timeouts, the synapses for multiple bodies
             will be processed in batches, where each batch corresponds to N bodies.
             This argument sets the batch size N.
+
+        by_roi:
+            If ``by_roi=True`` (the default), return separate rows for each ROI in each neuron.
+            If ``by_roi=False``, then return the mean for the entire neuron in each case,
+            without respect to ROI.
+
+            Note:
+
+                Even if ``by_roi=False``, the set of averaged synapses will be restricted to the
+                ROIs listed in your `synapse_critera` (if any).
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -332,6 +342,8 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
             775  5812993252  AOTU(R)  pre     17  11110.706055  30892.470703  17220.175781    0.960471
             776  5812993252    LO(R)  pre     39   7758.897461  11723.154297  28176.794922    0.943128
     """
+    assert by_roi in (True, False), "by_roi should be boolean"
+
     neuron_criteria.matchvar = 'n'
     q = f"""
         {neuron_criteria.global_with(prefix=8)}
@@ -345,8 +357,13 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
     for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
-        batch_df = _fetch_mean_synapses(batch_criteria, synapse_criteria, client)
-        batch_dfs.append( batch_df )
+        if by_roi:
+            batch_df = _fetch_mean_synapses_per_roi(batch_criteria, synapse_criteria, client)
+        else:
+            batch_df = _fetch_mean_synapses_per_whole_neuron(batch_criteria, synapse_criteria, client)
+
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )
@@ -360,14 +377,17 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
               'y': np.dtype('float32'),
               'z': np.dtype('float32')}
 
+    if not by_roi:
+        del dtypes['roi']
+
     return pd.DataFrame([], columns=dtypes.keys()).astype(dtypes)
 
 
-def _fetch_mean_synapses(neuron_criteria, synapse_criteria, client):
+def _fetch_mean_synapses_per_roi(neuron_criteria, synapse_criteria, client):
     neuron_criteria.matchvar = 'n'
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     if synapse_criteria.rois:
         rois = synapse_criteria.rois
@@ -401,7 +421,7 @@ def _fetch_mean_synapses(neuron_criteria, synapse_criteria, client):
 
         // Filter for the ROIs we need
         WITH rois, n, s, roi
-        WHERE roi in {rois}
+        WHERE roi in rois
 
         RETURN n.bodyId as bodyId,
                roi,
@@ -417,6 +437,51 @@ def _fetch_mean_synapses(neuron_criteria, synapse_criteria, client):
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
     syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['count'] = syn_df['count'].astype(np.int32)
+    syn_df['x'] = syn_df['x'].astype(np.float32)
+    syn_df['y'] = syn_df['y'].astype(np.float32)
+    syn_df['z'] = syn_df['z'].astype(np.float32)
+    syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    return syn_df
+
+
+def _fetch_mean_synapses_per_whole_neuron(neuron_criteria, synapse_criteria, client):
+    neuron_criteria.matchvar = 'n'
+
+    if synapse_criteria is None:
+        synapse_criteria = SynapseCriteria(client=client)
+
+    # If the user specified rois to filter synapses by, but hasn't specified rois
+    # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
+    if synapse_criteria.rois and not neuron_criteria.rois:
+        neuron_criteria.rois = {*synapse_criteria.rois}
+        neuron_criteria.roi_req = 'any'
+
+    # Fetch results
+    cypher = dedent(f"""\
+        MATCH (n:{neuron_criteria.label})
+        {neuron_criteria.all_conditions('n', prefix=8)}
+
+        MATCH (n)-[:Contains]->(ss:SynapseSet),
+              (ss)-[:Contains]->(s:Synapse)
+
+        {synapse_criteria.condition('n', 's', prefix=8)}
+        // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
+        WITH DISTINCT n, s
+
+        RETURN n.bodyId as bodyId,
+               s.type as type,
+               count(s) as count,
+               avg(s.location.x) as x,
+               avg(s.location.y) as y,
+               avg(s.location.z) as z,
+               avg(s.confidence) as confidence
+    """)
+    syn_df = client.fetch_custom(cypher)
+
+    # Save RAM with smaller dtypes and interned strings
+    syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
     syn_df['count'] = syn_df['count'].astype(np.int32)
     syn_df['x'] = syn_df['x'].astype(np.float32)
     syn_df['y'] = syn_df['y'].astype(np.float32)
@@ -557,7 +622,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         "Please specify either source or target search criteria (or both)."
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     def prepare_nc(nc, matchvar):
         nc.matchvar = matchvar
@@ -579,7 +644,9 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                  synapse_criteria.rois,
                                                  min(1, min_total_weight),
                                                  min_total_weight,
-                                                 properties=[] )
+                                                 include_nonprimary=not synapse_criteria.primary_only,
+                                                 properties=[],
+                                                 client=client )
 
     if len(roi_conn_df) == 0:
         # Return empty dataframe, but with the correct dtypes
@@ -641,7 +708,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                            synapse_criteria,
                                                            min_total_weight,
                                                            client )
-                syn_dfs.append(batch_syn_df)
+                if len(batch_syn_df) > 0:
+                    syn_dfs.append(batch_syn_df)
                 progress.update(len(batch_syn_df))
 
     syn_df = pd.concat(syn_dfs, ignore_index=True)
