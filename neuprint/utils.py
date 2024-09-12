@@ -1,6 +1,7 @@
 """
 Utility functions for manipulating neuprint-python output.
 """
+import os
 import sys
 import inspect
 import functools
@@ -10,6 +11,8 @@ from collections.abc import Iterable, Iterator, Collection
 
 import numpy as np
 import pandas as pd
+from requests import Session
+import ujson
 
 
 class NotNull:
@@ -422,3 +425,43 @@ def compile_columns(client, core_columns=[]):
     columns += [k for k in sorted(keys) if k not in columns]
 
     return columns
+
+def available_datasets(server, token=None):
+    """
+    Get a list of available datasets for a specified server.
+    Args:
+        server: URL of neuprintHttp server
+        token: neuPrint token. If null, will use
+               ``NEUPRINT_APPLICATION_CREDENTIALS`` environment variable.
+               Your token can be retrieved by clicking on your account in
+               the NeuPrint web interface.
+    Returns:
+        List of available datasets
+    """
+    # Token
+    if not token:
+        token = os.environ.get('NEUPRINT_APPLICATION_CREDENTIALS')
+    if not token:
+        raise RuntimeError("No token provided. Please provide one or set NEUPRINT_APPLICATION_CREDENTIALS")
+    if ':' in token:
+        try:
+            token = ujson.loads(token)['token']
+        except Exception as ex:
+            raise RuntimeError("Did not understand token. Please provide the entire JSON document or (only) the complete token string") from ex
+    token = token.replace('"', '')
+    # Server
+    if '://' not in server:
+        server = 'https://' + server
+    elif server.startswith('http://'):
+        raise RuntimeError("Server must be https, not http")
+    elif not server.startswith('https://'):
+        protocol = server.split('://')[0]
+        raise RuntimeError(f"Unknown protocol: {protocol}")
+    while server.endswith('/'):
+        server = server[:-1]
+    # Request
+    with Session() as session:
+        session.headers.update({'Authorization': f'Bearer {token}'})
+        response = session.get(f"{server}/api/dbmeta/datasets")
+        response.raise_for_status()
+    return list(response.json())
