@@ -5,6 +5,27 @@ Development Notes
 
 Notes for maintaining ``neuprint-python``.
 
+Prerequisites
+-------------
+
+Make sure you have both ``flyem-forge`` and ``conda-forge`` listed as channels in your ``.condarc`` file.
+(If you don't know where your ``.condarc`` file is, check ``conda config --show-sources``.)
+
+.. code-block:: yaml
+
+    # .condarc
+    channels:
+    - flyem-forge
+    - conda-forge
+    - nodefaults  # A magic channel that forbids any downloads from the anaconda default channels.
+
+Install ``conda-build`` if you don't have it yet:
+
+.. code-block:: bash
+
+    conda install -n base conda-build anaconda-client twine
+
+
 Packaging and Release
 ---------------------
 
