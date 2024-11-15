@@ -500,6 +500,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 if len(t) > 0:
                     conn_tables.append(t)
 
+        if not conn_tables:
+            return []
+
         # Combine batches
         connections_df = pd.concat(conn_tables, ignore_index=True)
         return connections_df

@@ -129,7 +129,7 @@ class MitoCriteria:
             args.append("rois=[" + ", ".join(f"'{roi}'" for roi in self.rois) + "]")
 
         if self.mitoType:
-            args.append(f"mitoType='{self.type}'")
+            args.append(f"mitoType='{self.mitoType}'")
 
         if self.size:
             args.append(f"size={self.size}")
