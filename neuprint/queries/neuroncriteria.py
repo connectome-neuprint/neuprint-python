@@ -11,7 +11,7 @@ from collections.abc import Iterable, Collection
 import numpy as np
 import pandas as pd
 
-from ..utils import ensure_list_args, ensure_list_attrs, IsNull, NotNull
+from ..utils import ensure_list_args, ensure_list_attrs, IsNull, NotNull, cypher_identifier
 from ..client import inject_client
 
 NoneType = type(None)
@@ -699,7 +699,7 @@ class NeuronCriteria:
                 if isinstance(values, np.ndarray):
                     values = values.tolist()
                 values = [v for v in values if v is not None]
-                var = f"{self.matchvar}_search_{key}"
+                var = cypher_identifier(f"{self.matchvar}_search_{key}")
                 exprs[var] = (f"{values} as {var}")
 
         return exprs
@@ -807,6 +807,8 @@ class NeuronCriteria:
         if value is None:
             return ""
 
+        key = cypher_identifier(key)
+
         if value:
             return f"{self.matchvar}.{key}"
         else:
@@ -824,7 +826,8 @@ class NeuronCriteria:
             return ""
 
         tags = sorted(tags)
-        return "(" + f" {logic} ".join(f"{self.matchvar}.`{v}`" for v in tags) + ")"
+        tag_properties = (f"{self.matchvar}.{cypher_identifier(v)}" for v in tags)
+        return "(" + f" {logic} ".join(tag_properties) + ")"
 
     def _gt_eq_expr(self, key, value):
         """
@@ -1098,6 +1101,8 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
 
     assert valuevar is None or isinstance(valuevar, str)
     assert not regex or not valuevar, "valuevar is not allowed if using a regex"
+
+    field = cypher_identifier(field)
 
     if len(values) == 0:
         return ""

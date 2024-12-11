@@ -64,8 +64,8 @@ def test_NeuronCriteria(client):
     assert NC(somaLocation=NotNull).basic_exprs() == ["exists(n.somaLocation)"]
     assert NC(somaLocation=IsNull).basic_exprs() == ["NOT exists(n.somaLocation)"]
 
-    assert NC(inputRois=['EB', 'FB'], outputRois=['FB', 'PB'], roi_req='all').basic_exprs() == ['(n.`EB` AND n.`FB` AND n.`PB`)']
-    assert NC(inputRois=['EB', 'FB'], outputRois=['FB', 'PB'], roi_req='any').basic_exprs() == ['(n.`EB` OR n.`FB` OR n.`PB`)']
+    assert NC(inputRois=['SMP(R)', 'FB'], outputRois=['FB', 'SIP(R)'], roi_req='all').basic_exprs() == ['(n.FB AND n.`SIP(R)` AND n.`SMP(R)`)']
+    assert NC(inputRois=['SMP(R)', 'FB'], outputRois=['FB', 'SIP(R)'], roi_req='any').basic_exprs() == ['(n.FB OR n.`SIP(R)` OR n.`SMP(R)`)']
 
     assert NC(min_pre=5).basic_exprs() == ["n.pre >= 5"]
     assert NC(min_post=5).basic_exprs() == ["n.post >= 5"]
@@ -146,6 +146,12 @@ def test_where_expr():
     assert where_expr('bodyId', []) == ""
     assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"
     assert where_expr('instance', ['foo.*', 'bar.*', 'baz.*'], regex=True, matchvar='m') == "m.instance =~ '(foo.*)|(bar.*)|(baz.*)'"
+
+    # We use backticks in the cypher when necessary (but not otherwise).
+    assert where_expr('foo/bar', [1], matchvar='m') == 'm.`foo/bar` = 1'
+    assert where_expr('foo/bar', [1,2], matchvar='m') == 'm.`foo/bar` in [1, 2]'
+    assert where_expr('foo/bar', np.array([1,2]), matchvar='m') == 'm.`foo/bar` in [1, 2]'
+    assert where_expr('foo/bar', []) == ""
 
 
 if __name__ == "__main__":
