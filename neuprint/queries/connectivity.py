@@ -723,7 +723,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
     """
     assert search_direction in ('upstream', 'downstream')
     if search_direction == "upstream":
-        edges_df = fetch_simple_connections(None, criteria, min_weight, properties, client=client)
+        edges_df = fetch_simple_connections(None, criteria, min_weight=min_weight, properties=properties, client=client)
 
         # How bodies many met main search criteria?
         num_primary = edges_df['bodyId_post'].nunique()
@@ -734,7 +734,7 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
         return edges_df.query('bodyId_pre in @_keep')
 
     if search_direction == "downstream":
-        edges_df = fetch_simple_connections(criteria, None, min_weight, properties, client=client)
+        edges_df = fetch_simple_connections(criteria, None, min_weight=min_weight, properties=properties, client=client)
 
         # How bodies many met main search criteria?
         num_primary = edges_df['bodyId_pre'].nunique()
