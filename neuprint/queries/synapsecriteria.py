@@ -1,6 +1,6 @@
 from textwrap import indent, dedent
 
-from ..utils import make_args_iterable
+from ..utils import ensure_list_args
 from ..client import inject_client
 
 
@@ -14,7 +14,7 @@ class SynapseCriteria:
     """
 
     @inject_client
-    @make_args_iterable(['rois'])
+    @ensure_list_args(['rois'])
     def __init__(self, matchvar='s', *, rois=None, type=None, confidence=None, primary_only=True, client=None):  # noqa
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.

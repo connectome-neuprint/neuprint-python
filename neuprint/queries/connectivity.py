@@ -7,12 +7,12 @@ import ujson
 import pandas as pd
 
 from ..client import inject_client, NeuprintTimeoutError
-from ..utils import make_args_iterable, trange
+from ..utils import ensure_list_args, trange
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 
 
 @inject_client
-@make_args_iterable(['rois'])
+@ensure_list_args(['rois'])
 @neuroncriteria_args('upstream_criteria', 'downstream_criteria')
 def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1,
                              properties=['type', 'instance'],
@@ -136,7 +136,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
 
 
 @inject_client
-@make_args_iterable(['rois'])
+@ensure_list_args(['rois'])
 @neuroncriteria_args('sources', 'targets')
 def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1,
                       include_nonprimary=False, export_dir=None, batch_size=200,

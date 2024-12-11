@@ -1,21 +1,21 @@
 import inspect
 import numpy as np
-from neuprint.utils import make_iterable, make_args_iterable
+from neuprint.utils import ensure_list, ensure_list_args
 
 
-def test_make_iterable():
-    assert make_iterable(None) == []
-    assert make_iterable([None]) == [None]
+def test_ensure_list():
+    assert ensure_list(None) == []
+    assert ensure_list([None]) == [None]
 
-    assert make_iterable(1) == [1]
-    assert make_iterable([1]) == [1]
+    assert ensure_list(1) == [1]
+    assert ensure_list([1]) == [1]
 
-    assert isinstance(make_iterable(np.array([1,2,3])), list)
+    assert isinstance(ensure_list(np.array([1,2,3])), list)
 
 
-def test_make_args_iterable():
+def test_ensure_list_args():
 
-    @make_args_iterable(['a', 'c', 'd'])
+    @ensure_list_args(['a', 'c', 'd'])
     def f(a, b, c, d='d', *, e=None):
         return (a,b,c,d,e)
 

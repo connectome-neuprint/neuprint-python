@@ -11,7 +11,7 @@ from collections.abc import Iterable, Collection
 import numpy as np
 import pandas as pd
 
-from ..utils import make_args_iterable, make_attributes_iterable, IsNull, NotNull
+from ..utils import ensure_list_args, ensure_list_attrs, IsNull, NotNull
 from ..client import inject_client
 
 NoneType = type(None)
@@ -146,7 +146,7 @@ _iterable_attrs = [
 ]
 
 
-@make_attributes_iterable(_iterable_attrs)
+@ensure_list_attrs(_iterable_attrs)
 class NeuronCriteria:
     """
     Neuron selection criteria.
@@ -175,7 +175,7 @@ class NeuronCriteria:
     """
 
     @inject_client
-    @make_args_iterable(_iterable_attrs)
+    @ensure_list_args(_iterable_attrs)
     def __init__(
         self, matchvar='n', *,
         bodyId=None,
