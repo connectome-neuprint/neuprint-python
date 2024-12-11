@@ -222,7 +222,7 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
     neuron_df = neuron_df[[*neuron_cols]]
 
     # Make a list of rois for every neuron (both pre and post)
-    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: ujson.loads(s))
+    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(ujson.loads)
     neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
     neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
 

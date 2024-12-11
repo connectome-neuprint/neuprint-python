@@ -10,7 +10,7 @@ def test_make_iterable():
     assert make_iterable(1) == [1]
     assert make_iterable([1]) == [1]
 
-    assert isinstance(make_iterable(np.array([1,2,3])), np.ndarray)
+    assert isinstance(make_iterable(np.array([1,2,3])), list)
 
 
 def test_make_args_iterable():

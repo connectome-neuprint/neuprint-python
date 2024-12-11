@@ -108,22 +108,24 @@ def UMAP(*args, **kwargs):
 
 def make_iterable(x):
     """
-    If ``x`` is already a list or array, return it unchanged.
-    If ``x`` is Series, return its values.
+    If ``x`` is already a list, return it unchanged.
+    If ``x`` is Series or ndarray, convert to plain list.
     If ``x`` is ``None``, return an empty list ``[]``.
     Otherwise, wrap it in a list.
     """
     if x is None:
         return []
 
-    if isinstance(x, np.ndarray):
-        return x
-
-    if isinstance(x, pd.Series):
-        return x.values
+    if isinstance(x, (np.ndarray, pd.Series)):
+        return x.tolist()
 
     if isinstance(x, Collection) and not isinstance(x, str):
-        return x
+        # Note:
+        #   This is a convenient way to handle all of these cases:
+        #   np.array([1, 2, 3]) -> [1, 2, 3]
+        #   [1, 2, 3] -> [1, 2, 3]
+        #   [np.int64(1), np.int64(2), np.int64(3)] -> [1, 2, 3]
+        return np.asarray(x).tolist()
     else:
         return [x]
 
@@ -146,6 +148,24 @@ def make_args_iterable(argnames):
         wrapper.__signature__ = inspect.signature(f)
         return wrapper
 
+    return decorator
+
+
+def make_attributes_iterable(attributes):
+    def decorator(cls):
+        for attr in attributes:
+            private_attr = f"_{attr}"
+
+            def getter(self, private_attr=private_attr):
+                return getattr(self, private_attr)
+
+            def setter(self, value, private_attr=private_attr):
+                value = make_iterable(value)
+                setattr(self, private_attr, value)
+
+            setattr(cls, attr, property(getter, setter))
+
+        return cls
     return decorator
 
 

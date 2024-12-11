@@ -1,6 +1,9 @@
 from textwrap import dedent
-import numpy as np
+
 import pytest
+import numpy as np
+import pandas as pd
+
 from neuprint import Client, default_client, set_default_client, NeuronCriteria as NC, NotNull, IsNull
 from neuprint.queries.neuroncriteria import where_expr
 from neuprint.tests import NEUPRINT_SERVER, DATASET
@@ -15,6 +18,14 @@ def client():
 
 
 def test_NeuronCriteria(client):
+    assert NC(bodyId=1).bodyId == [1]
+    assert NC(bodyId=[1,2,3]).bodyId == [1,2,3]
+
+    # It's important that bodyIds and ROIs are stored as plain lists,
+    # since we naively serialize them into Cypher queries with that assumption.
+    assert NC(bodyId=np.array([1,2,3])).bodyId == [1,2,3]
+    assert NC(bodyId=pd.Series([1,2,3])).bodyId == [1,2,3]
+
     ##
     ## basic_exprs()
     ##
@@ -131,6 +142,7 @@ def test_NeuronCriteria(client):
 def test_where_expr():
     assert where_expr('bodyId', [1], matchvar='m') == 'm.bodyId = 1'
     assert where_expr('bodyId', [1,2], matchvar='m') == 'm.bodyId in [1, 2]'
+    assert where_expr('bodyId', np.array([1,2]), matchvar='m') == 'm.bodyId in [1, 2]'
     assert where_expr('bodyId', []) == ""
     assert where_expr('instance', ['foo.*'], regex=True, matchvar='m') == "m.instance =~ 'foo.*'"
     assert where_expr('instance', ['foo.*', 'bar.*', 'baz.*'], regex=True, matchvar='m') == "m.instance =~ '(foo.*)|(bar.*)|(baz.*)'"
