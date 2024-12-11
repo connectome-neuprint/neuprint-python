@@ -77,9 +77,9 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     down_crit = copy.deepcopy(downstream_criteria)
 
     if up_crit is None:
-        up_crit = NC(label='Neuron')
+        up_crit = NC(label='Neuron', client=client)
     if down_crit is None:
-        down_crit = NC(label='Neuron')
+        down_crit = NC(label='Neuron', client=client)
 
     up_crit.matchvar = 'n'
     down_crit.matchvar = 'm'
@@ -461,7 +461,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                            e.weight as weight,
                            e.roiInfo as roiInfo
                 """
-                conn_tables.append(client.fetch_custom(q))
+                t = client.fetch_custom(q)
+                if len(t) > 0:
+                    conn_tables.append(t)
         else:
             # Break targets into batches
             for batch_start in trange(0, len(targets_df), batch_size):
@@ -494,7 +496,12 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                            e.weight as weight,
                            e.roiInfo as roiInfo
                 """
-                conn_tables.append(client.fetch_custom(q))
+                t = client.fetch_custom(q)
+                if len(t) > 0:
+                    conn_tables.append(t)
+
+        if not conn_tables:
+            return []
 
         # Combine batches
         connections_df = pd.concat(conn_tables, ignore_index=True)
@@ -581,6 +588,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     # This is necessary, even if min_roi_weight == 1, to filter out zeros
     # that can occur in the case of weak inter-ROI connnections.
     roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
+    roi_conn_df.reset_index(drop=True, inplace=True)
 
     ##
     ## Construct neurons_df
@@ -603,7 +611,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     batches = []
     for start in trange(0, len(missing_bodies), 10_000):
         batch_bodies = missing_bodies[start:start+10_000]
-        batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label))
+        batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label, client=client))
         batches.append( batch_df )
 
     neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
@@ -808,8 +816,13 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
     timeout_ms = int(1000*timeout)
 
     nodes_where = intermediate_criteria.all_conditions(comments=False)
-    nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
-    nodes_where = nodes_where.replace('\n', '')
+    if nodes_where:
+        nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
+        nodes_where = nodes_where.replace('\n', '')
+    else:
+        # Even if there are no constraints whatsoever, we still need
+        # an expression to serve as the predicate in the query below.
+        nodes_where = "WHERE TRUE"
 
     q = f"""\
         call apoc.cypher.runTimeboxed(

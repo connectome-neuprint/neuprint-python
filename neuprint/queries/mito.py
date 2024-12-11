@@ -97,7 +97,8 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_mitos(batch_criteria, mito_criteria, client)
-        batch_dfs.append( batch_df )
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )
@@ -137,7 +138,7 @@ def _fetch_mitos(neuron_criteria, mito_criteria, client):
         MATCH (n:{neuron_criteria.label})
         {neuron_criteria.all_conditions('n', prefix=8)}
 
-        MATCH (n)-[:Contains]->(:ElementSet)-[:Contains]->(m:Element)
+        MATCH (n)-[:Contains]->(:ElementSet)-[:Contains]->(m:Element {{type: "mitochondrion"}})
 
         {mito_criteria.condition('n', 'm', prefix=8)}
 
@@ -273,7 +274,8 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_synapses_and_closest_mitochondria(batch_criteria, synapse_criteria, client)
-        batch_dfs.append( batch_df )
+        if len(batch_df) > 0:
+            batch_dfs.append( batch_df )
 
     if batch_dfs:
         return pd.concat( batch_dfs, ignore_index=True )
@@ -304,7 +306,7 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
 def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, client):
 
     if synapse_criteria is None:
-        synapse_criteria = SynapseCriteria()
+        synapse_criteria = SynapseCriteria(client=client)
 
     if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
@@ -464,12 +466,12 @@ def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_crit
     conn = fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, batch_size=10)
 
     output_bodies = conn['bodyId_pre'].unique()
-    output_mito = fetch_synapses_and_closest_mitochondria(output_bodies, SC(type='pre'), batch_size=1)
+    output_mito = fetch_synapses_and_closest_mitochondria(output_bodies, SC(type='pre', client=client), batch_size=1)
     output_mito = output_mito[[*'xyz', 'mitoType', 'distance', 'size', 'mx', 'my', 'mz']]
     output_mito = output_mito.rename(columns={'size': 'mitoSize'})
 
     input_bodies = conn['bodyId_post'].unique()
-    input_mito = fetch_synapses_and_closest_mitochondria(input_bodies, SC(type='post'), batch_size=1)
+    input_mito = fetch_synapses_and_closest_mitochondria(input_bodies, SC(type='post', client=client), batch_size=1)
     input_mito = input_mito[[*'xyz', 'mitoType', 'distance', 'size', 'mx', 'my', 'mz']]
     input_mito = input_mito.rename(columns={'size': 'mitoSize'})
 

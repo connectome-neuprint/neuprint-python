@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.4.26 / 2023-06-08
+-------------------
+- ``NeuronCriteria`` now supports many new properties for the MANC v1.0 dataset.
+- Neuron property columns are determined from cached metadata rather than a full scan of the database.
+- If more than one ``Client`` has been constructed, none of them become automatically become the default client.
+  In that case, you must explicitly pass a ``client`` argument to each query function you call. This avoids a
+  common pitfall when dealing with multiple neuprint datasets (and therefore multiple Clients).
+- ``SynapseCriteria`` now uses a default confidence threshold based on the dataset metadata (instead of using 0.0 by default)
+- ``Client`` constructor avoids contacting the database unless it needs to. (Duplicate clients are now cheaper to construct.)
+- Minor enhancements to skeleton utilities, including a couple new analysis functions.
+- Added CITATION.cff
+
 0.4.25 / 2022-09-15
 -------------------
 

@@ -1,7 +1,7 @@
 from textwrap import dedent
 import numpy as np
 import pytest
-from neuprint import Client, default_client, set_default_client, NeuronCriteria as NC
+from neuprint import Client, default_client, set_default_client, NeuronCriteria as NC, NotNull, IsNull
 from neuprint.queries.neuroncriteria import where_expr
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
@@ -10,7 +10,7 @@ from neuprint.tests import NEUPRINT_SERVER, DATASET
 def client():
     c = Client(NEUPRINT_SERVER, DATASET)
     set_default_client(c)
-    assert default_client() is c
+    assert default_client() == c
     return c
 
 
@@ -49,6 +49,9 @@ def test_NeuronCriteria(client):
 
     assert NC(cropped=True).basic_exprs() == ["n.cropped"]
     assert NC(cropped=False).basic_exprs() == ["(NOT n.cropped OR NOT exists(n.cropped))"]
+
+    assert NC(somaLocation=NotNull).basic_exprs() == ["exists(n.somaLocation)"]
+    assert NC(somaLocation=IsNull).basic_exprs() == ["NOT exists(n.somaLocation)"]
 
     assert NC(inputRois=['EB', 'FB'], outputRois=['FB', 'PB'], roi_req='all').basic_exprs() == ['(n.`EB` AND n.`FB` AND n.`PB`)']
     assert NC(inputRois=['EB', 'FB'], outputRois=['FB', 'PB'], roi_req='any').basic_exprs() == ['(n.`EB` OR n.`FB` OR n.`PB`)']

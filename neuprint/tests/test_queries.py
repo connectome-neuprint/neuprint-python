@@ -18,7 +18,7 @@ from neuprint.tests import NEUPRINT_SERVER, DATASET
 def client():
     c = Client(NEUPRINT_SERVER, DATASET)
     set_default_client(c)
-    assert default_client() is c
+    assert default_client() == c
     return c
 
 
@@ -244,7 +244,7 @@ def test_fetch_synapse_connections(client):
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
-    #args += ['-k', 'fetch_neurons']
+    #args += ['-k', 'test_fetch_synapse_connections']
     #args += ['-k', 'fetch_synapses_and_closest_mitochondria']
     #args += ['-k', 'fetch_mean_synapses']
     pytest.main(args)

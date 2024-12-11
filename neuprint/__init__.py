@@ -1,7 +1,7 @@
 import os
 import platform
 
-from .client import Client, default_client, set_default_client
+from .client import Client, default_client, set_default_client, clear_default_client, list_all_clients
 from .queries import ( fetch_custom, fetch_meta, fetch_all_rois, fetch_primary_rois, fetch_roi_hierarchy,
                        fetch_neurons, fetch_custom_neurons, fetch_simple_connections, fetch_adjacencies,
                        fetch_traced_adjacencies, fetch_common_connectivity, fetch_shortest_paths,
@@ -14,10 +14,10 @@ from .simulation import ( NeuronModel, TimingResult, Ra_LOW, Ra_MED, Ra_HIGH, Rm
 from .skeleton import ( fetch_skeleton, skeleton_df_to_nx, skeleton_swc_to_df, skeleton_df_to_swc, heal_skeleton,
                         reorient_skeleton, calc_segment_distances, skeleton_segments, upsample_skeleton,
                         attach_synapses_to_skeleton)
+from .wrangle import syndist_matrix, bilateral_syndist, assign_sides_in_groups
 
-from ._version import get_versions
-__version__ = get_versions()['version']
-del get_versions
+from . import _version
+__version__ = _version.get_versions()['version']
 
 # On Mac, requests uses a system library which is not fork-safe,
 # so using multiprocessing results in segfaults such as the following:

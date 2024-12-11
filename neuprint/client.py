@@ -14,7 +14,9 @@ Example:
 
         In [1]: from neuprint import Client, fetch_custom, fetch_neurons
 
-        In [2]: # Create a default client. Will be implicitly used for all subsequent queries.
+        In [2]: # Create a default client.
+           ...: # It will be implicitly used for all subsequent queries as
+           ...: long as it remains the only client you've created.
            ...: c = Client('neuprint.janelia.org', dataset='hemibrain:v1.2.1')
 
         In [3]: fetch_custom("""\\
@@ -50,10 +52,10 @@ import sys
 import copy
 import inspect
 import logging
+import weakref
 import functools
 import threading
 import collections
-from io import StringIO
 from textwrap import dedent, indent
 
 import pandas as pd
@@ -71,12 +73,174 @@ from requests.adapters import HTTPAdapter
 import ujson
 
 logger = logging.getLogger(__name__)
-DEFAULT_NEUPRINT_CLIENT = None
-NEUPRINT_CLIENTS = {}
+
+# These hold weak references
+DEFAULT_NEUPRINT_CLIENT = lambda: None
+USER_NEUPRINT_CLIENTS = set()
+
+# This holds real references
+DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES = {}
+
+_global_client_lock = threading.Lock()
 
 
 class NeuprintTimeoutError(HTTPError):
     pass
+
+
+def default_client():
+    """
+    Obtain the default Client object to use.
+    This function returns a separate copy of the
+    default client for each thread (and process).
+
+    There's usually no need to call this function.
+    It is automatically called by all query functions if
+    you haven't passed in an explict `client` argument.
+    """
+    with _global_client_lock:
+        default = DEFAULT_NEUPRINT_CLIENT()
+        if default is None:
+            clients = {c() for c in USER_NEUPRINT_CLIENTS if c()}
+            if len(clients) == 0:
+                raise RuntimeError(
+                    "No default Client has been set yet because you haven't yet created a Client.\n"
+                )
+            if len(clients) > 1:
+                raise RuntimeError(
+                    "Currently more than one Client exists, so neither was automatically chosen as the default.\n"
+                    "You must explicitly pass a client to query functions, or explicitly call set_default_client().\n"
+                    f"Currently {len(clients)} clients exist: {clients}"
+            )
+            if len(clients) == 1:
+                raise RuntimeError(
+                    "No default Client has been set. One client does exist already, "
+                    "which can be made the default via set_default_client()."
+                )
+
+        thread_id = threading.current_thread().ident
+        pid = os.getpid()
+
+        try:
+            c = DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)]
+        except KeyError:
+            c = copy.deepcopy(default)
+            DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = c
+        return c
+
+
+def set_default_client(client):
+    """
+    Set (or overwrite) the default Client.
+
+    There's usually no need to call this function.
+    It's is automatically called when your first
+    ``Client`` is created, but you can call it again
+    to replace the default.
+    """
+    if client is None:
+        clear_default_client()
+        return
+
+    global DEFAULT_NEUPRINT_CLIENT  # noqa
+
+    thread_id = threading.current_thread().ident
+    pid = os.getpid()
+
+    with _global_client_lock:
+        DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
+        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.clear()
+
+        # We exclusively store *copies* in this dict,
+        # to ensure that the DEFAULT_NEUPRINT_CLIENT weakref becomes
+        # invalid if the user deletes their Client.
+        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = copy.deepcopy(client)
+
+
+def clear_default_client():
+    """
+    Unset the default Client, leaving no default in place.
+    """
+    global DEFAULT_NEUPRINT_CLIENT  # noqa
+    with _global_client_lock:
+        DEFAULT_NEUPRINT_CLIENT = lambda: None  # noqa
+        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.clear()
+
+
+def list_all_clients():
+    """
+    List all ``Client`` objects in the program.
+    """
+    return {c() for c in USER_NEUPRINT_CLIENTS if c()}
+
+
+def _register_client(client):
+    """
+    Register the client in our global list of client weakrefs,
+    and also set it as the default client if it happens to be the
+    ONLY client in existence.
+
+    We use weak references instead of regular references to leave
+    the user in control of which clients "still exist".
+
+    For example, the user should be able to do this:
+
+        .. code-block:: python
+
+            c = Client('neuprint.janelia.org', 'hemibrain:v1.2.1')
+            n1, w1 = fetch_neurons(..., client=None)
+
+            c = Client('neprint.janelia.org', 'manc:v1.0')
+            n2, w2 = fetch_neurons(..., client=None)
+
+    And since the first Client is deallocated, the second one
+    becomes the default without issues.
+    """
+    # Set this as the default client if this is the ONLY Client in existence.
+    with _global_client_lock:
+        clients = copy.copy(USER_NEUPRINT_CLIENTS)
+        # Housekeeping: drop invalid references
+        clients = {c for c in clients if c()}
+        clients.add(weakref.ref(client))
+        USER_NEUPRINT_CLIENTS.clear()
+        USER_NEUPRINT_CLIENTS.update(clients)
+
+    # If there weren't any other clients,
+    # then the new one becomes the default.
+    if len(clients) == 1:
+        set_default_client(client)
+    else:
+        # Otherwise, the default is cleared.
+        # If the user really wants to pick a default client,
+        # they can call set_default_client() explicitly.
+        clear_default_client()
+
+
+def inject_client(f):
+    """
+    Decorator.
+    Injects the default 'client' as a keyword argument
+    onto the decorated function, if the user hasn't supplied
+    one herself.
+
+    In typical usage the user will create one Client object,
+    and use it with every neuprint function.
+    Rather than requiring the user to pass the the client
+    to every neuprint call, this decorator automatically
+    passes the default (global) Client.
+    """
+    argspec = inspect.getfullargspec(f)
+    assert 'client' in argspec.kwonlyargs, \
+        f"Cannot wrap {f.__name__}: neuprint API wrappers must accept 'client' as a keyword-only argument."
+
+    @functools.wraps(f)
+    def wrapper(*args, client=None, **kwargs):
+        if client is None:
+            client = default_client()
+        return f(*args, **kwargs, client=client)
+
+    wrapper.__signature__ = inspect.signature(f)
+    return wrapper
 
 
 def setup_debug_logging():
@@ -140,82 +304,6 @@ def disable_debug_logging():
     logger.setLevel(logging.INFO)
 
 
-def default_client():
-    """
-    Obtain the default Client object to use.
-    This function returns a separate copy of the
-    default client for each thread (and process).
-
-    There's usually no need to call this function.
-    It is automatically called by all query functions if
-    you haven't passed in an explict `client` argument.
-    """
-    global DEFAULT_NEUPRINT_CLIENT
-
-    thread_id = threading.current_thread().ident
-    pid = os.getpid()
-
-    try:
-        c = NEUPRINT_CLIENTS[(thread_id, pid)]
-    except KeyError:
-        if DEFAULT_NEUPRINT_CLIENT is None:
-            raise RuntimeError(
-                    "No default Client has been set yet. "
-                    "Please create a Client object to serve as the default")
-
-        c = copy.deepcopy(DEFAULT_NEUPRINT_CLIENT)
-        NEUPRINT_CLIENTS[(thread_id, pid)] = c
-
-    return c
-
-
-def set_default_client(client):
-    """
-    Set (or overwrite) the default Client.
-
-    There's usually no need to call this function.
-    It's is automatically called when your first
-    ``Client`` is created, but you can call it again
-    to replace the default.
-    """
-    global NEUPRINT_CLIENTS
-    global DEFAULT_NEUPRINT_CLIENT
-
-    thread_id = threading.current_thread().ident
-    pid = os.getpid()
-
-    DEFAULT_NEUPRINT_CLIENT = client
-    NEUPRINT_CLIENTS.clear()
-    NEUPRINT_CLIENTS[(thread_id, pid)] = client
-
-
-def inject_client(f):
-    """
-    Decorator.
-    Injects the default 'client' as a keyword argument
-    onto the decorated function, if the user hasn't supplied
-    one herself.
-
-    In typical usage the user will create one Client object,
-    and use it with every neuprint function.
-    Rather than requiring the user to pass the the client
-    to every neuprint call, this decorator automatically
-    passes the default (global) Client.
-    """
-    argspec = inspect.getfullargspec(f)
-    assert 'client' in argspec.kwonlyargs, \
-        f"Cannot wrap {f.__name__}: neuprint API wrappers must accept 'client' as a keyword-only argument."
-
-    @functools.wraps(f)
-    def wrapper(*args, client=None, **kwargs):
-        if client is None:
-            client = default_client()
-        return f(*args, **kwargs, client=client)
-
-    wrapper.__signature__ = inspect.signature(f)
-    return wrapper
-
-
 def verbose_errors(f):
     """
     Decorator to be used with functions that directly fetch from neuprint.
@@ -249,14 +337,14 @@ def verbose_errors(f):
 
             # Show the server's error message
             if ex.response is not None:
-                msg += f"\nReturned Error"
+                msg += "\nReturned Error"
                 if hasattr(ex.response, 'status_code'):
                     msg += f" ({ex.response.status_code})"
                 if ex.response.content:
                     try:
                         err = ex.response.json()['error']
                         msg += f":\n\n{err}"
-                    except Exception:
+                    except Exception:  # noqa
                         pass
 
             if ex.response and 'timeout' in ex.response.content.decode('utf-8').lower():
@@ -273,13 +361,17 @@ def verbose_errors(f):
 
 
 class Client:
+    """
+    Client object for interacting with the neuprint database.
+    """
     def __init__(self, server, dataset=None, token=None, verify=True):
         """
-        Client constructor.
-
-        The first ``Client`` you create will be stored as the default
+        When you create the first ``Client``, it becomes the default
         ``Client`` to be used with all ``neuprint-python`` functions
         if you don't explicitly specify one.
+        But if you create multiple ``Client`` objects, the default client
+        is cleared and you must explicitly pass a ``client`` parameter to all
+        query functions.
 
         Args:
             server:
@@ -308,8 +400,8 @@ class Client:
         if ':' in token:
             try:
                 token = ujson.loads(token)['token']
-            except Exception:
-                raise RuntimeError("Did not understand token. Please provide the entire JSON document or (only) the complete token string")
+            except Exception as ex:
+                raise RuntimeError("Did not understand token. Please provide the entire JSON document or (only) the complete token string") from ex
 
         token = token.replace('"', '')
 
@@ -326,6 +418,7 @@ class Client:
             server = server[:-1]
 
         self.server = server
+        self.token = token
 
         self.session = Session()
         self.session.headers.update({"Authorization": "Bearer " + token,
@@ -339,32 +432,28 @@ class Client:
         if not verify:
             urllib3.disable_warnings(InsecureRequestWarning)
 
-        all_datasets = [*self.fetch_datasets().keys()]
+        try:
+            self.dataset = self._select_dataset(dataset, reload_cache=False)
+        except RuntimeError:
+            # One more try, in case we were using an outdated dataset list.
+            self.dataset = self._select_dataset(dataset, reload_cache=True)
+
+        _register_client(self)
+
+    def _select_dataset(self, dataset, reload_cache):
+        all_datasets = [*self.fetch_datasets(reload_cache).keys()]
         if len(all_datasets) == 0:
             raise RuntimeError(f"The neuprint server {self.server} has no datasets!")
 
         if len(all_datasets) == 1 and not dataset:
-            self.dataset = all_datasets[0]
-            logger.info(f"Initializing neuprint.Client with dataset: {self.dataset}")
+            logger.info(f"Initializing neuprint.Client with dataset: {dataset}")  # noqa
+            return all_datasets[0]
         elif dataset in all_datasets:
-            self.dataset = dataset
-        else:
-            raise RuntimeError(f"Dataset '{dataset}' does not exist on"
-                               f" the neuprint server ({self.server}).\n"
-                               f"Available datasets: {all_datasets}")
+            return dataset
 
-        # Set this as the default client if there isn't one already
-        global DEFAULT_NEUPRINT_CLIENT
-        if DEFAULT_NEUPRINT_CLIENT is None:
-            set_default_client(self)
-
-        from .queries.general import fetch_meta
-        from .queries.rois import _all_rois_from_meta
-        # Pre-cache these metadata fields,
-        # to avoid re-fetching them for many queries that need them.
-        self.meta = fetch_meta(client=self)
-        self.primary_rois = sorted(self.meta['primaryRois'])
-        self.all_rois = _all_rois_from_meta(self.meta)
+        raise RuntimeError(f"Dataset '{dataset}' does not exist on"
+                            f" the neuprint server ({self.server}).\n"
+                            f"Available datasets: {all_datasets}")
 
     def __repr__(self):
         s = f'Client("{self.server}", "{self.dataset}"'
@@ -372,6 +461,17 @@ class Client:
             s += ", verify=False"
         s += ")"
         return s
+
+    def __eq__(self, other):
+        return (
+            self.server == other.server and  # noqa
+            self.dataset == other.dataset and  # noqa
+            self.token == other.token and  # noqa
+            self.verify == other.verify
+        )
+
+    def __hash__(self):
+        return hash((self.server, self.dataset, self.token, self.verify))
 
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
@@ -391,12 +491,33 @@ class Client:
         return ujson.loads(r.content)
 
     ##
+    ## Cached properties
+    ##
+
+    @property
+    @lru_cache
+    def meta(self):
+        from .queries.general import fetch_meta
+        return fetch_meta(client=self)
+
+    @property
+    @lru_cache
+    def primary_rois(self):
+        return sorted(self.meta['primaryRois'])
+
+    @property
+    @lru_cache
+    def all_rois(self):
+        from .queries.rois import _all_rois_from_meta
+        return _all_rois_from_meta(self.meta)
+
+    ##
     ## CUSTOM QUERIES
     ##
     ## Note: Transaction queries are not implemented here.  See admin.py
     ##
 
-    def fetch_custom(self, cypher, dataset="", format='pandas'):
+    def fetch_custom(self, cypher, dataset="", format='pandas'):  # noqa
         """
         Query the neuprint server with a custom Cypher query.
 
@@ -421,7 +542,7 @@ class Client:
         url = f"{self.server}/api/custom/custom"
         return self._fetch_cypher(url, cypher, dataset, format)
 
-    def _fetch_cypher(self, url, cypher, dataset, format='pandas'):
+    def _fetch_cypher(self, url, cypher, dataset, format='pandas'):  # noqa
         """
         Fetch cypher from an endpoint.
         Called by fetch_custom and by Transaction queries.
@@ -478,18 +599,27 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/version")['Version']
 
-    @lru_cache(None)
+    @lru_cache
     def fetch_neuron_keys(self):
         """
         Returns all available :Neuron properties in the database. Cached.
         """
-        # Fetch available keys
-        c = """
-        MATCH (n :`Neuron`) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
-        """
-        raw = self.fetch_custom(c, format='json')
-        return [r[0] for r in raw['data']]
-
+        b = "MATCH (n:`Meta`) RETURN n.neuronProperties"
+        df_results = self.fetch_custom(b)
+        neuron_props_val = df_results.iloc[0, 0]
+        if neuron_props_val is None:
+            # Fetch available keys
+            c = """
+            MATCH (n :`Neuron`) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
+            """
+            raw = self.fetch_custom(c, format='json')
+            return [r[0] for r in raw['data']]
+        else:
+            # use neuronProperties to report neuron keys
+            neuron_props_val = df_results.iloc[0, 0]
+            neuron_props_json = ujson.loads(neuron_props_val)
+            neuron_props = list(neuron_props_json.keys())
+            return neuron_props
     ##
     ## DB-META
     ##
@@ -500,11 +630,31 @@ class Client:
         """
         return self._fetch_json(f"{self.server}/api/dbmeta/database")
 
-    def fetch_datasets(self):
+    DATASETS_CACHE = {}
+
+    def fetch_datasets(self, reload_cache=False):
         """
         Fetch basic information about the available datasets on the server.
+
+        Args:
+            reload_cache:
+                The result from each unique neuprint server is cached locally
+                and re-used by all Clients, but you can invalidate the entire
+                cache by setting reload_cache to True, causing it to be repopulated
+                during this call.
+
+        Returns:
+            dict, keyed by dataset name
         """
-        return self._fetch_json(f"{self.server}/api/dbmeta/datasets")
+        if reload_cache:
+            Client.DATASETS_CACHE.clear()
+
+        try:
+            return Client.DATASETS_CACHE[self.server]
+        except KeyError:
+            datasets = self._fetch_json(f"{self.server}/api/dbmeta/datasets")
+            Client.DATASETS_CACHE[self.server] = datasets
+            return datasets
 
     def fetch_instances(self):
         """

@@ -50,7 +50,9 @@ def fetch_output_completeness(criteria, complete_statuses=['Traced'], batch_size
     batch_results = []
     for start in trange(0, len(bodies), batch_size):
         criteria.bodyId = bodies[start:start+batch_size]
-        batch_results.append( _fetch_output_completeness(criteria, complete_statuses, client) )
+        _df = _fetch_output_completeness(criteria, complete_statuses, client)
+        if len(_df) > 0:
+            batch_results.append( _df )
     return pd.concat( batch_results, ignore_index=True )
 
 
@@ -127,7 +129,7 @@ def fetch_downstream_orphan_tasks(criteria, complete_statuses=['Traced'], *, cli
 
     """
     # Find all downstream segments, along with the status of all upstream and downstream bodies.
-    status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment'), properties=['status', 'statusLabel'], client=client)
+    status_df, roi_conn_df = fetch_adjacencies(criteria, NeuronCriteria(label='Segment', client=client), properties=['status', 'statusLabel'], client=client)
 
     # That table is laid out per-ROI, but we don't care about ROI. Aggregate.
     conn_df = roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'])['weight'].sum().reset_index()

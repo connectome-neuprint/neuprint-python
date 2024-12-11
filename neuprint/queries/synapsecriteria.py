@@ -15,7 +15,7 @@ class SynapseCriteria:
 
     @inject_client
     @make_args_iterable(['rois'])
-    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=0.0, primary_only=True, client=None):
+    def __init__(self, matchvar='s', *, rois=None, type=None, confidence=None, primary_only=True, client=None):  # noqa
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
 
@@ -26,13 +26,16 @@ class SynapseCriteria:
 
             rois (str or list):
                 Optional.
-                If provided, limit the results to synapses that reside within the given roi(s).
+                If provided, limit the results to synapses that reside within any of the given roi(s).
 
             type:
                 If provided, limit results to either 'pre' or 'post' synapses.
 
             confidence (float, 0.0-1.0):
                 Limit results to synapses of at least this confidence rating.
+                By default, use the dataset's default synapse confidence threshold,
+                which will include the same synapses that were counted in each
+                neuron-neuron ``weight`` (as opposed to ``weightHP`` or ``weightHR``).
 
             primary_only (boolean):
                 If True, only include primary ROI names in the results.
@@ -57,24 +60,30 @@ class SynapseCriteria:
         assert type in ('pre', 'post', None), \
             f"Invalid synapse type: {type}.  Choices are 'pre' and 'post'."
 
+        nonprimary = {*rois} - {*client.primary_rois}
+        assert not nonprimary or not primary_only, \
+            f"You listed non-primary ROIs ({nonprimary}) but did not specify include_nonprimary=True"
+
+        if confidence is None:
+            confidence = client.meta.get('postHighAccuracyThreshold', 0.0)
+
         self.matchvar = matchvar
         self.rois = rois
         self.type = type
         self.confidence = confidence
         self.primary_only = primary_only
 
-
-    def condition(self, *vars, prefix='', comments=True):
+    def condition(self, *matchvars, prefix='', comments=True):
         """
         Construct a cypher WITH..WHERE clause to filter for synapse criteria.
 
         Any match variables you wish to "carry through" for subsequent clauses
         in your query must be named in the ``vars`` arguments.
         """
-        if not vars:
-            vars = [self.matchvar]
+        if not matchvars:
+            matchvars = [self.matchvar]
 
-        assert self.matchvar in vars, \
+        assert self.matchvar in matchvars, \
             ("Please pass all match vars, including the one that "
              f"belongs to this criteria ('{self.matchvar}').")
 
@@ -97,7 +106,7 @@ class SynapseCriteria:
             return ""
 
         cond = dedent(f"""\
-            WITH {', '.join(vars)}
+            WITH {', '.join(matchvars)}
             WHERE {' AND '.join(exprs)}
             """)
 
@@ -107,14 +116,12 @@ class SynapseCriteria:
         cond = indent(cond, prefix)[len(prefix):]
         return cond
 
-
     def __eq__(self, other):
         return (    (self.matchvar == other.matchvar)
                 and (self.rois == other.rois)
                 and (self.type == other.type)
                 and (self.confidence == other.confidence)
                 and (self.primary_only == other.primary_only))
-
 
     def __repr__(self):
         s = f"SynapseCriteria('{self.matchvar}'"

@@ -17,10 +17,10 @@ build:
 
 requirements:
   build:
-    - python >=3.6
+    - python >=3.9
     - setuptools
   run:
-    - python >=3.6
+    - python >=3.9
     # dependencies are defined in setup.py
     {% for dep in data['install_requires'] %}
     - {{ dep.lower() }}
