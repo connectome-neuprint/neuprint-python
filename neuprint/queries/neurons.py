@@ -3,7 +3,7 @@ import ujson
 
 from textwrap import indent
 from ..client import inject_client
-from ..utils import compile_columns
+from ..utils import compile_columns, cypher_identifier
 from .neuroncriteria import neuroncriteria_args
 
 # Core set of columns
@@ -118,7 +118,8 @@ def fetch_neurons(criteria=None, *, client=None):
     # return properties individually to avoid a large JSON payload.
     # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
     props = compile_columns(client, core_columns=CORE_NEURON_COLS)
-    return_exprs = ',\n'.join(f'n.`{prop}` as `{prop}`' for prop in props)
+    props = map(cypher_identifier, props)
+    return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
 
     q = f"""\

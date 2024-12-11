@@ -604,13 +604,13 @@ class Client:
         """
         Returns all available :Neuron properties in the database. Cached.
         """
-        b = "MATCH (n:`Meta`) RETURN n.neuronProperties"
+        b = "MATCH (n:Meta) RETURN n.neuronProperties"
         df_results = self.fetch_custom(b)
         neuron_props_val = df_results.iloc[0, 0]
         if neuron_props_val is None:
             # Fetch available keys
             c = """
-            MATCH (n :`Neuron`) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
+            MATCH (n :Neuron) UNWIND KEYS(n) AS k RETURN DISTINCT k AS neuron_fields
             """
             raw = self.fetch_custom(c, format='json')
             return [r[0] for r in raw['data']]

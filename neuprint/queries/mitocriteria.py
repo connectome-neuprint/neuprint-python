@@ -1,6 +1,6 @@
 from textwrap import indent, dedent
 
-from ..utils import ensure_list_args
+from ..utils import ensure_list_args, cypher_identifier
 from ..client import inject_client
 
 
@@ -87,7 +87,7 @@ class MitoCriteria:
         roi_expr = size_expr = mitoType_expr = ""
 
         if self.rois:
-            roi_expr = '(' + ' OR '.join([f'{self.matchvar}.`{roi}`' for roi in self.rois]) + ')'
+            roi_expr = '(' + ' OR '.join([f'{self.matchvar}.{cypher_identifier(roi)}' for roi in self.rois]) + ')'
 
         if self.size:
             size_expr = f'({self.matchvar}.size >= {self.size})'

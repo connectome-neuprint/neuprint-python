@@ -1,6 +1,7 @@
 """
 Utility functions for manipulating neuprint-python output.
 """
+import re
 import os
 import sys
 import inspect
@@ -24,8 +25,6 @@ class NotNull:
 
     """
 
-    pass
-
 
 class IsNull:
     """Filter for missing properties.
@@ -36,7 +35,32 @@ class IsNull:
 
     """
 
-    pass
+
+CYPHER_KEYWORDS = [
+    "CALL", "CREATE", "DELETE", "DETACH", "FOREACH", "LOAD", "MATCH", "MERGE", "OPTIONAL", "REMOVE", "RETURN", "SET", "START", "UNION", "UNWIND", "WITH",
+    "LIMIT", "ORDER", "SKIP", "WHERE", "YIELD",
+    "ASC", "ASCENDING", "ASSERT", "BY", "CSV", "DESC", "DESCENDING", "ON",
+    "ALL", "CASE", "COUNT", "ELSE", "END", "EXISTS", "THEN", "WHEN",
+    "AND", "AS", "CONTAINS", "DISTINCT", "ENDS", "IN", "IS", "NOT", "OR", "STARTS", "XOR",
+    "CONSTRAINT", "CREATE", "DROP", "EXISTS", "INDEX", "NODE", "KEY", "UNIQUE",
+    "INDEX", "JOIN", "SCAN", "USING",
+    "FALSE", "NULL", "TRUE",
+    "ADD", "DO", "FOR", "MANDATORY", "OF", "REQUIRE", "SCALAR"
+]
+
+# Technically this pattern is too strict, as it doesn't allow for non-ascii letters,
+# but that's okay -- we just might use backticks a little more often than necessary.
+CYPHER_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+def cypher_identifier(name):
+    """
+    Wrap the given name in backticks if it wouldn't be a vlid cypher identifier without them.
+    """
+    if name.upper() in CYPHER_KEYWORDS or not CYPHER_IDENTIFIER_PATTERN.match(name):
+        return f"`{name}`"
+    return name
+
 
 #
 # Import the notebook-aware version of tqdm if
