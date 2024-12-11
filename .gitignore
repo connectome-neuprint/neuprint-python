@@ -70,3 +70,6 @@ target/
 .DS_store
 _autosummary/
 
+# pixi environments
+.pixi
+*.egg-info

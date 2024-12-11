@@ -1,0 +1,49 @@
+[project]
+authors = ["Stuart Berg <bergs@janelia.hhmi.org>"]
+channels = ["conda-forge"]
+description = "Add a short description here"
+name = "neuprint-python"
+platforms = ["osx-64"]
+version = "0.1.0"
+
+[environments]
+test = ["test"]
+docs = ["docs"]
+dev = ["docs", "test", "dev"]
+
+[feature.test.tasks]
+test = "pytest"
+
+[feature.docs.tasks]
+make-docs = {cwd = "docs", cmd = "export PYTHONPATH=$PIXI_PROJECT_ROOT && make html"}
+
+[dependencies]  # short for [feature.default.dependencies]
+requests = ">=2.22"
+pandas = ">=2.2.3,<3"
+tqdm = ">=4.67.1,<5"
+ujson = ">=5.10.0,<6"
+asciitree = ">=0.3.3,<0.4"
+scipy = ">=1.14.1,<2"
+networkx = ">=3.4.2,<4"
+
+[feature.test.dependencies]
+pytest = "*"
+
+[feature.docs.dependencies]
+nbsphinx = "*"
+numpydoc = "*"
+sphinx_bootstrap_theme = "*"
+sphinx = "*"
+sphinx_rtd_theme = "*"
+ipython = "*"
+jupyter = "*"
+ipywidgets = "*"
+bokeh = "*"
+holoviews = "*"
+hvplot = "*"
+selenium = "*"
+phantomjs = "*"
+
+[feature.dev.dependencies]
+line_profiler = "*"
+pyarrow = "*"
