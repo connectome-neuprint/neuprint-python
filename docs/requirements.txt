@@ -2,7 +2,7 @@
 nbsphinx
 numpydoc
 sphinx_bootstrap_theme
-sphinx==1.8.4
+sphinx
 sphinx_rtd_theme
 ipython
 jupyter
