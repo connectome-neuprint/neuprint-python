@@ -47,7 +47,12 @@ To prepare a release, follow these steps:
     pytest .
 
     # Do the docs still build?
-    cd docs && make html && cd -
+    (
+        export PYTHONPATH=$(pwd)
+        cd docs
+        make html
+        open build/html/index.html
+    )
 
     # Tag the git repo with the new version
     NEW_TAG=0.3.1
