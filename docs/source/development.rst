@@ -23,7 +23,32 @@ Install ``conda-build`` if you don't have it yet:
 
 .. code-block:: bash
 
-    conda install -n base conda-build anaconda-client twine
+    conda install -n base conda-build anaconda-client twine setuptools
+
+
+Before you can upload packages to anaconda.org, you'll need to be a member of the ``flyem-forge`` organization.
+Then you'll need to run ``anaconda login``.
+
+Before you can upload packages to PyPI, you'll need to be added as a "collaborator" of the
+``neuprint-python`` project on PyPI.  Then you'll need to log in and obtain a token with
+an appropriate scope for ``neuprint-python`` and add it to your ``~/.pypirc`` file:
+
+.. code-block:: toml
+
+    [distutils]
+    index-servers =
+        neuprint-python
+        my-other-project
+
+    [neuprint-python]
+    repository = https://upload.pypi.org/legacy/
+    username = __token__
+    password = <your token goes here>
+
+    [my-other-project]
+    repository = https://upload.pypi.org/legacy/
+    username = __token__
+    password = <your other token goes here>
 
 
 Packaging and Release
