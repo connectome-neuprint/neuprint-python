@@ -1,6 +1,6 @@
 from textwrap import indent, dedent
 
-from ..utils import make_args_iterable
+from ..utils import ensure_list_args, cypher_identifier
 from ..client import inject_client
 
 
@@ -14,7 +14,7 @@ class MitoCriteria:
     """
 
     @inject_client
-    @make_args_iterable(['rois'])
+    @ensure_list_args(['rois'])
     def __init__(self, matchvar='m', *, rois=None, mitoType=None, size=0, primary_only=True, client=None):
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
@@ -87,7 +87,7 @@ class MitoCriteria:
         roi_expr = size_expr = mitoType_expr = ""
 
         if self.rois:
-            roi_expr = '(' + ' OR '.join([f'{self.matchvar}.`{roi}`' for roi in self.rois]) + ')'
+            roi_expr = '(' + ' OR '.join([f'{self.matchvar}.{cypher_identifier(roi)}' for roi in self.rois]) + ')'
 
         if self.size:
             size_expr = f'({self.matchvar}.size >= {self.size})'

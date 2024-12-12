@@ -1,6 +1,6 @@
 from textwrap import indent, dedent
 
-from ..utils import make_args_iterable
+from ..utils import ensure_list_args, cypher_identifier
 from ..client import inject_client
 
 
@@ -14,7 +14,7 @@ class SynapseCriteria:
     """
 
     @inject_client
-    @make_args_iterable(['rois'])
+    @ensure_list_args(['rois'])
     def __init__(self, matchvar='s', *, rois=None, type=None, confidence=None, primary_only=True, client=None):  # noqa
         """
         Except for ``matchvar``, all parameters must be passed as keyword arguments.
@@ -92,7 +92,7 @@ class SynapseCriteria:
 
         roi_expr = conf_expr = type_expr = ""
         if self.rois:
-            roi_expr = '(' + ' OR '.join([f'{self.matchvar}.`{roi}`' for roi in self.rois]) + ')'
+            roi_expr = '(' + ' OR '.join([f'{self.matchvar}.{cypher_identifier(roi)}' for roi in self.rois]) + ')'
 
         if self.confidence:
             conf_expr = f'({self.matchvar}.confidence > {self.confidence})'

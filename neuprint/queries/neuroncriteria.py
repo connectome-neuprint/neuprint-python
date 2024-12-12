@@ -11,7 +11,7 @@ from collections.abc import Iterable, Collection
 import numpy as np
 import pandas as pd
 
-from ..utils import make_args_iterable, IsNull, NotNull
+from ..utils import ensure_list_args, ensure_list_attrs, IsNull, NotNull, cypher_identifier
 from ..client import inject_client
 
 NoneType = type(None)
@@ -104,6 +104,49 @@ def copy_as_neuroncriteria(obj, client=None):
         raise RuntimeError(f"Can't auto-construct a NeuronCriteria from {obj}.  Please explicitly create one.")
 
 
+# We permit the user to provide these NeuronCriteria members as
+# single values, lists, arrays, Series, etc. (or None).
+# But to facilitate a simpler implementation, we automatically
+# convert them all to lists upon class initialization and/or attribute
+# setting (via decorators).
+_iterable_attrs = [
+    'bodyId',
+
+    # Regex-optional
+    'type', 'instance',
+    # special: 'regex'
+
+    # ROI
+    'rois', 'inputRois', 'outputRois',
+    # special: roi_req, min_roi_inputs, min_roi_outputs
+
+    # integer
+    'group', 'serial',
+
+    # boolean
+    # 'cropped',
+
+    # Exact string fields (alphabetical order)
+    'birthtime', 'cellBodyFiber', 'class_',
+    'entryNerve', 'exitNerve', 'hemilineage',
+    'longTract', 'modality', 'origin',
+    'predictedNt', 'serialMotif', 'somaNeuromere',
+    'somaSide', 'status', 'statusLabel',
+    'subclass', 'synonyms', 'systematicType',
+    'target',
+
+    # Special
+    # label, min_pre, min_post
+
+    # Null/NotNull
+    # somaLocation, tosomaLocation,
+
+    # Deprecated
+    # soma
+]
+
+
+@ensure_list_attrs(_iterable_attrs)
 class NeuronCriteria:
     """
     Neuron selection criteria.
@@ -132,41 +175,7 @@ class NeuronCriteria:
     """
 
     @inject_client
-    @make_args_iterable([
-        'bodyId',
-
-        # Regex-optional
-        'type', 'instance',
-        # special: 'regex'
-
-        # ROI
-        'rois', 'inputRois', 'outputRois',
-        # special: roi_req, min_roi_inputs, min_roi_outputs
-
-        # integer
-        'group', 'serial',
-
-        # boolean
-        # 'cropped',
-
-        # Exact string fields (alphabetical order)
-        'birthtime', 'cellBodyFiber', 'class_',
-        'entryNerve', 'exitNerve', 'hemilineage', 
-        'longTract', 'modality', 'origin',
-        'predictedNt', 'serialMotif', 'somaNeuromere',
-        'somaSide', 'status', 'statusLabel',
-        'subclass', 'synonyms', 'systematicType',
-        'target',
-
-        # Special
-        # label, min_pre, min_post
-
-        # Null/NotNull
-        # somaLocation, tosomaLocation,
-
-        # Deprecated
-        # soma
-    ])
+    @ensure_list_args(_iterable_attrs)
     def __init__(
         self, matchvar='n', *,
         bodyId=None,
@@ -687,9 +696,11 @@ class NeuronCriteria:
             if len(values) > self.MAX_LITERAL_LENGTH:
                 if key.endswith('_'):
                     key = key[:-1]
-                values = [*filter(lambda s: s is not None, values)]
-                var = f"{self.matchvar}_search_{key}"
-                exprs[var] = (f"{[*values]} as {var}")
+                if isinstance(values, np.ndarray):
+                    values = values.tolist()
+                values = [v for v in values if v is not None]
+                var = cypher_identifier(f"{self.matchvar}_search_{key}")
+                exprs[var] = (f"{values} as {var}")
 
         return exprs
 
@@ -796,6 +807,8 @@ class NeuronCriteria:
         if value is None:
             return ""
 
+        key = cypher_identifier(key)
+
         if value:
             return f"{self.matchvar}.{key}"
         else:
@@ -813,7 +826,8 @@ class NeuronCriteria:
             return ""
 
         tags = sorted(tags)
-        return "(" + f" {logic} ".join(f"{self.matchvar}.`{v}`" for v in tags) + ")"
+        tag_properties = (f"{self.matchvar}.{cypher_identifier(v)}" for v in tags)
+        return "(" + f" {logic} ".join(tag_properties) + ")"
 
     def _gt_eq_expr(self, key, value):
         """
@@ -1080,8 +1094,15 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
     assert isinstance(values, collections.abc.Iterable), \
         f"Please pass a list or a variable name, not {values}"
 
+    if isinstance(values, np.ndarray):
+        values = values.tolist()
+    else:
+        values = list(values)
+
     assert valuevar is None or isinstance(valuevar, str)
     assert not regex or not valuevar, "valuevar is not allowed if using a regex"
+
+    field = cypher_identifier(field)
 
     if len(values) == 0:
         return ""
@@ -1115,10 +1136,10 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             r = '|'.join(f'({v})' for v in values)
             return f"{matchvar}.{field} =~ '{r}'"
         else:
-            return f"{matchvar}.{field} in {[*values]}"
+            return f"{matchvar}.{field} in {values}"
 
     # ['some_val', None, 'some_other']
-    values = [*filter(lambda v: v not in (None, IsNull), values)]
+    values = [v for v in values if v not in (None, IsNull)]
     if len(values) == 1:
         if regex:
             assert isinstance(values[0], str), \
@@ -1139,4 +1160,4 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         elif valuevar:
             return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
         else:
-            return f"{matchvar}.{field} in {[*values]} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} in {values} OR NOT exists({matchvar}.{field})"

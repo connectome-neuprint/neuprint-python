@@ -1,6 +1,7 @@
 """
 Utility functions for manipulating neuprint-python output.
 """
+import re
 import os
 import sys
 import inspect
@@ -24,8 +25,6 @@ class NotNull:
 
     """
 
-    pass
-
 
 class IsNull:
     """Filter for missing properties.
@@ -36,7 +35,32 @@ class IsNull:
 
     """
 
-    pass
+
+CYPHER_KEYWORDS = [
+    "CALL", "CREATE", "DELETE", "DETACH", "FOREACH", "LOAD", "MATCH", "MERGE", "OPTIONAL", "REMOVE", "RETURN", "SET", "START", "UNION", "UNWIND", "WITH",
+    "LIMIT", "ORDER", "SKIP", "WHERE", "YIELD",
+    "ASC", "ASCENDING", "ASSERT", "BY", "CSV", "DESC", "DESCENDING", "ON",
+    "ALL", "CASE", "COUNT", "ELSE", "END", "EXISTS", "THEN", "WHEN",
+    "AND", "AS", "CONTAINS", "DISTINCT", "ENDS", "IN", "IS", "NOT", "OR", "STARTS", "XOR",
+    "CONSTRAINT", "CREATE", "DROP", "EXISTS", "INDEX", "NODE", "KEY", "UNIQUE",
+    "INDEX", "JOIN", "SCAN", "USING",
+    "FALSE", "NULL", "TRUE",
+    "ADD", "DO", "FOR", "MANDATORY", "OF", "REQUIRE", "SCALAR"
+]
+
+# Technically this pattern is too strict, as it doesn't allow for non-ascii letters,
+# but that's okay -- we just might use backticks a little more often than necessary.
+CYPHER_IDENTIFIER_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_]*$')
+
+
+def cypher_identifier(name):
+    """
+    Wrap the given name in backticks if it wouldn't be a vlid cypher identifier without them.
+    """
+    if name.upper() in CYPHER_KEYWORDS or not CYPHER_IDENTIFIER_PATTERN.match(name):
+        return f"`{name}`"
+    return name
+
 
 #
 # Import the notebook-aware version of tqdm if
@@ -106,33 +130,35 @@ def UMAP(*args, **kwargs):
     return UMAP(*args, **kwargs)
 
 
-def make_iterable(x):
+def ensure_list(x):
     """
-    If ``x`` is already a list or array, return it unchanged.
-    If ``x`` is Series, return its values.
+    If ``x`` is already a list, return it unchanged.
+    If ``x`` is Series or ndarray, convert to plain list.
     If ``x`` is ``None``, return an empty list ``[]``.
     Otherwise, wrap it in a list.
     """
     if x is None:
         return []
 
-    if isinstance(x, np.ndarray):
-        return x
-
-    if isinstance(x, pd.Series):
-        return x.values
+    if isinstance(x, (np.ndarray, pd.Series)):
+        return x.tolist()
 
     if isinstance(x, Collection) and not isinstance(x, str):
-        return x
+        # Note:
+        #   This is a convenient way to handle all of these cases:
+        #   np.array([1, 2, 3]) -> [1, 2, 3]
+        #   [1, 2, 3] -> [1, 2, 3]
+        #   [np.int64(1), np.int64(2), np.int64(3)] -> [1, 2, 3]
+        return np.asarray(x).tolist()
     else:
         return [x]
 
 
-def make_args_iterable(argnames):
+def ensure_list_args(argnames):
     """
     Returns a decorator.
     For the given argument names, the decorator converts the
-    arguments into iterables via ``make_iterable()``.
+    arguments into iterables via ``ensure_list()``.
     """
     def decorator(f):
 
@@ -140,7 +166,7 @@ def make_args_iterable(argnames):
         def wrapper(*args, **kwargs):
             callargs = inspect.getcallargs(f, *args, **kwargs)
             for name in argnames:
-                callargs[name] = make_iterable(callargs[name])
+                callargs[name] = ensure_list(callargs[name])
             return f(**callargs)
 
         wrapper.__signature__ = inspect.signature(f)
@@ -149,7 +175,35 @@ def make_args_iterable(argnames):
     return decorator
 
 
-@make_args_iterable(['properties'])
+def ensure_list_attrs(attributes):
+    """
+    Returns a *class* decorator.
+    For the given attribute names, the decorator adds "private"
+    attributes (e.g. bodyId -> _bodyId) and declares getter/setter properties.
+    The setter property converts the new value to a list before storing
+    it in the private attribute.
+
+    Classes which require their members to be a true list can allow users to
+    set attributes as np.array.
+    """
+    def decorator(cls):
+        for attr in attributes:
+            private_attr = f"_{attr}"
+
+            def getter(self, private_attr=private_attr):
+                return getattr(self, private_attr)
+
+            def setter(self, value, private_attr=private_attr):
+                value = ensure_list(value)
+                setattr(self, private_attr, value)
+
+            setattr(cls, attr, property(getter, setter))
+
+        return cls
+    return decorator
+
+
+@ensure_list_args(['properties'])
 def merge_neuron_properties(neuron_df, conn_df, properties=['type', 'instance']):
     """
     Merge neuron properties to a connection table.

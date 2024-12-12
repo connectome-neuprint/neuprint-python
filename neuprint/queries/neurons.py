@@ -3,7 +3,7 @@ import ujson
 
 from textwrap import indent
 from ..client import inject_client
-from ..utils import compile_columns
+from ..utils import compile_columns, cypher_identifier
 from .neuroncriteria import neuroncriteria_args
 
 # Core set of columns
@@ -118,6 +118,7 @@ def fetch_neurons(criteria=None, *, client=None):
     # return properties individually to avoid a large JSON payload.
     # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
     props = compile_columns(client, core_columns=CORE_NEURON_COLS)
+    props = map(cypher_identifier, props)
     return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
 
@@ -222,7 +223,7 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
     neuron_df = neuron_df[[*neuron_cols]]
 
     # Make a list of rois for every neuron (both pre and post)
-    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(lambda s: ujson.loads(s))
+    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(ujson.loads)
     neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
     neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
 

@@ -1,0 +1,59 @@
+[project]
+authors = ["FlyEM"]
+channels = ["conda-forge"]
+description = "Python client utilties for interacting with the neuPrint connectome analysis service"
+name = "neuprint-python"
+platforms = ["osx-64", "linux-64", "win-64", "osx-arm64"]
+version = "0.5"
+
+[environments]
+test = ["test"]
+docs = ["docs"]
+dev = ["docs", "test", "dev"]
+publish = ["publish", "test"]
+
+[feature.test.tasks]
+test = "pytest"
+
+[feature.docs.tasks]
+make-docs = {cwd = "docs", cmd = "export PYTHONPATH=$PIXI_PROJECT_ROOT && make html"}
+
+[feature.publish.tasks]
+upload-to-pypi = "upload-to-pypi.sh"
+
+[dependencies]  # short for [feature.default.dependencies]
+requests = ">=2.22"
+pandas = ">=2.2.3,<3"
+tqdm = ">=4.67.1,<5"
+ujson = ">=5.10.0,<6"
+asciitree = ">=0.3.3,<0.4"
+scipy = ">=1.14.1,<2"
+networkx = ">=3.4.2,<4"
+
+[feature.test.dependencies]
+pytest = "*"
+
+[feature.publish.dependencies]
+conda-build = "*"
+anaconda-client = "*"
+twine = "*"
+setuptools = "*"
+
+[feature.docs.dependencies]
+nbsphinx = "*"
+numpydoc = "*"
+sphinx_bootstrap_theme = "*"
+sphinx = "*"
+sphinx_rtd_theme = "*"
+ipython = "*"
+jupyter = "*"
+ipywidgets = "*"
+bokeh = "*"
+holoviews = "*"
+hvplot = "*"
+selenium = "*"
+phantomjs = "*"
+
+[feature.dev.dependencies]
+line_profiler = "*"
+pyarrow = "*"

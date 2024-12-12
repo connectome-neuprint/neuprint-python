@@ -327,7 +327,9 @@ def heal_skeleton(skeleton_df, max_distance=np.inf, root_parent=None):
 
         # Remove links for omitted edges (convert child node to a new root).
         skeleton_df = skeleton_df.merge(omit_df, 'left', on=['rowId', 'link'])
-        skeleton_df['link'].update(skeleton_df['omit_link'])
+
+        # Update the 'link' column using 'omit_link'
+        skeleton_df.update(skeleton_df['omit_link'].rename('link'))
         del skeleton_df['omit_link']
 
     return skeleton_df

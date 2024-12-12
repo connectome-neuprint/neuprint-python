@@ -30,4 +30,5 @@ python setup.py sdist bdist_wheel
 #python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # The real PyPI server
-python3 -m twine upload dist/*
+# This command will use the token from ~/.pypirc
+python3 -m twine upload --repository neuprint-python dist/*

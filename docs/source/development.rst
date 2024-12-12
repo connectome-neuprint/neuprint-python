@@ -5,6 +5,52 @@ Development Notes
 
 Notes for maintaining ``neuprint-python``.
 
+Prerequisites
+-------------
+
+Make sure you have both ``flyem-forge`` and ``conda-forge`` listed as channels in your ``.condarc`` file.
+(If you don't know where your ``.condarc`` file is, check ``conda config --show-sources``.)
+
+.. code-block:: yaml
+
+    # .condarc
+    channels:
+    - flyem-forge
+    - conda-forge
+    - nodefaults  # A magic channel that forbids any downloads from the anaconda default channels.
+
+Install ``conda-build`` if you don't have it yet:
+
+.. code-block:: bash
+
+    conda install -n base conda-build anaconda-client twine setuptools
+
+
+Before you can upload packages to anaconda.org, you'll need to be a member of the ``flyem-forge`` organization.
+Then you'll need to run ``anaconda login``.
+
+Before you can upload packages to PyPI, you'll need to be added as a "collaborator" of the
+``neuprint-python`` project on PyPI.  Then you'll need to log in and obtain a token with
+an appropriate scope for ``neuprint-python`` and add it to your ``~/.pypirc`` file:
+
+.. code-block:: toml
+
+    [distutils]
+    index-servers =
+        neuprint-python
+        my-other-project
+
+    [neuprint-python]
+    repository = https://upload.pypi.org/legacy/
+    username = __token__
+    password = <your token goes here>
+
+    [my-other-project]
+    repository = https://upload.pypi.org/legacy/
+    username = __token__
+    password = <your other token goes here>
+
+
 Packaging and Release
 ---------------------
 
@@ -26,7 +72,12 @@ To prepare a release, follow these steps:
     pytest .
 
     # Do the docs still build?
-    cd docs && make html && cd -
+    (
+        export PYTHONPATH=$(pwd)
+        cd docs
+        make html
+        open build/html/index.html
+    )
 
     # Tag the git repo with the new version
     NEW_TAG=0.3.1
