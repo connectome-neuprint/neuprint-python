@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="../">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulation Tutorial &mdash; neuprint-python 0.4.26 documentation</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  <title>Simulation Tutorial &mdash; neuprint-python 0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+      <link rel="stylesheet" type="text/css" href="../_static/theme_overrides.css?v=2eda87d7" />
+
+  
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
-        <script src="../_static/jquery.js"></script>
-        <script src="../_static/underscore.js"></script>
-        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="../_static/doctools.js"></script>
+        <script src="../_static/documentation_options.js?v=db78e746"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../_static/js/theme.js"></script>
@@ -40,7 +41,7 @@
             neuprint-python
           </a>
               <div class="version">
-                0.4.26
+                0.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -107,13 +108,13 @@
   <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This page corresponds to a Jupyter notebook you can
-<a class="reference external" href="https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/0.4.26?filepath=docs%2Fsource%2Fnotebooks/SimulationTutorial.ipynb">try out yourself</a>. <br />
-(The original version is <a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/tree/0.4.26/docs/source/notebooks/SimulationTutorial.ipynb">here</a>.)</p>
-<a class="reference external image-reference" href="https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/0.4.26?filepath=docs%2Fsource%2Fnotebooks/SimulationTutorial.ipynb"><img alt="https://mybinder.org/badge_logo.svg" src="https://mybinder.org/badge_logo.svg" /></a>
+<a class="reference external" href="https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/0.5?filepath=docs%2Fsource%2Fnotebooks/SimulationTutorial.ipynb">try out yourself</a>. <br />
+(The original version is <a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/tree/0.5/docs/source/notebooks/SimulationTutorial.ipynb">here</a>.)</p>
+<a class="reference external image-reference" href="https://mybinder.org/v2/gh/connectome-neuprint/neuprint-python/0.5?filepath=docs%2Fsource%2Fnotebooks/SimulationTutorial.ipynb"><img alt="https://mybinder.org/badge_logo.svg" src="https://mybinder.org/badge_logo.svg" /></a>
 </div>
 <hr class="docutils" />
-<div class="section" id="Simulation-Tutorial">
-<h1>Simulation Tutorial<a class="headerlink" href="#Simulation-Tutorial" title="Permalink to this heading">¶</a></h1>
+<section id="Simulation-Tutorial">
+<h1>Simulation Tutorial<a class="headerlink" href="#Simulation-Tutorial" title="Link to this heading">¶</a></h1>
 <p>This notebook shows how to estimate the delay and amplitude response between primary brain regions for a given neuron. In general, the delay within a compartment tends to be isopotential meaning a region to region response matrix is a reasonable characterization of the output response of a neuron.</p>
 <p>The electrical simulation uses a simple linear passive model using a network of resistors and capacitors based on a skeleton representation of the neuron. Users can specify specific membrane resistance and capacitance values and cytoplasm resitance.</p>
 <div class="admonition note">
@@ -122,8 +123,8 @@
 </pre></div>
 </div>
 </div>
-<div class="section" id="Setup-neuron-model">
-<h2>Setup neuron model<a class="headerlink" href="#Setup-neuron-model" title="Permalink to this heading">¶</a></h2>
+<section id="Setup-neuron-model">
+<h2>Setup neuron model<a class="headerlink" href="#Setup-neuron-model" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>create neuprint client using the public hemibrain dataset</p></li>
 <li><p>build a neuron spice model for a given body id</p></li>
@@ -165,11 +166,11 @@
 
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Estimate-neuron-timing">
-<h2>Estimate neuron timing<a class="headerlink" href="#Estimate-neuron-timing" title="Permalink to this heading">¶</a></h2>
-<div class="section" id="Run-simulation-for-the-given-neuron">
-<h3>Run simulation for the given neuron<a class="headerlink" href="#Run-simulation-for-the-given-neuron" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="Estimate-neuron-timing">
+<h2>Estimate neuron timing<a class="headerlink" href="#Estimate-neuron-timing" title="Link to this heading">¶</a></h2>
+<section id="Run-simulation-for-the-given-neuron">
+<h3>Run simulation for the given neuron<a class="headerlink" href="#Run-simulation-for-the-given-neuron" title="Link to this heading">¶</a></h3>
 <p>Specify the number of inputs per brain region (randomly selected) which will be tested. A current is injected at each input site one at a time and delay and amplitude response is measured.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -193,9 +194,9 @@
 
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Examine-the-response-results">
-<h3>Examine the response results<a class="headerlink" href="#Examine-the-response-results" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="Examine-the-response-results">
+<h3>Examine the response results<a class="headerlink" href="#Examine-the-response-results" title="Link to this heading">¶</a></h3>
 <p>compute_region_delay_matrix reports the delay between regions where the row index is the input brain region and the column names represent the output region. A delay (ms) and amplitude (mV) are returned. They are averages over all the response for a given region input-output pair.</p>
 <p>Note: the results to synapses that are not in brain regions (“none”) are shown for completeness. But those output responses are not necessarily co-located and cannot be treated as an ROI.</p>
 <div class="nbinput nblast docutils container">
@@ -376,9 +377,9 @@
 </table>
 </div></div>
 </div>
-</div>
-<div class="section" id="Plot-response-from-one-brain-region-to-others">
-<h3>Plot response from one brain region to others<a class="headerlink" href="#Plot-response-from-one-brain-region-to-others" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="Plot-response-from-one-brain-region-to-others">
+<h3>Plot response from one brain region to others<a class="headerlink" href="#Plot-response-from-one-brain-region-to-others" title="Link to this heading">¶</a></h3>
 <p>Each dot represents the response from each input from the specified input region (LAL(R) here) to every output in the neuron (each output brain region is indicated).</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
@@ -396,13 +397,13 @@
 <img alt="../_images/notebooks_SimulationTutorial_14_0.png" src="../_images/notebooks_SimulationTutorial_14_0.png" />
 </div>
 </div>
-</div>
-</div>
-<div class="section" id="Decompose-neuron-connections-by-electrical-domain">
-<h2>Decompose neuron connections by electrical domain<a class="headerlink" href="#Decompose-neuron-connections-by-electrical-domain" title="Permalink to this heading">¶</a></h2>
+</section>
+</section>
+<section id="Decompose-neuron-connections-by-electrical-domain">
+<h2>Decompose neuron connections by electrical domain<a class="headerlink" href="#Decompose-neuron-connections-by-electrical-domain" title="Link to this heading">¶</a></h2>
 <p>Use simple linear passive delay progragation through the neuron to determine distinct domains for representing the neuron. The decomposition can be used to derive ROIs using electrical delay.</p>
-<div class="section" id="Simulate-the-delay-'distances'-between-parts-of-the-neuron">
-<h3>Simulate the delay ‘distances’ between parts of the neuron<a class="headerlink" href="#Simulate-the-delay-'distances'-between-parts-of-the-neuron" title="Permalink to this heading">¶</a></h3>
+<section id="Simulate-the-delay-'distances'-between-parts-of-the-neuron">
+<h3>Simulate the delay ‘distances’ between parts of the neuron<a class="headerlink" href="#Simulate-the-delay-'distances'-between-parts-of-the-neuron" title="Link to this heading">¶</a></h3>
 <p>This function checks propagation delays throughout the neuron based on the number of specified points. The points are randomly chosen even between inputs and outputs. In principle, any points could be chosen.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
@@ -426,9 +427,9 @@
 
 </pre></div></div>
 </div>
-</div>
-<div class="section" id="Show-delay-propogation-closeness-between-simulated-points">
-<h3>Show delay propogation closeness between simulated points<a class="headerlink" href="#Show-delay-propogation-closeness-between-simulated-points" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="Show-delay-propogation-closeness-between-simulated-points">
+<h3>Show delay propogation closeness between simulated points<a class="headerlink" href="#Show-delay-propogation-closeness-between-simulated-points" title="Link to this heading">¶</a></h3>
 <p>This plot should show whether there are distinct electrical domains for the neuron. The primary ROI labels are provided to show how well the points correspond to the annotated regions.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
@@ -446,9 +447,9 @@
 <img alt="../_images/notebooks_SimulationTutorial_19_0.png" src="../_images/notebooks_SimulationTutorial_19_0.png" />
 </div>
 </div>
-</div>
-<div class="section" id="Partition-the-neuron-into-different-domains-based-on-simulated-points">
-<h3>Partition the neuron into different domains based on simulated points<a class="headerlink" href="#Partition-the-neuron-into-different-domains-based-on-simulated-points" title="Permalink to this heading">¶</a></h3>
+</section>
+<section id="Partition-the-neuron-into-different-domains-based-on-simulated-points">
+<h3>Partition the neuron into different domains based on simulated points<a class="headerlink" href="#Partition-the-neuron-into-different-domains-based-on-simulated-points" title="Link to this heading">¶</a></h3>
 <p>Cluster the simulated points and map a partition id to each synapse in the neuron. The function returns input and output connections broken down by these domain ids.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
@@ -764,9 +765,9 @@
 <img alt="../_images/notebooks_SimulationTutorial_24_0.png" src="../_images/notebooks_SimulationTutorial_24_0.png" />
 </div>
 </div>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>

@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Development Notes &mdash; neuprint-python 0.4.26 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+  <title>Development Notes &mdash; neuprint-python 0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/documentation_options.js?v=db78e746"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +38,7 @@
             neuprint-python
           </a>
               <div class="version">
-                0.4.26
+                0.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -52,6 +53,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Development Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#packaging-and-release">Packaging and Release</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#documentation">Documentation</a></li>
@@ -88,35 +90,56 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="development-notes">
-<span id="development"></span><h1>Development Notes<a class="headerlink" href="#development-notes" title="Permalink to this heading">¶</a></h1>
+  <section id="development-notes">
+<span id="development"></span><h1>Development Notes<a class="headerlink" href="#development-notes" title="Link to this heading">¶</a></h1>
 <p>Notes for maintaining <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>.</p>
-<div class="section" id="packaging-and-release">
-<h2>Packaging and Release<a class="headerlink" href="#packaging-and-release" title="Permalink to this heading">¶</a></h2>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
+<p>Make sure you have both <code class="docutils literal notranslate"><span class="pre">flyem-forge</span></code> and <code class="docutils literal notranslate"><span class="pre">conda-forge</span></code> listed as channels in your <code class="docutils literal notranslate"><span class="pre">.condarc</span></code> file.
+(If you don’t know where your <code class="docutils literal notranslate"><span class="pre">.condarc</span></code> file is, check <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">config</span> <span class="pre">--show-sources</span></code>.)</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># .condarc</span>
+<span class="nt">channels</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">flyem-forge</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">conda-forge</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nodefaults</span><span class="w">  </span><span class="c1"># A magic channel that forbids any downloads from the anaconda default channels.</span>
+</pre></div>
+</div>
+<p>Install <code class="docutils literal notranslate"><span class="pre">conda-build</span></code> if you don’t have it yet:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>conda-build<span class="w"> </span>anaconda-client<span class="w"> </span>twine
+</pre></div>
+</div>
+</section>
+<section id="packaging-and-release">
+<h2>Packaging and Release<a class="headerlink" href="#packaging-and-release" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> is packaged for both <code class="docutils literal notranslate"><span class="pre">conda</span></code> (on the <a class="reference external" href="https://anaconda.org/flyem-forge/neuprint-python/files">flyem-forge channel</a>)
 and <code class="docutils literal notranslate"><span class="pre">pip</span></code> (on <a class="reference external" href="https://pypi.org/project/neuprint-python/">PyPI</a>).</p>
 <p>The package version is automatically inferred from the git tag.
 To prepare a release, follow these steps:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>neuprint-python
 
 <span class="c1"># Update the change log!</span>
-code docs/source/changelog.rst
-git commit -m <span class="s2">&quot;Updated changelog&quot;</span> docs/source/changelog.rst
+code<span class="w"> </span>docs/source/changelog.rst
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Updated changelog&quot;</span><span class="w"> </span>docs/source/changelog.rst
 
 <span class="c1"># Do the tests still pass?</span>
-pytest .
+pytest<span class="w"> </span>.
 
 <span class="c1"># Do the docs still build?</span>
-<span class="nb">cd</span> docs <span class="o">&amp;&amp;</span> make html <span class="o">&amp;&amp;</span> <span class="nb">cd</span> -
+<span class="o">(</span>
+<span class="w">    </span><span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="w">    </span><span class="nb">cd</span><span class="w"> </span>docs
+<span class="w">    </span>make<span class="w"> </span>html
+<span class="w">    </span>open<span class="w"> </span>build/html/index.html
+<span class="o">)</span>
 
 <span class="c1"># Tag the git repo with the new version</span>
 <span class="nv">NEW_TAG</span><span class="o">=</span><span class="m">0</span>.3.1
-git tag -a <span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span> -m <span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>
-git push --tags origin
+git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span><span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span><span class="w"> </span>-m<span class="w"> </span><span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>
+git<span class="w"> </span>push<span class="w"> </span>--tags<span class="w"> </span>origin
 
 <span class="c1"># Build and upload the conda package</span>
-conda build conda-recipe
-anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span class="k">)</span>/conda-bld/noarch/neuprint-python-<span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>-py_0.tar.bz2
+conda<span class="w"> </span>build<span class="w"> </span>conda-recipe
+anaconda<span class="w"> </span>upload<span class="w"> </span>-u<span class="w"> </span>flyem-forge<span class="w"> </span><span class="k">$(</span>conda<span class="w"> </span>info<span class="w"> </span>--base<span class="k">)</span>/conda-bld/noarch/neuprint-python-<span class="si">${</span><span class="nv">NEW_TAG</span><span class="si">}</span>-py_0.tar.bz2
 
 <span class="c1"># Build and upload the PyPI package</span>
 ./upload-to-pypi.sh
@@ -125,9 +148,9 @@ anaconda upload -u flyem-forge <span class="k">$(</span>conda info --base<span c
 ./docs/deploy-docs.sh
 </pre></div>
 </div>
-</div>
-<div class="section" id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">¶</a></h2>
 <p>If you need to add dependencies to <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>, edit <code class="docutils literal notranslate"><span class="pre">dependencies.txt</span></code> (which is used by the conda recipe).
 You should also update <code class="docutils literal notranslate"><span class="pre">environment.yml</span></code> so that our binder container will acquire the new dependencies
 when users try out the interactive <a class="reference internal" href="notebooks/QueryTutorial.html"><span class="doc">tutorial</span></a>.  After publishing a new conda package with the updated dependencies,
@@ -135,30 +158,30 @@ follow these steps <strong>on a Linux machine</strong>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 <span class="c1"># update-deps.sh</span>
 
-<span class="nb">set</span> -e
+<span class="nb">set</span><span class="w"> </span>-e
 
 <span class="c1"># Create an environment with the binder dependencies</span>
 <span class="nv">TUTORIAL_DEPS</span><span class="o">=</span><span class="s2">&quot;ipywidgets bokeh holoviews hvplot&quot;</span>
 <span class="nv">SIMULATION_DEPS</span><span class="o">=</span><span class="s2">&quot;ngspice umap-learn scikit-learn matplotlib&quot;</span>
 <span class="nv">BINDER_DEPS</span><span class="o">=</span><span class="s2">&quot;neuprint-python jupyterlab </span><span class="si">${</span><span class="nv">TUTORIAL_DEPS</span><span class="si">}</span><span class="s2"> </span><span class="si">${</span><span class="nv">SIMULATION_DEPS</span><span class="si">}</span><span class="s2">&quot;</span>
-conda create -y -n neuprint-python -c flyem-forge -c conda-forge <span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
+conda<span class="w"> </span>create<span class="w"> </span>-y<span class="w"> </span>-n<span class="w"> </span>neuprint-python<span class="w"> </span>-c<span class="w"> </span>flyem-forge<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="si">${</span><span class="nv">BINDER_DEPS</span><span class="si">}</span>
 
 <span class="c1"># Export to environment.yml, but relax the neuprint-python version requirement</span>
-conda env <span class="nb">export</span> -n neuprint-python &gt; environment.yml
-sed --in-place <span class="s1">&#39;s/neuprint-python=.*/neuprint-python/g&#39;</span> environment.yml
+conda<span class="w"> </span>env<span class="w"> </span><span class="nb">export</span><span class="w"> </span>-n<span class="w"> </span>neuprint-python<span class="w"> </span>&gt;<span class="w"> </span>environment.yml
+sed<span class="w"> </span>--in-place<span class="w"> </span><span class="s1">&#39;s/neuprint-python=.*/neuprint-python/g&#39;</span><span class="w"> </span>environment.yml
 
-git commit -m <span class="s2">&quot;Updated environment.yml for binder&quot;</span> environment.yml
-git push origin master
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Updated environment.yml for binder&quot;</span><span class="w"> </span>environment.yml
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>master
 </pre></div>
 </div>
-</div>
-<div class="section" id="documentation">
-<h2>Documentation<a class="headerlink" href="#documentation" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="documentation">
+<h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h2>
 <p>The docs are built with Sphinx.  See <code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code> for the docs dependencies.
 To build the docs locally:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python/docs
-make html
-open build/html/index.html
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>neuprint-python/docs
+make<span class="w"> </span>html
+open<span class="w"> </span>build/html/index.html
 </pre></div>
 </div>
 <p>We publish the docs via <a class="reference external" href="https://pages.github.com/">github pages</a>.
@@ -167,26 +190,26 @@ Use the script <code class="docutils literal notranslate"><span class="pre">docs
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./docs/deploy-docs.sh
 </pre></div>
 </div>
-</div>
-<div class="section" id="interactive-tutorial">
-<h2>Interactive Tutorial<a class="headerlink" href="#interactive-tutorial" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="interactive-tutorial">
+<h2>Interactive Tutorial<a class="headerlink" href="#interactive-tutorial" title="Link to this heading">¶</a></h2>
 <p>The documentation contains a <a class="reference internal" href="notebooks/QueryTutorial.html"><span class="doc">tutorial</span></a> which can be launched interactively via binder.
 To update the tutorial contents, simply edit the <code class="docutils literal notranslate"><span class="pre">.ipynb</span></code> file and re-build the docs.</p>
 <p>If the binder setup is broken, make sure the dependencies are configured properly as described above.</p>
 <p>It takes a few minutes to initialize the binder container for the first time after a new release.
 Consider sparing your users from that by clicking the binder button yourself after each release.</p>
-</div>
-<div class="section" id="tests">
-<h2>Tests<a class="headerlink" href="#tests" title="Permalink to this heading">¶</a></h2>
+</section>
+<section id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
 <p>The tests require <code class="docutils literal notranslate"><span class="pre">pytest</span></code>, and they rely on the public <code class="docutils literal notranslate"><span class="pre">hemibrain:v1.2.1</span></code> dataset on <code class="docutils literal notranslate"><span class="pre">neuprint.janelia.org</span></code>,
 which means you must define <code class="docutils literal notranslate"><span class="pre">NEUPRINT_APPLICATION_CREDENTIALS</span></code> in your environment before running them.</p>
 <p>To run the tests:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> neuprint-python
-<span class="nv">PYTHONPATH</span><span class="o">=</span>. pytest neuprint/tests
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>neuprint-python
+<span class="nv">PYTHONPATH</span><span class="o">=</span>.<span class="w"> </span>pytest<span class="w"> </span>neuprint/tests
 </pre></div>
 </div>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

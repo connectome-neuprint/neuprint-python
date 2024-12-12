@@ -1,23 +1,24 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Client &mdash; neuprint-python 0.4.26 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+  <title>Client &mdash; neuprint-python 0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
+        <script src="_static/documentation_options.js?v=db78e746"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +38,7 @@
             neuprint-python
           </a>
               <div class="version">
-                0.4.26
+                0.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -51,10 +52,41 @@
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Client</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Client</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.Client"><code class="docutils literal notranslate"><span class="pre">Client</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_available"><code class="docutils literal notranslate"><span class="pre">Client.fetch_available()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_custom"><code class="docutils literal notranslate"><span class="pre">Client.fetch_custom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_daily_type"><code class="docutils literal notranslate"><span class="pre">Client.fetch_daily_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_database"><code class="docutils literal notranslate"><span class="pre">Client.fetch_database()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_datasets"><code class="docutils literal notranslate"><span class="pre">Client.fetch_datasets()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_db_version"><code class="docutils literal notranslate"><span class="pre">Client.fetch_db_version()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_help"><code class="docutils literal notranslate"><span class="pre">Client.fetch_help()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_instances"><code class="docutils literal notranslate"><span class="pre">Client.fetch_instances()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_neuron_keys"><code class="docutils literal notranslate"><span class="pre">Client.fetch_neuron_keys()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_profile"><code class="docutils literal notranslate"><span class="pre">Client.fetch_profile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_raw_keyvalue"><code class="docutils literal notranslate"><span class="pre">Client.fetch_raw_keyvalue()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_roi_completeness"><code class="docutils literal notranslate"><span class="pre">Client.fetch_roi_completeness()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_roi_connectivity"><code class="docutils literal notranslate"><span class="pre">Client.fetch_roi_connectivity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_roi_mesh"><code class="docutils literal notranslate"><span class="pre">Client.fetch_roi_mesh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_server_info"><code class="docutils literal notranslate"><span class="pre">Client.fetch_server_info()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_skeleton"><code class="docutils literal notranslate"><span class="pre">Client.fetch_skeleton()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_token"><code class="docutils literal notranslate"><span class="pre">Client.fetch_token()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.fetch_version"><code class="docutils literal notranslate"><span class="pre">Client.fetch_version()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.client.Client.post_raw_keyvalue"><code class="docutils literal notranslate"><span class="pre">Client.post_raw_keyvalue()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.default_client"><code class="docutils literal notranslate"><span class="pre">default_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.set_default_client"><code class="docutils literal notranslate"><span class="pre">set_default_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.clear_default_client"><code class="docutils literal notranslate"><span class="pre">clear_default_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.list_all_clients"><code class="docutils literal notranslate"><span class="pre">list_all_clients()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.setup_debug_logging"><code class="docutils literal notranslate"><span class="pre">setup_debug_logging()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neuprint.client.disable_debug_logging"><code class="docutils literal notranslate"><span class="pre">disable_debug_logging()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="queries.html">Queries</a></li>
 <li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="skeleton.html">Skeletons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wrangle.html">Data Wrangling</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
 </ul>
@@ -90,9 +122,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="client">
-<span id="id1"></span><h1>Client<a class="headerlink" href="#client" title="Permalink to this heading">¶</a></h1>
-<span class="target" id="module-neuprint.client"></span><p>All communication to the neuPrint server is peformed using a
+  <section id="client">
+<span id="id1"></span><h1>Client<a class="headerlink" href="#client" title="Link to this heading">¶</a></h1>
+<p id="module-neuprint.client">All communication to the neuPrint server is peformed using a
 <a class="reference internal" href="#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> object, which holds your authorization
 credentials, the dataset name to use, and other connection settings.
 (To obtain your authorization credentials, see the <a class="reference internal" href="quickstart.html#quickstart"><span class="std std-ref">Quickstart</span></a>.)</p>
@@ -136,10 +168,6 @@ shown in the console by default.  To display them, see
 <a class="reference internal" href="#neuprint.client.setup_debug_logging" title="neuprint.client.setup_debug_logging"><code class="xref py py-func docutils literal notranslate"><span class="pre">setup_debug_logging()</span></code></a>.</p>
 </div>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neuprint.client.default_client" title="neuprint.client.default_client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_client</span></code></a>()</p></td>
 <td><p>Obtain the default Client object to use.</p></td>
@@ -164,10 +192,6 @@ shown in the console by default.  To display them, see
 <p><a class="reference internal" href="#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-class docutils literal notranslate"><span class="pre">Client</span></code></a> methods correspond directly to built-in
 <a class="reference external" href="https://neuprint.janelia.org/help/api?dataset=hemibrain%3Av1.2.1&amp;qt=findneurons&amp;q=1">neuprintHTTP API endpoints</a>.</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neuprint.client.Client" title="neuprint.client.Client"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Client</span></code></a>(server[, dataset, token, verify])</p></td>
 <td><p>Client object for interacting with the neuprint database.</p></td>
@@ -230,7 +254,7 @@ shown in the console by default.  To display them, see
 </table>
 <dl class="py class">
 <dt class="sig sig-object py" id="neuprint.client.Client">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L363"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">Client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">token</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L363"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client" title="Link to this definition">¶</a></dt>
 <dd><p>Client object for interacting with the neuprint database.</p>
 <p>When you create the first <code class="docutils literal notranslate"><span class="pre">Client</span></code>, it becomes the default
 <code class="docutils literal notranslate"><span class="pre">Client</span></code> to be used with all <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> functions
@@ -239,7 +263,7 @@ But if you create multiple <code class="docutils literal notranslate"><span clas
 is cleared and you must explicitly pass a <code class="docutils literal notranslate"><span class="pre">client</span></code> parameter to all
 query functions.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>server</strong> – URL of neuprintHttp server</p></li>
 <li><p><strong>token</strong> – neuPrint token. Either pass explitily as an argument or set
@@ -255,16 +279,16 @@ all queries.</p></li>
 </dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_available">
-<span class="sig-name descname"><span class="pre">fetch_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L578"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_available" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L578"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_available" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the list of REST API endpoints supported by the server.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_custom">
-<span class="sig-name descname"><span class="pre">fetch_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cypher</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L520"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_custom" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cypher</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L520"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_custom" title="Link to this definition">¶</a></dt>
 <dd><p>Query the neuprint server with a custom Cypher query.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>cypher</strong> – A cypher query string</p></li>
 <li><p><strong>dataset</strong> – <p><em>Deprecated. Please provide your dataset as a Client constructor argument.</em></p>
@@ -276,7 +300,7 @@ Whether to load the results into a <code class="docutils literal notranslate"><s
 or return the server’s raw JSON response as a Python <code class="docutils literal notranslate"><span class="pre">dict</span></code>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Either json or DataFrame, depending on <code class="docutils literal notranslate"><span class="pre">format</span></code>.</p>
 </dd>
 </dl>
@@ -284,13 +308,13 @@ or return the server’s raw JSON response as a Python <code class="docutils lit
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_daily_type">
-<span class="sig-name descname"><span class="pre">fetch_daily_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L698"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_daily_type" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_daily_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L698"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_daily_type" title="Link to this definition">¶</a></dt>
 <dd><p>Return information about today’s cell type of the day.</p>
 <p>The server updates the completeness numbers each day. A different
 cell type is randomly picked and an exemplar is chosen
 from this type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>If <code class="docutils literal notranslate"><span class="pre">format='json'</span></code>, a dictionary is returned with keys
 <code class="docutils literal notranslate"><span class="pre">['info',</span> <span class="pre">'connectivity',</span> <span class="pre">'skeleton']</span></code>.
 If <code class="docutils literal notranslate"><span class="pre">format='pandas'</span></code>, three values are returned:
@@ -302,22 +326,22 @@ and <code class="docutils literal notranslate"><span class="pre">skeleton</span>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_database">
-<span class="sig-name descname"><span class="pre">fetch_database</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L627"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_database" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_database</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L627"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_database" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the address of the neo4j database that the neuprint server is using.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_datasets">
-<span class="sig-name descname"><span class="pre">fetch_datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reload_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L635"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_datasets" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_datasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reload_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L635"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_datasets" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch basic information about the available datasets on the server.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>reload_cache</strong> – The result from each unique neuprint server is cached locally
 and re-used by all Clients, but you can invalidate the entire
 cache by setting reload_cache to True, causing it to be repopulated
 during this call.</p>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>dict, keyed by dataset name</p>
 </dd>
 </dl>
@@ -325,38 +349,38 @@ during this call.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_db_version">
-<span class="sig-name descname"><span class="pre">fetch_db_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L665"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_db_version" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_db_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L665"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_db_version" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the database version</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_help">
-<span class="sig-name descname"><span class="pre">fetch_help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L584"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_help" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L584"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_help" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch auto-generated REST API documentation, as YAML text.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_instances">
-<span class="sig-name descname"><span class="pre">fetch_instances</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L659"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_instances" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_instances</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L659"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_instances" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch secondary data instances avaiable through neupint http</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_neuron_keys">
-<span class="sig-name descname"><span class="pre">fetch_neuron_keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L602"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_neuron_keys" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_neuron_keys</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L602"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_neuron_keys" title="Link to this definition">¶</a></dt>
 <dd><p>Returns all available :Neuron properties in the database. Cached.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_profile">
-<span class="sig-name descname"><span class="pre">fetch_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L675"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_profile" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_profile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L675"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_profile" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch basic information about your user profile,
 including your access level.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_raw_keyvalue">
-<span class="sig-name descname"><span class="pre">fetch_raw_keyvalue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L898"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_raw_keyvalue" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_raw_keyvalue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L898"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_raw_keyvalue" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch a value from the <code class="docutils literal notranslate"><span class="pre">neuprintHTTP</span></code> server.
 The data address is given by both the instance name and key.
 (For admins and experts only.)</p>
@@ -364,7 +388,7 @@ The data address is given by both the instance name and key.
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_roi_completeness">
-<span class="sig-name descname"><span class="pre">fetch_roi_completeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L726"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_completeness" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_roi_completeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L726"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_completeness" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the pre-computed traced “completeness” statistics
 for each primary ROI in the dataset.</p>
 <p>The completeness statistics indicate how many synapses
@@ -378,7 +402,7 @@ They are computed periodically and cached.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_roi_connectivity">
-<span class="sig-name descname"><span class="pre">fetch_roi_connectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L747"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_connectivity" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_roi_connectivity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L747"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_connectivity" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the pre-computed connectivity statistics
 between primary ROIs in the dataset.</p>
 <div class="admonition note">
@@ -390,16 +414,16 @@ They are computed periodically and cached.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_roi_mesh">
-<span class="sig-name descname"><span class="pre">fetch_roi_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L781"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_mesh" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_roi_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L781"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_roi_mesh" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch a mesh for the given ROI, in <code class="docutils literal notranslate"><span class="pre">.obj</span></code> format.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>roi</strong> – Name of an ROI</p></li>
 <li><p><strong>export_path</strong> – Optional. Writes the <code class="docutils literal notranslate"><span class="pre">.obj</span></code> file to the given path.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>bytes
 The contents of the fetched <code class="docutils literal notranslate"><span class="pre">.obj</span></code> mesh file.</p>
 </dd>
@@ -413,16 +437,16 @@ The contents of the fetched <code class="docutils literal notranslate"><span cla
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_server_info">
-<span class="sig-name descname"><span class="pre">fetch_server_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L590"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_server_info" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_server_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L590"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_server_info" title="Link to this definition">¶</a></dt>
 <dd><p>Returns whether or not the server is public.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_skeleton">
-<span class="sig-name descname"><span class="pre">fetch_skeleton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_distances</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L810"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_skeleton" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_skeleton</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">body</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">export_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pandas'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">with_distances</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L810"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_skeleton" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch the skeleton for a neuron or segment.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>body</strong> (<em>int</em>) – A neuron or segment ID</p></li>
 <li><p><strong>heal</strong> (<em>bool</em>) – <p>If <code class="docutils literal notranslate"><span class="pre">True</span></code> and the skeleton is fragmented, ‘heal’ it by connecting
@@ -446,7 +470,7 @@ Distances are computed AFTER healing is performed.
 Distances will not be present in any exported SWC file.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Either a string (swc), a DataFrame (pandas), or <code class="docutils literal notranslate"><span class="pre">networkx.DiGraph</span></code> (nx).</p>
 </dd>
 </dl>
@@ -462,7 +486,7 @@ Distances will not be present in any exported SWC file.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_token">
-<span class="sig-name descname"><span class="pre">fetch_token</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L682"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_token" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_token</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L682"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_token" title="Link to this definition">¶</a></dt>
 <dd><p>Fetch your user authentication token.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -475,13 +499,13 @@ this documentation.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.fetch_version">
-<span class="sig-name descname"><span class="pre">fetch_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L596"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_version" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">fetch_version</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L596"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.fetch_version" title="Link to this definition">¶</a></dt>
 <dd><p>Returns the version of the <code class="docutils literal notranslate"><span class="pre">neuPrintHTTP</span></code> server.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="neuprint.client.Client.post_raw_keyvalue">
-<span class="sig-name descname"><span class="pre">post_raw_keyvalue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L907"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.post_raw_keyvalue" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">post_raw_keyvalue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L907"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.Client.post_raw_keyvalue" title="Link to this definition">¶</a></dt>
 <dd><p>Post a value from the <code class="docutils literal notranslate"><span class="pre">neuprintHTTP</span></code> server.
 The data address is given by both the instance name and key.
 (For admins and experts only.)</p>
@@ -491,7 +515,7 @@ The data address is given by both the instance name and key.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.client.default_client">
-<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">default_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.default_client" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">default_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L91"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.default_client" title="Link to this definition">¶</a></dt>
 <dd><p>Obtain the default Client object to use.
 This function returns a separate copy of the
 default client for each thread (and process).</p>
@@ -502,7 +526,7 @@ you haven’t passed in an explict <cite>client</cite> argument.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.client.set_default_client">
-<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">set_default_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L132"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.set_default_client" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">set_default_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L132"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.set_default_client" title="Link to this definition">¶</a></dt>
 <dd><p>Set (or overwrite) the default Client.</p>
 <p>There’s usually no need to call this function.
 It’s is automatically called when your first
@@ -512,19 +536,19 @@ to replace the default.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.client.clear_default_client">
-<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">clear_default_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L160"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.clear_default_client" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">clear_default_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L160"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.clear_default_client" title="Link to this definition">¶</a></dt>
 <dd><p>Unset the default Client, leaving no default in place.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.client.list_all_clients">
-<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">list_all_clients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L170"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.list_all_clients" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">list_all_clients</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L170"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.list_all_clients" title="Link to this definition">¶</a></dt>
 <dd><p>List all <code class="docutils literal notranslate"><span class="pre">Client</span></code> objects in the program.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.client.setup_debug_logging">
-<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">setup_debug_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L246"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.setup_debug_logging" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">setup_debug_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L246"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.setup_debug_logging" title="Link to this definition">¶</a></dt>
 <dd><p>Simple debug logging configuration.
 Useful for interactive terminal sessions.</p>
 <div class="admonition warning">
@@ -565,10 +589,10 @@ Enable neuprint debug logging via:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.client.disable_debug_logging">
-<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">disable_debug_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.4.26/neuprint/client.py#L303"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.disable_debug_logging" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.client.</span></span><span class="sig-name descname"><span class="pre">disable_debug_logging</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/client.py#L303"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.client.disable_debug_logging" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
-</div>
+</section>
 
 
            </div>

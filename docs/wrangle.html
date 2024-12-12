@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Wrangling &mdash; neuprint-python 0.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/documentation_options.js?v=db78e746"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities" href="utils.html" />
+    <link rel="prev" title="Skeletons" href="skeleton.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            neuprint-python
+          </a>
+              <div class="version">
+                0.5
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queries.html">Queries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation.html">Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="skeleton.html">Skeletons</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Wrangling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#reference">Reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.wrangle.syndist_matrix"><code class="docutils literal notranslate"><span class="pre">syndist_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.wrangle.bilateral_syndist"><code class="docutils literal notranslate"><span class="pre">bilateral_syndist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuprint.wrangle.assign_sides_in_groups"><code class="docutils literal notranslate"><span class="pre">assign_sides_in_groups()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="admin.html">Admin Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related.html">Related Projects</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">neuprint-python</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="api.html">API</a></li>
+      <li class="breadcrumb-item active">Data Wrangling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/wrangle.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neuprint.wrangle">
+<span id="data-wrangling"></span><span id="utils"></span><h1>Data Wrangling<a class="headerlink" href="#module-neuprint.wrangle" title="Link to this heading">¶</a></h1>
+<p>Miscellaneous utilities for wrangling data from neuprint for various purposes.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neuprint.wrangle.syndist_matrix" title="neuprint.wrangle.syndist_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">syndist_matrix</span></code></a>(syndist[, rois, syn_columns, ...])</p></td>
+<td><p>Pivot a synapse ROI counts table (one row per body).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neuprint.wrangle.bilateral_syndist" title="neuprint.wrangle.bilateral_syndist"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bilateral_syndist</span></code></a>(syndist[, bodies, rois, ...])</p></td>
+<td><p>Aggregate synapse counts for corresponding left and right ROIs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neuprint.wrangle.assign_sides_in_groups" title="neuprint.wrangle.assign_sides_in_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">assign_sides_in_groups</span></code></a>(neurons, syndist[, ...])</p></td>
+<td><p>Determine which side (left or right) each neuron belongs to, according to a few heuristics.</p></td>
+</tr>
+</tbody>
+</table>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neuprint.wrangle.syndist_matrix">
+<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">syndist_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['pre',</span> <span class="pre">'post']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten_column_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/wrangle.py#L8"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.syndist_matrix" title="Link to this definition">¶</a></dt>
+<dd><p>Pivot a synapse ROI counts table (one row per body).</p>
+<p>Given a table of synapse ROI distributions as returned by <a class="reference internal" href="queries.html#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a>,
+pivot the ROIs into the columns so the result has one row per body.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>syndist</strong> – DataFrame in the format returned by <code class="docutils literal notranslate"><span class="pre">fetch_neurons()[1]</span></code></p></li>
+<li><p><strong>rois</strong> – Optionally filter the input table to process only the listed ROIs.</p></li>
+<li><p><strong>syn_columns</strong> – Optionally process only the given columns of syndist.</p></li>
+<li><p><strong>flatten_column_index</strong> – By default, the result columns will use a MultiIndex <code class="docutils literal notranslate"><span class="pre">(orig_col,</span> <span class="pre">roi)</span></code>,
+e.g. <code class="docutils literal notranslate"><span class="pre">('pre',</span> <span class="pre">'LO(R)')</span></code>.  If <code class="docutils literal notranslate"><span class="pre">flatten_column_index=True</span></code>, then the
+output column index is flattened to a plain index with names like <code class="docutils literal notranslate"><span class="pre">LO(R)-pre</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame indexed by bodyId and with column count C * R, where C
+is the number of original columns (not counting bodId and roi),
+and R is the number of unique rois in the input.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">fetch_neurons</span><span class="p">,</span> <span class="n">syndist_matrix</span>
+<span class="gp">   ...: </span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="s1">&#39;hemibrain:v1.2.1&#39;</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">bodies</span> <span class="o">=</span> <span class="p">[</span><span class="mi">786989471</span><span class="p">,</span> <span class="mi">925548084</span><span class="p">,</span> <span class="mi">1102514975</span><span class="p">,</span> <span class="mi">1129042596</span><span class="p">,</span> <span class="mi">1292847181</span><span class="p">,</span> <span class="mi">5813080979</span><span class="p">]</span>
+<span class="gp">   ...: </span><span class="n">neurons</span><span class="p">,</span> <span class="n">syndist</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">bodies</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">syndist_matrix</span><span class="p">(</span><span class="n">syndist</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;EB&#39;</span><span class="p">,</span> <span class="s1">&#39;FB&#39;</span><span class="p">,</span> <span class="s1">&#39;PB&#39;</span><span class="p">])</span>
+<span class="gh">Out[1]:</span>
+<span class="go">            pre           post</span>
+<span class="go">roi          EB   FB  PB    EB    FB   PB</span>
+<span class="go">bodyId</span>
+<span class="go">786989471     0  110  11     0  1598  157</span>
+<span class="go">925548084     0  542   0     0   977    0</span>
+<span class="go">1102514975    0  236   0     1  1338    0</span>
+<span class="go">1129042596    0  139   0     0  1827    0</span>
+<span class="go">1292847181  916    0   0  1558     0    0</span>
+<span class="go">5813080979  439    0   0   748     0  451</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neuprint.wrangle.bilateral_syndist">
+<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">bilateral_syndist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bodies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['pre',</span> <span class="pre">'post']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/wrangle.py#L64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.bilateral_syndist" title="Link to this definition">¶</a></dt>
+<dd><p>Aggregate synapse counts for corresponding left and right ROIs.</p>
+<p>Given a synapse distribution table as returned by <a class="reference internal" href="queries.html#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a>
+(in its second return value), group corresponding contralateral ROIs
+(suffixed with <code class="docutils literal notranslate"><span class="pre">(L)</span></code> and <code class="docutils literal notranslate"><span class="pre">(R)</span></code>) and aggregate their synapse counts
+into total ‘bilateral’ counts with the suffix <code class="docutils literal notranslate"><span class="pre">(LR)</span></code>.</p>
+<p>ROIs without a suffix <code class="docutils literal notranslate"><span class="pre">(L)</span></code>/<code class="docutils literal notranslate"><span class="pre">(R)</span></code> will be returned in the output unchanged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>syndist</strong> – DataFrame in the format returned by <code class="docutils literal notranslate"><span class="pre">fetch_neurons()[1]</span></code></p></li>
+<li><p><strong>bodies</strong> – Optionally filter the input table to include only the listed body IDs.</p></li>
+<li><p><strong>rois</strong> – Optionally filter the input table to process only the listed ROIs.</p></li>
+<li><p><strong>syn_columns</strong> – The names of the statistic columns in the input to process.
+Others are ignored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame, similar to the input table but with left/right ROIs aggregated
+and named with a <code class="docutils literal notranslate"><span class="pre">(LR)</span></code> suffix.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">neuprint</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">fetch_neurons</span><span class="p">,</span> <span class="n">bilateral_syndist</span>
+<span class="gp">   ...: </span><span class="n">c</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s1">&#39;neuprint.janelia.org&#39;</span><span class="p">,</span> <span class="s1">&#39;hemibrain:v1.2.1&#39;</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">bodies</span> <span class="o">=</span> <span class="p">[</span><span class="mi">786989471</span><span class="p">,</span> <span class="mi">925548084</span><span class="p">,</span> <span class="mi">1102514975</span><span class="p">,</span> <span class="mi">1129042596</span><span class="p">,</span> <span class="mi">1292847181</span><span class="p">,</span> <span class="mi">5813080979</span><span class="p">]</span>
+<span class="gp">   ...: </span><span class="n">neurons</span><span class="p">,</span> <span class="n">syndist</span> <span class="o">=</span> <span class="n">fetch_neurons</span><span class="p">(</span><span class="n">bodies</span><span class="p">)</span>
+<span class="gp">   ...: </span><span class="n">bilateral_syndist</span><span class="p">(</span><span class="n">syndist</span><span class="p">,</span> <span class="n">rois</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">primary_rois</span><span class="p">)</span>
+<span class="gh">Out[1]:</span>
+<span class="go">        bodyId      roi  pre  post</span>
+<span class="go">0    786989471  CRE(LR)   77    75</span>
+<span class="go">3    786989471       FB  110  1598</span>
+<span class="go">1    786989471  LAL(LR)    2     2</span>
+<span class="go">14   786989471       PB   11   157</span>
+<span class="go">2    925548084  CRE(LR)    1   203</span>
+<span class="go">22   925548084       FB  542   977</span>
+<span class="go">3    925548084  SMP(LR)    1   171</span>
+<span class="go">4   1102514975  CRE(LR)    2   190</span>
+<span class="go">35  1102514975       EB    0     1</span>
+<span class="go">37  1102514975       FB  236  1338</span>
+<span class="go">5   1102514975  ICL(LR)    0     1</span>
+<span class="go">6   1102514975  LAL(LR)    0     3</span>
+<span class="go">7   1102514975  SMP(LR)    0    74</span>
+<span class="go">8   1102514975  b&#39;L(LR)    0     4</span>
+<span class="go">55  1129042596       FB  139  1827</span>
+<span class="go">9   1129042596  ICL(LR)    0     2</span>
+<span class="go">10  1292847181   BU(LR)    5   143</span>
+<span class="go">67  1292847181       EB  916  1558</span>
+<span class="go">11  1292847181  LAL(LR)    0     1</span>
+<span class="go">77  5813080979       EB  439   748</span>
+<span class="go">82  5813080979       NO  105   451</span>
+<span class="go">86  5813080979       PB    0   451</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neuprint.wrangle.assign_sides_in_groups">
+<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">assign_sides_in_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neurons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_post</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/wrangle.py#L145"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.assign_sides_in_groups" title="Link to this definition">¶</a></dt>
+<dd><p>Determine which side (left or right) each neuron belongs to,
+according to a few heuristics.</p>
+<p>Assigns a column named ‘consensusSide’ to the given neurons table.
+The consensusSide is only assigned for neurons with an assigned <code class="docutils literal notranslate"><span class="pre">group</span></code>,
+and only if every neuron in the group can be assigned a side using
+the same heuristic.</p>
+<p>The neurons are processed in groups (according to the <code class="docutils literal notranslate"><span class="pre">group</span></code> column).
+Multiple heuristics are tried:</p>
+<ul>
+<li><p>If all neurons in the group have a valid <code class="docutils literal notranslate"><span class="pre">somaSide</span></code>, then that’s used.</p></li>
+<li><p>Otherwise, if all neurons in the group have an instance ending with
+<code class="docutils literal notranslate"><span class="pre">_L</span></code> or <code class="docutils literal notranslate"><span class="pre">_R</span></code>, then that is used.</p></li>
+<li><p>Otherwise, we inspect the pre- and post-synapse counts in ROIs which end
+with <code class="docutils literal notranslate"><span class="pre">(L)</span></code> or <code class="docutils literal notranslate"><span class="pre">(R)</span></code>:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If all neurons in the group have significantly more post-synapses
+on one side, then the balance post-synapse is used to assign the
+neuron side.</p></li>
+<li><p>Otherwise, if all neurons in the group have significantly more
+pre-synapses on one side, then that’s used.</p></li>
+<li><p>But we do not use either heuristic if there is any disagreement
+on the relative lateral direction in which the neurons in the group
+project.  If some seem to project contralaterally and others seem to
+project ipsilaterally, we do not assign a consensusSide to any neurons
+in the group.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>neurons</strong> – As produced by <a class="reference internal" href="queries.html#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a></p></li>
+<li><p><strong>syndist</strong> – As produced by <a class="reference internal" href="queries.html#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a></p></li>
+<li><p><strong>primary_rois</strong> – To avoid double-counting synapses in overlapping ROIs, it is best to
+restrict the syndist table to non-overlapping ROIs only (e.g. primary ROIs).
+Provide the list of such ROIs here, or pre-filter the input yourself.</p></li>
+<li><p><strong>min_pre</strong> – When determining a neuron’s side via synapse counts, don’t analyze
+pre-synapses in neurons with fewer than <code class="docutils literal notranslate"><span class="pre">min_pre</span></code> pre-synapses.</p></li>
+<li><p><strong>min_post</strong> – When determining a neuron’s side via synapse counts, don’t analyze
+post-synapses in neurons with fewer than <code class="docutils literal notranslate"><span class="pre">min_post</span></code> post-synapses.</p></li>
+<li><p><strong>min_bias</strong> – When determining a neuron’s side via synapse counts, don’t assign a
+consensusSide unless each neuron in the group has a significant fraction
+of its lateral synapses on either the left or right, as specified
+in this argument.  By default, only assign a consensusSide if 70%
+of post-synapses are on one side, or 70% of pre-synapses are on one
+side (not counting synapses in medial ROIs).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame, indexed by bodyId, with column <code class="docutils literal notranslate"><span class="pre">consensusSide</span></code> (all values
+<code class="docutils literal notranslate"><span class="pre">L</span></code>, <code class="docutils literal notranslate"><span class="pre">R</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>) and various auxiliary columns which indicate
+how the consensus was determined.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="skeleton.html" class="btn btn-neutral float-left" title="Skeletons" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2019, FlyEM.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
