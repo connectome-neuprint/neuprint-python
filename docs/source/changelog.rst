@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.5.1 / 2025-02-02
+------------------
+- ``fetch_neurons()``: Added ``omit_rois`` option, which speeds up the function if you don't need ROI information.
+- For admins: Fixed an issue that could cause needless exceptions to be raised when cleaning up from a failed transaction.
+
 0.5 / 2024-12-11
 ----------------
 - Now compatible with numpy 2.x
