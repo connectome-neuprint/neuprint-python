@@ -33,7 +33,7 @@ Before you can upload packages to PyPI, you'll need to be added as a "collaborat
 ``neuprint-python`` project on PyPI.  Then you'll need to log in and obtain a token with
 an appropriate scope for ``neuprint-python`` and add it to your ``~/.pypirc`` file:
 
-.. code-block:: toml
+.. code-block::
 
     [distutils]
     index-servers =

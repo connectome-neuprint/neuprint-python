@@ -17,7 +17,7 @@ CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_neurons(criteria=None, *, client=None):
+def fetch_neurons(criteria=None, *, omit_rois=False,client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
 
@@ -36,12 +36,16 @@ def fetch_neurons(criteria=None, *, client=None):
             Only Neurons which satisfy all components of the given criteria are returned.
             If no criteria is specified then the default ``NeuronCriteria()`` is used.
 
+        omit_rois (bool):
+            If True, the ROI columns are omitted from the output.
+            If you don't need ROI information, this can speed up the query.
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
     Returns:
-        Two DataFrames.
-        ``(neurons_df, roi_counts_df)``
+        Two DataFrames: ``(neurons_df, roi_counts_df)`` unless ``omit_rois`` is True,
+        in which case only ``neurons_df`` is returned.
 
         In ``neurons_df``, all available ``:Neuron`` columns are returned, with the following changes:
 
@@ -119,6 +123,9 @@ def fetch_neurons(criteria=None, *, client=None):
     # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
     props = compile_columns(client, core_columns=CORE_NEURON_COLS)
     props = map(cypher_identifier, props)
+    if omit_rois:
+        props = [p for p in props if p != 'roiInfo']
+
     return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
 
@@ -130,6 +137,9 @@ def fetch_neurons(criteria=None, *, client=None):
         ORDER BY n.bodyId
     """
     neuron_df = client.fetch_custom(q)
+    if omit_rois:
+        return neuron_df
+
     neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
     return neuron_df, roi_counts_df
 

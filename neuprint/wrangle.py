@@ -160,6 +160,7 @@ def assign_sides_in_groups(neurons, syndist, primary_rois=None, min_pre=50, min_
       ``_L`` or ``_R``, then that is used.
     - Otherwise, we inspect the pre- and post-synapse counts in ROIs which end
       with ``(L)`` or ``(R)``:
+
         - If all neurons in the group have significantly more post-synapses
           on one side, then the balance post-synapse is used to assign the
           neuron side.
