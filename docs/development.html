@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Development Notes &mdash; neuprint-python 0.5 documentation</title>
+  <title>Development Notes &mdash; neuprint-python 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
@@ -14,7 +14,7 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/documentation_options.js?v=db78e746"></script>
+        <script src="_static/documentation_options.js?v=b9afe91b"></script>
         <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -38,7 +38,7 @@
             neuprint-python
           </a>
               <div class="version">
-                0.5
+                0.5.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -105,7 +105,28 @@
 </pre></div>
 </div>
 <p>Install <code class="docutils literal notranslate"><span class="pre">conda-build</span></code> if you don’t have it yet:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>conda-build<span class="w"> </span>anaconda-client<span class="w"> </span>twine
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>conda-build<span class="w"> </span>anaconda-client<span class="w"> </span>twine<span class="w"> </span>setuptools
+</pre></div>
+</div>
+<p>Before you can upload packages to anaconda.org, you’ll need to be a member of the <code class="docutils literal notranslate"><span class="pre">flyem-forge</span></code> organization.
+Then you’ll need to run <code class="docutils literal notranslate"><span class="pre">anaconda</span> <span class="pre">login</span></code>.</p>
+<p>Before you can upload packages to PyPI, you’ll need to be added as a “collaborator” of the
+<code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> project on PyPI.  Then you’ll need to log in and obtain a token with
+an appropriate scope for <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code> and add it to your <code class="docutils literal notranslate"><span class="pre">~/.pypirc</span></code> file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">distutils</span><span class="p">]</span>
+<span class="n">index</span><span class="o">-</span><span class="n">servers</span> <span class="o">=</span>
+    <span class="n">neuprint</span><span class="o">-</span><span class="n">python</span>
+    <span class="n">my</span><span class="o">-</span><span class="n">other</span><span class="o">-</span><span class="n">project</span>
+
+<span class="p">[</span><span class="n">neuprint</span><span class="o">-</span><span class="n">python</span><span class="p">]</span>
+<span class="n">repository</span> <span class="o">=</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">upload</span><span class="o">.</span><span class="n">pypi</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">legacy</span><span class="o">/</span>
+<span class="n">username</span> <span class="o">=</span> <span class="n">__token__</span>
+<span class="n">password</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">your</span> <span class="n">token</span> <span class="n">goes</span> <span class="n">here</span><span class="o">&gt;</span>
+
+<span class="p">[</span><span class="n">my</span><span class="o">-</span><span class="n">other</span><span class="o">-</span><span class="n">project</span><span class="p">]</span>
+<span class="n">repository</span> <span class="o">=</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">upload</span><span class="o">.</span><span class="n">pypi</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">legacy</span><span class="o">/</span>
+<span class="n">username</span> <span class="o">=</span> <span class="n">__token__</span>
+<span class="n">password</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">your</span> <span class="n">other</span> <span class="n">token</span> <span class="n">goes</span> <span class="n">here</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 </section>

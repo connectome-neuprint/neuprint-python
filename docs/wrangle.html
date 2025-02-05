@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Data Wrangling &mdash; neuprint-python 0.5 documentation</title>
+  <title>Data Wrangling &mdash; neuprint-python 0.5.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
@@ -14,7 +14,7 @@
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-        <script src="_static/documentation_options.js?v=db78e746"></script>
+        <script src="_static/documentation_options.js?v=b9afe91b"></script>
         <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -38,7 +38,7 @@
             neuprint-python
           </a>
               <div class="version">
-                0.5
+                0.5.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -101,7 +101,7 @@
            <div itemprop="articleBody">
              
   <section id="module-neuprint.wrangle">
-<span id="data-wrangling"></span><span id="utils"></span><h1>Data Wrangling<a class="headerlink" href="#module-neuprint.wrangle" title="Link to this heading">¶</a></h1>
+<span id="data-wrangling"></span><span id="wrangle"></span><h1>Data Wrangling<a class="headerlink" href="#module-neuprint.wrangle" title="Link to this heading">¶</a></h1>
 <p>Miscellaneous utilities for wrangling data from neuprint for various purposes.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
@@ -120,7 +120,7 @@
 <h2>Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.wrangle.syndist_matrix">
-<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">syndist_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['pre',</span> <span class="pre">'post']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten_column_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/wrangle.py#L8"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.syndist_matrix" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">syndist_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['pre',</span> <span class="pre">'post']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten_column_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5.1/neuprint/wrangle.py#L8"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.syndist_matrix" title="Link to this definition">¶</a></dt>
 <dd><p>Pivot a synapse ROI counts table (one row per body).</p>
 <p>Given a table of synapse ROI distributions as returned by <a class="reference internal" href="queries.html#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a>,
 pivot the ROIs into the columns so the result has one row per body.</p>
@@ -163,7 +163,7 @@ and R is the number of unique rois in the input.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.wrangle.bilateral_syndist">
-<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">bilateral_syndist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bodies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['pre',</span> <span class="pre">'post']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/wrangle.py#L64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.bilateral_syndist" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">bilateral_syndist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bodies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syn_columns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['pre',</span> <span class="pre">'post']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5.1/neuprint/wrangle.py#L64"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.bilateral_syndist" title="Link to this definition">¶</a></dt>
 <dd><p>Aggregate synapse counts for corresponding left and right ROIs.</p>
 <p>Given a synapse distribution table as returned by <a class="reference internal" href="queries.html#neuprint.queries.fetch_neurons" title="neuprint.queries.fetch_neurons"><code class="xref py py-func docutils literal notranslate"><span class="pre">fetch_neurons()</span></code></a>
 (in its second return value), group corresponding contralateral ROIs
@@ -221,7 +221,7 @@ and named with a <code class="docutils literal notranslate"><span class="pre">(L
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.wrangle.assign_sides_in_groups">
-<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">assign_sides_in_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neurons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_post</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5/neuprint/wrangle.py#L145"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.assign_sides_in_groups" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.wrangle.</span></span><span class="sig-name descname"><span class="pre">assign_sides_in_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neurons</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">syndist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">primary_rois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_pre</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_post</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.7</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5.1/neuprint/wrangle.py#L145"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.wrangle.assign_sides_in_groups" title="Link to this definition">¶</a></dt>
 <dd><p>Determine which side (left or right) each neuron belongs to,
 according to a few heuristics.</p>
 <p>Assigns a column named ‘consensusSide’ to the given neurons table.
