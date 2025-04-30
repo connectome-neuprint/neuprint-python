@@ -59,6 +59,7 @@ import collections
 from textwrap import dedent, indent
 
 import pandas as pd
+import pyarrow as pa
 
 from functools import lru_cache
 
@@ -489,6 +490,15 @@ class Client:
     def _fetch_json(self, url, json=None, ispost=False):
         r = self._fetch(url, json=json, ispost=ispost)
         return ujson.loads(r.content)
+    
+    def _fetch_arrow(self, url, json=None, ispost=False):
+        print(f"Fetching Arrow data from {url}")
+        r = self._fetch(url, json=json, ispost=ispost)
+        content_type = r.headers.get('Content-Type', '')
+        if 'application/vnd.apache.arrow.stream' not in content_type:
+            raise Exception(f"Expected Arrow stream content type but got: {content_type}")
+        reader = pa.ipc.open_stream(pa.py_buffer(r.content))
+        return reader.read_all().to_pandas(maps_as_pydicts='strict')
 
     ##
     ## Cached properties
@@ -537,9 +547,12 @@ class Client:
                 or return the server's raw JSON response as a Python ``dict``.
 
         Returns:
-            Either json or DataFrame, depending on ``format``.
+            json or DataFrame, depending on ``format``.
         """
-        url = f"{self.server}/api/custom/custom"
+        if format == 'json':
+            url = f"{self.server}/api/custom/custom"
+        else:
+            url = f"{self.server}/api/custom/arrow"
         return self._fetch_cypher(url, cypher, dataset, format)
 
     def _fetch_cypher(self, url, cypher, dataset, format='pandas'):  # noqa
@@ -561,14 +574,15 @@ class Client:
         cypher = indent(dedent(cypher), '    ')
         logger.debug(f"Performing cypher query against dataset '{dataset}':\n{cypher}")
 
-        result = self._fetch_json(url,
-                                  json={"cypher": cypher, "dataset": dataset},
-                                  ispost=True)
-
         if format == 'json':
-            return result
+            return self._fetch_json(url,
+                                    json={"cypher": cypher, "dataset": dataset},
+                                    ispost=True)
 
-        df = pd.DataFrame(result['data'], columns=result['columns'])
+        #df = pd.DataFrame(result['data'], columns=result['columns'])
+        df = self._fetch_arrow(url,
+                            json={"cypher": cypher, "dataset": dataset},
+                            ispost=True)
         return df
 
     ##
