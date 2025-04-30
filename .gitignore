@@ -73,3 +73,5 @@ _autosummary/
 # pixi environments
 .pixi
 *.egg-info
+
+**/.claude/settings.local.json

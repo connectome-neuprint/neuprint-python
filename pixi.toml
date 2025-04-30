@@ -29,9 +29,11 @@ ujson = ">=5.10.0,<6"
 asciitree = ">=0.3.3,<0.4"
 scipy = ">=1.14.1,<2"
 networkx = ">=3.4.2,<4"
+packaging = ">=23.0"
 
 [feature.test.dependencies]
 pytest = "*"
+pyarrow = "*"
 
 [feature.publish.dependencies]
 conda-build = "*"
