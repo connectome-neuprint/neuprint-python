@@ -8,3 +8,5 @@ ujson
 asciitree
 scipy
 networkx
+packaging
+pyarrow

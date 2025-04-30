@@ -62,6 +62,7 @@ import pandas as pd
 import pyarrow as pa
 
 from functools import lru_cache
+from packaging import version
 
 import urllib3
 from urllib3.util.retry import Retry
@@ -597,17 +598,7 @@ class Client:
         Returns:
             json or DataFrame, depending on ``format``.
         """
-        if format == 'json':
-            url = f"{self.server}/api/custom/custom"
-        else:
-            url = f"{self.server}/api/custom/arrow"
-        return self._fetch_cypher(url, cypher, dataset, format)
-
-    def _fetch_cypher(self, url, cypher, dataset, format='pandas'):  # noqa
-        """
-        Fetch cypher from an endpoint.
-        Called by fetch_custom and by Transaction queries.
-        """
+        
         assert format in ('json', 'pandas')
 
         if set("‘’“”").intersection(cypher):
@@ -618,16 +609,24 @@ class Client:
             raise RuntimeError(msg)
 
         dataset = dataset or self.dataset
+        server_handles_arrow = self.arrow_endpoint()
+
+        url = f"{self.server}/api/custom/arrow"
+
 
         cypher = indent(dedent(cypher), '    ')
         logger.debug(f"Performing cypher query against dataset '{dataset}':\n{cypher}")
 
-        if format == 'json':
-            return self._fetch_json(url,
+        if format == 'json' or not server_handles_arrow:
+            response = self._fetch_json(url=f"{self.server}/api/custom/custom",
                                     json={"cypher": cypher, "dataset": dataset},
                                     ispost=True)
+            if format == 'json':
+                return response
+            # Convert the JSON response to a DataFrame
+            return pd.DataFrame(response['data'], columns=response['columns'])
 
-        #df = pd.DataFrame(result['data'], columns=result['columns'])
+        # If the server supports Arrow, use it for pandas dataframe
         df = self._fetch_arrow(url,
                             json={"cypher": cypher, "dataset": dataset},
                             ispost=True)
@@ -658,8 +657,42 @@ class Client:
     def fetch_version(self):
         """
         Returns the version of the ``neuPrintHTTP`` server.
+        
+        Returns:
+            str: The server version as a string.
+            
+        Raises:
+            HTTPError: If the version endpoint is not found or returns an error.
+            KeyError: If the response doesn't contain a 'Version' key.
+            Exception: For other unexpected errors.
         """
-        return self._fetch_json(f"{self.server}/api/version")['Version']
+        try:
+            response = self._fetch_json(f"{self.server}/api/version")
+            return response['Version']
+        except (HTTPError, KeyError, Exception) as e:
+            # Let the caller handle the exception
+            raise
+        
+    def arrow_endpoint(self):
+        """
+        Checks if the neuPrintHTTP server version supports Arrow IPC via HTTP.
+        
+        Returns:
+            bool: True if the server version is 1.7.3 or higher, False otherwise.
+        """
+        try:
+            version_str = self.fetch_version()
+            if not version_str:
+                return False
+                
+            # Parse semantic version
+            server_version = version.parse(version_str)
+            min_version = version.parse('1.7.3')
+            
+            return server_version >= min_version
+        except (HTTPError, KeyError, Exception):
+            # If we can't determine the version for any reason, default to False
+            return False
 
     @lru_cache
     def fetch_neuron_keys(self):
