@@ -493,7 +493,6 @@ class Client:
         return ujson.loads(r.content)
     
     def _fetch_arrow(self, url, json=None, ispost=False):
-        print(f"Fetching Arrow data from {url}")
         r = self._fetch(url, json=json, ispost=ispost)
         content_type = r.headers.get('Content-Type', '')
         if 'application/vnd.apache.arrow.stream' not in content_type:
