@@ -527,7 +527,7 @@ class Client:
     ## Note: Transaction queries are not implemented here.  See admin.py
     ##
 
-    def fetch_custom(self, cypher, dataset="", format='pandas'):  # noqa
+    def fetch_custom(self, cypher, dataset="", format='pandas', use_arrow=False):  # noqa
         """
         Query the neuprint server with a custom Cypher query.
 
@@ -546,11 +546,30 @@ class Client:
                 Whether to load the results into a ``pandas.DataFrame``,
                 or return the server's raw JSON response as a Python ``dict``.
 
+            use_arrow:
+                Behind the scenes, fetch data from the server using Arrow IPC instead of JSON.
+
+                If False, use JSON.
+                If True, use Arrow or raise an error if the server does not support it.
+                If None, use Arrow if the server supports it, otherwise use JSON.
+
+                Note:
+                    At the time of this writing, neuprintHTTP performs slightly worse with the
+                    Arrow IPC format than it does with JSON, which is why the default is JSON.
+
         Returns:
             json or DataFrame, depending on ``format``.
         """
-        
         assert format in ('json', 'pandas')
+        assert use_arrow in (True, False, None)
+        dataset = dataset or self.dataset
+        server_handles_arrow = self.arrow_endpoint()
+
+        if format == 'json' and use_arrow:
+            raise RuntimeError("Returning JSON via Arrow is not supported.")
+
+        if use_arrow and not server_handles_arrow:
+            raise RuntimeError("Cannot use arrow: Server does not support Arrow IPC.")
 
         if set("‘’“”").intersection(cypher):
             msg = ("Your cypher query contains 'smart quotes' (e.g. ‘foo’ or “foo”),"
@@ -559,17 +578,12 @@ class Client:
                    "Your query was:\n" + cypher)
             raise RuntimeError(msg)
 
-        dataset = dataset or self.dataset
-        server_handles_arrow = self.arrow_endpoint()
-
-        url = f"{self.server}/api/custom/arrow"
-
         cypher = indent(dedent(cypher), '    ')
         logger.debug(f"Performing cypher query against dataset '{dataset}':\n{cypher}")
 
-        if format == 'pandas' and server_handles_arrow:
+        if format == 'pandas' and server_handles_arrow and use_arrow is not False:
             return self._fetch_arrow(
-                url,
+                f"{self.server}/api/custom/arrow",
                 {"cypher": cypher, "dataset": dataset},
                 True
             )
