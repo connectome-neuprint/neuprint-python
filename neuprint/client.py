@@ -564,24 +564,27 @@ class Client:
 
         url = f"{self.server}/api/custom/arrow"
 
-
         cypher = indent(dedent(cypher), '    ')
         logger.debug(f"Performing cypher query against dataset '{dataset}':\n{cypher}")
 
-        if format == 'json' or not server_handles_arrow:
-            response = self._fetch_json(url=f"{self.server}/api/custom/custom",
-                                    json={"cypher": cypher, "dataset": dataset},
-                                    ispost=True)
-            if format == 'json':
-                return response
-            # Convert the JSON response to a DataFrame
-            return pd.DataFrame(response['data'], columns=response['columns'])
+        if format == 'pandas' and server_handles_arrow:
+            return self._fetch_arrow(
+                url,
+                {"cypher": cypher, "dataset": dataset},
+                True
+            )
 
-        # If the server supports Arrow, use it for pandas dataframe
-        df = self._fetch_arrow(url,
-                            json={"cypher": cypher, "dataset": dataset},
-                            ispost=True)
-        return df
+        response = self._fetch_json(
+            f"{self.server}/api/custom/custom",
+            {"cypher": cypher, "dataset": dataset},
+            True
+        )
+
+        if format == 'json':
+            return response
+
+        return pd.DataFrame(response['data'], columns=response['columns'])
+
 
     ##
     ## API-META
