@@ -9,6 +9,12 @@ Python client utilties for interacting with the [neuPrint][neuprint] connectome 
 
 ## Install
 
+If you're using pixi, use this:
+```shell
+pixi init -c flyem-forge -c conda-forge
+pixi add python=3.9 'neuprint-python>=0.5.1' 'pyarrow>=20' 'numpy>=2' 'pandas>=2'
+```
+
 If you're using conda, use this command:
 
 ```shell
