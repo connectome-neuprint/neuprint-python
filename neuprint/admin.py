@@ -3,7 +3,9 @@ Administration utilities for managing a neuprint server.
 Using these tools requires admin privileges on the neuPrintHttp server.
 """
 import re
+import pandas as pd
 from requests import HTTPError
+
 from .client import inject_client
 
 
@@ -56,7 +58,17 @@ class Transaction:
             raise RuntimeError("no transaction was created")
 
         url = f"{self.client.server}/api/raw/cypher/transaction/{self.transaction_id}/cypher"
-        return self.client._fetch_cypher(url, cypher, self.dataset, format)
+        response = self.client._fetch_json(
+            url,
+            {"cypher": cypher, "dataset": self.dataset},
+            True
+        )
+
+        if format == 'json':
+            return response
+
+        return pd.DataFrame(response['data'], columns=response['columns'])
+
 
     def kill(self):
         """
