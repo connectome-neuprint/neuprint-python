@@ -241,6 +241,24 @@ def test_fetch_synapse_connections(client):
     assert len(syn_df) == 0
     assert syn_df.dtypes.to_dict() == dtypes
 
+def test_issue_69(client):
+    # Issue #69: somaLocation should be a list independent of omit_rois parameter.
+
+    # This body in hemibrain is known to have a somaLocation.
+    bodyId = 294792184
+    neuron_df, roi_counts_df = fetch_neurons(NC(bodyId=bodyId))
+    assert 'somaLocation' in neuron_df.columns
+    somaLocation = neuron_df.iloc[0]["somaLocation"]
+    assert isinstance(somaLocation, list)
+    assert len(somaLocation) == 3
+
+    # Fetch without ROIs
+    neuron_df = fetch_neurons(NC(bodyId=bodyId), omit_rois=True)
+    assert 'somaLocation' in neuron_df.columns
+    somaLocation = neuron_df.iloc[0]["somaLocation"]
+    assert isinstance(somaLocation, list)
+    assert len(somaLocation) == 3
+
 
 if __name__ == "__main__":
     args = ['-s', '--tb=native', '--pyargs', 'neuprint.tests.test_queries']
