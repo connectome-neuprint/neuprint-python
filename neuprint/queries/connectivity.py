@@ -865,21 +865,24 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
 
 @inject_client
-def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
-                          intermediate_criteria=None,
-                          timeout=5.0, *, client=None):
+def fetch_paths(upstream_bodyId, downstream_bodyId, path_length=None,  max_path_length=None, 
+                min_weight=1, intermediate_criteria=None, timeout=5.0, *, client=None):
     """
     Find all neurons along paths of a specific length between two neurons.
 
     Args:
         upstream_bodyId:
-            The starting neuron.
+            The starting neuron. A single id.
 
         downstream_bodyId:
-            The destination neuron.
+            The destination neuron. A single id.
 
         path_length:
             The exact length of the path (number of relationships).
+
+        max_path_length:
+            The max length of the path (number of relationships). Only one of the two arguments
+            ``path_length`` and ``max_path_length`` should be specified.
 
         min_weight:
             Minimum connection strength for each step in the path.
@@ -901,6 +904,7 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
         The `path` column indicates which path that row belongs to.
         The `weight` column indicates the connection strength to that
         body from the previous body in the path.
+        The `path_length` column indicates the length of the path.
 
     Example:
         .. code-block:: ipython
@@ -929,6 +933,16 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
             17	5	799586652	MBON05	     1065	      2
 
     """
+
+    # Ensure that exactly one of path_length or max_path_length is specified
+    if path_length is None and max_path_length is None:
+        raise ValueError("Either path_length or max_path_length must be specified")
+    if path_length is not None and max_path_length is not None:
+        raise ValueError("Please specify either 'path_length' or 'max_path_length', but not both.")
+    
+    # Determine which mode we're in
+    exact_length_mode = path_length is not None
+
     if intermediate_criteria is None:
         intermediate_criteria = NeuronCriteria(status="Traced", client=client)
     else:
@@ -946,21 +960,29 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
     nodes_where += f"\n OR n.bodyId in [{upstream_bodyId}, {downstream_bodyId}]"
     nodes_where = nodes_where.replace('\n', '')
 
+    if exact_length_mode:
+        path_pattern = f"[:ConnectsTo*{path_length}]"
+    else: 
+        #variable path length up to maximum
+        path_pattern = f"[:ConnectsTo*1..{max_path_length}]"
+
     q = f"""\
         call apoc.cypher.runTimeboxed(
             "{intermediate_criteria.global_with(prefix=12)}
             MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
-                   (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
-                   p = (src)-[:ConnectsTo*{path_length}]->(dest)
+                   (dest :Neuron {{ bodyId: {downstream_bodyId} }}),           
+                   p = (src)-{path_pattern}->(dest)
 
             WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
                   AND ALL (n in nodes(p) {nodes_where})
 
             RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
-                   [x in relationships(p) | x.weight] AS weights",
+                   [x in relationships(p) | x.weight] AS weights,
+                   length(p) AS path_length",
 
             {{}},{timeout_ms}) YIELD value
-            RETURN value.path as path, value.weights AS weights
+            RETURN value.path as path, value.weights AS weights{', value.path_length as path_length' if not exact_length_mode else ''}
+
     """
     results_df = client.fetch_custom(q)
 
@@ -968,8 +990,9 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
     table_bodies = []
     table_types = []
     table_weights = []
+    table_path_lengths = []
 
-    for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
+    for path_index, (path, weights, p_length) in enumerate(results_df.itertuples(index=False)):
         bodies, types = zip(*path)
         weights = [0, *weights]
 
@@ -977,13 +1000,13 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, path_length, min_weight=1,
         table_bodies += bodies
         table_types += types
         table_weights += weights
+        table_path_lengths += len(bodies) * [p_length]
 
     paths_df = pd.DataFrame({'path': table_indexes,
                              'bodyId': table_bodies,
                              'type': table_types,
-                             'weight': table_weights})
-
-    # add a column for the path length
-    paths_df['path_length'] = path_length
+                             'weight': table_weights,
+                             'path_length': table_path_lengths
+                             })
 
     return paths_df
