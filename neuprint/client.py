@@ -683,6 +683,28 @@ class Client:
             neuron_props_json = ujson.loads(neuron_props_val)
             neuron_props = list(neuron_props_json.keys())
             return neuron_props
+
+    @lru_cache
+    def fetch_synapse_nt_keys(self):
+        """
+        Returns :Synapse properties related to neurotransmitters. Cached.
+        """
+
+        # hard-coded CNS reply until we populate the db:
+        return ["ntAcetylcholineProb", "ntDopamineProb", "ntGabaProb",
+                "ntGlutamateProb", "ntHistamineProb", "ntOctopamineProb", "ntSerotoninProb"]
+
+        # like fetch_neuron_keys(), but no fallback query
+        b = "MATCH (n:Meta) RETURN n.ntSynapseProperties"
+        df_results = self.fetch_custom(b)
+        synapse_props_val = df_results.iloc[0, 0]
+        if synapse_props_val is None:
+            return []
+        else:
+            synapse_props_json = ujson.loads(synapse_props_val)
+            synapse_props = list(synapse_props_json.keys())
+            return sorted(synapse_props)
+
     ##
     ## DB-META
     ##
