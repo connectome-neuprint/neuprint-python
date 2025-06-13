@@ -155,6 +155,15 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         neuron_criteria.rois = {*synapse_criteria.rois}
         neuron_criteria.roi_req = 'any'
 
+    # Neurotransmitters vary by dataset; get the names from :Meta and dynamically
+    #   insert the column names into the cypher query.
+    synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+    def _nt_return_clause(prefix=""):
+        if isinstance(prefix, int):
+            prefix = ' ' * prefix
+        # to make the cypher align nicely, chop off the first "prefix"
+        return ",\n".join(f"{prefix}s.{name} as {name}" for name in synapse_nt_prop_names)[len(prefix):]
+
     # Fetch results
     cypher = dedent(f"""\
         {neuron_criteria.global_with(prefix=8)}
@@ -168,9 +177,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
         WITH DISTINCT n, s
         
-        // Find neurotransmitter properties
-        WITH n, s, [k IN keys(s) WHERE k STARTS WITH 'nt'] AS nt_keys
-
+        // Extract properties as rows
         RETURN n.bodyId as bodyId,
                s.type as type,
                s.confidence as confidence,
@@ -178,30 +185,25 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
                s.location.y as y,
                s.location.z as z,
                apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info, 
-               apoc.map.submap(s, nt_keys) as nt_props
+               {_nt_return_clause(prefix=15)}
     """)
     data = client.fetch_custom(cypher, format='json')['data']
 
     # Assemble DataFrame
     syn_table = []
-    nt_columns = []
-    for body, syn_type, conf, x, y, z, syn_info, nt_props in data:
-
-        # extract the neurotransmitter columns, once; they are
-        #   guaranteed to be the same for all pre synapses in the dataset
-        if not nt_columns and nt_props:
-            nt_columns = [_clean_nt_name(name) for name in sorted(nt_props.keys())]
+    cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
+    for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
 
         # prepare the nt info for the synapse
         match nt:
             case None:
                 nt_info = ( )
             case 'max':
-                nt_info = (_max_nt(nt_props), )
+                nt_info = (_max_nt(cleaned_nt_prop_names, nt_probs), )
             case 'all':
-                nt_info = tuple(nt_props.get(k, None) for k in sorted(nt_props.keys()))
+                nt_info = tuple(nt_probs)
             case _:
-                raise ValueError(f"Invalid neurotransmitter option: {nt}. "
+                raise ValueError(f"Invalid option for nt: {nt}. "
                                  "Use None, 'max', or 'all'.")
 
         # Exclude non-primary ROIs if necessary
@@ -220,7 +222,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         case 'max':
             synapse_columns.append('ntWithMaxProb')
         case 'all':
-            synapse_columns.extend(nt_columns)
+            synapse_columns.extend(cleaned_nt_prop_names)
         case _:
             # this has been checked above
             pass
@@ -237,10 +239,10 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     # nt columns types
     if nt == 'all':
-        for column in nt_columns:
+        for column in cleaned_nt_prop_names:
             syn_df[column] = syn_df[column].astype(np.float32)
     elif nt == 'max':
-        syn_df['ntWithMaxProb'] = pd.Categorical(syn_df['ntWithMaxProb'], nt_columns)
+        syn_df['ntWithMaxProb'] = pd.Categorical(syn_df['ntWithMaxProb'], cleaned_nt_prop_names + ["n/a"])
 
     return syn_df
 
@@ -804,11 +806,15 @@ def _clean_nt_name(name):
 
     return name.replace('nt', '').replace('Prob', '').lower()
 
-def _max_nt(nt_props):
+def _max_nt(nt_prop_names, nt_probs):
     """
     Return the neurotransmitter with the highest probability.
-    """
-    if not nt_props:
-        return "n/a"
-    return _clean_nt_name(max(nt_props, key=nt_props.get))
 
+    input: list of nt property names and list of probabilities, in the same order
+    """
+
+    # if any probs are None, they all are
+    if not nt_probs or nt_probs[0] is None:
+        return "n/a"
+
+    return nt_prop_names[nt_probs.index(max(nt_probs))]
