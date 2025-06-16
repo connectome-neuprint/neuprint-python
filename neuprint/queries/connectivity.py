@@ -745,12 +745,32 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
         return edges_df.query('bodyId_post in @_keep')
 
 
-@inject_client
 def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
-                         intermediate_criteria=None,
-                         timeout=5.0, *, client=None):
+                        intermediate_criteria=None,
+                        timeout=5.0, *,
+                        client=None):
     """
     Find all neurons along the shortest path between two neurons.
+
+    This function is a convenience wrapper around :py:func:`fetch_paths()`
+    that sets ``path_length=None`` so the shortest path is returned.
+    """
+
+    return fetch_paths(upstream_bodyId, downstream_bodyId, min_weight=min_weight,
+                        intermediate_criteria=intermediate_criteria,
+                        timeout=timeout,
+                        path_length=None, max_path_length=None,
+                        client=client)
+
+
+@inject_client
+def fetch_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
+                intermediate_criteria=None,
+                timeout=5.0, *,
+                path_length=None, max_path_length=None,
+                client=None):
+    """
+    Find all neurons along one or more paths between two neurons, as specified.
 
     Args:
         upstream_bodyId:
@@ -766,6 +786,15 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
             Filtering criteria for neurons on path.
             All intermediate neurons in the path must satisfy this criteria.
             By default, ``NeuronCriteria(status="Traced")`` is used.
+
+        path_length:
+            The exact length of the path (number of relationships). If None, the shorted
+            path will be returned. Only one of the two arguments
+            ``path_length`` and ``max_path_length`` should be specified.
+
+        max_path_length:
+            The max length of the path (number of relationships). Only one of the two arguments
+            ``path_length`` and ``max_path_length`` should be specified.
 
         timeout:
             Give up after this many seconds, in which case an **empty DataFrame is returned.**
@@ -802,6 +831,24 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
             [5778 rows x 4 columns]
     """
+
+    if path_length is not None and max_path_length is not None:
+        raise ValueError("Please specify either 'path_length' or 'max_path_length', but not both.")
+
+    if max_path_length is not None:
+        path_mode = 'max'
+    elif path_length is not None:
+        path_mode = 'exact'
+        try:
+            path_length = int(path_length)
+        except ValueError:
+            path_length = None
+            raise ValueError(f"Invalid path_length: {path_length}. "
+                             "Please specify an integer value for path_length.")
+    else:
+        # default to shortest path
+        path_mode = 'shortest'
+
     if intermediate_criteria is None:
         intermediate_criteria = NeuronCriteria(status="Traced", client=client)
     else:
@@ -824,21 +871,33 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
         # an expression to serve as the predicate in the query below.
         nodes_where = "WHERE TRUE"
 
+    if path_mode == 'shortest':
+        path_clause = "allShortestPaths((src)-[:ConnectsTo*]->(dest))"
+        return_clause1 = ""
+        return_clause2 = ""
+    else:
+        if path_mode == 'exact':
+            path_clause = f"(src)-[:ConnectsTo*{path_length}]->(dest)"
+        elif path_mode == 'max':
+            path_clause = f"(src)-[:ConnectsTo*1..{max_path_length}]->(dest)"
+        return_clause1 = ",\n                   length(p) AS path_length"
+        return_clause2 = ", value.path_length as path_length"
+
     q = f"""\
         call apoc.cypher.runTimeboxed(
             "{intermediate_criteria.global_with(prefix=12)}
             MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
                    (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
-                   p = allShortestPaths((src)-[:ConnectsTo*]->(dest))
+                   p = {path_clause}
 
             WHERE     ALL (x in relationships(p) WHERE x.weight >= {min_weight})
                   AND ALL (n in nodes(p) {nodes_where})
 
             RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
-                   [x in relationships(p) | x.weight] AS weights",
+                   [x in relationships(p) | x.weight] AS weights{return_clause1}",
 
             {{}},{timeout_ms}) YIELD value
-            RETURN value.path as path, value.weights AS weights
+            RETURN value.path as path, value.weights AS weights{return_clause2}
     """
     results_df = client.fetch_custom(q)
 
@@ -846,18 +905,30 @@ def fetch_shortest_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
     table_bodies = []
     table_types = []
     table_weights = []
+    table_path_lengths = []
 
-    for path_index, (path, weights) in enumerate(results_df.itertuples(index=False)):
+    for path_index, (path, weights, *p_length) in enumerate(results_df.itertuples(index=False)):
         bodies, types = zip(*path)
         weights = [0, *weights]
 
-        table_indexes += len(bodies)*[path_index]
+        table_indexes += len(bodies) * [path_index]
         table_bodies += bodies
         table_types += types
         table_weights += weights
+        if path_mode != 'shortest':
+            table_path_lengths += len(bodies) * [p_length[0]]
 
-    paths_df = pd.DataFrame({'path': table_indexes,
-                             'bodyId': table_bodies,
-                             'type': table_types,
-                             'weight': table_weights})
+    if path_mode == 'shortest':
+        paths_df = pd.DataFrame({'path': table_indexes,
+                                 'bodyId': table_bodies,
+                                 'type': table_types,
+                                 'weight': table_weights})
+    else:
+        paths_df = pd.DataFrame({'path': table_indexes,
+                                 'bodyId': table_bodies,
+                                 'type': table_types,
+                                 'weight': table_weights,
+                                 'path_length': table_path_lengths
+                                 })
+
     return paths_df
