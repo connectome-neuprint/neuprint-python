@@ -50,6 +50,8 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
             If 'max', the most probable neurotransmitter for each synapse is returned in a column named "ntWithMaxProb".
             If 'all', probabilities for all neurotransmitters are returned in named columns.
 
+            If no neurotransmitter information is available, the ``nt`` argument is ignored.
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
@@ -155,14 +157,23 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         neuron_criteria.rois = {*synapse_criteria.rois}
         neuron_criteria.roi_req = 'any'
 
-    # Neurotransmitters vary by dataset; get the names from :Meta and dynamically
+    # Neurotransmitters vary by dataset; get the names and dynamically
     #   insert the column names into the cypher query.
     synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+    if not synapse_nt_prop_names:
+        # no data = ignore this parameter
+        nt = None
+
     def _nt_return_clause(prefix=""):
         if isinstance(prefix, int):
             prefix = ' ' * prefix
-        # to make the cypher align nicely, chop off the first "prefix"
-        return ",\n".join(f"{prefix}s.{name} as {name}" for name in synapse_nt_prop_names)[len(prefix):]
+        if synapse_nt_prop_names:
+            # to make the cypher align nicely, chop off the first "prefix"
+            # also, the first ",\n" continues the previous line of the query, while the
+            #     second is for joining the synapse_nt_prop_names
+            return ",\n" + ",\n".join(f"{prefix}s.{name} as {name}" for name in synapse_nt_prop_names)[len(prefix):]
+        else:
+            return ""
 
     # Fetch results
     cypher = dedent(f"""\
@@ -184,7 +195,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
                s.location.x as x,
                s.location.y as y,
                s.location.z as z,
-               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info, 
+               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
                {_nt_return_clause(prefix=15)}
     """)
     data = client.fetch_custom(cypher, format='json')['data']
@@ -194,7 +205,6 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
     cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
     for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
 
-        # prepare the nt info for the synapse
         match nt:
             case None:
                 nt_info = ( )
