@@ -164,17 +164,6 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         # no data = ignore this parameter
         nt = None
 
-    def _nt_return_clause(prefix=""):
-        if isinstance(prefix, int):
-            prefix = ' ' * prefix
-        if synapse_nt_prop_names:
-            # to make the cypher align nicely, chop off the first "prefix"
-            # also, the first ",\n" continues the previous line of the query, while the
-            #     second is for joining the synapse_nt_prop_names
-            return ",\n" + ",\n".join(f"{prefix}s.{name} as {name}" for name in synapse_nt_prop_names)[len(prefix):]
-        else:
-            return ""
-
     # Fetch results
     cypher = dedent(f"""\
         {neuron_criteria.global_with(prefix=8)}
@@ -195,8 +184,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
                s.location.x as x,
                s.location.y as y,
                s.location.z as z,
-               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
-               {_nt_return_clause(prefix=15)}
+               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info{_neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15)}
     """)
     data = client.fetch_custom(cypher, format='json')['data']
 
@@ -473,7 +461,7 @@ def _fetch_mean_synapses_per_whole_neuron(neuron_criteria, synapse_criteria, cli
 
 @inject_client
 @neuroncriteria_args('source_criteria', 'target_criteria')
-def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=10_000, *, client=None):
+def fetch_synapse_connections(source_criteria=None, target_criteria=None, synapse_criteria=None, min_total_weight=1, batch_size=10_000, *, nt=None, client=None):
     """
     Fetch synaptic-level connections between source and target neurons.
 
@@ -556,6 +544,15 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             This argument specifies the maximum size of each batch in the inner loop.
             Larger batches are more efficient to fetch, but increase the likelihood
             of timeouts.
+
+        neurotransmitters (None (default), 'max', or 'all'):
+            Optional. Retrieves neurotransmitter information for each "pre" synapse.
+
+            If None, no neurotransmitter information is retrieved.
+            If 'max', the most probable neurotransmitter for each synapse is returned in a column named "ntWithMaxProb".
+            If 'all', probabilities for all neurotransmitters are returned in named columns.
+
+            If no neurotransmitter information is available, the ``nt`` argument is ignored.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -687,7 +684,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
                                                            tgt_crit,
                                                            synapse_criteria,
                                                            min_total_weight,
-                                                           client )
+                                                           nt=nt,
+                                                           client=client)
                 if len(batch_syn_df) > 0:
                     syn_dfs.append(batch_syn_df)
                 progress.update(len(batch_syn_df))
@@ -699,7 +697,7 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     return syn_df
 
 
-def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, client):
+def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteria, min_total_weight, nt, client):
     if synapse_criteria.primary_only:
         return_rois = {*client.primary_rois}
     else:
@@ -729,6 +727,13 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         ['n', 'e', 'm', 'ns', 'ms', *criteria_globals],
         prefix=8)
 
+    # Neurotransmitters vary by dataset; get the names and dynamically
+    #   insert the column names into the cypher query.
+    synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+    if not synapse_nt_prop_names:
+        # no data = ignore this parameter
+        nt = None
+
     # Fetch results
     cypher = dedent(f"""\
         {NeuronCriteria.combined_global_with((source_criteria, target_criteria), prefix=8)}
@@ -757,13 +762,25 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
                ns.confidence as confidence_pre,
                ms.confidence as confidence_post,
                apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as info_pre,
-               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as info_post
+               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as info_post{_neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15, matchvar='ns')}
     """)
     data = client.fetch_custom(cypher, format='json')['data']
 
     # Assemble DataFrame
     syn_table = []
-    for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post in data:
+    cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
+    for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post, *nt_probs in data:
+        match nt:
+            case None:
+                nt_info = ( )
+            case 'max':
+                nt_info = (_max_nt(cleaned_nt_prop_names, nt_probs), )
+            case 'all':
+                nt_info = tuple(nt_probs)
+            case _:
+                raise ValueError(f"Invalid option for nt: {nt}. "
+                                 "Use None, 'max', or 'all'.")
+
         # Exclude non-primary ROIs if necessary
         pre_rois = return_rois & {*info_pre.keys()}
         post_rois = return_rois & {*info_post.keys()}
@@ -781,12 +798,22 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
             pre_rois = pre_rois[0]
             post_rois = post_rois[0]
 
-        syn_table.append((bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf))
+        syn_table.append((bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf) + nt_info)
 
-    syn_df = pd.DataFrame(syn_table, columns=['bodyId_pre', 'bodyId_post',
-                                              'roi_pre', 'roi_post',
-                                              'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post',
-                                              'confidence_pre', 'confidence_post'])
+    synapse_columns = ['bodyId_pre', 'bodyId_post', 'roi_pre', 'roi_post',
+        'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post', 'confidence_pre', 'confidence_post']
+    match nt:
+        case None:
+            pass
+        case 'max':
+            synapse_columns.append('ntWithMaxProb')
+        case 'all':
+            synapse_columns.extend(cleaned_nt_prop_names)
+        case _:
+            # this has been checked above
+            pass
+
+    syn_df = pd.DataFrame(syn_table, columns=synapse_columns)
 
     syn_df['bodyId_pre'] = syn_df['bodyId_pre'].astype(np.int64)
     syn_df['bodyId_post'] = syn_df['bodyId_post'].astype(np.int64)
@@ -801,7 +828,16 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     syn_df['confidence_pre'] = syn_df['confidence_pre'].astype(np.float32)
     syn_df['confidence_post'] = syn_df['confidence_post'].astype(np.float32)
 
+    # nt columns types
+    if nt == 'all':
+        for column in cleaned_nt_prop_names:
+            syn_df[column] = syn_df[column].astype(np.float32)
+    elif nt == 'max':
+        syn_df['ntWithMaxProb'] = pd.Categorical(syn_df['ntWithMaxProb'], cleaned_nt_prop_names + ["n/a"])
+
     return syn_df
+
+# a few common routines used when working with neurotransmitter info
 
 def _clean_nt_name(name):
     """
@@ -828,3 +864,20 @@ def _max_nt(nt_prop_names, nt_probs):
         return "n/a"
 
     return nt_prop_names[nt_probs.index(max(nt_probs))]
+
+def _neurotransmitter_return_clause(synapse_nt_prop_names, prefix="", matchvar='s'):
+    """
+    Returns the section of the RETURN clause of the cypher query for
+    all the neurotransmitter probabilities.
+
+    input: list of the property names; a prefix to indent the query (if integer,
+        that many spaces); and the match variable to use
+    """
+    if isinstance(prefix, int):
+        prefix = ' ' * prefix
+    if synapse_nt_prop_names:
+        # the first ",\n" continues the previous line of the query, while the
+        #     second is for joining the synapse_nt_prop_names
+        return ",\n" + ",\n".join(f"{prefix}{matchvar}.{name} as {name}" for name in synapse_nt_prop_names)
+    else:
+        return ""
