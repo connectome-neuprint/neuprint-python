@@ -193,16 +193,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
     cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
     for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
 
-        match nt:
-            case None:
-                nt_info = ( )
-            case 'max':
-                nt_info = (_max_nt(cleaned_nt_prop_names, nt_probs), )
-            case 'all':
-                nt_info = tuple(nt_probs)
-            case _:
-                raise ValueError(f"Invalid option for nt: {nt}. "
-                                 "Use None, 'max', or 'all'.")
+        nt_info = _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names)
 
         # Exclude non-primary ROIs if necessary
         syn_rois = return_rois & {*syn_info.keys()}
@@ -214,16 +205,10 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
             syn_table.append((body, syn_type, None, x, y, z, conf) + nt_info)
 
     synapse_columns = ['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence']
-    match nt:
-        case None:
-            pass
-        case 'max':
-            synapse_columns.append('ntWithMaxProb')
-        case 'all':
-            synapse_columns.extend(cleaned_nt_prop_names)
-        case _:
-            # this has been checked above
-            pass
+    if nt == "max":
+        synapse_columns.append('ntWithMaxProb')
+    elif nt == "all":
+        synapse_columns.extend(cleaned_nt_prop_names)
 
     syn_df = pd.DataFrame(syn_table, columns=synapse_columns)
 
@@ -770,16 +755,8 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     syn_table = []
     cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
     for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post, *nt_probs in data:
-        match nt:
-            case None:
-                nt_info = ( )
-            case 'max':
-                nt_info = (_max_nt(cleaned_nt_prop_names, nt_probs), )
-            case 'all':
-                nt_info = tuple(nt_probs)
-            case _:
-                raise ValueError(f"Invalid option for nt: {nt}. "
-                                 "Use None, 'max', or 'all'.")
+
+        nt_info = _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names)
 
         # Exclude non-primary ROIs if necessary
         pre_rois = return_rois & {*info_pre.keys()}
@@ -802,16 +779,10 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
 
     synapse_columns = ['bodyId_pre', 'bodyId_post', 'roi_pre', 'roi_post',
         'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post', 'confidence_pre', 'confidence_post']
-    match nt:
-        case None:
-            pass
-        case 'max':
-            synapse_columns.append('ntWithMaxProb')
-        case 'all':
-            synapse_columns.extend(cleaned_nt_prop_names)
-        case _:
-            # this has been checked above
-            pass
+    if nt == "max":
+        synapse_columns.append('ntWithMaxProb')
+    elif nt == "all":
+        synapse_columns.extend(cleaned_nt_prop_names)
 
     syn_df = pd.DataFrame(syn_table, columns=synapse_columns)
 
@@ -881,3 +852,26 @@ def _neurotransmitter_return_clause(synapse_nt_prop_names, prefix="", matchvar='
         return ",\n" + ",\n".join(f"{prefix}{matchvar}.{name} as {name}" for name in synapse_nt_prop_names)
     else:
         return ""
+
+
+def _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names):
+    """
+    Process neurotransmitter probabilities based on the requested type.
+
+    Args:
+        nt: 'max', 'all', or None.
+        nt_probs: List of neurotransmitter probabilities.
+        cleaned_nt_prop_names: List of cleaned neurotransmitter names.
+
+    Returns:
+        Processed neurotransmitter information.
+    """
+    match nt:
+        case None:
+            return ()
+        case 'max':
+            return (_max_nt(cleaned_nt_prop_names, nt_probs), )
+        case 'all':
+            return tuple(nt_probs)
+        case _:
+            raise ValueError(f"Invalid option for nt: {nt}. Use None, 'max', or 'all'.")
