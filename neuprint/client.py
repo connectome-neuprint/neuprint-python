@@ -705,23 +705,35 @@ class Client:
     @lru_cache
     def fetch_synapse_nt_keys(self):
         """
-        Returns :Synapse properties related to neurotransmitters. Cached.
+        Returns :Synapse properties related to neurotransmitters, sorted. Cached.
+
+        The properties may be stored in the :Meta node, or they may be
+        queried from the database directly.
         """
 
-        # hard-coded CNS reply until we populate the db:
-        return ["ntAcetylcholineProb", "ntDopamineProb", "ntGabaProb",
-                "ntGlutamateProb", "ntHistamineProb", "ntOctopamineProb", "ntSerotoninProb"]
-
-        # like fetch_neuron_keys(), but no fallback query
+        # first, check the :Meta node; it'll have a dict of {property: property type}
         b = "MATCH (n:Meta) RETURN n.ntSynapseProperties"
         df_results = self.fetch_custom(b)
         synapse_props_val = df_results.iloc[0, 0]
-        if synapse_props_val is None:
-            return []
-        else:
+        if synapse_props_val is not None:
             synapse_props_json = ujson.loads(synapse_props_val)
             synapse_props = list(synapse_props_json.keys())
             return sorted(synapse_props)
+        else:
+            # fallback: query the database and see actually exists;
+            #   note all "pre" values have the same props
+            q = """
+                MATCH (s: Synapse {type:"pre"}) 
+                WITH [k IN keys(s) WHERE k STARTS WITH 'nt'] AS nt_keys
+                RETURN nt_keys
+                LIMIT 1
+                """
+            json_data = self.fetch_custom(q, format='json')
+            if json_data['data']:
+                return sorted(json_data['data'][0][0])
+            else:
+                logger.warning("No synapse neurotransmitter keys found in the database.")
+                return []
 
     ##
     ## DB-META
