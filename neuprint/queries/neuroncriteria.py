@@ -126,14 +126,17 @@ _iterable_attrs = [
     # boolean
     # 'cropped',
 
+    # Secondary type fields (regex-optional)
+    'flywireType', 'hemibrainType', 'mancType',
+
     # Exact string fields (alphabetical order)
     'birthtime', 'cellBodyFiber', 'class_',
-    'entryNerve', 'exitNerve', 'hemilineage',
+    'entryNerve', 'exitNerve', 'hemilineage', 'itoleeHl',
     'longTract', 'modality', 'origin',
     'predictedNt', 'serialMotif', 'somaNeuromere',
     'somaSide', 'status', 'statusLabel',
-    'subclass', 'synonyms', 'systematicType',
-    'target',
+    'subclass', 'superclass', 'synonyms', 'systematicType',
+    'target', 'trumanHl'
 
     # Special
     # label, min_pre, min_post
@@ -197,13 +200,16 @@ class NeuronCriteria:
         # boolean
         cropped=None,
 
+        # Secondary type fields (regex-optional)
+        flywireType=None, hemibrainType=None, mancType=None,
+
         # Other exact string fields (alphabetical)
         birthtime=None, cellBodyFiber=None, class_=None,
-        entryNerve=None, exitNerve=None, hemilineage=None,
+        entryNerve=None, exitNerve=None, hemilineage=None, itoleeHl=None,
         longTract=None, modality=None, origin=None,
         predictedNt=None, serialMotif=None, somaNeuromere=None,
-        somaSide=None, subclass=None, synonyms=None,
-        systematicType=None, target=None,
+        somaSide=None, subclass=None, superclass=None, synonyms=None,
+        systematicType=None, target=None, trumanHl=None,
 
         # Special
         label=None, min_pre=0, min_post=0,
@@ -275,8 +281,8 @@ class NeuronCriteria:
                 matches EITHER criteria will match the overall criteria.
 
             regex (bool):
-                If ``True``, the ``instance`` and ``type`` arguments will be interpreted as
-                regular expressions, rather than exact match strings.
+                If ``True``, the ``instance`` and all ``type``-style arguments will be interpreted
+                as regular expressions, rather than exact match strings.
                 If ``False``, only exact matches will be found.
                 By default, the matching method will be automatically chosen by inspecting the
                 ``type`` and ``instance`` strings.  If they contain regex-like characters,
@@ -331,12 +337,17 @@ class NeuronCriteria:
 
             birthtime (str or list of str):
             cellBodyFiber (str or list of str):
+            superclass (str or list of str):
             class\\_ (str or list of str):
                 Matches for the neuron ``class`` field.
             entryNerve (str or list of str):
             exitNerve (str or list of str):
+            flywireType (str or list of str, regex-optional):
+            hemibrainType (str or list of str, regex-optional):
             hemilineage (str or list of str):
+            itoleeHl (str or list of str):
             longTract (str or list of str):
+            mancType (str or list of str, regex-optional):
             modality (str or list of str):
             origin (str or list of str):
             predictedNt (str or list of str):
@@ -348,6 +359,7 @@ class NeuronCriteria:
             synonyms (str or list of str):
             systematicType (str or list of str):
             target (str or list of str):
+            trumanHl (str or list of str):
 
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.
@@ -397,7 +409,6 @@ class NeuronCriteria:
         # regex-optional
         self.type = self._init_type(type)
         self.instance = self._init_instance(instance)
-        self.regex = self._init_regex(regex, type, instance)
 
         # Status (exact string)
         self.status = status
@@ -424,6 +435,11 @@ class NeuronCriteria:
         self.tosomaLocation = self._init_location_arg(tosomaLocation, 'tosomaLocation')
         self.rootLocation = self._init_location_arg(rootLocation, 'rootLocation')
 
+        # Alternative type fields (alphabetical)
+        self.flywireType = flywireType
+        self.hemibrainType = hemibrainType
+        self.mancType = mancType
+
         # Other exact string fields (alphabetical order)
         self.birthtime = birthtime
         self.cellBodyFiber = cellBodyFiber
@@ -431,6 +447,7 @@ class NeuronCriteria:
         self.entryNerve = entryNerve
         self.exitNerve = exitNerve
         self.hemilineage = hemilineage
+        self.itoleeHl = itoleeHl
         self.longTract = longTract
         self.modality = modality
         self.origin = origin
@@ -439,9 +456,11 @@ class NeuronCriteria:
         self.somaNeuromere = somaNeuromere
         self.somaSide = somaSide
         self.subclass = subclass
+        self.superclass = superclass
         self.synonyms = synonyms
         self.systematicType = systematicType
         self.target = target
+        self.trumanHl = trumanHl
 
         # Special
         self.label = self._init_label(label, bodyId)
@@ -465,13 +484,16 @@ class NeuronCriteria:
 
             # Other exact string fields (alphabetical order)
             'birthtime', 'cellBodyFiber', 'class_',
-            'entryNerve', 'exitNerve', 'hemilineage',
+            'entryNerve', 'exitNerve', 'hemilineage', 'itoleeHl',
             'longTract', 'modality', 'origin',
             'predictedNt', 'serialMotif', 'somaNeuromere',
-            'somaSide', 'subclass', 'synonyms',
-            'systematicType', 'target',
+            'somaSide', 'subclass', 'superclass', 'synonyms',
+            'systematicType', 'target', 'trumanHl',
         ]
-        self.list_props_regex = ['type', 'instance']
+        self.list_props_regex = ['type', 'instance', 'flywireType', 'hemibrainType', 'mancType']
+
+        # Initialize the regex property
+        self.regex = self._init_regex(regex, *[getattr(self, prop) for prop in self.list_props_regex])
 
     @classmethod
     def _init_matchvar(cls, matchvar):
@@ -528,22 +550,18 @@ class NeuronCriteria:
         return instance
 
     @classmethod
-    def _init_regex(cls, regex, type, instance):
+    def _init_regex(cls, regex, *args):
         assert regex in (True, False, 'guess')
         if regex != 'guess':
             return regex
 
         rgx = re.compile(r'[\\\.\?\[\]\+\^\$\*]')
-        instance_is_regex = False
-        for i in instance:
-            instance_is_regex |= isinstance(i, str) and bool(rgx.search(i or ''))
+        for arg in args:
+            for val in arg:
+                if isinstance(val, str) and bool(rgx.search(val or '')):
+                    return True
 
-        type_is_regex = False
-        for t in type:
-            type_is_regex |= isinstance(t, str) and bool(rgx.search(t or ''))
-
-        regex = type_is_regex or instance_is_regex
-        return regex
+        return False
 
     @classmethod
     def _init_rois(cls, roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois, client):
@@ -612,7 +630,7 @@ class NeuronCriteria:
             other = getattr(value, p)
 
             # If not the same type, return False
-            if type(me) != type(other):
+            if type(me) is not type(other):
                 return False
 
             # If iterable (e.g. ROIs or body IDs) we don't care about order
@@ -641,7 +659,10 @@ class NeuronCriteria:
             elif len(self.instance) > 1:
                 s += f", {attr}={list(val)}"
 
-        if len(self.type) or len(self.instance):
+        if any(
+            len(getattr(self, attr))
+            for attr in self._list_props_regex
+        ):
             s += f", regex={self.regex}"
 
         if self.min_pre != 0:
