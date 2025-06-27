@@ -130,13 +130,23 @@ _iterable_attrs = [
     'flywireType', 'hemibrainType', 'mancType',
 
     # Exact string fields (alphabetical order)
-    'birthtime', 'cellBodyFiber', 'class_',
-    'entryNerve', 'exitNerve', 'hemilineage', 'itoleeHl',
-    'longTract', 'modality', 'origin',
-    'predictedNt', 'serialMotif', 'somaNeuromere',
-    'somaSide', 'status', 'statusLabel',
-    'subclass', 'superclass', 'synonyms', 'systematicType',
-    'target', 'trumanHl'
+    # these fields come from several datasets; this list appears elsewhere
+    #   in the code, always with "exact string fields" in a nearby comment
+    # TODO: (a) generate this list dynamically from the db, and
+    #       (b) consider making them all eligible for regex searching
+    'birthtime', 'cellBodyFiber', 'celltypePredictedNt',
+    'class_', 'comment', 'consensusNt', 'description',
+    'dimorphism', 'entryNerve', 'exitNerve', 'flywireId',
+    'fruDsx', 'hemibrainBodyId',
+    'hemilineage', 'itoleeHl', 'locationType', 'longTract',
+    'matchingNotes', 'mcnsSerial', 'modality',
+    'ntReference', 'origin', 'otherNt', 'otherNtReference',
+    'predictedNt', 'prefix', 'receptorType', 'rootSide',
+    'serialMotif', 'somaNeuromere', 'somaSide', 'source',
+    'status', 'statusLabel', 'subclass', 'subclassabbr',
+    'superclass', 'supertype', 'synonyms', 'systematicType',
+    'tag', 'target', 'transmission', 'trumanHl', 'trumanHlVncOnly',
+    'vfbId',
 
     # Special
     # label, min_pre, min_post
@@ -204,12 +214,20 @@ class NeuronCriteria:
         flywireType=None, hemibrainType=None, mancType=None,
 
         # Other exact string fields (alphabetical)
-        birthtime=None, cellBodyFiber=None, class_=None,
-        entryNerve=None, exitNerve=None, hemilineage=None, itoleeHl=None,
-        longTract=None, modality=None, origin=None,
-        predictedNt=None, serialMotif=None, somaNeuromere=None,
-        somaSide=None, subclass=None, superclass=None, synonyms=None,
-        systematicType=None, target=None, trumanHl=None,
+        birthtime=None, cellBodyFiber=None, celltypePredictedNt=None,
+        class_=None, comment=None, consensusNt=None, description=None,
+        dimorphism=None, entryNerve=None, exitNerve=None, flywireId=None,
+        fruDsx=None, hemibrainBodyId=None,
+        hemilineage=None, itoleeHl=None, locationType=None, longTract=None,
+        matchingNotes=None, mcnsSerial=None, modality=None,
+        ntReference=None, origin=None, otherNt=None, otherNtReference=None,
+        predictedNt=None, prefix=None, receptorType=None, rootSide=None,
+        serialMotif=None, somaNeuromere=None, somaSide=None, source=None,
+        subclass=None, subclassabbr=None,
+        superclass=None, supertype=None, synonyms=None, systematicType=None,
+        tag=None, target=None, transmission=None, trumanHl=None, trumanHlVncOnly=None,
+        vfbId=None,
+
 
         # Special
         label=None, min_pre=0, min_post=0,
@@ -335,31 +353,32 @@ class NeuronCriteria:
             cropped (bool):
                 If given, restrict results to neurons that are cropped or not.
 
-            birthtime (str or list of str):
-            cellBodyFiber (str or list of str):
-            superclass (str or list of str):
-            class\\_ (str or list of str):
-                Matches for the neuron ``class`` field.
-            entryNerve (str or list of str):
-            exitNerve (str or list of str):
-            flywireType (str or list of str, regex-optional):
-            hemibrainType (str or list of str, regex-optional):
-            hemilineage (str or list of str):
-            itoleeHl (str or list of str):
-            longTract (str or list of str):
-            mancType (str or list of str, regex-optional):
-            modality (str or list of str):
-            origin (str or list of str):
-            predictedNt (str or list of str):
-            serialMotif (str or list of str):
-            somaNeuromere (str or list of str):
-            somaSide  (str or list of str):
-                Valid choices are 'RHS', 'LHS', 'Midline'
-            subclass (str or list of str):
-            synonyms (str or list of str):
-            systematicType (str or list of str):
-            target (str or list of str):
-            trumanHl (str or list of str):
+            dataset-specific exact string fields, possibiliy including but not limited to:
+                birthtime (str or list of str):
+                cellBodyFiber (str or list of str):
+                superclass (str or list of str):
+                class\\_ (str or list of str):
+                    Matches for the neuron ``class`` field.
+                entryNerve (str or list of str):
+                exitNerve (str or list of str):
+                flywireType (str or list of str, regex-optional):
+                hemibrainType (str or list of str, regex-optional):
+                hemilineage (str or list of str):
+                itoleeHl (str or list of str):
+                longTract (str or list of str):
+                mancType (str or list of str, regex-optional):
+                modality (str or list of str):
+                origin (str or list of str):
+                predictedNt (str or list of str):
+                serialMotif (str or list of str):
+                somaNeuromere (str or list of str):
+                somaSide  (str or list of str):
+                    Valid choices are 'RHS', 'LHS', 'Midline'
+                subclass (str or list of str):
+                synonyms (str or list of str):
+                systematicType (str or list of str):
+                target (str or list of str):
+                trumanHl (str or list of str):
 
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.
@@ -443,24 +462,48 @@ class NeuronCriteria:
         # Other exact string fields (alphabetical order)
         self.birthtime = birthtime
         self.cellBodyFiber = cellBodyFiber
+        self.celltypePredictedNt = celltypePredictedNt
         self.class_ = class_
+        self.comment = comment
+        self.consensusNt = consensusNt
+        self.description = description
+        self.dimorphism = dimorphism
         self.entryNerve = entryNerve
         self.exitNerve = exitNerve
+        self.flywireId = flywireId
+        self.fruDsx = fruDsx
+        self.hemibrainBodyId = hemibrainBodyId
         self.hemilineage = hemilineage
         self.itoleeHl = itoleeHl
+        self.locationType = locationType
         self.longTract = longTract
+        self.matchingNotes = matchingNotes
+        self.mcnsSerial = mcnsSerial
         self.modality = modality
+        self.ntReference = ntReference
         self.origin = origin
+        self.otherNt = otherNt
+        self.otherNtReference = otherNtReference
         self.predictedNt = predictedNt
+        self.prefix = prefix
+        self.receptorType = receptorType
+        self.rootSide = rootSide
         self.serialMotif = serialMotif
         self.somaNeuromere = somaNeuromere
         self.somaSide = somaSide
+        self.source = source
         self.subclass = subclass
+        self.subclassabbr = subclassabbr
         self.superclass = superclass
+        self.supertype = supertype
         self.synonyms = synonyms
         self.systematicType = systematicType
+        self.tag = tag
         self.target = target
+        self.transmission = transmission
         self.trumanHl = trumanHl
+        self.trumanHlVncOnly = trumanHlVncOnly
+        self.vfbId = vfbId
 
         # Special
         self.label = self._init_label(label, bodyId)
@@ -483,16 +526,22 @@ class NeuronCriteria:
             'status', 'statusLabel',
 
             # Other exact string fields (alphabetical order)
-            'birthtime', 'cellBodyFiber', 'class_',
-            'entryNerve', 'exitNerve', 'hemilineage', 'itoleeHl',
-            'longTract', 'modality', 'origin',
-            'predictedNt', 'serialMotif', 'somaNeuromere',
-            'somaSide', 'subclass', 'superclass', 'synonyms',
-            'systematicType', 'target', 'trumanHl',
+            'birthtime', 'cellBodyFiber', 'celltypePredictedNt',
+            'class_', 'comment', 'consensusNt', 'description',
+            'dimorphism', 'entryNerve', 'exitNerve', 'flywireId',
+            'flywireType', 'fruDsx', 'hemibrainBodyId', 'hemibrainType',
+            'hemilineage', 'itoleeHl', 'locationType', 'longTract',
+            'mancType', 'matchingNotes', 'mcnsSerial', 'modality',
+            'ntReference', 'origin', 'otherNt', 'otherNtReference',
+            'predictedNt', 'prefix', 'receptorType', 'rootSide',
+            'serialMotif', 'somaNeuromere', 'somaSide', 'source',
+            'subclass', 'subclassabbr',
+            'superclass', 'supertype', 'synonyms', 'systematicType',
+            'tag', 'target', 'transmission', 'trumanHl', 'trumanHlVncOnly',
+            'vfbId',
+
         ]
         self.list_props_regex = ['type', 'instance', 'flywireType', 'hemibrainType', 'mancType']
-
-        # Initialize the regex property
         self.regex = self._init_regex(regex, *[getattr(self, prop) for prop in self.list_props_regex])
 
     @classmethod
