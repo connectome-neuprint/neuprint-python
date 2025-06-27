@@ -135,7 +135,7 @@ _iterable_attrs = [
     # TODO: (a) generate this list dynamically from the db, and
     #       (b) consider making them all eligible for regex searching
     'birthtime', 'cellBodyFiber', 'celltypePredictedNt',
-    'class_', 'comment', 'consensusNt', 'description',
+    'class_', 'consensusNt', 'description',
     'dimorphism', 'entryNerve', 'exitNerve', 'flywireId',
     'fruDsx', 'hemibrainBodyId',
     'hemilineage', 'itoleeHl', 'locationType', 'longTract',
@@ -145,7 +145,7 @@ _iterable_attrs = [
     'serialMotif', 'somaNeuromere', 'somaSide', 'source',
     'status', 'statusLabel', 'subclass', 'subclassabbr',
     'superclass', 'supertype', 'synonyms', 'systematicType',
-    'tag', 'target', 'transmission', 'trumanHl', 'trumanHlVncOnly',
+    'tag', 'target', 'transmission', 'trumanHl',
     'vfbId',
 
     # Special
@@ -215,7 +215,7 @@ class NeuronCriteria:
 
         # Other exact string fields (alphabetical)
         birthtime=None, cellBodyFiber=None, celltypePredictedNt=None,
-        class_=None, comment=None, consensusNt=None, description=None,
+        class_=None, consensusNt=None, description=None,
         dimorphism=None, entryNerve=None, exitNerve=None, flywireId=None,
         fruDsx=None, hemibrainBodyId=None,
         hemilineage=None, itoleeHl=None, locationType=None, longTract=None,
@@ -225,7 +225,7 @@ class NeuronCriteria:
         serialMotif=None, somaNeuromere=None, somaSide=None, source=None,
         subclass=None, subclassabbr=None,
         superclass=None, supertype=None, synonyms=None, systematicType=None,
-        tag=None, target=None, transmission=None, trumanHl=None, trumanHlVncOnly=None,
+        tag=None, target=None, transmission=None, trumanHl=None,
         vfbId=None,
 
 
@@ -464,7 +464,6 @@ class NeuronCriteria:
         self.cellBodyFiber = cellBodyFiber
         self.celltypePredictedNt = celltypePredictedNt
         self.class_ = class_
-        self.comment = comment
         self.consensusNt = consensusNt
         self.description = description
         self.dimorphism = dimorphism
@@ -502,7 +501,6 @@ class NeuronCriteria:
         self.target = target
         self.transmission = transmission
         self.trumanHl = trumanHl
-        self.trumanHlVncOnly = trumanHlVncOnly
         self.vfbId = vfbId
 
         # Special
@@ -527,7 +525,7 @@ class NeuronCriteria:
 
             # Other exact string fields (alphabetical order)
             'birthtime', 'cellBodyFiber', 'celltypePredictedNt',
-            'class_', 'comment', 'consensusNt', 'description',
+            'class_', 'consensusNt', 'description',
             'dimorphism', 'entryNerve', 'exitNerve', 'flywireId',
             'flywireType', 'fruDsx', 'hemibrainBodyId', 'hemibrainType',
             'hemilineage', 'itoleeHl', 'locationType', 'longTract',
@@ -537,7 +535,7 @@ class NeuronCriteria:
             'serialMotif', 'somaNeuromere', 'somaSide', 'source',
             'subclass', 'subclassabbr',
             'superclass', 'supertype', 'synonyms', 'systematicType',
-            'tag', 'target', 'transmission', 'trumanHl', 'trumanHlVncOnly',
+            'tag', 'target', 'transmission', 'trumanHl',
             'vfbId',
 
         ]
