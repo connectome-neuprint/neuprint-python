@@ -17,7 +17,7 @@ CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_neurons(criteria=None, *, omit_rois=False,client=None):
+def fetch_neurons(criteria=None, *, omit_rois=False, client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
 
@@ -137,11 +137,12 @@ def fetch_neurons(criteria=None, *, omit_rois=False,client=None):
         ORDER BY n.bodyId
     """
     neuron_df = client.fetch_custom(q)
+    neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client, omit_rois)
+
     if omit_rois:
         return neuron_df
-
-    neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
-    return neuron_df, roi_counts_df
+    else:
+        return neuron_df, roi_counts_df
 
 
 @inject_client
@@ -206,15 +207,20 @@ def fetch_custom_neurons(q, *, client=None):
 
     neuron_df = pd.DataFrame(results['n'].tolist())
 
-    neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client)
+    # note while fixing issue #69: unlike fetch_neurons(), this function doesn't
+    #    expose `omit_rois` as an argument; pass it explicitly here, but in the
+    #    future we could let the user specify
+    neuron_df, roi_counts_df = _process_neuron_df(neuron_df, client, omit_rois=False)
     return neuron_df, roi_counts_df
 
 
-def _process_neuron_df(neuron_df, client, parse_locs=True):
+def _process_neuron_df(neuron_df, client, omit_rois=False, parse_locs=True):
     """
-    Given a DataFrame of neuron properties, parse the roiInfo into
-    inputRois and outputRois, and a secondary DataFrame for per-ROI
-    synapse counts.
+    Given a DataFrame of neuron properties, order columns, parse coordinates,
+    and remove unwanted RoI columns.
+
+    Optionally parse the roiInfo into inputRois and outputRois,
+    and a secondary DataFrame for per-ROI synapse counts.
 
     Returns:
         neuron_df, roi_counts_df
@@ -232,11 +238,6 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
     neuron_cols += [*extra_cols]
     neuron_df = neuron_df[[*neuron_cols]]
 
-    # Make a list of rois for every neuron (both pre and post)
-    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(ujson.loads)
-    neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('post')]))
-    neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k,v in d.items() if v.get('pre')]))
-
     # Find location columns
     if parse_locs:
         for c in neuron_df.columns:
@@ -248,6 +249,30 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
                 continue
             neuron_df.loc[is_dict, c] = neuron_df.loc[is_dict, c].apply(lambda x: x.get('coordinates', x))
 
+    if not omit_rois:
+        roi_counts_df = _process_roi_info(neuron_df, client)
+    else:
+        roi_counts_df = None
+
+    return neuron_df, roi_counts_df
+
+
+def _process_roi_info(neuron_df, client):
+    """
+    Given a DataFrame of neuron properties, parse the roiInfo
+    into inputRois and outputRois, and a secondary DataFrame
+    for per-ROI synapse counts.
+
+    Returns:
+        roi_counts_df
+
+    Warning: destructively modifies the input DataFrame.
+    """
+
+    # Make a list of rois for every neuron (both pre and post)
+    neuron_df['roiInfo'] = neuron_df['roiInfo'].apply(ujson.loads)
+    neuron_df['inputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k, v in d.items() if v.get('post')]))
+    neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k, v in d.items() if v.get('pre')]))
     # Return roi info as a separate table.
     # (Note: Some columns aren't present in old neuprint databases.)
     countcols = ['pre', 'post', 'downstream', 'upstream', 'mito']
@@ -280,4 +305,4 @@ def _process_neuron_df(neuron_df, client, parse_locs=True):
     # Drop the rows with all-zero counts (introduced via the NotPrimary rows we added)
     roi_counts_df = roi_counts_df.loc[roi_counts_df[countcols].any(axis=1)].copy()
 
-    return neuron_df, roi_counts_df
+    return roi_counts_df

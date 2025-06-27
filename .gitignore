@@ -75,3 +75,6 @@ _autosummary/
 *.egg-info
 
 **/.claude/settings.local.json
+
+# PyCharm
+.idea
