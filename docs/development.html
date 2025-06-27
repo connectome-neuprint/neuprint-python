@@ -1,24 +1,24 @@
+
+
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" data-content_root="./">
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Development Notes &mdash; neuprint-python 0.5.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+  <title>Development Notes &mdash; neuprint-python 0.5.1+10.g8532153.dirty documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
 
   
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script src="_static/documentation_options.js?v=b9afe91b"></script>
-        <script src="_static/doctools.js?v=9a2dae69"></script>
-        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=27165782"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,9 +37,6 @@
           <a href="index.html" class="icon icon-home">
             neuprint-python
           </a>
-              <div class="version">
-                0.5.1
-              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -95,6 +92,7 @@
 <p>Notes for maintaining <code class="docutils literal notranslate"><span class="pre">neuprint-python</span></code>.</p>
 <section id="prerequisites">
 <h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading">¶</a></h2>
+<p><strong>For general development:</strong></p>
 <p>Make sure you have both <code class="docutils literal notranslate"><span class="pre">flyem-forge</span></code> and <code class="docutils literal notranslate"><span class="pre">conda-forge</span></code> listed as channels in your <code class="docutils literal notranslate"><span class="pre">.condarc</span></code> file.
 (If you don’t know where your <code class="docutils literal notranslate"><span class="pre">.condarc</span></code> file is, check <code class="docutils literal notranslate"><span class="pre">conda</span> <span class="pre">config</span> <span class="pre">--show-sources</span></code>.)</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># .condarc</span>
@@ -104,6 +102,7 @@
 <span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nodefaults</span><span class="w">  </span><span class="c1"># A magic channel that forbids any downloads from the anaconda default channels.</span>
 </pre></div>
 </div>
+<p><strong>For packaging and release:</strong></p>
 <p>Install <code class="docutils literal notranslate"><span class="pre">conda-build</span></code> if you don’t have it yet:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>-n<span class="w"> </span>base<span class="w"> </span>conda-build<span class="w"> </span>anaconda-client<span class="w"> </span>twine<span class="w"> </span>setuptools
 </pre></div>
@@ -198,8 +197,9 @@ git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </
 </section>
 <section id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h2>
-<p>The docs are built with Sphinx.  See <code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code> for the docs dependencies.
-To build the docs locally:</p>
+<p>The docs are built with Sphinx.  See <code class="docutils literal notranslate"><span class="pre">docs/requirements.txt</span></code> for the docs dependencies (in addition to those listed in <code class="docutils literal notranslate"><span class="pre">dependencies.txt</span></code>). In addition, building the docs requires the <code class="docutils literal notranslate"><span class="pre">pandoc</span></code> command-line tool to be installed in the environment (the Python wrapper, though, is not required).</p>
+<p>The example notebooks are run when the docs are built. For this to succeed, the <code class="docutils literal notranslate"><span class="pre">neuprint</span></code> library must be on your <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code>. Like the tests, the docs rely on the public <code class="docutils literal notranslate"><span class="pre">hemibrain:v1.2.1</span></code> dataset on <code class="docutils literal notranslate"><span class="pre">neuprint.janelia.org</span></code>, which means you must define <code class="docutils literal notranslate"><span class="pre">NEUPRINT_APPLICATION_CREDENTIALS</span></code> in your environment before running them.</p>
+<p>To build the docs locally:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>neuprint-python/docs
 make<span class="w"> </span>html
 open<span class="w"> </span>build/html/index.html
