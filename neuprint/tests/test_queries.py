@@ -12,6 +12,7 @@ from neuprint import (NeuronCriteria as NC,
                       fetch_mitochondria, fetch_synapses_and_closest_mitochondria,
                       fetch_synapses, fetch_mean_synapses, fetch_synapse_connections)
 
+from neuprint.queries.neurons import CORE_NEURON_COLS
 from neuprint.tests import NEUPRINT_SERVER, DATASET
 
 @pytest.fixture(scope='module')
@@ -78,6 +79,15 @@ def test_fetch_neurons(client):
 
     neurons, roi_counts = fetch_neurons(NC(min_pre=1000, min_post=2000))
     assert neurons.eval('pre >= 1000 and post >= 2000').all()
+
+    neurons, roi_counts = fetch_neurons(NC(bodyId=bodyId), returned_columns="core")
+    # hemibrain dataset has all the CORE_NEURON_COLS
+    assert set(neurons.columns) == set(CORE_NEURON_COLS)
+
+    requested_columns = ['bodyId', 'instance']
+    neurons = fetch_neurons(NC(bodyId=bodyId), returned_columns=requested_columns, omit_rois=True)
+    assert set(neurons.columns) == set(requested_columns)
+
 
 
 def test_fetch_simple_connections(client):

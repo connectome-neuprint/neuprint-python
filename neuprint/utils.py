@@ -450,21 +450,28 @@ class _iter_batches_with_len(_iter_batches):
         return int(np.ceil(len(self.base_iterator) / self.batch_size))
 
 
-def compile_columns(client, core_columns=[]):
+def compile_columns(client, user_columns=[], core_columns=[], core_columns_only=False):
     """
-    Compile list of columns from available :Neuron keys (excluding ROIs).
+    Compile list of columns from user input and available :Neuron keys (excluding ROIs).
 
     Args:
         client:
             neu.Client to collect columns for.
+        user_columns:
+            List of user-defined columns (optional). The list will be returned in
+            input order, with non-existing columns dropped.
         core_columns:
-            List of core columns (optional). If provided, new columns will be
-            added to the end of the list and non-existing columns will be
+            List of core columns (optional). If provided, core columns will be
+            appear at the beginning of the list, and non-existing columns will be
             dropped.
+        core_columns_only: default=False
+            If True and user_columns is empty, only return columns that are in
+            the core_columns list (which should not be empty).
 
     Returns:
         columns:
-            List of key names.
+            List of key names, with core columns first, followed by other
+            columns in sorted order.
     """
     # Fetch existing keys. This call is cached.
     keys = client.fetch_neuron_keys()
@@ -472,11 +479,15 @@ def compile_columns(client, core_columns=[]):
     # Drop ROIs
     keys = [k for k in keys if k not in client.all_rois]
 
-    # Drop missing columns from core_columns
-    columns = [k for k in core_columns if k in keys]
-
-    # Add new keys (sort to make deterministic)
-    columns += [k for k in sorted(keys) if k not in columns]
+    if user_columns:
+        # user columns only, in the order they were given, if they exist
+        columns = [k for k in user_columns if k in keys]
+    else:
+        # core columns go first, if they exist
+        columns = [k for k in core_columns if k in keys]
+        if not core_columns_only:
+            # add in the other keys, in sorted order
+            columns += [k for k in sorted(keys) if k not in columns]
 
     return columns
 
