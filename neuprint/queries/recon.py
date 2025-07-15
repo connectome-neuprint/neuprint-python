@@ -48,7 +48,7 @@ def fetch_output_completeness(criteria, complete_statuses=['Traced'], batch_size
     bodies = fetch_custom(q)['bodyId']
 
     batch_results = []
-    for start in trange(0, len(bodies), batch_size):
+    for start in trange(0, len(bodies), batch_size, disable=not client.progress):
         criteria.bodyId = bodies[start:start+batch_size]
         _df = _fetch_output_completeness(criteria, complete_statuses, client)
         if len(_df) > 0:

@@ -401,7 +401,7 @@ class NeuronModel:
         self.bodyid = bodyid
 
 
-        with tqdm(total=100) as pbar:
+        with tqdm(total=100, disable=not client.progress) as pbar:
             # retrieve healed skeleton
             pbar.set_description("fetching skeleton")
             self.skeleton_df = client.fetch_skeleton(bodyid, heal=True)
