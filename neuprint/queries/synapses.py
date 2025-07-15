@@ -109,7 +109,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, cli
     bodies = client.fetch_custom(q)['bodyId'].values
 
     batch_dfs = []
-    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size), disable=not client.progress):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_synapses(batch_criteria, synapse_criteria, client)
@@ -273,7 +273,7 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
     bodies = client.fetch_custom(q)['bodyId'].values
 
     batch_dfs = []
-    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size), disable=not client.progress):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         if by_roi:
@@ -598,10 +598,10 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         grouping_col = 'bodyId_post'
 
     syn_dfs = []
-    with tqdm(total=roi_conn_df['weight'].sum()) as progress:
+    with tqdm(total=roi_conn_df['weight'].sum(), disable=not client.progress) as progress:
         for _, group_df in conn_df.groupby(grouping_col):
             batches = iter_batches(group_df, batch_size)
-            for batch_df in tqdm(batches, leave=False):
+            for batch_df in tqdm(batches, leave=False, disable=not client.progress):
                 src_crit = copy.copy(source_criteria)
                 tgt_crit = copy.copy(target_criteria)
 
