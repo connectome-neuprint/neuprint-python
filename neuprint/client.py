@@ -83,7 +83,7 @@ USER_NEUPRINT_CLIENTS = set()
 # This holds real references
 DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES = {}
 
-_global_client_lock = threading.Lock()
+_global_client_lock = threading.RLock()
 
 
 class NeuprintTimeoutError(HTTPError):
@@ -149,9 +149,16 @@ def set_default_client(client):
     thread_id = threading.current_thread().ident
     pid = os.getpid()
 
+    if DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.get((thread_id, pid), None) == client:
+        return
+
     with _global_client_lock:
         DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
         DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.clear()
+
+        # We temporarily store the original object before performing the deepcopy below.
+        # The current function is called during depickling, so this avoids infinite recursion.
+        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = client
 
         # We exclusively store *copies* in this dict,
         # to ensure that the DEFAULT_NEUPRINT_CLIENT weakref becomes
@@ -466,6 +473,7 @@ class Client:
 
     def __eq__(self, other):
         return (
+            other and
             self.server == other.server and  # noqa
             self.dataset == other.dataset and  # noqa
             self.token == other.token and  # noqa
@@ -474,6 +482,10 @@ class Client:
 
     def __hash__(self):
         return hash((self.server, self.dataset, self.token, self.verify))
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        _register_client(self)
 
     @verbose_errors
     def _fetch(self, url, json=None, ispost=False):
