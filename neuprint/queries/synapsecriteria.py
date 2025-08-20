@@ -98,7 +98,7 @@ class SynapseCriteria:
             conf_expr = f'({self.matchvar}.confidence > {self.confidence})'
 
         if self.type:
-            type_expr = f"({self.matchvar}.type = '{self.type}')"
+            type_expr = f"({self.matchvar}.type = {repr(self.type)})"
 
         exprs = [*filter(None, [roi_expr, conf_expr, type_expr])]
 
@@ -129,10 +129,10 @@ class SynapseCriteria:
         args = []
 
         if self.rois:
-            args.append("rois=[" + ", ".join(f"'{roi}'" for roi in self.rois) + "]")
+            args.append("rois=[" + ", ".join(f"{repr(roi)}" for roi in self.rois) + "]")
 
         if self.type:
-            args.append(f"type='{self.type}'")
+            args.append(f"type={repr(self.type)}")
 
         if self.confidence:
             args.append(f"confidence={self.confidence}")

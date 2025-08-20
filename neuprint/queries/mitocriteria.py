@@ -93,7 +93,7 @@ class MitoCriteria:
             size_expr = f'({self.matchvar}.size >= {self.size})'
 
         if self.mitoType:
-            mitoType_expr = f"({self.matchvar}.mitoType = '{self.mitoType}')"
+            mitoType_expr = f"({self.matchvar}.mitoType = {repr(self.mitoType)})"
 
         exprs = [*filter(None, [type_expr, roi_expr, size_expr, mitoType_expr])]
 
@@ -126,10 +126,10 @@ class MitoCriteria:
         args = []
 
         if self.rois:
-            args.append("rois=[" + ", ".join(f"'{roi}'" for roi in self.rois) + "]")
+            args.append("rois=[" + ", ".join(f"{repr(roi)}" for roi in self.rois) + "]")
 
         if self.mitoType:
-            args.append(f"mitoType='{self.mitoType}'")
+            args.append(f"mitoType={repr(self.mitoType)}")
 
         if self.size:
             args.append(f"size={self.size}")
