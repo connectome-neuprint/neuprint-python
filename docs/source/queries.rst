@@ -71,6 +71,7 @@ Connectivity
     fetch_adjacencies
     fetch_traced_adjacencies
     fetch_common_connectivity
+    fetch_paths
     fetch_shortest_paths
 
 Synapses

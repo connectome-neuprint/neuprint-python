@@ -8,7 +8,7 @@ from neuprint import (NeuronCriteria as NC,
                       SynapseCriteria as SC,
                       fetch_custom, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
-                      fetch_adjacencies, fetch_shortest_paths,
+                      fetch_adjacencies, fetch_shortest_paths, fetch_paths,
                       fetch_mitochondria, fetch_synapses_and_closest_mitochondria,
                       fetch_synapses, fetch_mean_synapses, fetch_synapse_connections)
 
@@ -126,6 +126,33 @@ def test_fetch_shortest_paths(client):
     assert (paths_df.groupby('path')['bodyId'].last() == dst).all()
 
     assert (paths_df.groupby('path')['weight'].first() == 0).all()
+
+def test_fetch_paths_exact(client):
+    src = 329566174
+    dst = 294792184
+    paths_df = fetch_paths(src, dst, path_length=2, min_weight=10, timeout=3)
+    assert (paths_df.groupby('path')['bodyId'].first() == src).all()
+    assert (paths_df.groupby('path')['bodyId'].last() == dst).all()
+
+    assert "path_length" in paths_df.columns
+    assert (paths_df['path_length'] == 2).all()
+
+def test_fetch_paths_limited(client):
+    src = 329566174
+    dst = 294792184
+    paths_df = fetch_paths(src, dst, max_path_length=2, min_weight=10, timeout=3)
+    assert (paths_df.groupby('path')['bodyId'].first() == src).all()
+    assert (paths_df.groupby('path')['bodyId'].last() == dst).all()
+
+    assert "path_length" in paths_df.columns
+    assert (paths_df['path_length'] <= 2).all()
+
+def test_fetch_paths_input(client):
+    src = 329566174
+    dst = 294792184
+    with pytest.raises(ValueError):
+        # path_length and max_path_length are mutually exclusive
+        fetch_paths(src, dst, path_length=2, max_path_length=2, min_weight=10, timeout=3)
 
 
 @pytest.mark.skip
