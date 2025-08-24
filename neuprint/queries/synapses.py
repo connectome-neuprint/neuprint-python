@@ -159,10 +159,14 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     # Neurotransmitters vary by dataset; get the names and dynamically
     #   insert the column names into the cypher query.
-    synapse_nt_prop_names = client.fetch_synapse_nt_keys()
-    if not synapse_nt_prop_names:
-        # no data = ignore this parameter
-        nt = None
+    synapse_nt_prop_names = []
+    if nt:
+        synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+        if not synapse_nt_prop_names:
+            raise RuntimeError(
+                "Can't return synapse neurotransmitter properties: "
+                "No neurotransmitter properties found in the database."
+            )
 
     # Fetch results
     cypher = dedent(f"""\
@@ -714,10 +718,14 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
 
     # Neurotransmitters vary by dataset; get the names and dynamically
     #   insert the column names into the cypher query.
-    synapse_nt_prop_names = client.fetch_synapse_nt_keys()
-    if not synapse_nt_prop_names:
-        # no data = ignore this parameter
-        nt = None
+    synapse_nt_prop_names = []
+    if nt:
+        synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+        if not synapse_nt_prop_names:
+            raise RuntimeError(
+                "Can't return synapse neurotransmitter properties: "
+                "No neurotransmitter properties found in the database."
+            )
 
     # Fetch results
     cypher = dedent(f"""\
