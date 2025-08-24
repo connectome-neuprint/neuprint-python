@@ -145,6 +145,7 @@ def set_default_client(client):
         return
 
     global DEFAULT_NEUPRINT_CLIENT  # noqa
+    DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
 
     thread_id = threading.current_thread().ident
     pid = os.getpid()
@@ -153,7 +154,6 @@ def set_default_client(client):
         return
 
     with _global_client_lock:
-        DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
         DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.clear()
 
         # We temporarily store the original object before performing the deepcopy below.
@@ -164,6 +164,11 @@ def set_default_client(client):
         # to ensure that the DEFAULT_NEUPRINT_CLIENT weakref becomes
         # invalid if the user deletes their Client.
         DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = copy.deepcopy(client)
+
+        # Sadly, we must set this again because the deepcopy above
+        # triggered registration of the client and cleared the default.
+        # This is all a mess and needs to be reworked.
+        DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
 
 
 def clear_default_client():
@@ -205,14 +210,20 @@ def _register_client(client):
     And since the first Client is deallocated, the second one
     becomes the default without issues.
     """
-    # Set this as the default client if this is the ONLY Client in existence.
+    added_client = False
     with _global_client_lock:
         clients = copy.copy(USER_NEUPRINT_CLIENTS)
         # Housekeeping: drop invalid references
         clients = {c for c in clients if c()}
-        clients.add(weakref.ref(client))
+        w = weakref.ref(client)
+        if w not in clients:
+            clients.add(w)
+            added_client = True
         USER_NEUPRINT_CLIENTS.clear()
         USER_NEUPRINT_CLIENTS.update(clients)
+
+    if not added_client:
+        return
 
     # If there weren't any other clients,
     # then the new one becomes the default.
