@@ -22,16 +22,56 @@ def neuroncriteria_args(*argnames):
     For the given argument names, the decorator converts the
     arguments into NeuronCriteria objects via ``copy_as_neuroncriteria()``.
 
-    If the decorated function also accepts a 'client' argument,
-    that argument is used to initialize the NeuronCriteria.
+    If provided, the 'client' keyword argument to the decorated function
+    must be the same as the 'client' attribute in all of the passed NeuronCriteria arguments.
+    If any client is None (either the keyword argument or the NeuronCriteria client(s)),
+    then it will be automatically set from the valid clients that were provided.
+
+    Example:
+
+    .. code-block:: python
+
+        @neuroncriteria_args('nc'):
+        def foo(nc, client=None):
+            pass
+
+        # All of the following are equivalent:
+        foo(NC(client=c), client=c)
+        foo(NC(client=c))  
+        foo(NC(), client=c)
+
+        # Invalid:
+        c1 = Client('neuprint.janelia.org', 'hemibrain:v1.0')
+        c2 = Client('neuprint.janelia.org', 'hemibrain:v1.1')
+        foo(NC(client=c1), client=c2)  # raises ValueError
     """
     def decorator(f):
 
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             callargs = inspect.getcallargs(f, *args, **kwargs)
+
+            clients = set()
+            if c := callargs.get('client', None):
+                clients.add(c)
             for name in argnames:
-                callargs[name] = copy_as_neuroncriteria(callargs[name], callargs.get('client', None))
+                arg = callargs[name]
+                if isinstance(arg, NeuronCriteria) and arg.client:
+                    clients.add(arg.client)
+
+            if len(clients) == 1:
+                client = clients.pop()
+            elif len(clients) > 1:
+                raise ValueError(f"Clients of NeuronCriteria arguments and/or the keyword argument do not match: {clients}")
+            else:
+                client = None
+
+            for name in argnames:
+                callargs[name] = copy_as_neuroncriteria(callargs[name], client)
+
+            if 'client' in callargs:
+                callargs['client'] = client
+
             return f(**callargs)
 
         wrapper.__signature__ = inspect.signature(f)
@@ -42,7 +82,9 @@ def neuroncriteria_args(*argnames):
 
 def copy_as_neuroncriteria(obj, client=None):
     """
-    If the given argument is a NeuronCriteria object, copy it.
+    If the given argument is a NeuronCriteria object, copy it
+    and overwrite the copy's 'client' attribute if one was provided.
+
     Otherwise, attempt to construct a NeuronCriteria object,
     using the argument as either the bodyId or the type AND instance.
 
@@ -73,7 +115,10 @@ def copy_as_neuroncriteria(obj, client=None):
         return NeuronCriteria(client=client)
 
     if isinstance(obj, NeuronCriteria):
-        return copy.copy(obj)
+        nc = copy.copy(obj)
+        if client:
+            nc.client = client
+        return nc
 
     if not isinstance(obj, Collection) or isinstance(obj, str):
         if isinstance(obj, str):
@@ -186,7 +231,6 @@ class NeuronCriteria:
             neuron_df, conn_df = fetch_neurons("OA-VPM3")
     """
 
-    @inject_client
     @ensure_list_args(_iterable_attrs)
     def __init__(
         self, matchvar='n', *,
@@ -428,8 +472,11 @@ class NeuronCriteria:
 
             client (:py:class:`neuprint.client.Client`):
                 Used to validate ROI names.
-                If not provided, the global default ``Client`` will be used.
         """
+        # Note: client may be None upon construction, but typically
+        # the @neuroncriteria_args decorator will set it automatically.
+        self.client = client
+
         self.matchvar = self._init_matchvar(matchvar)
         self.bodyId = self._init_integer_arg(bodyId, 'bodyId')
 
@@ -446,7 +493,7 @@ class NeuronCriteria:
          self.rois, self.inputRois, self.outputRois) = (
             self._init_rois(
                 roi_req, min_roi_inputs, min_roi_outputs,
-                rois, inputRois, outputRois, client
+                rois, inputRois, outputRois
             )
         )
 
@@ -621,7 +668,7 @@ class NeuronCriteria:
         return False
 
     @classmethod
-    def _init_rois(cls, roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois, client):
+    def _init_rois(cls, roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois):
         assert roi_req in ('any', 'all')
         assert min_roi_inputs <= 1 or inputRois, \
             "Can't stipulate min_roi_inputs without a list of inputRois"
@@ -639,21 +686,30 @@ class NeuronCriteria:
         # Make sure intersecting is a superset of inputRois and outputRois
         rois |= {*inputRois, *outputRois}
 
-        # Verify ROI names against known ROIs.
+        return roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois
+
+    @inject_client
+    def _validate_rois(self, *, client=None):
+        """
+        Verify ROI names against known ROIs.
+        This requires access to a client from which we obtain the list of valid ROIs.
+        We don't call this function upon construction, since sometimes it's
+        convenient to assign the client after the rest of the initialization.
+        Instead, this function is called when constructing a query.
+        """
+
         neuprint_rois = {*client.all_rois}
-        unknown_input_rois = inputRois - neuprint_rois
+        unknown_input_rois = self.inputRois - neuprint_rois
         if unknown_input_rois:
             raise RuntimeError(f"Unrecognized input ROIs: {unknown_input_rois}")
 
-        unknown_output_rois = outputRois - neuprint_rois
+        unknown_output_rois = self.outputRois - neuprint_rois
         if unknown_output_rois:
             raise RuntimeError(f"Unrecognized output ROIs: {unknown_output_rois}")
 
-        unknown_generic_rois = rois - neuprint_rois
+        unknown_generic_rois = self.rois - neuprint_rois
         if unknown_generic_rois:
-            raise RuntimeError(f"Unrecognized output ROIs: {unknown_generic_rois}")
-
-        return roi_req, min_roi_inputs, min_roi_outputs, rois, inputRois, outputRois
+            raise RuntimeError(f"Unrecognized ROIs: {unknown_generic_rois}")
 
     @classmethod
     def _init_soma(cls, soma, somaLocation):
@@ -947,6 +1003,7 @@ class NeuronCriteria:
         return ""
 
     def rois_expr(self):
+        self._validate_rois(client=self.client)
         return self._logic_tag_expr(
             self.rois,
             {'any': 'OR', 'all': 'AND'}[self.roi_req]
