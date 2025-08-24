@@ -134,6 +134,7 @@ Connectivity
 .. autofunction:: fetch_adjacencies
 .. autofunction:: fetch_traced_adjacencies
 .. autofunction:: fetch_common_connectivity
+.. autofunction:: fetch_paths
 .. autofunction:: fetch_shortest_paths
 
 Synapses
