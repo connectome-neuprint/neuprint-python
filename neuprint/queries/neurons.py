@@ -1,7 +1,9 @@
+from collections.abc import Iterable
+from textwrap import indent
+
 import pandas as pd
 import ujson
 
-from textwrap import indent
 from ..client import inject_client
 from ..utils import compile_columns, cypher_identifier
 from .neuroncriteria import neuroncriteria_args
@@ -17,7 +19,7 @@ CORE_NEURON_COLS = ['bodyId', 'instance', 'type',
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_neurons(criteria=None, *, omit_rois=False, client=None):
+def fetch_neurons(criteria=None, *, omit_rois=False, returned_columns="all", client=None):
     """
     Return properties and per-ROI synapse counts for a set of neurons.
 
@@ -39,6 +41,13 @@ def fetch_neurons(criteria=None, *, omit_rois=False, client=None):
         omit_rois (bool):
             If True, the ROI columns are omitted from the output.
             If you don't need ROI information, this can speed up the query.
+
+        returned_columns:
+            If 'all', all available columns are returned.
+            If 'core', only the core set of columns (see :py:const:`CORE_NEURON_COLS`) are returned.
+            If a list, only the specified columns are returned, in the order given.
+
+            In all cases, invalid column names are ignored.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -121,10 +130,29 @@ def fetch_neurons(criteria=None, *, omit_rois=False, client=None):
     # Unlike in fetch_custom_neurons() below, here we specify the
     # return properties individually to avoid a large JSON payload.
     # (Returning a map on every row is ~2x more costly than returning a table of rows/columns.)
-    props = compile_columns(client, core_columns=CORE_NEURON_COLS)
-    props = map(cypher_identifier, props)
+
+    # figure out which columns to return
+    if returned_columns == 'all':
+        props = compile_columns(client, core_columns=CORE_NEURON_COLS)
+    elif returned_columns == 'core':
+        props = compile_columns(client, core_columns=CORE_NEURON_COLS, core_columns_only=True)
+    elif isinstance(returned_columns, Iterable):
+        props = compile_columns(client, user_columns=returned_columns, core_columns=CORE_NEURON_COLS)
+    else:
+        raise ValueError(f'returned_columns must be a list or "all" or "core"; got {returned_columns}')
+
+    props = list(map(cypher_identifier, props))
+    if not props:
+        raise ValueError("No requested returned_columns exist!")
+
+    # 'roiInfo' must be present if the user doesn't specify omit_rois=True (even if they
+    #   didn't list it in returned_columns) but must be absent for omit_rois=False
     if omit_rois:
-        props = [p for p in props if p != 'roiInfo']
+        if "roiInfo" in props:
+            props.remove("roiInfo")
+    else:
+        if 'roiInfo' not in props:
+            props.append('roiInfo')
 
     return_exprs = ',\n'.join(f'n.{prop} as {prop}' for prop in props)
     return_exprs = indent(return_exprs, ' '*15)[15:]
