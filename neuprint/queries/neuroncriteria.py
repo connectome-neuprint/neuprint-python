@@ -16,7 +16,6 @@ from ..client import inject_client
 
 NoneType = type(None)
 
-
 def neuroncriteria_args(*argnames):
     """
     Returns a decorator.
@@ -121,7 +120,7 @@ _iterable_attrs = [
     # special: roi_req, min_roi_inputs, min_roi_outputs
 
     # integer
-    'group', 'serial',
+    'group', 'serial', 'zapbenchId',
 
     # boolean
     # 'cropped',
@@ -149,7 +148,7 @@ _iterable_attrs = [
     'vfbId',
 
     # Special
-    # label, min_pre, min_post
+    # label, min_pre, min_post, max_closestLandmarkDistanceMicrons
 
     # Null/NotNull
     # somaLocation, tosomaLocation,
@@ -205,7 +204,7 @@ class NeuronCriteria:
         roi_req='all', min_roi_inputs=1, min_roi_outputs=1,
 
         # integer
-        group=None, serial=None,
+        group=None, serial=None, zapbenchId=None,
 
         # boolean
         cropped=None,
@@ -230,7 +229,7 @@ class NeuronCriteria:
 
 
         # Special
-        label=None, min_pre=0, min_post=0,
+        label=None, min_pre=0, min_post=0, max_closestLandmarkDistanceMicrons=np.inf,
 
         # IsNull/NotNull
         somaLocation=None, tosomaLocation=None, rootLocation=None,
@@ -379,6 +378,7 @@ class NeuronCriteria:
                 systematicType (str or list of str):
                 target (str or list of str):
                 trumanHl (str or list of str):
+                zapbenchId
 
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.
@@ -418,6 +418,14 @@ class NeuronCriteria:
             soma (Either ``True``, ``False``, or ``None``)
                 DEPRECATED.  Use ``somaLocation=NotNull`` or ``somaLocation=IsNull``.
 
+            zapbenchId (int or list of int):
+                (zebrafish only) This field is used to identify neurons that have been matched to neurons
+                in the ZAPBench dataset.
+
+            max_closestLandmarkDistanceMicrons (float):
+                (zebrafish only) The maximum distance (in microns) from the closest landmark
+                that a neuron must have to be included in the results.
+
             client (:py:class:`neuprint.client.Client`):
                 Used to validate ROI names.
                 If not provided, the global default ``Client`` will be used.
@@ -445,6 +453,7 @@ class NeuronCriteria:
         # integer
         self.group = self._init_integer_arg(group, 'group')
         self.serial = self._init_integer_arg(serial, 'serial')
+        self.zapbenchId = self._init_integer_arg(zapbenchId, 'zapbenchId')
 
         # boolean
         self.cropped = cropped
@@ -507,6 +516,7 @@ class NeuronCriteria:
         self.label = self._init_label(label, bodyId)
         self.min_pre = min_pre
         self.min_post = min_post
+        self.max_closestLandmarkDistanceMicrons = max_closestLandmarkDistanceMicrons
 
         # Deprecated
         self.soma = self._init_soma(soma, somaLocation)
@@ -518,7 +528,7 @@ class NeuronCriteria:
             'bodyId',
 
             # integer
-            'group', 'serial',
+            'group', 'serial', 'zapbenchId',
 
             # status (exact string)
             'status', 'statusLabel',
@@ -718,6 +728,9 @@ class NeuronCriteria:
         if self.min_post != 0:
             s += f", min_post={self.min_post}"
 
+        if not np.isposinf(self.max_closestLandmarkDistanceMicrons):
+            s += f", max_closestLandmarkDistanceMicrons={self.max_closestLandmarkDistanceMicrons}"
+
         if self.rois:
             s += f", rois={list(self.rois)}"
 
@@ -814,6 +827,8 @@ class NeuronCriteria:
             ('soma',): self._single_value_expr('somaLocation', self.soma),  # deprecated arg
             ('min_pre',): self._gt_eq_expr('pre', self.min_pre),
             ('min_post',): self._gt_eq_expr('post', self.min_post),
+            ('max_closestLandmarkDistanceMicrons',): self._lt_eq_expr('closestLandmarkDistanceMicrons',
+                  self.max_closestLandmarkDistanceMicrons),
             ('rois', 'inputRois', 'outputRois', 'roi_req', 'min_roi_inputs', 'min_roi_outputs'): self.rois_expr(),
             # No expression for label;
             # enclosing queries are responsible for inserting label into their MATCH statement.
@@ -903,6 +918,15 @@ class NeuronCriteria:
         """
         if value:
             return f"{self.matchvar}.{key} >= {value}"
+        else:
+            return ""
+
+    def _lt_eq_expr(self, key, value):
+        """
+        Match against key/value being less than or equal.
+        """
+        if not np.isposinf(value):
+            return f"{self.matchvar}.{key} <= {value}"
         else:
             return ""
 
