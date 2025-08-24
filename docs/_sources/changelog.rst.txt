@@ -1,6 +1,21 @@
 Changelog
 =========
 
+0.5.2 / 2025-08-24
+------------------
+- Optionally fetch data from the server via ArrowIPC instead of JSON.  Disabled by default. (PR # 71)
+- Fixed docs search (PR #86)
+- Added more fields to ``NeuronCriteria`` to support various datasets. (PR #88, PR #91)
+    - The new type fields ``flywireType``, ``mancType`` and ``hemibrainType`` can be matched via regular expressions. (PR #84)
+- Fix the way coordinate values (e.g. ``somaLocation``) are returned from ``fetch_neurons(omit_rois=True)`` (PR #72)
+- Fixed string handling when searching for properties whose values contain quote characters (PR #96)
+- Fixed an issue that prevented clients from being used in multiprocessing pools (PR #95)
+- Optionally disable all progress bars via ``Client(..., progress=False)`` (PR #98)
+- Added ``fetch_paths()``, a more general path search function than ``fetch_shortest_paths()`` (PR #79)
+- More convenient handling of the way clients are passed in to functions and ``NeuronCriteria`` (PR #87)
+- Added ``returned_columns`` parameter to ``fetch_neurons()`` (PR #90)
+- Optionally return synapse-level neurotransmitter probabilities in ``fetch_synapses()`` and ``fetch_synapse_connections()`` (PR #78)
+
 0.5.1 / 2025-02-02
 ------------------
 - ``fetch_neurons()``: Added ``omit_rois`` option, which speeds up the function if you don't need ROI information.

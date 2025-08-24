@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Utilities &mdash; neuprint-python 0.5.1+10.g8532153.dirty documentation</title>
+  <title>Utilities &mdash; neuprint-python 0.5.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=27165782"></script>
+      <script src="_static/documentation_options.js?v=8e576371"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -113,7 +113,7 @@
 <h2>Reference<a class="headerlink" href="#reference" title="Link to this heading">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.utils.merge_neuron_properties">
-<span class="sig-prename descclassname"><span class="pre">neuprint.utils.</span></span><span class="sig-name descname"><span class="pre">merge_neuron_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neuron_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['type',</span> <span class="pre">'instance']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/utils.py#L206"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.utils.</span></span><span class="sig-name descname"><span class="pre">merge_neuron_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neuron_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conn_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['type',</span> <span class="pre">'instance']</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5.2/neuprint/utils.py#L206"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.utils.merge_neuron_properties" title="Link to this definition">¶</a></dt>
 <dd><p>Merge neuron properties to a connection table.</p>
 <p>Given a table of neuron properties and a connection table, append
 <code class="docutils literal notranslate"><span class="pre">_pre</span></code> and <code class="docutils literal notranslate"><span class="pre">_post</span></code> columns to the connection table for each of
@@ -165,7 +165,7 @@ the given properties via the appropriate merge operations.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neuprint.utils.connection_table_to_matrix">
-<span class="sig-prename descclassname"><span class="pre">neuprint.utils.</span></span><span class="sig-name descname"><span class="pre">connection_table_to_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bodyId'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weight'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_square</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/master/neuprint/utils.py#L277"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">neuprint.utils.</span></span><span class="sig-name descname"><span class="pre">connection_table_to_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conn_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">group_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bodyId'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_col</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'weight'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">make_square</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/connectome-neuprint/neuprint-python/blob/0.5.2/neuprint/utils.py#L277"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neuprint.utils.connection_table_to_matrix" title="Link to this definition">¶</a></dt>
 <dd><p>Given a weighted connection table, produce a weighted adjacency matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
