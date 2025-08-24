@@ -188,8 +188,13 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
                s.location.x as x,
                s.location.y as y,
                s.location.z as z,
-               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info{_neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15)}
+               apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
     """)
+
+    if nt and synapse_nt_prop_names:
+        cypher = cypher[:-1] + ',\n'
+        cypher += _neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15)
+
     data = client.fetch_custom(cypher, format='json')['data']
 
     # Assemble DataFrame
@@ -755,8 +760,13 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
                ns.confidence as confidence_pre,
                ms.confidence as confidence_post,
                apoc.map.removeKeys(ns, ['location', 'confidence', 'type']) as info_pre,
-               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as info_post{_neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15, matchvar='ns')}
+               apoc.map.removeKeys(ms, ['location', 'confidence', 'type']) as info_post
     """)
+
+    if nt and synapse_nt_prop_names:
+        cypher = cypher[:-1] + ',\n'
+        cypher += _neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15, matchvar='ns')
+
     data = client.fetch_custom(cypher, format='json')['data']
 
     # Assemble DataFrame
@@ -823,12 +833,6 @@ def _clean_nt_name(name):
     given a neurotransmitter probability name as stored in the database,
     return the name without the 'nt' and 'Prob' parts, lowercase
     """
-
-    # I am really tempted to replace "gaba" by "GABA" here,
-    #   but not sure if I want to go down that path of being
-    #   100% faithful to general outside usage; it's probably
-    #   not worth the maintenance overhead.
-
     return name.replace('nt', '').replace('Prob', '').lower()
 
 def _max_nt(nt_prop_names, nt_probs):
@@ -855,9 +859,7 @@ def _neurotransmitter_return_clause(synapse_nt_prop_names, prefix="", matchvar='
     if isinstance(prefix, int):
         prefix = ' ' * prefix
     if synapse_nt_prop_names:
-        # the first ",\n" continues the previous line of the query, while the
-        #     second is for joining the synapse_nt_prop_names
-        return ",\n" + ",\n".join(f"{prefix}{matchvar}.{name} as {name}" for name in synapse_nt_prop_names)
+        return ",\n".join(f"{prefix}{matchvar}.{name} as {name}" for name in synapse_nt_prop_names)
     else:
         return ""
 
