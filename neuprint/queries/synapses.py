@@ -43,7 +43,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
             will be fetched in batches, where each batch corresponds to N bodies.
             This argument sets the batch size N.
 
-        neurotransmitters (None (default), 'max', or 'all'):
+        nt (None (default), 'max', or 'all'):
             Optional. Retrieves neurotransmitter information for each "pre" synapse.
 
             If None, no neurotransmitter information is retrieved.
