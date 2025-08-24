@@ -702,9 +702,9 @@ class NeuronCriteria:
         for attr in list_props:
             val = getattr(self, attr)
             if len(val) == 1:
-                s += f', {attr}="{val[0]}"'
+                s += f', {attr}={repr(val[0])}'
             elif len(self.instance) > 1:
-                s += f", {attr}={list(val)}"
+                s += f", {attr}={repr(list(val))}"
 
         if any(
             len(getattr(self, attr))
@@ -768,7 +768,7 @@ class NeuronCriteria:
                     values = values.tolist()
                 values = [v for v in values if v is not None]
                 var = cypher_identifier(f"{self.matchvar}_search_{key}")
-                exprs[var] = (f"{values} as {var}")
+                exprs[var] = (f"{repr(values)} as {var}")
 
         return exprs
 
@@ -852,7 +852,7 @@ class NeuronCriteria:
         if value is None:
             return ""
         if not isinstance(value, bool):
-            return f"{self.matchvar}.{key} = '{value}'"
+            return f"{self.matchvar}.{key} = {repr(value)}"
         elif value:
             return f"{self.matchvar}.{key} IS NOT NULL"
         else:
@@ -925,7 +925,8 @@ class NeuronCriteria:
     def rois_expr(self):
         return self._logic_tag_expr(
             self.rois,
-            {'any': 'OR', 'all': 'AND'}[self.roi_req])
+            {'any': 'OR', 'all': 'AND'}[self.roi_req]
+        )
 
     def all_conditions(self, *vars, prefix=0, comments=True):
         if isinstance(prefix, int):
@@ -1064,8 +1065,8 @@ class NeuronCriteria:
         conditions = dedent(f"""\
             // -- Directed ROI conditions for segment '{self.matchvar}' --
             WITH {vars},
-                 {[*self.inputRois]} as inputRois,
-                 {[*self.outputRois]} as outputRois,
+                 {repr([*self.inputRois])} as inputRois,
+                 {repr([*self.outputRois])} as outputRois,
                  apoc.convert.fromJsonMap({self.matchvar}.roiInfo) as roiInfo
 
             // Check input ROIs (segment '{self.matchvar}')
@@ -1183,12 +1184,9 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             return f"exists({matchvar}.{field})"
 
         if regex:
-            return f"{matchvar}.{field} =~ '{values[0]}'"
+            return f"{matchvar}.{field} =~ {repr(values[0])}"
 
-        if isinstance(values[0], str):
-            return f"{matchvar}.{field} = '{values[0]}'"
-
-        return f"{matchvar}.{field} = {values[0]}"
+        return f"{matchvar}.{field} = {repr(values[0])}"
 
     if NotNull in values and len(values) > 1:
         raise ValueError('`NotNull` can not be combined with other criteria '
@@ -1202,9 +1200,9 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             assert all(isinstance(v, str) for v in values), \
                 "Expected all regex values to be strings"
             r = '|'.join(f'({v})' for v in values)
-            return f"{matchvar}.{field} =~ '{r}'"
+            return f"{matchvar}.{field} =~ {repr(r)}"
         else:
-            return f"{matchvar}.{field} in {values}"
+            return f"{matchvar}.{field} in {repr(values)}"
 
     # ['some_val', None, 'some_other']
     values = [v for v in values if v not in (None, IsNull)]
@@ -1212,11 +1210,9 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         if regex:
             assert isinstance(values[0], str), \
                 "Expected all regex values to be strings"
-            return f"{matchvar}.{field} =~ '{values[0]}' OR NOT exists({matchvar}.{field})"
-        elif isinstance(values[0], str):
-            return f"{matchvar}.{field} = '{values[0]}' OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} =~ {repr(values[0])} OR NOT exists({matchvar}.{field})"
         else:
-            return f"{matchvar}.{field} = {values[0]} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} = {repr(values[0])} OR NOT exists({matchvar}.{field})"
     else:
         if regex:
             # Combine the list of regexes into a single regex
@@ -1224,8 +1220,8 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             assert all(isinstance(v, str) for v in values), \
                 "Expected all regex values to be strings"
             r = '|'.join(f'({v})' for v in values)
-            return f"{matchvar}.{field} =~ '{r}' OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} =~ {repr(r)} OR NOT exists({matchvar}.{field})"
         elif valuevar:
             return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
         else:
-            return f"{matchvar}.{field} in {values} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} in {repr(values)} OR NOT exists({matchvar}.{field})"

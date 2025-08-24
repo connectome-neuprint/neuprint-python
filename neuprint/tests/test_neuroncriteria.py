@@ -58,6 +58,13 @@ def test_NeuronCriteria(client):
     assert NC(status=["foo", "bar"]).basic_exprs() == ["n.status in ['foo', 'bar']"]
     assert NC(status=["foo", "bar"], regex=True).basic_exprs() == ["n.status in ['foo', 'bar']"]
 
+    # Check that quotes and backslashes are escaped correctly.
+    assert NC(status="f\\oo").basic_exprs() == ["n.status = 'f\\\\oo'"]
+    assert NC(instance="fo'o").basic_exprs() == ["n.instance = \"fo'o\""]
+    assert NC(instance="fo'o", regex=True).basic_exprs() == ["n.instance =~ \"fo'o\""]
+    assert NC(instance=["fo'o", 'ba\"r']).basic_exprs() == ["n.instance in [\"fo'o\", 'ba\"r']"]
+    assert NC(instance=["fo'o", 'ba"r'], regex=True).basic_exprs() == ["n.instance =~ '(fo\\'o)|(ba\"r)'"]
+
     assert NC(cropped=True).basic_exprs() == ["n.cropped"]
     assert NC(cropped=False).basic_exprs() == ["(NOT n.cropped OR NOT exists(n.cropped))"]
 
