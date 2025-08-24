@@ -93,7 +93,7 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
     bodies = client.fetch_custom(q)['bodyId'].values
 
     batch_dfs = []
-    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size), disable=not client.progress):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_mitos(batch_criteria, mito_criteria, client)
@@ -270,7 +270,7 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
     bodies = client.fetch_custom(q)['bodyId'].values
 
     batch_dfs = []
-    for batch_bodies in tqdm(iter_batches(bodies, batch_size)):
+    for batch_bodies in tqdm(iter_batches(bodies, batch_size), disable=not client.progress):
         batch_criteria = copy.copy(neuron_criteria)
         batch_criteria.bodyId = batch_bodies
         batch_df = _fetch_synapses_and_closest_mitochondria(batch_criteria, synapse_criteria, client)

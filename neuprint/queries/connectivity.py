@@ -431,7 +431,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
         if sources_df is not None:
             # Break sources into batches
-            for batch_start in trange(0, len(sources_df), batch_size):
+            for batch_start in trange(0, len(sources_df), batch_size, disable=not client.progress):
                 batch_stop = batch_start + batch_size
                 source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
 
@@ -466,7 +466,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                     conn_tables.append(t)
         else:
             # Break targets into batches
-            for batch_start in trange(0, len(targets_df), batch_size):
+            for batch_start in trange(0, len(targets_df), batch_size, disable=not client.progress):
                 batch_stop = batch_start + batch_size
                 target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
 
@@ -609,7 +609,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     missing_bodies = [*set(connected_bodies) - set(neurons_df['bodyId'])]
 
     batches = []
-    for start in trange(0, len(missing_bodies), 10_000):
+    for start in trange(0, len(missing_bodies), 10_000, disable=not client.progress):
         batch_bodies = missing_bodies[start:start+10_000]
         batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label, client=client))
         batches.append( batch_df )

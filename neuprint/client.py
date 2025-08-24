@@ -373,7 +373,7 @@ class Client:
     """
     Client object for interacting with the neuprint database.
     """
-    def __init__(self, server, dataset=None, token=None, verify=True):
+    def __init__(self, server, dataset=None, token=None, verify=True, progress=True):
         """
         When you create the first ``Client``, it becomes the default
         ``Client`` to be used with all ``neuprint-python`` functions
@@ -399,7 +399,13 @@ class Client:
                 The dataset to run all queries against, e.g. 'hemibrain'.
                 If not provided, the server will use a default dataset for
                 all queries.
+
+            progress:
+                If ``True`` (default), show progress bars for long queries.
+
         """
+        self.progress = progress
+
         if not token:
             token = os.environ.get('NEUPRINT_APPLICATION_CREDENTIALS')
 
@@ -503,7 +509,7 @@ class Client:
     def _fetch_json(self, url, json=None, ispost=False):
         r = self._fetch(url, json=json, ispost=ispost)
         return ujson.loads(r.content)
-    
+
     def _fetch_arrow(self, url, json=None, ispost=False):
         r = self._fetch(url, json=json, ispost=ispost)
         content_type = r.headers.get('Content-Type', '')
@@ -637,10 +643,10 @@ class Client:
     def fetch_version(self):
         """
         Returns the version of the ``neuPrintHTTP`` server.
-        
+
         Returns:
             str: The server version as a string.
-            
+
         Raises:
             HTTPError: If the version endpoint is not found or returns an error.
             KeyError: If the response doesn't contain a 'Version' key.
@@ -652,11 +658,11 @@ class Client:
         except (HTTPError, KeyError, Exception) as e:
             # Let the caller handle the exception
             raise
-        
+
     def arrow_endpoint(self):
         """
         Checks if the neuPrintHTTP server version supports Arrow IPC via HTTP.
-        
+
         Returns:
             bool: True if the server version is 1.7.3 or higher, False otherwise.
         """
@@ -664,11 +670,11 @@ class Client:
             version_str = self.fetch_version()
             if not version_str:
                 return False
-                
+
             # Parse semantic version
             server_version = version.parse(version_str)
             min_version = version.parse('1.7.3')
-            
+
             return server_version >= min_version
         except (HTTPError, KeyError, Exception):
             # If we can't determine the version for any reason, default to False
