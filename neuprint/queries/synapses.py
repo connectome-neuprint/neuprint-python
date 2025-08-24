@@ -47,10 +47,12 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
             Optional. Retrieves neurotransmitter information for each "pre" synapse.
 
             If None, no neurotransmitter information is retrieved.
-            If 'max', the most probable neurotransmitter for each synapse is returned in a column named "ntWithMaxProb".
+            If 'max', the most probable neurotransmitter for each synapse is returned in a column
+            named "nt" and a column "ntProb" indicating the probability associated with it.
             If 'all', probabilities for all neurotransmitters are returned in named columns.
 
-            If no neurotransmitter information is available, the ``nt`` argument is ignored.
+            If no neurotransmitter information is available, then setting nt to 'max' or 'all'
+            will raise an error.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -215,7 +217,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     synapse_columns = ['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence']
     if nt == "max":
-        synapse_columns.append('ntWithMaxProb')
+        synapse_columns.extend(['nt', 'ntProb'])
     elif nt == "all":
         synapse_columns.extend(cleaned_nt_prop_names)
 
@@ -234,7 +236,8 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         for column in cleaned_nt_prop_names:
             syn_df[column] = syn_df[column].astype(np.float32)
     elif nt == 'max':
-        syn_df['ntWithMaxProb'] = pd.Categorical(syn_df['ntWithMaxProb'], cleaned_nt_prop_names + ["n/a"])
+        syn_df['nt'] = pd.Categorical(syn_df['nt'], cleaned_nt_prop_names)
+        syn_df['ntProb'] = syn_df['ntProb'].astype(np.float32)
 
     return syn_df
 
@@ -543,10 +546,12 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
             Optional. Retrieves neurotransmitter information for each "pre" synapse.
 
             If None, no neurotransmitter information is retrieved.
-            If 'max', the most probable neurotransmitter for each synapse is returned in a column named "ntWithMaxProb".
+            If 'max', the most probable neurotransmitter for each presynapse is returned in a
+            column named "nt" along with a column "ntProb" indicating the probability associated with it.
             If 'all', probabilities for all neurotransmitters are returned in named columns.
 
-            If no neurotransmitter information is available, the ``nt`` argument is ignored.
+            If no neurotransmitter information is available, then setting nt to 'max' or 'all'
+            will raise an error.
 
         client:
             If not provided, the global default :py:class:`.Client` will be used.
@@ -798,7 +803,7 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     synapse_columns = ['bodyId_pre', 'bodyId_post', 'roi_pre', 'roi_post',
         'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post', 'confidence_pre', 'confidence_post']
     if nt == "max":
-        synapse_columns.append('ntWithMaxProb')
+        synapse_columns.extend(['nt', 'ntProb'])
     elif nt == "all":
         synapse_columns.extend(cleaned_nt_prop_names)
 
@@ -822,7 +827,8 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         for column in cleaned_nt_prop_names:
             syn_df[column] = syn_df[column].astype(np.float32)
     elif nt == 'max':
-        syn_df['ntWithMaxProb'] = pd.Categorical(syn_df['ntWithMaxProb'], cleaned_nt_prop_names + ["n/a"])
+        syn_df['nt'] = pd.Categorical(syn_df['nt'], cleaned_nt_prop_names)
+        syn_df['ntProb'] = syn_df['ntProb'].astype(np.float32)
 
     return syn_df
 
@@ -837,16 +843,19 @@ def _clean_nt_name(name):
 
 def _max_nt(nt_prop_names, nt_probs):
     """
-    Return the neurotransmitter with the highest probability.
+    Return the name of the neurotransmitter with the highest
+    probability and the corresponding probability value.
 
     input: list of nt property names and list of probabilities, in the same order
     """
 
     # if any probs are None, they all are
     if not nt_probs or nt_probs[0] is None:
-        return "n/a"
+        return (None, np.nan)
 
-    return nt_prop_names[nt_probs.index(max(nt_probs))]
+    max_prob = max(nt_probs)
+    nt_name = nt_prop_names[nt_probs.index(max_prob)]
+    return (nt_name, max_prob)
 
 def _neurotransmitter_return_clause(synapse_nt_prop_names, prefix="", matchvar='s'):
     """
@@ -880,7 +889,7 @@ def _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names):
         case None:
             return ()
         case 'max':
-            return (_max_nt(cleaned_nt_prop_names, nt_probs), )
+            return _max_nt(cleaned_nt_prop_names, nt_probs)
         case 'all':
             return tuple(nt_probs)
         case _:
