@@ -359,16 +359,18 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         def _fetch_count(criteria, timeout):
             matchvar = criteria.matchvar
             q = f"""\
-                CALL apoc.cypher.runTimeboxed("
                     {criteria.global_with(prefix=20)}
                     MATCH ({matchvar}:{criteria.label})
                     {criteria.all_conditions(prefix=20)}
                     RETURN count({matchvar}) as c
-                ", {{}}, {timeout*1000}) YIELD value
+            """
+            timeboxed_q = f"""\
+                CALL apoc.cypher.runTimeboxed("{q.replace('"', r'\"')}",
+                {{}}, {timeout*1000}) YIELD value
                 RETURN value.c as count
             """
             try:
-                result = client.fetch_custom(q)['count']
+                result = client.fetch_custom(timeboxed_q)['count']
             except NeuprintTimeoutError:
                 return None
 
@@ -883,9 +885,9 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
         return_clause1 = ",\n                   length(p) AS path_length"
         return_clause2 = ", value.path_length as path_length"
 
+
     q = f"""\
-        call apoc.cypher.runTimeboxed(
-            "{intermediate_criteria.global_with(prefix=12)}
+           {intermediate_criteria.global_with(prefix=12)}
             MATCH (src :Neuron {{ bodyId: {upstream_bodyId} }}),
                    (dest:Neuron {{ bodyId: {downstream_bodyId} }}),
                    p = {path_clause}
@@ -894,12 +896,14 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
                   AND ALL (n in nodes(p) {nodes_where})
 
             RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
-                   [x in relationships(p) | x.weight] AS weights{return_clause1}",
-
+                   [x in relationships(p) | x.weight] AS weights{return_clause1}
+    """
+    timeboxed_q = f"""\
+        CALL apoc.cypher.runTimeboxed("{q.replace('"', r'\"')}",
             {{}},{timeout_ms}) YIELD value
             RETURN value.path as path, value.weights AS weights{return_clause2}
     """
-    results_df = client.fetch_custom(q)
+    results_df = client.fetch_custom(timeboxed_q)
 
     table_indexes = []
     table_bodies = []
