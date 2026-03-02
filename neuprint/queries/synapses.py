@@ -225,7 +225,12 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    def try_intern(s):
+        try:
+            return sys.intern(s)
+        except Exception:
+            return s
+    syn_df['roi'] = syn_df['roi'].map(try_intern)
     syn_df['x'] = syn_df['x'].astype(np.int32)
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
