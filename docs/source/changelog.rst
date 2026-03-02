@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.5.3 / 2026-03-02
+------------------
+- The `roi` column returned in synapse tables now has dtype `category` instead of `object`. (PR #102)
+
 0.5.2 / 2025-08-24
 ------------------
 - Optionally fetch data from the server via ArrowIPC instead of JSON.  Disabled by default. (PR # 71)
