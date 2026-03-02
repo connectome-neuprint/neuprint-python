@@ -76,14 +76,27 @@ import ujson
 
 logger = logging.getLogger(__name__)
 
-# These hold weak references
-DEFAULT_NEUPRINT_CLIENT = lambda: None
-USER_NEUPRINT_CLIENTS = set()
+# Weak-reference-based tracking of all live Client instances.
+#
+# We track by id() (identity) rather than equality because weakref.ref
+# delegates __eq__/__hash__ to the referent, which causes equal-but-distinct
+# Client objects to shadow each other in a set.  Using id() as dict keys
+# ensures every distinct object is tracked independently.
+#
+# _default_client_ref: weakref to the current default Client (or a
+#     lambda returning None when no default is set).
+# _user_clients: maps id(client) -> weakref.ref(client) for every live Client.
+# _thread_copies: maps (thread_id, pid) -> deepcopy of the default client,
+#     so each thread gets its own requests.Session (not thread-safe).
+# _suppress_registration: thread-local flag to prevent internal deepcopies
+#     (made for thread safety) from registering themselves as user clients.
 
-# This holds real references
-DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES = {}
+_default_client_ref = lambda: None
+_user_clients = {}
+_thread_copies = {}
 
-_global_client_lock = threading.RLock()
+_lock = threading.RLock()
+_suppress_registration = threading.local()
 
 
 class NeuprintTimeoutError(HTTPError):
@@ -100,35 +113,32 @@ def default_client():
     It is automatically called by all query functions if
     you haven't passed in an explict `client` argument.
     """
-    with _global_client_lock:
-        default = DEFAULT_NEUPRINT_CLIENT()
+    with _lock:
+        default = _default_client_ref()
+
         if default is None:
-            clients = {c() for c in USER_NEUPRINT_CLIENTS if c()}
-            if len(clients) == 0:
+            live = _live_clients()
+            if len(live) == 0:
                 raise RuntimeError(
                     "No default Client has been set yet because you haven't yet created a Client.\n"
                 )
-            if len(clients) > 1:
+            if len(live) > 1 and not _all_equivalent(live):
                 raise RuntimeError(
                     "Currently more than one Client exists, so neither was automatically chosen as the default.\n"
                     "You must explicitly pass a client to query functions, or explicitly call set_default_client().\n"
-                    f"Currently {len(clients)} clients exist: {clients}"
-            )
-            if len(clients) == 1:
-                raise RuntimeError(
-                    "No default Client has been set. One client does exist already, "
-                    "which can be made the default via set_default_client()."
+                    f"Currently {len(live)} clients exist: {live}"
                 )
+            # One client, or multiple equivalent clients: re-establish a default.
+            _set_default_inner(live[0])
+            default = live[0]
 
-        thread_id = threading.current_thread().ident
-        pid = os.getpid()
-
+        thread_key = (threading.current_thread().ident, os.getpid())
         try:
-            c = DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)]
+            return _thread_copies[thread_key]
         except KeyError:
-            c = copy.deepcopy(default)
-            DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = c
-        return c
+            c = _deepcopy_no_register(default)
+            _thread_copies[thread_key] = c
+            return c
 
 
 def set_default_client(client):
@@ -143,56 +153,32 @@ def set_default_client(client):
     if client is None:
         clear_default_client()
         return
-
-    global DEFAULT_NEUPRINT_CLIENT  # noqa
-    DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
-
-    thread_id = threading.current_thread().ident
-    pid = os.getpid()
-
-    if DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.get((thread_id, pid), None) == client:
-        return
-
-    with _global_client_lock:
-        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.clear()
-
-        # We temporarily store the original object before performing the deepcopy below.
-        # The current function is called during depickling, so this avoids infinite recursion.
-        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = client
-
-        # We exclusively store *copies* in this dict,
-        # to ensure that the DEFAULT_NEUPRINT_CLIENT weakref becomes
-        # invalid if the user deletes their Client.
-        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES[(thread_id, pid)] = copy.deepcopy(client)
-
-        # Sadly, we must set this again because the deepcopy above
-        # triggered registration of the client and cleared the default.
-        # This is all a mess and needs to be reworked.
-        DEFAULT_NEUPRINT_CLIENT = weakref.ref(client)
+    with _lock:
+        _set_default_inner(client)
 
 
 def clear_default_client():
     """
     Unset the default Client, leaving no default in place.
     """
-    global DEFAULT_NEUPRINT_CLIENT  # noqa
-    with _global_client_lock:
-        DEFAULT_NEUPRINT_CLIENT = lambda: None  # noqa
-        DEFAULT_NEUPRINT_CLIENT_THREAD_COPIES.clear()
+    global _default_client_ref
+    with _lock:
+        _default_client_ref = lambda: None
+        _thread_copies.clear()
 
 
 def list_all_clients():
     """
     List all ``Client`` objects in the program.
     """
-    return {c() for c in USER_NEUPRINT_CLIENTS if c()}
+    return set(_live_clients())
 
 
 def _register_client(client):
     """
     Register the client in our global list of client weakrefs,
     and also set it as the default client if it happens to be the
-    ONLY client in existence.
+    ONLY client in existence (or all existing clients are equivalent).
 
     We use weak references instead of regular references to leave
     the user in control of which clients "still exist".
@@ -204,36 +190,71 @@ def _register_client(client):
             c = Client('neuprint.janelia.org', 'hemibrain:v1.2.1')
             n1, w1 = fetch_neurons(..., client=None)
 
-            c = Client('neprint.janelia.org', 'manc:v1.0')
+            c = Client('neuprint.janelia.org', 'manc:v1.0')
             n2, w2 = fetch_neurons(..., client=None)
 
     And since the first Client is deallocated, the second one
     becomes the default without issues.
     """
-    added_client = False
-    with _global_client_lock:
-        clients = copy.copy(USER_NEUPRINT_CLIENTS)
-        # Housekeeping: drop invalid references
-        clients = {c for c in clients if c()}
-        w = weakref.ref(client)
-        if w not in clients:
-            clients.add(w)
-            added_client = True
-        USER_NEUPRINT_CLIENTS.clear()
-        USER_NEUPRINT_CLIENTS.update(clients)
-
-    if not added_client:
+    # Internal deepcopies (for thread safety) must not be tracked as user clients.
+    if getattr(_suppress_registration, 'active', False):
         return
 
-    # If there weren't any other clients,
-    # then the new one becomes the default.
-    if len(clients) == 1:
-        set_default_client(client)
-    else:
-        # Otherwise, the default is cleared.
-        # If the user really wants to pick a default client,
-        # they can call set_default_client() explicitly.
-        clear_default_client()
+    with _lock:
+        cid = id(client)
+        if cid in _user_clients and _user_clients[cid]() is not None:
+            return  # same object already registered
+
+        def _cleanup(ref, cid=cid):
+            _user_clients.pop(cid, None)
+
+        _user_clients[cid] = weakref.ref(client, _cleanup)
+
+        live = _live_clients()
+        if len(live) == 1:
+            _set_default_inner(client)
+        elif _all_equivalent(live):
+            _set_default_inner(client)
+        else:
+            _clear_default_inner()
+
+
+# ---- internal helpers ----
+
+def _live_clients():
+    """Return a list of all live Client objects."""
+    return [ref() for ref in _user_clients.values() if ref() is not None]
+
+
+def _all_equivalent(clients):
+    """Return True if all clients in the list are equivalent (==)."""
+    return all(c == clients[0] for c in clients[1:])
+
+
+def _set_default_inner(client):
+    """Set the default client.  Caller must hold _lock."""
+    global _default_client_ref
+    _default_client_ref = weakref.ref(client)
+    _thread_copies.clear()
+
+    thread_key = (threading.current_thread().ident, os.getpid())
+    _thread_copies[thread_key] = _deepcopy_no_register(client)
+
+
+def _clear_default_inner():
+    """Clear the default client.  Caller must hold _lock."""
+    global _default_client_ref
+    _default_client_ref = lambda: None
+    _thread_copies.clear()
+
+
+def _deepcopy_no_register(client):
+    """Deepcopy a Client without triggering _register_client on the copy."""
+    _suppress_registration.active = True
+    try:
+        return copy.deepcopy(client)
+    finally:
+        _suppress_registration.active = False
 
 
 def inject_client(f):
