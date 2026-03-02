@@ -182,7 +182,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         {synapse_criteria.condition('n', 's', prefix=8)}
         // De-duplicate 's' because 'pre' synapses can appear in more than one SynapseSet
         WITH DISTINCT n, s
-        
+
         // Extract properties as rows
         RETURN n.bodyId as bodyId,
                s.type as type,
@@ -225,13 +225,6 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-
-    def try_intern(s):
-        try:
-            return sys.intern(s)
-        except TypeError:
-            return s
-
     syn_df['roi'] = syn_df['roi'].map(try_intern)
     syn_df['x'] = syn_df['x'].astype(np.int32)
     syn_df['y'] = syn_df['y'].astype(np.int32)
@@ -408,7 +401,7 @@ def _fetch_mean_synapses_per_roi(neuron_criteria, synapse_criteria, client):
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['roi'] = syn_df['roi'].apply(try_intern)
     syn_df['count'] = syn_df['count'].astype(np.int32)
     syn_df['x'] = syn_df['x'].astype(np.float32)
     syn_df['y'] = syn_df['y'].astype(np.float32)
@@ -793,8 +786,8 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         post_rois = return_rois & {*info_post.keys()}
 
         # Intern the ROIs to save RAM
-        pre_rois = sorted(map(sys.intern, pre_rois))
-        post_rois = sorted(map(sys.intern, post_rois))
+        pre_rois = sorted(map(try_intern, pre_rois))
+        post_rois = sorted(map(try_intern, post_rois))
 
         pre_rois = pre_rois or [None]
         post_rois = post_rois or [None]
@@ -901,3 +894,10 @@ def _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names):
             return tuple(nt_probs)
         case _:
             raise ValueError(f"Invalid option for nt: {nt}. Use None, 'max', or 'all'.")
+
+
+def try_intern(s):
+    try:
+        return sys.intern(s)
+    except TypeError:
+        return s

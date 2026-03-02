@@ -171,8 +171,8 @@ def _fetch_mitos(neuron_criteria, mito_criteria, client):
     mito_df = pd.DataFrame(mito_table, columns=cols)
 
     # Save RAM with smaller dtypes and interned strings
-    mito_df['mitoType'] = mito_df['mitoType'].apply(lambda s: sys.intern(s) if s else s)
-    mito_df['roi'] = mito_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    mito_df['mitoType'] = mito_df['mitoType'].apply(try_intern)
+    mito_df['roi'] = mito_df['roi'].apply(try_intern)
     mito_df['x'] = mito_df['x'].astype(np.int32)
     mito_df['y'] = mito_df['y'].astype(np.int32)
     mito_df['z'] = mito_df['z'].astype(np.int32)
@@ -371,12 +371,12 @@ def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, 
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-    syn_df['roi'] = syn_df['roi'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['roi'] = syn_df['roi'].apply(try_intern)
     syn_df['x'] = syn_df['x'].astype(np.int32)
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
     syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
-    syn_df['mitoType'] = syn_df['mitoType'].apply(lambda s: sys.intern(s) if s else s)
+    syn_df['mitoType'] = syn_df['mitoType'].apply(try_intern)
     syn_df['distance'] = syn_df['distance'].astype(np.float32)
     syn_df['size'] = syn_df['size'].astype(np.int32)
     syn_df['mx'] = syn_df['mx'].astype(np.int32)
@@ -488,3 +488,10 @@ def fetch_connection_mitochondria(source_criteria, target_criteria, synapse_crit
                                           right_on=['x', 'y', 'z'],
                                           suffixes=['_pre', '_post']).drop(columns=[*'xyz'])
     return conn_with_mito
+
+
+def try_intern(s):
+    try:
+        return sys.intern(s)
+    except TypeError:
+        return s
