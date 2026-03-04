@@ -1,12 +1,8 @@
 Changelog
 =========
 
-0.5.3 / 2026-03-02
-------------------
-- The `roi` column returned in synapse tables now has dtype `category` instead of `object`. (PR #102)
 - Fixed a cypher quoting issue that could occur in certain time-boxed queries such as in ``fetch_paths()`` (PR #103)
 - Fixed a bug in how clients are tracked and managed for the purpose of selecting a default client. (PR #104)
-
 0.5.2 / 2025-08-24
 ------------------
 - Optionally fetch data from the server via ArrowIPC instead of JSON.  Disabled by default. (PR # 71)
