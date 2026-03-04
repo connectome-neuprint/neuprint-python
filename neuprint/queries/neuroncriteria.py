@@ -396,33 +396,55 @@ class NeuronCriteria:
             cropped (bool):
                 If given, restrict results to neurons that are cropped or not.
 
-            dataset-specific exact string fields, possibiliy including but not limited to:
-                birthtime (str or list of str):
-                cellBodyFiber (str or list of str):
-                superclass (str or list of str):
-                class\\_ (str or list of str):
-                    Matches for the neuron ``class`` field.
-                entryNerve (str or list of str):
-                exitNerve (str or list of str):
-                flywireType (str or list of str, regex-optional):
-                hemibrainType (str or list of str, regex-optional):
-                hemilineage (str or list of str):
-                itoleeHl (str or list of str):
-                longTract (str or list of str):
-                mancType (str or list of str, regex-optional):
-                modality (str or list of str):
-                origin (str or list of str):
-                predictedNt (str or list of str):
-                serialMotif (str or list of str):
-                somaNeuromere (str or list of str):
-                somaSide  (str or list of str):
-                    Valid choices are 'RHS', 'LHS', 'Midline'
-                subclass (str or list of str):
-                synonyms (str or list of str):
-                systematicType (str or list of str):
-                target (str or list of str):
-                trumanHl (str or list of str):
-                zapbenchId
+            birthtime (str or list of str):
+
+            cellBodyFiber (str or list of str):
+
+            superclass (str or list of str):
+
+            class\\_ (str or list of str):
+                Matches for the neuron ``class`` field.
+
+            entryNerve (str or list of str):
+
+            exitNerve (str or list of str):
+
+            flywireType (str or list of str, regex-optional):
+
+            hemibrainType (str or list of str, regex-optional):
+
+            hemilineage (str or list of str):
+
+            itoleeHl (str or list of str):
+
+            longTract (str or list of str):
+
+            mancType (str or list of str, regex-optional):
+
+            modality (str or list of str):
+
+            origin (str or list of str):
+
+            predictedNt (str or list of str):
+
+            serialMotif (str or list of str):
+
+            somaNeuromere (str or list of str):
+
+            somaSide  (str or list of str):
+                Valid choices are 'RHS', 'LHS', 'Midline'
+
+            subclass (str or list of str):
+
+            synonyms (str or list of str):
+
+            systematicType (str or list of str):
+
+            target (str or list of str):
+
+            trumanHl (str or list of str):
+
+            zapbenchId:
 
             label (Either ``'Neuron'`` or ``'Segment'``):
                 Which node label to match with.

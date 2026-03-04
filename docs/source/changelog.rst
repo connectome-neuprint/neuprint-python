@@ -36,7 +36,7 @@ Changelog
   This is crucial if multiple clients have been constructed.
 - ``fetch_mean_synapses()``: Added ``by_roi`` option to allow the user to fetch whole-neuron mean synapses
 - ``fetch_shorted_paths()`` allows you to omit filtering entirely using ``NC()``
-- ``fetch_neurons()``: If no ``NeuronCriteria`` is provided, fetch all ``:Neuron``s by default
+- ``fetch_neurons()``: If no ``NeuronCriteria`` is provided, fetch all ``:Neuron``\s by default
 - Added ``available_datasets`` to utils.py (PR #60)
 - Internally generated Cypher now uses backticks for variables/properties that require them. (PR #42 and related commits)
 - Bug fix in ``connection_table_to_matrix()`` (PR #47)
