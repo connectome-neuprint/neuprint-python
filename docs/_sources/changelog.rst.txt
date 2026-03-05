@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.5.3 / 2026-03-05
+0.6 / 2026-03-05
 ------------------
 - Fixed a cypher quoting issue that could occur in certain time-boxed queries such as in ``fetch_paths()`` (PR #103)
 - Fixed a bug in how clients are tracked and managed for the purpose of selecting a default client. (PR #104)
