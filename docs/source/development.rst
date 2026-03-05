@@ -90,7 +90,7 @@ To prepare a release, follow these steps:
 
     # Build and upload the conda package
     conda build conda-recipe
-    anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-${NEW_TAG}-py_0.tar.bz2
+    anaconda upload -u flyem-forge $(conda info --base)/conda-bld/noarch/neuprint-python-${NEW_TAG}-py_0.conda
 
     # Build and upload the PyPI package
     ./upload-to-pypi.sh
