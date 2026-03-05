@@ -1,4 +1,3 @@
-import sys
 import copy
 from textwrap import dedent
 
@@ -133,7 +132,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
     # Return empty results, but with correct dtypes
     dtypes = {'bodyId': np.dtype('int64'),
               'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
-              'roi': np.dtype('O'),
+              'roi': pd.Series(['']).dtype,
               'x': np.dtype('int32'),
               'y': np.dtype('int32'),
               'z': np.dtype('int32'),
@@ -225,7 +224,6 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-    syn_df['roi'] = syn_df['roi'].astype('category')
     syn_df['x'] = syn_df['x'].astype(np.int32)
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
@@ -336,7 +334,7 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
     # Return empty results, but with correct dtypes
     dtypes = {'bodyId': np.dtype('int64'),
               'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
-              'roi': np.dtype('O'),
+              'roi': pd.Series(['']).dtype,
               'count': np.dtype('int32'),
               'x': np.dtype('float32'),
               'y': np.dtype('float32'),
@@ -399,9 +397,8 @@ def _fetch_mean_synapses_per_roi(neuron_criteria, synapse_criteria, client):
     """)
     syn_df = client.fetch_custom(cypher)
 
-    # Save RAM with smaller dtypes
+    # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-    syn_df['roi'] = syn_df['roi'].astype('category')
     syn_df['count'] = syn_df['count'].astype(np.int32)
     syn_df['x'] = syn_df['x'].astype(np.float32)
     syn_df['y'] = syn_df['y'].astype(np.float32)
@@ -629,8 +626,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         dtypes = {
             'bodyId_pre': np.dtype('int64'),
             'bodyId_post': np.dtype('int64'),
-            'roi_pre': np.dtype('O'),
-            'roi_post': np.dtype('O'),
+            'roi_pre': pd.Series(['']).dtype,
+            'roi_post': pd.Series(['']).dtype,
             'x_pre': np.dtype('int32'),
             'y_pre': np.dtype('int32'),
             'z_pre': np.dtype('int32'),
@@ -786,8 +783,8 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         post_rois = return_rois & {*info_post.keys()}
 
         # Intern the ROIs to save RAM
-        pre_rois = sorted(map(sys.intern, pre_rois))
-        post_rois = sorted(map(sys.intern, post_rois))
+        pre_rois = sorted(pre_rois)
+        post_rois = sorted(post_rois)
 
         pre_rois = pre_rois or [None]
         post_rois = post_rois or [None]

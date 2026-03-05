@@ -1,4 +1,3 @@
-import sys
 import copy
 from textwrap import dedent
 
@@ -106,8 +105,8 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
     # Return empty results, but with correct dtypes
     dtypes = {
         'bodyId': np.dtype('int64'),
-        'mitoType': np.dtype('O'),
-        'roi': np.dtype('O'),
+        'mitoType': pd.Series(['']).dtype,
+        'roi': pd.Series(['']).dtype,
         'x': np.dtype('int32'),
         'y': np.dtype('int32'),
         'z': np.dtype('int32'),
@@ -171,8 +170,6 @@ def _fetch_mitos(neuron_criteria, mito_criteria, client):
     mito_df = pd.DataFrame(mito_table, columns=cols)
 
     # Save RAM with smaller dtypes and interned strings
-    mito_df['mitoType'] = mito_df['mitoType'].astype('category')
-    mito_df['roi'] = mito_df['roi'].astype('category')
     mito_df['x'] = mito_df['x'].astype(np.int32)
     mito_df['y'] = mito_df['y'].astype(np.int32)
     mito_df['z'] = mito_df['z'].astype(np.int32)
@@ -284,12 +281,12 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
     dtypes = {
         'bodyId': np.dtype('int64'),
         'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
-        'roi': np.dtype('O'),
+        'roi': pd.Series(['']).dtype,
         'x': np.dtype('int32'),
         'y': np.dtype('int32'),
         'z': np.dtype('int32'),
         'confidence': np.dtype('float32'),
-        'mitoType': np.dtype('O'),
+        'mitoType': pd.Series(['']).dtype,
         'distance': np.dtype('float32'),
         'mx': np.dtype('int32'),
         'my': np.dtype('int32'),
@@ -371,12 +368,10 @@ def _fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria, 
 
     # Save RAM with smaller dtypes and interned strings
     syn_df['type'] = pd.Categorical(syn_df['type'], ['pre', 'post'])
-    syn_df['roi'] = syn_df['roi'].astype('category')
     syn_df['x'] = syn_df['x'].astype(np.int32)
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
     syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
-    syn_df['mitoType'] = syn_df['mitoType'].astype('category')
     syn_df['distance'] = syn_df['distance'].astype(np.float32)
     syn_df['size'] = syn_df['size'].astype(np.int32)
     syn_df['mx'] = syn_df['mx'].astype(np.int32)

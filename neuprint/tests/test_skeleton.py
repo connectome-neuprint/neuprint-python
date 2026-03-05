@@ -42,7 +42,7 @@ def test_skeleton_df_to_nx(linear_skeleton):
     g = skeleton_df_to_nx(linear_skeleton, directed=False)
     assert not isinstance(g, nx.DiGraph)
     expected_edges = linear_skeleton[['rowId', 'link']].values[1:]
-    expected_edges.sort(axis=1)
+    expected_edges = np.sort(expected_edges, axis=1)
     assert (np.array(g.edges) == expected_edges).all()
 
     g = skeleton_df_to_nx(linear_skeleton, directed=True)
