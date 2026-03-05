@@ -105,8 +105,8 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
     # Return empty results, but with correct dtypes
     dtypes = {
         'bodyId': np.dtype('int64'),
-        'mitoType': np.dtype('O'),
-        'roi': np.dtype('O'),
+        'mitoType': pd.Series(['']).dtype,
+        'roi': pd.Series(['']).dtype,
         'x': np.dtype('int32'),
         'y': np.dtype('int32'),
         'z': np.dtype('int32'),
@@ -281,12 +281,12 @@ def fetch_synapses_and_closest_mitochondria(neuron_criteria, synapse_criteria=No
     dtypes = {
         'bodyId': np.dtype('int64'),
         'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
-        'roi': np.dtype('O'),
+        'roi': pd.Series(['']).dtype,
         'x': np.dtype('int32'),
         'y': np.dtype('int32'),
         'z': np.dtype('int32'),
         'confidence': np.dtype('float32'),
-        'mitoType': np.dtype('O'),
+        'mitoType': pd.Series(['']).dtype,
         'distance': np.dtype('float32'),
         'mx': np.dtype('int32'),
         'my': np.dtype('int32'),

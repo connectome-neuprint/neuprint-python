@@ -132,7 +132,7 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
     # Return empty results, but with correct dtypes
     dtypes = {'bodyId': np.dtype('int64'),
               'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
-              'roi': np.dtype('O'),
+              'roi': pd.Series(['']).dtype,
               'x': np.dtype('int32'),
               'y': np.dtype('int32'),
               'z': np.dtype('int32'),
@@ -334,7 +334,7 @@ def fetch_mean_synapses(neuron_criteria, synapse_criteria=None, batch_size=100, 
     # Return empty results, but with correct dtypes
     dtypes = {'bodyId': np.dtype('int64'),
               'type': pd.CategoricalDtype(categories=['pre', 'post'], ordered=False),
-              'roi': np.dtype('O'),
+              'roi': pd.Series(['']).dtype,
               'count': np.dtype('int32'),
               'x': np.dtype('float32'),
               'y': np.dtype('float32'),
@@ -626,8 +626,8 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         dtypes = {
             'bodyId_pre': np.dtype('int64'),
             'bodyId_post': np.dtype('int64'),
-            'roi_pre': np.dtype('O'),
-            'roi_post': np.dtype('O'),
+            'roi_pre': pd.Series(['']).dtype,
+            'roi_post': pd.Series(['']).dtype,
             'x_pre': np.dtype('int32'),
             'y_pre': np.dtype('int32'),
             'z_pre': np.dtype('int32'),
