@@ -52,6 +52,25 @@ class Transaction:
         """
         Make a custom cypher query within the context
         of this transaction (allows writes).
+
+        If writing JSON to a property, be sure to escape single or double quotes,
+        depending on which quote character you use when expressing the string in Cypher.
+
+        Example:
+
+        .. code-block:: python
+
+            import json
+            from neuprint.admin import Transaction
+
+            myprop = {"foo": "bar"}
+            myprop = json.dumps(myprop).replace("\\", "\\\\").replace("'", "\\'")
+            q = f'''
+                MATCH (m:Meta)
+                SET m.myproperty = '{myprop}'
+            '''
+            with Transaction('my-dataset', client=c) as t:
+                t.query(q)
         """
         assert format in ('pandas', 'json')
         if self.transaction_id is None:
