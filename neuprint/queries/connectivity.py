@@ -363,9 +363,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                     MATCH ({matchvar}:{criteria.label})
                     {criteria.all_conditions(prefix=20)}
                     RETURN count({matchvar}) as c
-            """
+            """.replace('"', r'\"')
             timeboxed_q = f"""\
-                CALL apoc.cypher.runTimeboxed("{q.replace('"', r'\"')}",
+                CALL apoc.cypher.runTimeboxed("{q}",
                 {{}}, {timeout*1000}) YIELD value
                 RETURN value.c as count
             """
@@ -897,9 +897,9 @@ def fetch_paths(upstream_bodyId, downstream_bodyId, min_weight=1,
 
             RETURN [n in nodes(p) | [n.bodyId, n.type]] AS path,
                    [x in relationships(p) | x.weight] AS weights{return_clause1}
-    """
+    """.replace('"', r'\"')
     timeboxed_q = f"""\
-        CALL apoc.cypher.runTimeboxed("{q.replace('"', r'\"')}",
+        CALL apoc.cypher.runTimeboxed("{q}",
             {{}},{timeout_ms}) YIELD value
             RETURN value.path as path, value.weights AS weights{return_clause2}
     """
