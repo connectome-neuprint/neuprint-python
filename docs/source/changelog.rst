@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.6.1 / 2026-03-19
+------------------
+- Fixed syntax compatibility with Python 3.10/3.11 (PR #107)
+
 0.6 / 2026-03-05
 ------------------
 - Fixed a cypher quoting issue that could occur in certain time-boxed queries such as in ``fetch_paths()`` (PR #103)
