@@ -303,7 +303,7 @@ def _process_roi_info(neuron_df, client):
     neuron_df['outputRois'] = neuron_df['roiInfo'].apply(lambda d: sorted([k for k, v in d.items() if v.get('pre')]))
     # Return roi info as a separate table.
     # (Note: Some columns aren't present in old neuprint databases.)
-    countcols = ['pre', 'post', 'downstream', 'upstream', 'mito']
+    countcols = ['pre', 'post', 'downstream', 'upstream', 'mito', 'soma']
     countcols = [c for c in countcols if c in neuron_df.columns]
     fullcols = ['bodyId', 'roi', *countcols]
     nonroi_cols = ['bodyId', *countcols]
