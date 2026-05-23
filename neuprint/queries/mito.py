@@ -79,7 +79,7 @@ def fetch_mitochondria(neuron_criteria, mito_criteria=None, batch_size=10, *, cl
 
             [2812 rows x 10 columns]
     """
-    mito_criteria = copy.copy(mito_criteria) or MitoCriteria()
+    mito_criteria = copy.copy(mito_criteria) or MitoCriteria(client=client)
     mito_criteria.matchvar = 'm'
     neuron_criteria.matchvar = 'n'
 
