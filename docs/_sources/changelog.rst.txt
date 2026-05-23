@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.6.2 / 2026-05-22
+------------------
+- If a dataset has ``:Element`` nodes with type ``soma``, then ``fetch_neurons`` will return soma counts in the ``roi_counts_df`` result.
+- Fix missing client arg when creating MitoCriteria in ``fetch_mitochondria()``
+
 0.6.1 / 2026-03-19
 ------------------
 - Fixed syntax compatibility with Python 3.10/3.11 (PR #107)
