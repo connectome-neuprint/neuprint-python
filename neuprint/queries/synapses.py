@@ -152,6 +152,13 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
     else:
         return_rois = {*client.all_rois}
 
+    if synapse_criteria.rois:
+        if invalid_rois := {*synapse_criteria.rois} - return_rois:
+            if synapse_criteria.primary_only:
+                raise RuntimeError(f"SynapseCriteria specified primary_only=True but selected non-primary rois: {invalid_rois}")
+            raise RuntimeError(f"SynapseCriteria unrecognized rois: {invalid_rois}")
+        return_rois &= {*synapse_criteria.rois}
+
     # If the user specified rois to filter synapses by, but hasn't specified rois
     # in the NeuronCriteria, add them to the NeuronCriteria to speed up the query.
     if synapse_criteria.rois and not neuron_criteria.rois:
@@ -191,6 +198,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
                s.location.z as z,
                apoc.map.removeKeys(s, ['location', 'confidence', 'type']) as syn_info
     """)
+    cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
 
     if nt and synapse_nt_prop_names:
         cypher = cypher[:-1] + ',\n'
@@ -198,23 +206,34 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
 
     data = client.fetch_custom(cypher, format='json')['data']
 
+    # Determine additional columns by looping through all syn_info,
+    # in case not all synapses have the same set of properties.
+    additional_properties = set()
+    for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
+        additional_properties |= {*syn_info.keys()} - {*cleaned_nt_prop_names} - {*client.all_rois}
+    additional_properties = sorted(additional_properties)
+
     # Assemble DataFrame
     syn_table = []
-    cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
     for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
-
         nt_info = _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names)
 
-        # Exclude non-primary ROIs if necessary
+        # Exclude ROIs the user didn't ask for.
         syn_rois = return_rois & {*syn_info.keys()}
-        # Fixme: Filter for the user's ROIs (drop duplicates)
         for roi in syn_rois:
-            syn_table.append((body, syn_type, roi, x, y, z, conf) + nt_info)
+            row = (body, syn_type, roi, x, y, z, conf)
 
         if not syn_rois:
-            syn_table.append((body, syn_type, None, x, y, z, conf) + nt_info)
+            row = (body, syn_type, None, x, y, z, conf)
 
-    synapse_columns = ['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence']
+        if additional_properties:
+            row += tuple(syn_info.get(col) for col in additional_properties)
+
+        row += nt_info
+
+        syn_table.append(row)
+
+    synapse_columns = ['bodyId', 'type', 'roi', 'x', 'y', 'z', 'confidence', *additional_properties]
     if nt == "max":
         synapse_columns.extend(['nt', 'ntProb'])
     elif nt == "all":
@@ -228,6 +247,16 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
     syn_df['y'] = syn_df['y'].astype(np.int32)
     syn_df['z'] = syn_df['z'].astype(np.int32)
     syn_df['confidence'] = syn_df['confidence'].astype(np.float32)
+
+    # Special handling for 'compartment' column, assuming it has the categories we expect.
+    if 'compartment' in syn_df.columns:
+        try:
+            syn_df['compartment'] = pd.Categorical(
+                syn_df['compartment'],
+                ['unknown', 'axon', 'dendrite', 'linker', 'cell-body-fiber']
+            )
+        except ValueError:
+            pass
 
     # nt columns types
     if nt == 'all':
