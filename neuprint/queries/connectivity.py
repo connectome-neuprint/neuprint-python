@@ -1,13 +1,15 @@
 import os
 import copy
+import threading
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 from textwrap import indent, dedent
 
 import ujson
 import pandas as pd
 
-from ..client import inject_client, NeuprintTimeoutError
-from ..utils import ensure_list_args, trange
+from ..client import inject_client, NeuprintTimeoutError, _deepcopy_no_register
+from ..utils import ensure_list_args, tqdm
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 
 
@@ -135,12 +137,39 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
     return edges_df
 
 
+def _fetch_queries(queries, client, threads):
+    """
+    Run a list of cypher queries and return their result DataFrames, in order.
+
+    If ``threads > 1``, the queries are issued concurrently.  Since
+    ``requests.Session`` is not thread-safe, each worker thread is given its
+    own copy of the client.
+    """
+    disable_progress = not client.progress
+
+    if threads <= 1 or len(queries) <= 1:
+        return [client.fetch_custom(q) for q in tqdm(queries, disable=disable_progress)]
+
+    thread_state = threading.local()
+
+    def _fetch(q):
+        c = getattr(thread_state, 'client', None)
+        if c is None:
+            c = thread_state.client = _deepcopy_no_register(client)
+        return c.fetch_custom(q)
+
+    with ThreadPoolExecutor(max_workers=threads) as pool:
+        # Executor.map() yields results in input order, so the
+        # concatenated table doesn't depend on completion order.
+        return [*tqdm(pool.map(_fetch, queries), total=len(queries), disable=disable_progress)]
+
+
 @inject_client
 @ensure_list_args(['rois'])
 @neuroncriteria_args('sources', 'targets')
 def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1,
                       include_nonprimary=False, export_dir=None, batch_size=200,
-                      properties=['type', 'instance'], *, client=None):
+                      properties=['type', 'instance'], *, omit_rois=False, threads=4, client=None):
     """
     Find connections to/from large sets of neurons, with per-ROI connection strengths.
 
@@ -165,9 +194,11 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
         rois:
             Limit results to connections within the listed ROIs.
+            Not compatible with ``omit_rois=True``.
 
         min_roi_weight:
             Limit results to connections of at least this strength within at least one of the returned ROIs.
+            Not compatible with ``omit_rois=True``.
 
         min_total_weight:
             Limit results to connections that are at least this strong when totaled across all ROIs.
@@ -183,6 +214,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             If True, also list per-ROI totals for non-primary ROIs
             (i.e. parts of the ROI hierarchy that are sub-primary or super-primary).
             See :py:func:`fetch_roi_hierarchy` for details.
+            Not compatible with ``omit_rois=True``.
 
             Note:
                 Since non-primary ROIs overlap with primary ROIs, then the sum of the
@@ -193,6 +225,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         export_dir:
             Optional. Export CSV files for the neuron table,
             connection table (total weight), and connection table (per ROI).
+            The per-ROI table is not exported if ``omit_rois=True``.
 
         batch_size:
             For optimal performance, connections will be fetched in batches.
@@ -201,6 +234,24 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         properties:
             Which Neuron properties to include in the output table.
 
+        omit_rois (bool):
+            If True, don't ask the server for a per-ROI breakdown of each connection.
+            The returned connection table then contains one row per body pair,
+            with the *total* connection weight and no ``roi`` column.
+            If you don't need ROI information, this speeds up the query, since
+            the per-edge ROI data is a large part of the payload, and unpacking
+            it into a per-ROI table is expensive.
+
+            Since the per-ROI weights are what make ``rois``, ``min_roi_weight``
+            and ``include_nonprimary`` meaningful, those options can't be combined
+            with ``omit_rois=True``.  (``min_total_weight`` still works, and is
+            applied by the server.)
+
+        threads:
+            How many batches to fetch concurrently.  Use ``threads=1`` to
+            fetch them one at a time.  Each thread uses its own copy of the
+            client, and therefore its own connection to the server.
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
@@ -208,6 +259,10 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         Two DataFrames, ``(neurons_df, roi_conn_df)``, containing a
         table of neuron IDs and the per-ROI connection table, respectively.
         See caveat above concerning non-primary ROIs.
+
+        If ``omit_rois=True``, the second DataFrame has columns
+        ``['bodyId_pre', 'bodyId_post', 'weight']`` (one row per body pair)
+        instead of ``['bodyId_pre', 'bodyId_post', 'roi', 'weight']``.
 
     See also:
         :py:func:`.fetch_simple_connections()`
@@ -275,6 +330,23 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         4   329599710    329566174       4
         5   424379864    329566174       7
         6   425790257    329566174      12
+
+    If the totals are all you need, use ``omit_rois=True`` to obtain them directly.
+    The per-ROI weights are then never fetched, which is faster.
+
+    .. code-block:: ipython
+
+        In [6]: neuron_df, connection_df = fetch_adjacencies(sources, targets, omit_rois=True)
+           ...: connection_df
+        Out[6]:
+           bodyId_pre  bodyId_post  weight
+        0   329566174    329599710       1
+        1   329566174    420274150       1
+        2   329566174    424379864      37
+        3   329566174    425790257      43
+        4   329599710    329566174       4
+        5   424379864    329566174       7
+        6   425790257    329566174      12
     """
     ## Why is this function so dang long and complicated?
     ## --------------------------------------------------
@@ -301,6 +373,18 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     ## Preprocess arguments
     ##
 
+    if omit_rois:
+        # Without the per-ROI weights, none of these options can be honored.
+        # Silently approximating them would return the wrong connections.
+        if rois:
+            raise ValueError("Can't filter by rois when omit_rois=True: "
+                             "per-ROI weights are required to filter connections by ROI.")
+        if min_roi_weight > 1:
+            raise ValueError("Can't use min_roi_weight when omit_rois=True. "
+                             "Use min_total_weight instead.")
+        if include_nonprimary:
+            raise ValueError("include_nonprimary has no meaning when omit_rois=True.")
+
     rois = {*rois}
     invalid_rois = rois - {*client.all_rois}
     assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
@@ -311,6 +395,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
     min_roi_weight = max(min_roi_weight, 1)
     min_total_weight = max(min_total_weight, min_roi_weight)
+    threads = max(int(threads), 1)
 
     if 'bodyId' not in properties:
         properties = ['bodyId'] + properties
@@ -330,13 +415,13 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     sources = _prepare_criteria(sources, 'n')
     targets = _prepare_criteria(targets, 'm')
 
-    def _fetch_neurons(criteria):
+    def _neuron_query(criteria):
         matchvar = criteria.matchvar
 
         return_props = [f'{matchvar}.{prop} as {prop}' for prop in properties]
         return_props = indent(',\n'.join(return_props), ' '*19)[19:]
 
-        q = f"""\
+        return f"""\
             {criteria.global_with(prefix=12)}
             MATCH ({matchvar}:{criteria.label})
             {criteria.all_conditions(prefix=12)}
@@ -344,7 +429,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             RETURN {return_props}
             ORDER BY bodyId
         """
-        return client.fetch_custom(q)
+
+    def _fetch_neurons(criteria):
+        return client.fetch_custom(_neuron_query(criteria))
 
     ##
     ## Pre-fetch either source list or target list (whichever is shorter)
@@ -416,91 +503,72 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     ## Fetch connections in batches
     ##
 
+    if rois or omit_rois:
+        min_edge_weight = min_total_weight
+    else:
+        # If rois aren't specified, then we'll include 'NotPrimary' counts,
+        # and that means we can't filter by weight in the query.
+        # We'll filter afterwards, but here we can at least filter out 0-weight edges.
+        min_edge_weight = 1
+
+    # A 'WHERE e.weight >= 1' predicate discards nothing in practice, but it forces
+    # the planner to materialize (n,m,e) at that point.  Skip it when it's a no-op
+    # and drop any 0-weight edges on the client instead (see below).
+    filter_weight_in_query = (min_edge_weight > 1)
+
     def _fetch_connections():
-        if rois:
-            min_edge_weight = min_total_weight
+        # The per-edge roiInfo dominates the payload of a large edge list.
+        roiinfo_return = '' if omit_rois else ',\n                           e.roiInfo as roiInfo'
+
+        if filter_weight_in_query:
+            weight_filter = ('\n                    // -- Filter by total connection weight --'
+                             '\n                    WITH n,m,e'
+                             f'\n                    WHERE e.weight >= {min_edge_weight}\n')
         else:
-            # If rois aren't specified, then we'll include 'NotPrimary' counts,
-            # and that means we can't filter by weight in the query.
-            # We'll filter afterwards, but here we can at least filter out 0-weight edges.
-            min_edge_weight = 1
+            weight_filter = ''
+
+        def _batch_query(batch_criteria, other_criteria, global_with_criteria):
+            criteria_globals = [*batch_criteria.global_vars().keys(), *other_criteria.global_vars().keys()]
+            return f"""\
+                {NeuronCriteria.combined_global_with(global_with_criteria, prefix=20)}
+                MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
+                {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
+
+                // Artificial break in the query flow to fool the query
+                // planner into avoiding a Cartesian product.
+                // This improves performance considerably in some cases.
+                WITH {','.join([*'nme', *criteria_globals])}, true as _
+
+                {other_criteria.all_conditions(*'nme', prefix=20)}
+                {weight_filter}
+                RETURN n.bodyId as bodyId_pre,
+                       m.bodyId as bodyId_post,
+                       e.weight as weight{roiinfo_return}
+            """
 
         # Fetch connections by batching either the source list
         # or the target list, not both.
         # (It turns out that batching across BOTH sources and
         # targets is much slower than batching across only one.)
-        conn_tables = []
-
         if sources_df is not None:
-            # Break sources into batches
-            for batch_start in trange(0, len(sources_df), batch_size, disable=not client.progress):
-                batch_stop = batch_start + batch_size
-                source_bodies = sources_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+            batch_bodies = sources_df['bodyId']
 
+            def _make_query(bodies):
                 batch_criteria = copy.copy(sources)
-                batch_criteria.bodyId = source_bodies
-
-                criteria_globals = [*batch_criteria.global_vars().keys(), *targets.global_vars().keys()]
-
-                q = f"""\
-                    {NeuronCriteria.combined_global_with((batch_criteria, targets), prefix=20)}
-                    MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
-
-                    // Artificial break in the query flow to fool the query
-                    // planner into avoiding a Cartesian product.
-                    // This improves performance considerably in some cases.
-                    WITH {','.join([*'nme', *criteria_globals])}, true as _
-
-                    {targets.all_conditions(*'nme', prefix=20)}
-
-                    // -- Filter by total connection weight --
-                    WITH n,m,e
-                    WHERE e.weight >= {min_edge_weight}
-
-                    RETURN n.bodyId as bodyId_pre,
-                           m.bodyId as bodyId_post,
-                           e.weight as weight,
-                           e.roiInfo as roiInfo
-                """
-                t = client.fetch_custom(q)
-                if len(t) > 0:
-                    conn_tables.append(t)
+                batch_criteria.bodyId = bodies
+                return _batch_query(batch_criteria, targets, (batch_criteria, targets))
         else:
-            # Break targets into batches
-            for batch_start in trange(0, len(targets_df), batch_size, disable=not client.progress):
-                batch_stop = batch_start + batch_size
-                target_bodies = targets_df['bodyId'].iloc[batch_start:batch_stop].tolist()
+            batch_bodies = targets_df['bodyId']
 
+            def _make_query(bodies):
                 batch_criteria = copy.copy(targets)
-                batch_criteria.bodyId = target_bodies
+                batch_criteria.bodyId = bodies
+                return _batch_query(batch_criteria, sources, (sources, batch_criteria))
 
-                criteria_globals = [*batch_criteria.global_vars().keys(), *sources.global_vars().keys()]
+        queries = [_make_query(batch_bodies.iloc[start:start+batch_size].tolist())
+                   for start in range(0, len(batch_bodies), batch_size)]
 
-                q = f"""\
-                    {NeuronCriteria.combined_global_with((sources, batch_criteria), prefix=20)}
-                    MATCH (n:{sources.label})-[e:ConnectsTo]->(m:{targets.label})
-                    {batch_criteria.all_conditions(*'nme', *criteria_globals, prefix=20)}
-
-                    // Artificial break in the query flow to fool the query
-                    // planner into avoiding a Cartesian product.
-                    // This improves performance considerably in some cases.
-                    WITH {','.join([*'nme', *criteria_globals])}, true as _
-
-                    {sources.all_conditions(*'nme', prefix=20)}
-
-                    // -- Filter by total connection weight --
-                    WITH n,m,e
-                    WHERE e.weight >= {min_edge_weight}
-
-                    RETURN n.bodyId as bodyId_pre,
-                           m.bodyId as bodyId_post,
-                           e.weight as weight,
-                           e.roiInfo as roiInfo
-                """
-                t = client.fetch_custom(q)
-                if len(t) > 0:
-                    conn_tables.append(t)
+        conn_tables = [t for t in _fetch_queries(queries, client, threads) if len(t) > 0]
 
         if not conn_tables:
             return []
@@ -509,18 +577,87 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         connections_df = pd.concat(conn_tables, ignore_index=True)
         return connections_df
 
+    ##
+    ## Construct neurons_df, export, and return
+    ##
+
+    def _finalize(conn_df):
+        connected_bodies = pd.unique(conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
+
+        # We only fetched either the source list or the target list.
+        # we need to fetch the missing info based on the adjacencies we
+        # actually found, and fetch it in batches.
+        if sources_df is None:
+            neurons_df = targets_df.query('bodyId in @connected_bodies')
+            missing_label = sources.label
+        else:
+            neurons_df = sources_df.query('bodyId in @connected_bodies')
+            missing_label = targets.label
+
+        missing_bodies = [*set(connected_bodies) - set(neurons_df['bodyId'])]
+
+        # This can dwarf the connection fetch when 'sources' and 'targets' differ
+        # a lot in size (e.g. a small source set against all downstream Segments),
+        # so these batches are fetched concurrently too.
+        queries = [_neuron_query(NeuronCriteria(bodyId=missing_bodies[start:start+10_000],
+                                                label=missing_label, client=client))
+                   for start in range(0, len(missing_bodies), 10_000)]
+        batches = _fetch_queries(queries, client, threads)
+
+        neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
+        neurons_df.reset_index(drop=True, inplace=True)
+
+        if export_dir:
+            os.makedirs(export_dir, exist_ok=True)
+
+            # Export Nodes
+            p = f"{export_dir}/neurons.csv"
+            neurons_df.to_csv(p, index=False, header=True)
+
+            # Export Edges (per ROI)
+            if not omit_rois:
+                p = f"{export_dir}/roi-connections.csv"
+                conn_df.to_csv(p, index=False, header=True)
+
+            # Export Edges (total weight)
+            p = f"{export_dir}/total-connections.csv"
+            connections_df[['bodyId_pre', 'bodyId_post', 'weight']].to_csv(p, index=False, header=True)
+
+        return neurons_df, conn_df
+
     connections_df = _fetch_connections()
+
+    if len(connections_df) and not filter_weight_in_query:
+        # We left the weight predicate out of the query, so enforce it here.
+        # Datasets generally have no 0-weight edges, so avoid copying the
+        # (potentially huge) table unless there's something to discard.
+        keep = (connections_df['weight'] >= min_edge_weight)
+        if not keep.all():
+            connections_df = connections_df[keep].reset_index(drop=True)
+
     if len(connections_df) == 0:
         # Return empty DataFrames, but with the correct dtypes
         neuron_df = pd.DataFrame([], columns=['bodyId', 'instance', 'type'])
         neuron_df = neuron_df.astype({'bodyId': int, 'instance': str, 'type': str})
-        roi_conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
-        roi_conn_df = roi_conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'roi': str, 'weight': int})
-        return neuron_df, roi_conn_df
+        if omit_rois:
+            conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'weight'])
+            conn_df = conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'weight': int})
+        else:
+            conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
+            conn_df = conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'roi': str, 'weight': int})
+        return neuron_df, conn_df
 
     ##
-    ## Post-process connections, construct roi_conn_df
+    ## Post-process connections, construct conn_df
     ##
+
+    if omit_rois:
+        # No roiInfo was fetched, so there's nothing to explode into per-ROI rows.
+        # The server already applied min_total_weight, so 'weight' is final.
+        conn_df = connections_df[['bodyId_pre', 'bodyId_post', 'weight']].copy()
+        conn_df.sort_values(['bodyId_pre', 'bodyId_post'], inplace=True)
+        conn_df.reset_index(drop=True, inplace=True)
+        return _finalize(conn_df)
 
     # Parse roiInfo json (ujson is faster than apoc.convert.fromJsonMap)
     connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
@@ -592,56 +729,11 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     roi_conn_df.query('weight >= @min_roi_weight', inplace=True)
     roi_conn_df.reset_index(drop=True, inplace=True)
 
-    ##
-    ## Construct neurons_df
-    ##
-
-    connected_bodies = pd.unique(roi_conn_df[['bodyId_pre', 'bodyId_post']].values.reshape(-1))
-
-    # We only fetched either the source list or the target list.
-    # we need to fetch the missing info based on the adjacencies we
-    # actually found, and fetch it in batches.
-    if sources_df is None:
-        neurons_df = targets_df.query('bodyId in @connected_bodies')
-        missing_label = sources.label
-    else:
-        neurons_df = sources_df.query('bodyId in @connected_bodies')
-        missing_label = targets.label
-
-    missing_bodies = [*set(connected_bodies) - set(neurons_df['bodyId'])]
-
-    batches = []
-    for start in trange(0, len(missing_bodies), 10_000, disable=not client.progress):
-        batch_bodies = missing_bodies[start:start+10_000]
-        batch_df = _fetch_neurons(NeuronCriteria(bodyId=batch_bodies, label=missing_label, client=client))
-        batches.append( batch_df )
-
-    neurons_df = pd.concat((neurons_df, *batches), ignore_index=True)
-    neurons_df.reset_index(drop=True, inplace=True)
-
-    ##
-    ## Export to CSV
-    ##
-    if export_dir:
-        os.makedirs(export_dir, exist_ok=True)
-
-        # Export Nodes
-        p = f"{export_dir}/neurons.csv"
-        neurons_df.to_csv(p, index=False, header=True)
-
-        # Export Edges (per ROI)
-        p = f"{export_dir}/roi-connections.csv"
-        roi_conn_df.to_csv(p, index=False, header=True)
-
-        # Export Edges (total weight)
-        p = f"{export_dir}/total-connections.csv"
-        connections_df[['bodyId_pre', 'bodyId_post', 'weight']].to_csv(p, index=False, header=True)
-
-    return neurons_df, roi_conn_df
+    return _finalize(roi_conn_df)
 
 
 @inject_client
-def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
+def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, omit_rois=False, threads=4, client=None):
     """
     Convenience function that calls :py:func:`.fetch_adjacencies()`
     for all ``Traced``, non-``cropped`` neurons.
@@ -680,7 +772,8 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, client=None):
             4   202916528    264986706       2
      """
     criteria = NeuronCriteria(status="Traced", cropped=False, client=client)
-    return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir, batch_size=batch_size, client=client)
+    return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir,
+                             batch_size=batch_size, omit_rois=omit_rois, threads=threads, client=client)
 
 
 @inject_client
