@@ -62,6 +62,13 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
         Unless ``primary_only`` was specified, some synapses may be listed more than once,
         if they reside in more than one overlapping ROI.
 
+        In addition to the columns shown in the example below, any other properties
+        stored on the ``:Synapse`` nodes will be returned in their own columns.
+        (The exact set of properties varies by dataset; examples include ``compartment``.)
+        Synapses that lack a given property will have ``None`` in that column.
+        Neurotransmitter-related properties are not included here; use the ``nt``
+        argument to retrieve those.
+
     Example:
 
         .. code-block:: ipython
@@ -165,16 +172,16 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
         neuron_criteria.rois = {*synapse_criteria.rois}
         neuron_criteria.roi_req = 'any'
 
-    # Neurotransmitters vary by dataset; get the names and dynamically
-    #   insert the column names into the cypher query.
-    synapse_nt_prop_names = []
-    if nt:
-        synapse_nt_prop_names = client.fetch_synapse_nt_keys()
-        if not synapse_nt_prop_names:
-            raise RuntimeError(
-                "Can't return synapse neurotransmitter properties: "
-                "No neurotransmitter properties found in the database."
-            )
+    # Neurotransmitter probability properties are handled separately (via the
+    # `nt` argument), so we always fetch their names -- both to insert them into
+    # the cypher query when requested, and to exclude them from the "additional"
+    # synapse properties returned below.  (These names vary by dataset.)
+    synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+    if nt and not synapse_nt_prop_names:
+        raise RuntimeError(
+            "Can't return synapse neurotransmitter properties: "
+            "No neurotransmitter properties found in the database."
+        )
 
     # Fetch results
     cypher = dedent(f"""\
@@ -210,7 +217,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
     # in case not all synapses have the same set of properties.
     additional_properties = set()
     for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
-        additional_properties |= {*syn_info.keys()} - {*cleaned_nt_prop_names} - {*client.all_rois}
+        additional_properties |= {*syn_info.keys()} - {*synapse_nt_prop_names} - {*client.all_rois}
     additional_properties = sorted(additional_properties)
 
     # Assemble DataFrame
@@ -595,6 +602,15 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
         or lists-of-strings, depending on the ``primary_only`` synapse criteria as
         described above.
 
+        In addition to the columns shown in the example below, any other properties
+        stored on the ``:Synapse`` nodes will be returned in their own columns, with
+        a ``_pre``/``_post`` suffix indicating which side of the connection they came
+        from (e.g. ``compartment_pre`` and ``compartment_post``).
+        The exact set of properties varies by dataset, and the pre and post sides
+        may carry different properties.  Synapses that lack a given property will have
+        ``None`` in that column.  Neurotransmitter-related properties are not included
+        here; use the ``nt`` argument to retrieve those.
+
     Example:
 
         .. code-block:: ipython
@@ -752,16 +768,16 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         ['n', 'e', 'm', 'ns', 'ms', *criteria_globals],
         prefix=8)
 
-    # Neurotransmitters vary by dataset; get the names and dynamically
-    #   insert the column names into the cypher query.
-    synapse_nt_prop_names = []
-    if nt:
-        synapse_nt_prop_names = client.fetch_synapse_nt_keys()
-        if not synapse_nt_prop_names:
-            raise RuntimeError(
-                "Can't return synapse neurotransmitter properties: "
-                "No neurotransmitter properties found in the database."
-            )
+    # Neurotransmitter probability properties are handled separately (via the
+    # `nt` argument), so we always fetch their names -- both to insert them into
+    # the cypher query when requested, and to exclude them from the "additional"
+    # synapse properties returned below.  (These names vary by dataset.)
+    synapse_nt_prop_names = client.fetch_synapse_nt_keys()
+    if nt and not synapse_nt_prop_names:
+        raise RuntimeError(
+            "Can't return synapse neurotransmitter properties: "
+            "No neurotransmitter properties found in the database."
+        )
 
     # Fetch results
     cypher = dedent(f"""\
@@ -798,11 +814,24 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
         cypher = cypher[:-1] + ',\n'
         cypher += _neurotransmitter_return_clause(synapse_nt_prop_names, prefix=15, matchvar='ns')
 
+    cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
+
     data = client.fetch_custom(cypher, format='json')['data']
+
+    # Determine additional columns by looping through all info dicts,
+    # in case not all synapses have the same set of properties.
+    # The pre and post sides are handled separately, since they may
+    # carry different properties.
+    additional_pre_props = set()
+    additional_post_props = set()
+    for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post, *nt_probs in data:
+        additional_pre_props |= {*info_pre.keys()} - {*synapse_nt_prop_names} - {*client.all_rois}
+        additional_post_props |= {*info_post.keys()} - {*synapse_nt_prop_names} - {*client.all_rois}
+    additional_pre_props = sorted(additional_pre_props)
+    additional_post_props = sorted(additional_post_props)
 
     # Assemble DataFrame
     syn_table = []
-    cleaned_nt_prop_names = [_clean_nt_name(name) for name in synapse_nt_prop_names]
     for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post, *nt_probs in data:
 
         nt_info = _process_nt_probabilities(nt, nt_probs, cleaned_nt_prop_names)
@@ -824,10 +853,21 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
             pre_rois = pre_rois[0]
             post_rois = post_rois[0]
 
-        syn_table.append((bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf) + nt_info)
+        row = (bodyId_pre, bodyId_post, pre_rois, post_rois, ux, uy, uz, dx, dy, dz, up_conf, dn_conf)
+
+        if additional_pre_props:
+            row += tuple(info_pre.get(col) for col in additional_pre_props)
+        if additional_post_props:
+            row += tuple(info_post.get(col) for col in additional_post_props)
+
+        row += nt_info
+
+        syn_table.append(row)
 
     synapse_columns = ['bodyId_pre', 'bodyId_post', 'roi_pre', 'roi_post',
         'x_pre', 'y_pre', 'z_pre', 'x_post', 'y_post', 'z_post', 'confidence_pre', 'confidence_post']
+    synapse_columns += [f'{col}_pre' for col in additional_pre_props]
+    synapse_columns += [f'{col}_post' for col in additional_post_props]
     if nt == "max":
         synapse_columns.extend(['nt', 'ntProb'])
     elif nt == "all":
@@ -847,6 +887,17 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     syn_df['z_post'] = syn_df['z_post'].astype(np.int32)
     syn_df['confidence_pre'] = syn_df['confidence_pre'].astype(np.float32)
     syn_df['confidence_post'] = syn_df['confidence_post'].astype(np.float32)
+
+    # Special handling for 'compartment' columns, assuming they have the categories we expect.
+    for col in ('compartment_pre', 'compartment_post'):
+        if col in syn_df.columns:
+            try:
+                syn_df[col] = pd.Categorical(
+                    syn_df[col],
+                    ['unknown', 'axon', 'dendrite', 'linker', 'cell-body-fiber']
+                )
+            except ValueError:
+                pass
 
     # nt columns types
     if nt == 'all':
