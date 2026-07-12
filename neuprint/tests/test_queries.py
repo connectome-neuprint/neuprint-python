@@ -135,8 +135,8 @@ def test_fetch_simple_connections_weight_props(client):
     bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
 
-    # Default: unchanged from historical behavior.
-    conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[])
+    # weight_props=['weight'] restores the historical (pre-weight_props) behavior.
+    conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[], weight_props=['weight'])
     assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'conn_roiInfo']
 
     # weightHP is always available at the edge level.
@@ -146,12 +146,15 @@ def test_fetch_simple_connections_weight_props(client):
     assert (conn_df['weightHP'] >= 0).all()
     assert (conn_df['weightHP'] <= conn_df['weight']).all()
 
-    # This test dataset has no axon/dendrite polarity info, so 'all' silently
-    # omits the (unavailable) polarity-split properties -- no warning expected.
+    # The default is 'all'.  This test dataset has no axon/dendrite polarity info,
+    # so the (unavailable) polarity-split properties are silently omitted, whether
+    # via the implicit default or the explicit 'all' shorthand -- no warning expected.
     with warnings.catch_warnings():
         warnings.simplefilter("error")
-        conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[], weight_props='all')
+        conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[])
+        conn_df2 = fetch_simple_connections(NC(bodyId=bodyId), properties=[], weight_props='all')
     assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP', 'conn_roiInfo']
+    assert conn_df2.columns.tolist() == conn_df.columns.tolist()
 
     # But explicitly requesting one of those unavailable properties warns,
     # and the column is omitted entirely (never returned as all-zeros).
@@ -250,8 +253,11 @@ def test_fetch_adjacencies_omit_rois(client):
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
 
-    neuron_df, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies))
-    neuron_df2, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), omit_rois=True)
+    # weight_props=['weight'] here, to keep this test focused on omit_rois
+    # semantics rather than coupling it to the (separately tested) weight_props
+    # default of 'all'.
+    neuron_df, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props=['weight'])
+    neuron_df2, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props=['weight'], omit_rois=True)
 
     # The per-ROI breakdown is replaced by one row per body pair.
     assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight']
@@ -267,7 +273,7 @@ def test_fetch_adjacencies_omit_rois(client):
     assert (neuron_df.fillna('') == neuron_df2.fillna('')).all().all()
 
     # min_total_weight is applied by the server.
-    _neuron_df, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+    _neuron_df, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props=['weight'],
                                             min_total_weight=10, omit_rois=True)
     assert (conn_df['weight'] >= 10).all()
     assert (conn_df == expected.query('weight >= 10').reset_index(drop=True)).all().all()
@@ -281,7 +287,7 @@ def test_fetch_adjacencies_omit_rois(client):
         fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), include_nonprimary=True, omit_rois=True)
 
     # What happens if results are empty
-    neuron_df, conn_df = fetch_adjacencies(879442155, 5813027103, omit_rois=True)
+    neuron_df, conn_df = fetch_adjacencies(879442155, 5813027103, weight_props=['weight'], omit_rois=True)
     assert len(neuron_df) == 0
     assert len(conn_df) == 0
     assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight']

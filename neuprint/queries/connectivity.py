@@ -72,7 +72,7 @@ def _normalize_weight_props(weight_props, client):
 @neuroncriteria_args('upstream_criteria', 'downstream_criteria')
 def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1,
                              properties=['type', 'instance'],
-                             *, weight_props=None, client=None):
+                             *, weight_props='all', client=None):
     """
     Find connections to/from small set(s) of neurons.  Most users
     should prefer ``fetch_adjacencies()`` instead of this function.
@@ -108,11 +108,11 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             in addition to the standard ``weight``.  Choose from:
             ``'weight'``, ``'weightHP'``, ``'weightAxonAxon'``, ``'weightAxonDendrite'``,
             ``'weightDendriteDendrite'``, ``'weightDendriteAxon'``.
-            Pass ``'all'`` as a shorthand for every property that's available in this dataset.
-            By default (``None``), only the standard ``weight`` column is returned.
-            See :py:func:`.fetch_adjacencies()` for details; the same availability rules apply
-            here (unavailable properties are omitted, with a warning, rather than returned as
-            all-zero columns), except that ``min_weight`` always filters on ``weight`` only.
+            Pass ``'all'`` as a shorthand for every property that's available in this dataset
+            (the default).  Pass ``weight_props=['weight']`` to only fetch the standard ``weight``
+            column.  See :py:func:`.fetch_adjacencies()` for details; the same availability rules
+            apply here (unavailable properties are omitted, with a warning, rather than returned
+            as all-zero columns), except that ``min_weight`` always filters on ``weight`` only.
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
@@ -236,7 +236,7 @@ def _fetch_queries(queries, client, threads):
 @neuroncriteria_args('sources', 'targets')
 def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1,
                       include_nonprimary=False, export_dir=None, batch_size=200,
-                      properties=['type', 'instance'], *, weight_props=None,
+                      properties=['type', 'instance'], *, weight_props='all',
                       omit_rois=False, threads=4, client=None):
     """
     Find connections to/from large sets of neurons, with per-ROI connection strengths.
@@ -307,10 +307,10 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             in addition to the standard ``weight``.  Choose from:
             ``'weight'``, ``'weightHP'``, ``'weightAxonAxon'``, ``'weightAxonDendrite'``,
             ``'weightDendriteDendrite'``, ``'weightDendriteAxon'``.
-            Pass ``'all'`` as a shorthand for every property that's available in this dataset.
-
-            By default (``None``), only the standard ``weight`` column is returned,
-            matching the historical behavior of this function.
+            Pass ``'all'`` as a shorthand for every property that's available in this dataset
+            (the default).  Pass ``weight_props=['weight']`` to only fetch the standard
+            ``weight`` column, matching the historical (pre-``weight_props``) behavior of
+            this function.
 
             Note:
                 ``rois``, ``min_roi_weight``, and ``min_total_weight`` always filter
@@ -874,7 +874,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
 
 @inject_client
-def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, weight_props=None,
+def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, weight_props='all',
                              omit_rois=False, threads=4, client=None):
     """
     Convenience function that calls :py:func:`.fetch_adjacencies()`
@@ -922,7 +922,7 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, weight_props=No
 @inject_client
 @neuroncriteria_args('criteria')
 def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'],
-                              *, weight_props=None, client=None):
+                              *, weight_props='all', client=None):
     """
     Find shared connections among a set of neurons.
 
