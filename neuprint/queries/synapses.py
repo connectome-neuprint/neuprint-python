@@ -10,6 +10,12 @@ from .neuroncriteria import NeuronCriteria, neuroncriteria_args
 from .synapsecriteria import SynapseCriteria
 from .connectivity import fetch_adjacencies
 
+# Some datasets store these directly on :Synapse nodes (e.g. as a convenience
+# denormalization of the owning neuron's bodyId, or a single primary ROI name).
+# They're already returned via other columns, so they must be excluded from the
+# "additional properties" columns below -- otherwise they'd be duplicated.
+_RESERVED_SYNAPSE_PROPS = {'bodyId', 'roi'}
+
 
 @inject_client
 @neuroncriteria_args('neuron_criteria')
@@ -217,7 +223,7 @@ def _fetch_synapses(neuron_criteria, synapse_criteria, nt, client):
     # in case not all synapses have the same set of properties.
     additional_properties = set()
     for body, syn_type, conf, x, y, z, syn_info, *nt_probs in data:
-        additional_properties |= {*syn_info.keys()} - {*synapse_nt_prop_names} - {*client.all_rois}
+        additional_properties |= {*syn_info.keys()} - {*synapse_nt_prop_names} - {*client.all_rois} - _RESERVED_SYNAPSE_PROPS
     additional_properties = sorted(additional_properties)
 
     # Assemble DataFrame
@@ -825,8 +831,8 @@ def _fetch_synapse_connections(source_criteria, target_criteria, synapse_criteri
     additional_pre_props = set()
     additional_post_props = set()
     for bodyId_pre, bodyId_post, ux, uy, uz, dx, dy, dz, up_conf, dn_conf, info_pre, info_post, *nt_probs in data:
-        additional_pre_props |= {*info_pre.keys()} - {*synapse_nt_prop_names} - {*client.all_rois}
-        additional_post_props |= {*info_post.keys()} - {*synapse_nt_prop_names} - {*client.all_rois}
+        additional_pre_props |= {*info_pre.keys()} - {*synapse_nt_prop_names} - {*client.all_rois} - _RESERVED_SYNAPSE_PROPS
+        additional_post_props |= {*info_post.keys()} - {*synapse_nt_prop_names} - {*client.all_rois} - _RESERVED_SYNAPSE_PROPS
     additional_pre_props = sorted(additional_pre_props)
     additional_post_props = sorted(additional_post_props)
 

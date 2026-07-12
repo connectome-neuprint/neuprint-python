@@ -15,7 +15,7 @@ from neuprint import (NeuronCriteria as NC,
                       fetch_synapses, fetch_mean_synapses, fetch_synapse_connections)
 
 from neuprint.queries.neurons import CORE_NEURON_COLS
-from neuprint.tests import NEUPRINT_SERVER, DATASET
+from neuprint.tests import NEUPRINT_SERVER, DATASET, TOKEN
 
 @pytest.fixture(scope='module')
 def client():
@@ -429,6 +429,34 @@ def test_fetch_synapse_connections(client):
     syn_df = fetch_synapse_connections(879442155, 5813027103)
     assert len(syn_df) == 0
     assert syn_df.dtypes.to_dict() == dtypes
+
+
+def test_fetch_synapses_no_duplicate_columns(client):
+    # Regression test: some datasets (e.g. manc) store 'bodyId' and 'roi' properties
+    # directly on :Synapse nodes (in addition to the ROI-name boolean flags), which
+    # used to leak into the "additional properties" columns and duplicate the
+    # already-present 'bodyId'/'roi' columns.
+    # Note: this creates a second live Client (for a dataset other than the module-scoped
+    # 'client' fixture's), and always passes client= explicitly so it's never relied on
+    # as the ambient default. But merely constructing it still perturbs the global default
+    # (see _register_client()/set_default_client()), so restore the fixture's client as the
+    # default afterward -- otherwise later tests that rely on the implicit default break.
+    manc_client = Client(NEUPRINT_SERVER, 'manc:v1.2.3', token=TOKEN)
+    try:
+        bodies = [10000, 10002]
+
+        syn_df = fetch_synapses(NC(bodyId=bodies, client=manc_client), client=manc_client)
+        assert syn_df.columns.tolist().count('bodyId') == 1
+        assert syn_df.columns.tolist().count('roi') == 1
+
+        conn_df = fetch_synapse_connections(NC(bodyId=bodies, client=manc_client), client=manc_client)
+        assert conn_df.columns.tolist().count('bodyId_pre') == 1
+        assert conn_df.columns.tolist().count('bodyId_post') == 1
+        assert conn_df.columns.tolist().count('roi_pre') == 1
+        assert conn_df.columns.tolist().count('roi_post') == 1
+    finally:
+        set_default_client(client)
+
 
 def test_issue_69(client):
     # Issue #69: somaLocation should be a list independent of omit_rois parameter.

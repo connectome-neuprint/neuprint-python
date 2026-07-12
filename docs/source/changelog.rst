@@ -4,6 +4,7 @@ Changelog
 Unreleased
 ------------------
 - ``fetch_adjacencies()`` and ``fetch_traced_adjacencies()``: Added ``weight_props`` parameter to optionally fetch alternative ``:ConnectsTo`` weight properties (``weightHP``, ``weightAxonAxon``, ``weightAxonDendrite``, ``weightDendriteDendrite``, ``weightDendriteAxon``) as extra columns, in addition to the standard ``weight``.
+- Fixed a bug in ``fetch_synapses()`` and ``fetch_synapse_connections()`` that caused duplicate ``bodyId``/``roi`` (or ``bodyId_pre``/``bodyId_post``/``roi_pre``/``roi_post``) columns on datasets whose ``:Synapse`` nodes store those as literal properties (e.g. ``manc``, ``optic-lobe``).
 
 0.6.2 / 2026-05-22
 ------------------
