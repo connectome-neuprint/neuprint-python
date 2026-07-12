@@ -199,6 +199,88 @@ def test_fetch_adjacencies(client):
     assert neuron_df.columns.tolist() == ['bodyId', 'instance', 'type']
 
 
+def test_fetch_adjacencies_omit_rois(client):
+    bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    neuron_df, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies))
+    neuron_df2, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), omit_rois=True)
+
+    # The per-ROI breakdown is replaced by one row per body pair.
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight']
+
+    # The totals must agree with the per-ROI table, aggregated across ROIs.
+    expected = (roi_conn_df
+                    .groupby(['bodyId_pre', 'bodyId_post'], as_index=False)['weight']
+                    .sum()
+                    .sort_values(['bodyId_pre', 'bodyId_post'], ignore_index=True))
+    assert (conn_df == expected).all().all()
+
+    # The neuron table is unaffected.
+    assert (neuron_df.fillna('') == neuron_df2.fillna('')).all().all()
+
+    # min_total_weight is applied by the server.
+    _neuron_df, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                            min_total_weight=10, omit_rois=True)
+    assert (conn_df['weight'] >= 10).all()
+    assert (conn_df == expected.query('weight >= 10').reset_index(drop=True)).all().all()
+
+    # Options that depend on per-ROI weights can't be honored.
+    with pytest.raises(ValueError):
+        fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), rois=['SLP(R)'], omit_rois=True)
+    with pytest.raises(ValueError):
+        fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), min_roi_weight=5, omit_rois=True)
+    with pytest.raises(ValueError):
+        fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), include_nonprimary=True, omit_rois=True)
+
+    # What happens if results are empty
+    neuron_df, conn_df = fetch_adjacencies(879442155, 5813027103, omit_rois=True)
+    assert len(neuron_df) == 0
+    assert len(conn_df) == 0
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight']
+
+
+def test_fetch_adjacencies_threads(client):
+    bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    # Use a small batch_size so that several batches are actually fetched in parallel.
+    kwargs = dict(batch_size=3)
+
+    serial_neurons, serial_conns = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                                     threads=1, **kwargs)
+    threaded_neurons, threaded_conns = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                                         threads=4, **kwargs)
+
+    # Batches are concatenated in input order, so threading must not perturb the results.
+    assert (serial_neurons.fillna('') == threaded_neurons.fillna('')).all().all()
+    assert (serial_conns == threaded_conns).all().all()
+
+    # ...and the same must hold for the omit_rois path.
+    _n, serial_conns = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                         omit_rois=True, threads=1, **kwargs)
+    _n, threaded_conns = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                           omit_rois=True, threads=4, **kwargs)
+    assert (serial_conns == threaded_conns).all().all()
+
+
+def test_fetch_adjacencies_threaded_backfill(client):
+    # When sources and targets differ, the neurons_df for the bodies on the
+    # un-prefetched side is 'backfilled' in batches of 10_000, which are also
+    # fetched concurrently.  Use enough downstream Segments to span several batches.
+    sources = NC(bodyId=[329566174, 425790257])
+    targets = NC(label='Segment')
+
+    serial_neurons, serial_conns = fetch_adjacencies(sources, targets, omit_rois=True, threads=1)
+    threaded_neurons, threaded_conns = fetch_adjacencies(sources, targets, omit_rois=True, threads=4)
+
+    # More than one backfill batch, otherwise this test proves nothing.
+    assert len(serial_neurons) > 10_000
+
+    assert (serial_neurons.fillna('') == threaded_neurons.fillna('')).all().all()
+    assert (serial_conns == threaded_conns).all().all()
+
+
 def test_fetch_meta(client):
     meta = fetch_meta()
     assert isinstance(meta, dict)
