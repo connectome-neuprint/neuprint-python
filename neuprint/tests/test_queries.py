@@ -10,6 +10,7 @@ from neuprint import (NeuronCriteria as NC,
                       SynapseCriteria as SC,
                       fetch_custom, fetch_neurons, fetch_meta,
                       fetch_all_rois, fetch_primary_rois, fetch_simple_connections,
+                      fetch_common_connectivity,
                       fetch_adjacencies, fetch_shortest_paths, fetch_paths,
                       fetch_mitochondria, fetch_synapses_and_closest_mitochondria,
                       fetch_synapses, fetch_mean_synapses, fetch_synapse_connections)
@@ -128,6 +129,50 @@ def test_fetch_simple_connections(client):
     assert 'roiInfo_pre' in conn_df
     assert 'roiInfo_post' in conn_df
     assert isinstance(conn_df['roiInfo_pre'].iloc[0], dict)
+
+
+def test_fetch_simple_connections_weight_props(client):
+    bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    # Default: unchanged from historical behavior.
+    conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[])
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'conn_roiInfo']
+
+    # weightHP is always available at the edge level.
+    conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[], weight_props=['weightHP'])
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP', 'conn_roiInfo']
+    assert pd.api.types.is_integer_dtype(conn_df['weightHP'])
+    assert (conn_df['weightHP'] >= 0).all()
+    assert (conn_df['weightHP'] <= conn_df['weight']).all()
+
+    # This test dataset has no axon/dendrite polarity info, so 'all' silently
+    # omits the (unavailable) polarity-split properties -- no warning expected.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[], weight_props='all')
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP', 'conn_roiInfo']
+
+    # But explicitly requesting one of those unavailable properties warns,
+    # and the column is omitted entirely (never returned as all-zeros).
+    with pytest.warns(UserWarning, match="axon/dendrite polarity"):
+        conn_df = fetch_simple_connections(NC(bodyId=bodyId), properties=[],
+                                           weight_props=['weightHP', 'weightAxonDendrite'])
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP', 'conn_roiInfo']
+
+    # Unrecognized weight_props are rejected.
+    with pytest.raises(AssertionError):
+        fetch_simple_connections(NC(bodyId=bodyId), weight_props=['bogus'])
+
+
+def test_fetch_common_connectivity_weight_props(client):
+    bodyId = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    # weight_props is simply forwarded to fetch_simple_connections().
+    conn_df = fetch_common_connectivity(NC(bodyId=bodyId), weight_props=['weightHP'])
+    assert 'weightHP' in conn_df.columns
+    assert (conn_df['weightHP'] <= conn_df['weight']).all()
 
 
 def test_fetch_shortest_paths(client):

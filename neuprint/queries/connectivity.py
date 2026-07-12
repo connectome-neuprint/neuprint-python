@@ -24,12 +24,55 @@ _POLARITY_WEIGHT_PROPERTIES = {'weightAxonAxon', 'weightAxonDendrite',
                                'weightDendriteDendrite', 'weightDendriteAxon'}
 
 
+def _normalize_weight_props(weight_props, client):
+    """
+    Parse and validate the ``weight_props`` argument (shared by
+    ``fetch_adjacencies()`` and ``fetch_simple_connections()``).
+
+    Returns:
+        (extra_weight_props, requested_all_weight_props)
+
+        ``extra_weight_props`` is the list of additional (non-``'weight'``)
+        properties to fetch, in canonical ``WEIGHT_PROPERTIES`` order, after
+        dropping any polarity-split properties this dataset doesn't support
+        (with a warning, unless the caller passed ``weight_props='all'``).
+    """
+    if weight_props is None:
+        weight_props = ['weight']
+        requested_all_weight_props = False
+    elif weight_props == 'all':
+        weight_props = [*WEIGHT_PROPERTIES]
+        requested_all_weight_props = True
+    else:
+        weight_props = [*weight_props]
+        requested_all_weight_props = False
+
+    invalid_weight_props = set(weight_props) - {*WEIGHT_PROPERTIES}
+    assert not invalid_weight_props, \
+        f"Unrecognized weight_props: {invalid_weight_props}. Valid options are {WEIGHT_PROPERTIES}"
+
+    unavailable_polarity_props = _POLARITY_WEIGHT_PROPERTIES & {*weight_props}
+    if unavailable_polarity_props and 'axonOut' not in client.fetch_neuron_keys():
+        weight_props = [p for p in weight_props if p not in unavailable_polarity_props]
+        if not requested_all_weight_props:
+            warnings.warn(
+                "This dataset doesn't have axon/dendrite polarity information, "
+                f"so the following weight_props aren't available and will be omitted: "
+                f"{sorted(unavailable_polarity_props)}"
+            )
+
+    # 'weight' is always fetched/returned; additional properties are appended
+    # afterward, in a canonical order (regardless of the order the caller listed them in).
+    extra_weight_props = [p for p in WEIGHT_PROPERTIES if p != 'weight' and p in weight_props]
+    return extra_weight_props, requested_all_weight_props
+
+
 @inject_client
 @ensure_list_args(['rois'])
 @neuroncriteria_args('upstream_criteria', 'downstream_criteria')
 def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, rois=None, min_weight=1,
                              properties=['type', 'instance'],
-                             *, client=None):
+                             *, weight_props=None, client=None):
     """
     Find connections to/from small set(s) of neurons.  Most users
     should prefer ``fetch_adjacencies()`` instead of this function.
@@ -60,6 +103,16 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             Exclude connections whose total weight (across all ROIs) falls below this threshold.
         properties:
             Additional columns to include in the results, for both the upstream and downstream body.
+        weight_props:
+            Which connection-strength propert(y/ies) to include in the results,
+            in addition to the standard ``weight``.  Choose from:
+            ``'weight'``, ``'weightHP'``, ``'weightAxonAxon'``, ``'weightAxonDendrite'``,
+            ``'weightDendriteDendrite'``, ``'weightDendriteAxon'``.
+            Pass ``'all'`` as a shorthand for every property that's available in this dataset.
+            By default (``None``), only the standard ``weight`` column is returned.
+            See :py:func:`.fetch_adjacencies()` for details; the same availability rules apply
+            here (unavailable properties are omitted, with a warning, rather than returned as
+            all-zero columns), except that ``min_weight`` always filters on ``weight`` only.
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
@@ -104,9 +157,12 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
         invalid_rois = {*rois} - {*client.all_rois}
         assert not invalid_rois, f"Unrecognized ROIs: {invalid_rois}"
 
+    extra_weight_props, _ = _normalize_weight_props(weight_props, client)
+
     return_props = ['n.bodyId as bodyId_pre',
                     'm.bodyId as bodyId_post',
                     'e.weight as weight']
+    return_props += [f'coalesce(e.{prop}, 0) as {prop}' for prop in extra_weight_props]
 
     for p in properties:
         if p == 'roiInfo':
@@ -448,33 +504,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     if 'bodyId' not in properties:
         properties = ['bodyId'] + properties
 
-    if weight_props is None:
-        weight_props = ['weight']
-        requested_all_weight_props = False
-    elif weight_props == 'all':
-        weight_props = [*WEIGHT_PROPERTIES]
-        requested_all_weight_props = True
-    else:
-        weight_props = [*weight_props]
-        requested_all_weight_props = False
-
-    invalid_weight_props = set(weight_props) - {*WEIGHT_PROPERTIES}
-    assert not invalid_weight_props, \
-        f"Unrecognized weight_props: {invalid_weight_props}. Valid options are {WEIGHT_PROPERTIES}"
-
-    unavailable_polarity_props = _POLARITY_WEIGHT_PROPERTIES & {*weight_props}
-    if unavailable_polarity_props and 'axonOut' not in client.fetch_neuron_keys():
-        weight_props = [p for p in weight_props if p not in unavailable_polarity_props]
-        if not requested_all_weight_props:
-            warnings.warn(
-                "This dataset doesn't have axon/dendrite polarity information, "
-                f"so the following weight_props aren't available and will be omitted: "
-                f"{sorted(unavailable_polarity_props)}"
-            )
-
-    # 'weight' is always fetched/returned; additional properties are appended
-    # afterward, in a canonical order (regardless of the order the caller listed them in).
-    extra_weight_props = [p for p in WEIGHT_PROPERTIES if p != 'weight' and p in weight_props]
+    extra_weight_props, requested_all_weight_props = _normalize_weight_props(weight_props, client)
 
     def _prepare_criteria(criteria, matchvar):
         criteria.matchvar = matchvar
@@ -891,7 +921,8 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, weight_props=No
 
 @inject_client
 @neuroncriteria_args('criteria')
-def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'], *, client=None):
+def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=1, properties=['type', 'instance'],
+                              *, weight_props=None, client=None):
     """
     Find shared connections among a set of neurons.
 
@@ -918,6 +949,9 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
         properties:
             Additional columns to include in the results, for both the upstream and downstream body.
 
+        weight_props:
+            Forwarded to :py:func:`.fetch_simple_connections()`.  See its documentation for details.
+
         client:
             If not provided, the global default :py:class:`.Client` will be used.
 
@@ -931,7 +965,8 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
     """
     assert search_direction in ('upstream', 'downstream')
     if search_direction == "upstream":
-        edges_df = fetch_simple_connections(None, criteria, min_weight=min_weight, properties=properties, client=client)
+        edges_df = fetch_simple_connections(None, criteria, min_weight=min_weight, properties=properties,
+                                            weight_props=weight_props, client=client)
 
         # How bodies many met main search criteria?
         num_primary = edges_df['bodyId_post'].nunique()
@@ -942,7 +977,8 @@ def fetch_common_connectivity(criteria, search_direction='upstream', min_weight=
         return edges_df.query('bodyId_pre in @_keep')
 
     if search_direction == "downstream":
-        edges_df = fetch_simple_connections(criteria, None, min_weight=min_weight, properties=properties, client=client)
+        edges_df = fetch_simple_connections(criteria, None, min_weight=min_weight, properties=properties,
+                                            weight_props=weight_props, client=client)
 
         # How bodies many met main search criteria?
         num_primary = edges_df['bodyId_pre'].nunique()
