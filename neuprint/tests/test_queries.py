@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import numpy as np
 import pandas as pd
@@ -279,6 +281,74 @@ def test_fetch_adjacencies_threaded_backfill(client):
 
     assert (serial_neurons.fillna('') == threaded_neurons.fillna('')).all().all()
     assert (serial_conns == threaded_conns).all().all()
+
+
+def test_fetch_adjacencies_weight_props(client):
+    bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
+              424379864, 425790257, 451982486, 480927537, 481268653]
+
+    # Default: unchanged from historical behavior (no extra columns).
+    _n, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies))
+    assert roi_conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'roi', 'weight']
+
+    # weightHP is always available at the edge level, but this dataset's roiInfo
+    # doesn't break it down per-ROI, so it's dropped (with a warning) from the
+    # per-ROI table -- never shown as a meaningless all-zero column.
+    with pytest.warns(UserWarning, match="per-ROI breakdown"):
+        _n, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props=['weightHP'])
+    assert roi_conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'roi', 'weight']
+
+    # The flat (omit_rois) table reads weightHP directly off the edge, so it's unaffected.
+    _n, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                    weight_props=['weightHP'], omit_rois=True)
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP']
+    assert pd.api.types.is_integer_dtype(conn_df['weightHP'])
+    assert (conn_df['weightHP'] >= 0).all()
+    assert (conn_df['weightHP'] <= conn_df['weight']).all()
+
+    # 'all' is a shorthand that silently omits whatever isn't usefully available --
+    # both the polarity-split props this dataset lacks entirely, and the roiInfo
+    # per-ROI breakdown that weightHP lacks here -- no warnings expected.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        _n, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props='all')
+        _n, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props='all', omit_rois=True)
+    assert roi_conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'roi', 'weight']
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP']
+
+    # Explicitly requesting an unavailable polarity-split property warns, and the
+    # column is omitted entirely (never returned as all-zeros).
+    with pytest.warns(UserWarning, match="axon/dendrite polarity"):
+        _n, conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                        weight_props=['weightHP', 'weightAxonDendrite'], omit_rois=True)
+    assert conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'weight', 'weightHP']
+
+    # Unrecognized weight_props are rejected.
+    with pytest.raises(AssertionError):
+        fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies), weight_props=['bogus'])
+
+
+def test_fetch_adjacencies_weight_props_polarity_available(client, monkeypatch):
+    # Simulate a dataset that DOES have axon/dendrite polarity info (none of the
+    # currently available public datasets do), so weightAxonDendrite passes the
+    # availability gate.  (This live dataset's roiInfo still won't actually carry a
+    # per-ROI weightAxonDendrite breakdown -- the property is only simulated here via
+    # 'axonOut' -- so the per-ROI table still omits it, but the flat table includes it.)
+    monkeypatch.setattr(client, 'fetch_neuron_keys', lambda: ['bodyId', 'axonOut'])
+
+    bodies = [294792184, 329566174, 329599710, 417199910, 420274150]
+    # Pass client= explicitly: fetch_adjacencies() otherwise resolves the default
+    # client via default_client(), which hands back a per-thread deepcopy rather
+    # than this exact (monkeypatched) instance.
+    with pytest.warns(UserWarning, match="per-ROI breakdown"):
+        _n, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies, client=client), NC(bodyId=bodies, client=client),
+                                            weight_props=['weightAxonDendrite'], client=client)
+    assert 'weightAxonDendrite' not in roi_conn_df.columns
+
+    _n, conn_df = fetch_adjacencies(NC(bodyId=bodies, client=client), NC(bodyId=bodies, client=client),
+                                    weight_props=['weightAxonDendrite'], omit_rois=True, client=client)
+    assert 'weightAxonDendrite' in conn_df.columns
+    assert (conn_df['weightAxonDendrite'] == 0).all()
 
 
 def test_fetch_meta(client):

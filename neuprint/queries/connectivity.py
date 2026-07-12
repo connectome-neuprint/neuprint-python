@@ -12,6 +12,17 @@ from ..client import inject_client, NeuprintTimeoutError, _deepcopy_no_register
 from ..utils import ensure_list_args, tqdm
 from .neuroncriteria import NeuronCriteria, neuroncriteria_args, copy_as_neuroncriteria
 
+# Alternative connection-strength properties that may be present on :ConnectsTo
+# relationships (and correspondingly nested within each ROI entry of e.roiInfo),
+# in addition to the standard 'weight'.
+WEIGHT_PROPERTIES = ['weight', 'weightHP', 'weightAxonAxon',
+                     'weightAxonDendrite', 'weightDendriteDendrite', 'weightDendriteAxon']
+
+# These properties are only populated in datasets with axon/dendrite polarity info,
+# which we detect via the presence of the 'axonOut' neuron property.
+_POLARITY_WEIGHT_PROPERTIES = {'weightAxonAxon', 'weightAxonDendrite',
+                               'weightDendriteDendrite', 'weightDendriteAxon'}
+
 
 @inject_client
 @ensure_list_args(['rois'])
@@ -169,7 +180,8 @@ def _fetch_queries(queries, client, threads):
 @neuroncriteria_args('sources', 'targets')
 def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, min_total_weight=1,
                       include_nonprimary=False, export_dir=None, batch_size=200,
-                      properties=['type', 'instance'], *, omit_rois=False, threads=4, client=None):
+                      properties=['type', 'instance'], *, weight_props=None,
+                      omit_rois=False, threads=4, client=None):
     """
     Find connections to/from large sets of neurons, with per-ROI connection strengths.
 
@@ -234,6 +246,39 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         properties:
             Which Neuron properties to include in the output table.
 
+        weight_props:
+            Which connection-strength propert(y/ies) to include in the output table(s),
+            in addition to the standard ``weight``.  Choose from:
+            ``'weight'``, ``'weightHP'``, ``'weightAxonAxon'``, ``'weightAxonDendrite'``,
+            ``'weightDendriteDendrite'``, ``'weightDendriteAxon'``.
+            Pass ``'all'`` as a shorthand for every property that's available in this dataset.
+
+            By default (``None``), only the standard ``weight`` column is returned,
+            matching the historical behavior of this function.
+
+            Note:
+                ``rois``, ``min_roi_weight``, and ``min_total_weight`` always filter
+                according to the standard ``weight`` column, even if you also request
+                other ``weight_props``.
+
+            Note:
+                The ``weightAxonAxon``, ``weightAxonDendrite``, ``weightDendriteDendrite``,
+                and ``weightDendriteAxon`` properties only exist in datasets with
+                axon/dendrite polarity information.  If you explicitly request one of
+                those properties in a dataset that lacks it, it's omitted from the
+                results (never returned as an all-zero column), and a warning is issued.
+                (No warning is issued if you used ``weight_props='all'``, since omitting
+                unavailable properties is exactly what that shorthand means.)
+
+            Note:
+                Some datasets populate a requested weight property on the ``:ConnectsTo``
+                edge itself but don't break it down per-ROI within ``roiInfo``.  In that
+                case, the property is included in the *flat* connection table (i.e. with
+                ``omit_rois=True``, where it's read directly off the edge), but omitted
+                from the *per-ROI* connection table (where it would otherwise show up as
+                a meaningless all-zero column).  A warning is issued when this happens,
+                unless you used ``weight_props='all'``.
+
         omit_rois (bool):
             If True, don't ask the server for a per-ROI breakdown of each connection.
             The returned connection table then contains one row per body pair,
@@ -263,6 +308,9 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         If ``omit_rois=True``, the second DataFrame has columns
         ``['bodyId_pre', 'bodyId_post', 'weight']`` (one row per body pair)
         instead of ``['bodyId_pre', 'bodyId_post', 'roi', 'weight']``.
+
+        If you requested additional ``weight_props``, those appear as extra
+        columns (in the order listed above under ``weight_props``), after ``weight``.
 
     See also:
         :py:func:`.fetch_simple_connections()`
@@ -400,6 +448,34 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     if 'bodyId' not in properties:
         properties = ['bodyId'] + properties
 
+    if weight_props is None:
+        weight_props = ['weight']
+        requested_all_weight_props = False
+    elif weight_props == 'all':
+        weight_props = [*WEIGHT_PROPERTIES]
+        requested_all_weight_props = True
+    else:
+        weight_props = [*weight_props]
+        requested_all_weight_props = False
+
+    invalid_weight_props = set(weight_props) - {*WEIGHT_PROPERTIES}
+    assert not invalid_weight_props, \
+        f"Unrecognized weight_props: {invalid_weight_props}. Valid options are {WEIGHT_PROPERTIES}"
+
+    unavailable_polarity_props = _POLARITY_WEIGHT_PROPERTIES & {*weight_props}
+    if unavailable_polarity_props and 'axonOut' not in client.fetch_neuron_keys():
+        weight_props = [p for p in weight_props if p not in unavailable_polarity_props]
+        if not requested_all_weight_props:
+            warnings.warn(
+                "This dataset doesn't have axon/dendrite polarity information, "
+                f"so the following weight_props aren't available and will be omitted: "
+                f"{sorted(unavailable_polarity_props)}"
+            )
+
+    # 'weight' is always fetched/returned; additional properties are appended
+    # afterward, in a canonical order (regardless of the order the caller listed them in).
+    extra_weight_props = [p for p in WEIGHT_PROPERTIES if p != 'weight' and p in weight_props]
+
     def _prepare_criteria(criteria, matchvar):
         criteria.matchvar = matchvar
 
@@ -520,6 +596,11 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         # The per-edge roiInfo dominates the payload of a large edge list.
         roiinfo_return = '' if omit_rois else ',\n                           e.roiInfo as roiInfo'
 
+        # Extra edge-level totals are needed even when omit_rois=True (for the flat
+        # per-body-pair table) and even when omit_rois=False (for the NotPrimary math).
+        extra_weight_return = ''.join(f',\n                           coalesce(e.{prop}, 0) as {prop}'
+                                      for prop in extra_weight_props)
+
         if filter_weight_in_query:
             weight_filter = ('\n                    // -- Filter by total connection weight --'
                              '\n                    WITH n,m,e'
@@ -543,7 +624,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
                 {weight_filter}
                 RETURN n.bodyId as bodyId_pre,
                        m.bodyId as bodyId_post,
-                       e.weight as weight{roiinfo_return}
+                       e.weight as weight{extra_weight_return}{roiinfo_return}
             """
 
         # Fetch connections by batching either the source list
@@ -621,7 +702,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
             # Export Edges (total weight)
             p = f"{export_dir}/total-connections.csv"
-            connections_df[['bodyId_pre', 'bodyId_post', 'weight']].to_csv(p, index=False, header=True)
+            connections_df[['bodyId_pre', 'bodyId_post', 'weight', *extra_weight_props]].to_csv(p, index=False, header=True)
 
         return neurons_df, conn_df
 
@@ -639,12 +720,13 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         # Return empty DataFrames, but with the correct dtypes
         neuron_df = pd.DataFrame([], columns=['bodyId', 'instance', 'type'])
         neuron_df = neuron_df.astype({'bodyId': int, 'instance': str, 'type': str})
+        extra_weight_dtypes = {p: int for p in extra_weight_props}
         if omit_rois:
-            conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'weight'])
-            conn_df = conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'weight': int})
+            conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'weight', *extra_weight_props])
+            conn_df = conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'weight': int, **extra_weight_dtypes})
         else:
-            conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
-            conn_df = conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'roi': str, 'weight': int})
+            conn_df = pd.DataFrame([], columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight', *extra_weight_props])
+            conn_df = conn_df.astype({'bodyId_pre': int, 'bodyId_post': int, 'roi': str, 'weight': int, **extra_weight_dtypes})
         return neuron_df, conn_df
 
     ##
@@ -654,7 +736,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     if omit_rois:
         # No roiInfo was fetched, so there's nothing to explode into per-ROI rows.
         # The server already applied min_total_weight, so 'weight' is final.
-        conn_df = connections_df[['bodyId_pre', 'bodyId_post', 'weight']].copy()
+        conn_df = connections_df[['bodyId_pre', 'bodyId_post', 'weight', *extra_weight_props]].copy()
         conn_df.sort_values(['bodyId_pre', 'bodyId_post'], inplace=True)
         conn_df.reset_index(drop=True, inplace=True)
         return _finalize(conn_df)
@@ -663,32 +745,58 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     connections_df['roiInfo'] = connections_df['roiInfo'].apply(ujson.loads)
 
     # Extract per-ROI counts from the roiInfo column
-    # to construct one big table of per-ROI counts
+    # to construct one big table of per-ROI counts.
+    # Some weight_props (e.g. weightHP) may be populated on the edge itself but
+    # not broken down per-ROI within roiInfo -- track which ones actually appear
+    # in roiInfo so we can drop them from the per-ROI table below (rather than
+    # showing an all-zero column whose real total silently vanishes into the
+    # 'NotPrimary' bucket and then gets pruned by the weight filters).
+    roiinfo_has_prop = {prop: False for prop in extra_weight_props}
     roi_connections = []
     for row in connections_df.itertuples(index=False):
-        # We use the 'post' count as the weight (ignore pre)
-        roi_connections += [(row.bodyId_pre, row.bodyId_post, roi, weights.get('post', 0))
-                            for roi, weights in row.roiInfo.items()]
+        for roi, weights in row.roiInfo.items():
+            for prop in extra_weight_props:
+                if prop in weights:
+                    roiinfo_has_prop[prop] = True
+            # We use the 'post' count as the weight (ignore pre)
+            roi_connections.append((row.bodyId_pre, row.bodyId_post, roi, weights.get('post', 0),
+                                    *(weights.get(prop, 0) for prop in extra_weight_props)))
 
     roi_conn_df = pd.DataFrame(roi_connections,
-                               columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight'])
+                               columns=['bodyId_pre', 'bodyId_post', 'roi', 'weight', *extra_weight_props])
+
+    roi_table_extra_props = [p for p in extra_weight_props if roiinfo_has_prop[p]]
+    missing_roiinfo_props = [p for p in extra_weight_props if not roiinfo_has_prop[p]]
+    if missing_roiinfo_props:
+        roi_conn_df = roi_conn_df.drop(columns=missing_roiinfo_props)
+        if not requested_all_weight_props:
+            warnings.warn(
+                "This dataset's roiInfo doesn't include a per-ROI breakdown for the following "
+                f"weight_props, so they are omitted from the per-ROI connection table (they are "
+                f"still included in the flat/total weight values, e.g. via omit_rois=True): "
+                f"{missing_roiinfo_props}"
+            )
+
+    # All connection-strength columns we're tracking in the per-ROI table, in canonical order.
+    weight_cols = ['weight', *roi_table_extra_props]
 
     # Filter out non-primary ROIs
     primary_roi_conn_df = roi_conn_df.query('roi in @client.primary_rois')
 
     # Add a special roi name "NotPrimary" to account for the
     # difference between total weights and primary-only weights.
-    primary_totals = primary_roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'])['weight'].sum().reset_index()
+    primary_totals = primary_roi_conn_df.groupby(['bodyId_pre', 'bodyId_post'])[weight_cols].sum().reset_index()
 
-    totals_df = connections_df.merge(primary_totals, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_all', '_primary'])
+    totals_df = connections_df[['bodyId_pre', 'bodyId_post', *weight_cols]].merge(
+        primary_totals, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_all', '_primary'])
     totals_df.fillna(0, inplace=True)
-    totals_df['weight_notprimary'] = totals_df.eval('weight_all - weight_primary').astype(int)
+    for col in weight_cols:
+        totals_df[col] = (totals_df[f'{col}_all'] - totals_df[f'{col}_primary']).astype(int)
     totals_df['roi'] = 'NotPrimary'
 
-    # Drop weights other than NotPrimary
-    totals_df = totals_df[['bodyId_pre', 'bodyId_post', 'roi', 'weight_notprimary']]
-    notprimary_totals_df = totals_df.query('weight_notprimary > 0')
-    notprimary_totals_df = notprimary_totals_df.rename(columns={'weight_notprimary': 'weight'})
+    # Drop the intermediate _all/_primary columns, keeping only the NotPrimary totals.
+    notprimary_totals_df = totals_df[['bodyId_pre', 'bodyId_post', 'roi', *weight_cols]]
+    notprimary_totals_df = notprimary_totals_df[(notprimary_totals_df[weight_cols] > 0).any(axis=1)]
 
     if not include_nonprimary:
         roi_conn_df = primary_roi_conn_df
@@ -701,16 +809,19 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
     # Consistency check: Double-check our math against the original totals
     summed_roi_weights = (roi_conn_df
                             .query('roi in @client.primary_rois or roi == "NotPrimary"')
-                            .groupby(['bodyId_pre', 'bodyId_post'])['weight']
+                            .groupby(['bodyId_pre', 'bodyId_post'])[weight_cols]
                             .sum()
                             .reset_index())
-    compare_df = connections_df.merge(summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
-    compare_df = compare_df.fillna(0)[['weight_orig', 'weight_summed']]
-    mismatches = compare_df.eval('weight_orig != weight_summed')
+    compare_df = connections_df[['bodyId_pre', 'bodyId_post', *weight_cols]].merge(
+        summed_roi_weights, 'left', on=['bodyId_pre', 'bodyId_post'], suffixes=['_orig', '_summed'])
+    compare_df = compare_df.fillna(0)
+    mismatches = pd.Series(False, index=compare_df.index)
+    for col in weight_cols:
+        mismatches |= (compare_df[f'{col}_orig'] != compare_df[f'{col}_summed'])
     if mismatches.any():
         warnings.warn(
             "There appears to be an inconsistency in the neuprint data.\n"
-            "Detected edge(s) in which the aggregate 'weight' does not match the sum of the roiInfo 'post' counts.\n"
+            "Detected edge(s) in which an aggregate weight property does not match the sum of the corresponding roiInfo counts.\n"
             "Please report this to the neuprint administrators.\n"
             f"{compare_df.loc[mismatches]}"
         )
@@ -733,7 +844,8 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
 
 
 @inject_client
-def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, omit_rois=False, threads=4, client=None):
+def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, weight_props=None,
+                             omit_rois=False, threads=4, client=None):
     """
     Convenience function that calls :py:func:`.fetch_adjacencies()`
     for all ``Traced``, non-``cropped`` neurons.
@@ -773,7 +885,8 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, omit_rois=False
      """
     criteria = NeuronCriteria(status="Traced", cropped=False, client=client)
     return fetch_adjacencies(criteria, criteria, include_nonprimary=False, export_dir=export_dir,
-                             batch_size=batch_size, omit_rois=omit_rois, threads=threads, client=client)
+                             batch_size=batch_size, weight_props=weight_props,
+                             omit_rois=omit_rois, threads=threads, client=client)
 
 
 @inject_client

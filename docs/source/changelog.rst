@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+------------------
+- ``fetch_adjacencies()`` and ``fetch_traced_adjacencies()``: Added ``weight_props`` parameter to optionally fetch alternative ``:ConnectsTo`` weight properties (``weightHP``, ``weightAxonAxon``, ``weightAxonDendrite``, ``weightDendriteDendrite``, ``weightDendriteAxon``) as extra columns, in addition to the standard ``weight``.
+
 0.6.2 / 2026-05-22
 ------------------
 - If a dataset has ``:Element`` nodes with type ``soma``, then ``fetch_neurons`` will return soma counts in the ``roi_counts_df`` result.
