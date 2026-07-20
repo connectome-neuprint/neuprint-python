@@ -146,6 +146,10 @@ def test_fetch_simple_connections_weight_props(client):
     assert (conn_df['weightHP'] >= 0).all()
     assert (conn_df['weightHP'] <= conn_df['weight']).all()
 
+    # A single property name (not wrapped in a list) is also accepted.
+    conn_df_single = fetch_simple_connections(NC(bodyId=bodyId), properties=[], weight_props='weightHP')
+    assert (conn_df_single == conn_df).all().all()
+
     # The default is 'all'.  This test dataset has no axon/dendrite polarity info,
     # so the (unavailable) polarity-split properties are silently omitted, whether
     # via the implicit default or the explicit 'all' shorthand -- no warning expected.
@@ -338,7 +342,9 @@ def test_fetch_adjacencies_weight_props(client):
     bodies = [294792184, 329566174, 329599710, 417199910, 420274150,
               424379864, 425790257, 451982486, 480927537, 481268653]
 
-    # Default: unchanged from historical behavior (no extra columns).
+    # Even with the new 'all' default, this dataset's roiInfo doesn't break weightHP
+    # down per-ROI, so it's silently dropped from the per-ROI table -- the result
+    # is identical to the pre-weight_props behavior.
     _n, roi_conn_df = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies))
     assert roi_conn_df.columns.tolist() == ['bodyId_pre', 'bodyId_post', 'roi', 'weight']
 
@@ -356,6 +362,11 @@ def test_fetch_adjacencies_weight_props(client):
     assert pd.api.types.is_integer_dtype(conn_df['weightHP'])
     assert (conn_df['weightHP'] >= 0).all()
     assert (conn_df['weightHP'] <= conn_df['weight']).all()
+
+    # A single property name (not wrapped in a list) is also accepted.
+    _n, conn_df_single = fetch_adjacencies(NC(bodyId=bodies), NC(bodyId=bodies),
+                                           weight_props='weightHP', omit_rois=True)
+    assert (conn_df_single == conn_df).all().all()
 
     # 'all' is a shorthand that silently omits whatever isn't usefully available --
     # both the polarity-split props this dataset lacks entirely, and the roiInfo

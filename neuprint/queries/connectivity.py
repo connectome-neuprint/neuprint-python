@@ -43,6 +43,11 @@ def _normalize_weight_props(weight_props, client):
     elif weight_props == 'all':
         weight_props = [*WEIGHT_PROPERTIES]
         requested_all_weight_props = True
+    elif isinstance(weight_props, str):
+        # A bare string (other than 'all') is a single property name, not an
+        # iterable of characters.
+        weight_props = [weight_props]
+        requested_all_weight_props = False
     else:
         weight_props = [*weight_props]
         requested_all_weight_props = False
@@ -108,6 +113,7 @@ def fetch_simple_connections(upstream_criteria=None, downstream_criteria=None, r
             in addition to the standard ``weight``.  Choose from:
             ``'weight'``, ``'weightHP'``, ``'weightAxonAxon'``, ``'weightAxonDendrite'``,
             ``'weightDendriteDendrite'``, ``'weightDendriteAxon'``.
+            May be a single property name (e.g. ``'weightHP'``) or a list of them.
             Pass ``'all'`` as a shorthand for every property that's available in this dataset
             (the default).  Pass ``weight_props=['weight']`` to only fetch the standard ``weight``
             column.  See :py:func:`.fetch_adjacencies()` for details; the same availability rules
@@ -307,6 +313,7 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
             in addition to the standard ``weight``.  Choose from:
             ``'weight'``, ``'weightHP'``, ``'weightAxonAxon'``, ``'weightAxonDendrite'``,
             ``'weightDendriteDendrite'``, ``'weightDendriteAxon'``.
+            May be a single property name (e.g. ``'weightHP'``) or a list of them.
             Pass ``'all'`` as a shorthand for every property that's available in this dataset
             (the default).  Pass ``weight_props=['weight']`` to only fetch the standard
             ``weight`` column, matching the historical (pre-``weight_props``) behavior of
