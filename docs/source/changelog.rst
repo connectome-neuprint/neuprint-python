@@ -1,8 +1,11 @@
 Changelog
 =========
 
-Unreleased
+0.6.3 / 2026-07-20
 ------------------
+- ``fetch_synapses()`` and ``fetch_synapse_connections()`` now return all properties of the synapses (other than boolean ROI flags).
+- ``fetch_adjacencies()`` now allows you to omit the ROI-breakdown via ``omit_rois=True`` (PR #110)
+- ``fetch_adjacencies()`` now uses multithreading to speed up large queries. (PR #110)
 - ``fetch_adjacencies()``, ``fetch_traced_adjacencies()``, ``fetch_simple_connections()``, and ``fetch_common_connectivity()``: Added ``weight_props`` parameter to optionally fetch alternative ``:ConnectsTo`` weight properties (``weightHP``, ``weightAxonAxon``, ``weightAxonDendrite``, ``weightDendriteDendrite``, ``weightDendriteAxon``) as extra columns, in addition to the standard ``weight``. Accepts a single property name (e.g. ``weight_props='weightHP'``) or a list of them. Unavailable properties are omitted (with a warning), never returned as all-zero columns.
 
   .. note::
