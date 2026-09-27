@@ -23,6 +23,11 @@ def fetch_synapses(neuron_criteria, synapse_criteria=None, batch_size=10, *, nt=
     """
     Fetch synapses from a neuron or selection of neurons.
 
+    Note:
+        This function is intended for targeted queries, not for exporting an entire dataset.
+        For whole-connectome analyses, please use the bulk downloads instead, if available. See the FAQ:
+        https://connectome-neuprint.github.io/neuprint-python/docs/faq.html#bulk-downloads
+
     Args:
 
         neuron_criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
@@ -512,6 +517,11 @@ def fetch_synapse_connections(source_criteria=None, target_criteria=None, synaps
     Note:
         If you experience timeouts while running this function,
         try reducing the ``batch_size`` setting.
+
+    Note:
+        This function is intended for targeted queries, not for exporting an entire dataset.
+        For whole-connectome analyses, please use the bulk downloads instead, if available. See the FAQ:
+        https://connectome-neuprint.github.io/neuprint-python/docs/faq.html#bulk-downloads
 
     Args:
 

@@ -33,6 +33,11 @@ def fetch_neurons(criteria=None, *, omit_rois=False, returned_columns="all", cli
 
     .. _Find Neurons: https://neuprint.janelia.org/?dataset=hemibrain%3Av1.2.1&qt=findneurons&q=1
 
+    Note:
+        This function is intended for targeted queries, not for exporting an entire dataset.
+        For whole-connectome analyses, please use the bulk downloads instead, if available. See the FAQ:
+        https://connectome-neuprint.github.io/neuprint-python/docs/faq.html#bulk-downloads
+
     Args:
         criteria (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Only Neurons which satisfy all components of the given criteria are returned.
