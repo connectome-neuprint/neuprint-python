@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.6.4 / 2026-09-28
+------------------
+- docs: Add notes suggesting bulk downloads for whole-connectome analyses (PR #112)
+
 0.6.3 / 2026-07-20
 ------------------
 - ``fetch_synapses()`` and ``fetch_synapse_connections()`` now return all properties of the synapses (other than boolean ROI flags).

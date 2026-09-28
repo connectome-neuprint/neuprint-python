@@ -51,14 +51,66 @@ Where can I find general information about the FlyEM Hemibrain dataset?
 See the `hemibrain description page <https://www.janelia.org/project-team/flyem/hemibrain>`_.
 
 
-I just want the complete connection table for the FlyEM Hemibrain. Can I download that separately?
---------------------------------------------------------------------------------------------------
+.. _bulk-downloads:
 
-Yes, the complete connection table for all ``Traced`` neurons is available for download.
-To find the latest version, see the `hemibrain description page <https://www.janelia.org/project-team/flyem/hemibrain>`_,
-and find the link to the "compact connection matrix summary".
-`Here's a link <https://storage.cloud.google.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz>`_
-to the table we released for version v1.2 (the most recent release at the time of this writing).
+I want to analyze the whole connectome. Can I download it instead of querying neuprint?
+---------------------------------------------------------------------------------------
+
+Yes, and please do!  The neuprint server is designed for interactive exploration and
+targeted queries (a few cell types, a circuit, a region), not for exporting the entire dataset.
+If you need all neurons, all connections, all synapses, or all skeletons in a dataset
+(e.g. for whole-connectome analysis, graph statistics, simulation, or machine learning),
+download the bulk exports instead of looping over ``fetch_neurons()``, ``fetch_adjacencies()``,
+``fetch_synapses()``, ``fetch_skeleton()``, or ``fetch_custom()``.
+The bulk files are faster to obtain, easier to work with, and they don't burden the shared
+neuprint server for other users.
+
+Bulk exports for the major FlyEM datasets are stored in public Google Cloud Storage buckets:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Dataset
+     - Bulk downloads
+   * - male-cns
+     - See the `male-cns download page <https://male-cns.janelia.org/download>`_.
+   * - optic-lobe
+     - ``gs://flyem-optic-lobe/v1.1/``
+       (`browse <https://console.cloud.google.com/storage/browser/flyem-optic-lobe/v1.1/>`__).
+       The male-cns dataset is a superset of the optic-lobe dataset (the same fly), so consider using male-cns instead.
+   * - MANC
+     - ``gs://manc-seg-v1p2/``
+       (`browse <https://console.cloud.google.com/storage/browser/manc-seg-v1p2/>`__)
+   * - hemibrain
+     - ``gs://hemibrain/v1.2/``
+       (`browse <https://console.cloud.google.com/storage/browser/hemibrain/v1.2>`__)
+
+The bucket contents and file naming conventions differ from one dataset to the next,
+so look for a README in the bucket (or on the dataset's download page).
+The dataset descriptions shown on the `neuprint website <https://neuprint.janelia.org>`_
+also link to the relevant bucket.
+
+The "browse" links above require a Google login, but the buckets are public, so no login
+is needed to list or download their contents.  For example:
+
+.. code-block:: bash
+
+    # List the contents of a bucket directory with the gcloud CLI
+    gcloud storage ls gs://hemibrain/v1.2/
+
+    # ...or without any tools, via the public JSON API
+    curl 'https://storage.googleapis.com/storage/v1/b/hemibrain/o?prefix=v1.2/&delimiter=/'
+
+    # Download an individual file via plain HTTPS
+    curl -O https://storage.googleapis.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz
+
+.. note::
+
+    For datasets not listed here, check the dataset's description on the neuprint website.
+    If you still can't find a bulk download, please ask on the neuPrint
+    `Google Groups forum <https://groups.google.com/forum/#!forum/neuprint>`_
+    before attempting to export the whole dataset through the neuprint API.
 
 
 How can I download the exact Hemibrain ROI shapes?

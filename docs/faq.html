@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FAQ &mdash; neuprint-python 0.6.3 documentation</title>
+  <title>FAQ &mdash; neuprint-python 0.6.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="_static/theme_overrides.css?v=2eda87d7" />
@@ -14,7 +14,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=b8503983"></script>
+      <script src="_static/documentation_options.js?v=73d9a94e"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
       <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -56,7 +56,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#what-cypher-queries-are-being-used-by-this-code-internally">What Cypher queries are being used by this code internally?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#where-are-the-release-notes-for-the-data">Where are the release notes for the <em>data</em>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#where-can-i-find-general-information-about-the-flyem-hemibrain-dataset">Where can I find general information about the FlyEM Hemibrain dataset?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#i-just-want-the-complete-connection-table-for-the-flyem-hemibrain-can-i-download-that-separately">I just want the complete connection table for the FlyEM Hemibrain. Can I download that separately?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#i-want-to-analyze-the-whole-connectome-can-i-download-it-instead-of-querying-neuprint">I want to analyze the whole connectome. Can I download it instead of querying neuprint?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-can-i-download-the-exact-hemibrain-roi-shapes">How can I download the exact Hemibrain ROI shapes?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#can-this-library-be-used-with-multiprocessing">Can this library be used with <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#where-can-i-find-help">Where can I find help?</a></li>
@@ -130,13 +130,69 @@ See <a class="reference internal" href="client.html#neuprint.client.setup_debug_
 <h2>Where can I find general information about the FlyEM Hemibrain dataset?<a class="headerlink" href="#where-can-i-find-general-information-about-the-flyem-hemibrain-dataset" title="Link to this heading">¶</a></h2>
 <p>See the <a class="reference external" href="https://www.janelia.org/project-team/flyem/hemibrain">hemibrain description page</a>.</p>
 </section>
-<section id="i-just-want-the-complete-connection-table-for-the-flyem-hemibrain-can-i-download-that-separately">
-<h2>I just want the complete connection table for the FlyEM Hemibrain. Can I download that separately?<a class="headerlink" href="#i-just-want-the-complete-connection-table-for-the-flyem-hemibrain-can-i-download-that-separately" title="Link to this heading">¶</a></h2>
-<p>Yes, the complete connection table for all <code class="docutils literal notranslate"><span class="pre">Traced</span></code> neurons is available for download.
-To find the latest version, see the <a class="reference external" href="https://www.janelia.org/project-team/flyem/hemibrain">hemibrain description page</a>,
-and find the link to the “compact connection matrix summary”.
-<a class="reference external" href="https://storage.cloud.google.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz">Here’s a link</a>
-to the table we released for version v1.2 (the most recent release at the time of this writing).</p>
+<section id="i-want-to-analyze-the-whole-connectome-can-i-download-it-instead-of-querying-neuprint">
+<span id="bulk-downloads"></span><h2>I want to analyze the whole connectome. Can I download it instead of querying neuprint?<a class="headerlink" href="#i-want-to-analyze-the-whole-connectome-can-i-download-it-instead-of-querying-neuprint" title="Link to this heading">¶</a></h2>
+<p>Yes, and please do!  The neuprint server is designed for interactive exploration and
+targeted queries (a few cell types, a circuit, a region), not for exporting the entire dataset.
+If you need all neurons, all connections, all synapses, or all skeletons in a dataset
+(e.g. for whole-connectome analysis, graph statistics, simulation, or machine learning),
+download the bulk exports instead of looping over <code class="docutils literal notranslate"><span class="pre">fetch_neurons()</span></code>, <code class="docutils literal notranslate"><span class="pre">fetch_adjacencies()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fetch_synapses()</span></code>, <code class="docutils literal notranslate"><span class="pre">fetch_skeleton()</span></code>, or <code class="docutils literal notranslate"><span class="pre">fetch_custom()</span></code>.
+The bulk files are faster to obtain, easier to work with, and they don’t burden the shared
+neuprint server for other users.</p>
+<p>Bulk exports for the major FlyEM datasets are stored in public Google Cloud Storage buckets:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 80.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Dataset</p></th>
+<th class="head"><p>Bulk downloads</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>male-cns</p></td>
+<td><p>See the <a class="reference external" href="https://male-cns.janelia.org/download">male-cns download page</a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p>optic-lobe</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gs://flyem-optic-lobe/v1.1/</span></code>
+(<a class="reference external" href="https://console.cloud.google.com/storage/browser/flyem-optic-lobe/v1.1/">browse</a>).
+The male-cns dataset is a superset of the optic-lobe dataset (the same fly), so consider using male-cns instead.</p></td>
+</tr>
+<tr class="row-even"><td><p>MANC</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gs://manc-seg-v1p2/</span></code>
+(<a class="reference external" href="https://console.cloud.google.com/storage/browser/manc-seg-v1p2/">browse</a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>hemibrain</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">gs://hemibrain/v1.2/</span></code>
+(<a class="reference external" href="https://console.cloud.google.com/storage/browser/hemibrain/v1.2">browse</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<p>The bucket contents and file naming conventions differ from one dataset to the next,
+so look for a README in the bucket (or on the dataset’s download page).
+The dataset descriptions shown on the <a class="reference external" href="https://neuprint.janelia.org">neuprint website</a>
+also link to the relevant bucket.</p>
+<p>The “browse” links above require a Google login, but the buckets are public, so no login
+is needed to list or download their contents.  For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># List the contents of a bucket directory with the gcloud CLI</span>
+gcloud<span class="w"> </span>storage<span class="w"> </span>ls<span class="w"> </span>gs://hemibrain/v1.2/
+
+<span class="c1"># ...or without any tools, via the public JSON API</span>
+curl<span class="w"> </span><span class="s1">&#39;https://storage.googleapis.com/storage/v1/b/hemibrain/o?prefix=v1.2/&amp;delimiter=/&#39;</span>
+
+<span class="c1"># Download an individual file via plain HTTPS</span>
+curl<span class="w"> </span>-O<span class="w"> </span>https://storage.googleapis.com/hemibrain/v1.2/exported-traced-adjacencies-v1.2.tar.gz
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For datasets not listed here, check the dataset’s description on the neuprint website.
+If you still can’t find a bulk download, please ask on the neuPrint
+<a class="reference external" href="https://groups.google.com/forum/#!forum/neuprint">Google Groups forum</a>
+before attempting to export the whole dataset through the neuprint API.</p>
+</div>
 </section>
 <section id="how-can-i-download-the-exact-hemibrain-roi-shapes">
 <h2>How can I download the exact Hemibrain ROI shapes?<a class="headerlink" href="#how-can-i-download-the-exact-hemibrain-roi-shapes" title="Link to this heading">¶</a></h2>
