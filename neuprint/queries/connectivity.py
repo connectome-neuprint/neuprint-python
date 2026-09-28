@@ -257,6 +257,11 @@ def fetch_adjacencies(sources=None, targets=None, rois=None, min_roi_weight=1, m
         but that function isn't suitable for querying large sets of neurons.
         However, it may be more convenient for small interactive queries.
 
+    Note:
+        This function is intended for targeted queries, not for exporting an entire dataset.
+        For whole-connectome analyses, please use the bulk downloads instead, if available. See the FAQ:
+        https://connectome-neuprint.github.io/neuprint-python/docs/faq.html#bulk-downloads
+
     Args:
         sources (bodyId(s), type/instance, or :py:class:`.NeuronCriteria`):
             Limit results to connections from bodies that match this criteria.
@@ -890,6 +895,12 @@ def fetch_traced_adjacencies(export_dir=None, batch_size=200, *, weight_props='a
     Note:
         On the hemibrain dataset, this function takes a few minutes to run,
         and the results are somewhat large (~300 MB).
+        On larger datasets (e.g. MANC, male-cns), it places a heavy load on the neuprint server.
+
+    Note:
+        If a bulk download of the complete connection table is available for your dataset,
+        please use it instead. It's much faster than this function. See the FAQ:
+        https://connectome-neuprint.github.io/neuprint-python/docs/faq.html#bulk-downloads
 
     Example:
 

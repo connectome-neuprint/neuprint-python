@@ -958,6 +958,11 @@ class Client:
         """
         Fetch the skeleton for a neuron or segment.
 
+        Note:
+            This function is intended for targeted queries, not for exporting an entire dataset.
+            For whole-connectome analyses, please use the bulk downloads instead, if available. See the FAQ:
+            https://connectome-neuprint.github.io/neuprint-python/docs/faq.html#bulk-downloads
+
         Args:
 
             body (int):
