@@ -66,10 +66,10 @@ def test_NeuronCriteria(client):
     assert NC(instance=["fo'o", 'ba"r'], regex=True).basic_exprs() == ["n.instance =~ '(fo\\'o)|(ba\"r)'"]
 
     assert NC(cropped=True).basic_exprs() == ["n.cropped"]
-    assert NC(cropped=False).basic_exprs() == ["(NOT n.cropped OR NOT exists(n.cropped))"]
+    assert NC(cropped=False).basic_exprs() == ["(NOT n.cropped OR n.cropped IS NULL)"]
 
-    assert NC(somaLocation=NotNull).basic_exprs() == ["exists(n.somaLocation)"]
-    assert NC(somaLocation=IsNull).basic_exprs() == ["NOT exists(n.somaLocation)"]
+    assert NC(somaLocation=NotNull).basic_exprs() == ["n.somaLocation IS NOT NULL"]
+    assert NC(somaLocation=IsNull).basic_exprs() == ["n.somaLocation IS NULL"]
 
     assert NC(inputRois=['SMP(R)', 'FB'], outputRois=['FB', 'SIP(R)'], roi_req='all').basic_exprs() == ['(n.FB AND n.`SIP(R)` AND n.`SMP(R)`)']
     assert NC(inputRois=['SMP(R)', 'FB'], outputRois=['FB', 'SIP(R)'], roi_req='any').basic_exprs() == ['(n.FB OR n.`SIP(R)` OR n.`SMP(R)`)']
@@ -108,12 +108,12 @@ def test_NeuronCriteria(client):
         WITH {statuses} as n_search_status""")
     assert nc.basic_conditions(comments=False) == "n.status in n_search_status"
 
-    # If None is included, then exists() should be checked.
+    # If None is included, then a null check should be added.
     statuses = ['Traced', 'Orphan', 'Assign', None]
     nc = NC(status=statuses)
     assert nc.global_with() == dedent("""\
         WITH ['Traced', 'Orphan', 'Assign'] as n_search_status""")
-    assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_status OR NOT exists(n.status)")
+    assert nc.basic_conditions(comments=False) == dedent("n.status in n_search_status OR n.status IS NULL")
 
     types = ['aaa', 'bbb', 'ccc']
     nc = NC(type=types)

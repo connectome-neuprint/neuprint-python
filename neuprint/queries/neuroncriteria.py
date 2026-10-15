@@ -954,9 +954,9 @@ class NeuronCriteria:
     def _nullcheck_expr(self, key, value):
         assert value in (None, IsNull, NotNull)
         if value == IsNull:
-            return f"NOT exists({self.matchvar}.{key})"
+            return f"{self.matchvar}.{key} IS NULL"
         elif value == NotNull:
-            return f"exists({self.matchvar}.{key})"
+            return f"{self.matchvar}.{key} IS NOT NULL"
         else:
             return ""
 
@@ -975,8 +975,8 @@ class NeuronCriteria:
         else:
             # Not all neurons might actually have the flag (e.g. `.cropped`),
             # so simply checking for False values isn't enough.
-            # Must check exists().
-            return f"(NOT {self.matchvar}.{key} OR NOT exists({self.matchvar}.{key}))"
+            # Must check for the property's existence, too.
+            return f"(NOT {self.matchvar}.{key} OR {self.matchvar}.{key} IS NULL)"
 
     def _logic_tag_expr(self, tags, logic):
         """
@@ -1216,7 +1216,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
 
     If 'valuevar' is given, then the generated cypher will refer to the variable
     instead of the literal values, BUT if the literal values contain None,
-    then an additional 'exists()' condition will be added.
+    then an additional 'IS NULL' condition will be added.
 
     Examples:
 
@@ -1228,7 +1228,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             Out[2]: ''
 
             In [3]: where_expr('status', [None])
-            Out[3]: 'NOT exists(n.status)'
+            Out[3]: 'n.status IS NULL'
 
             In [4]: where_expr('status', ['Orphan'])
             Out[4]: "n.status = 'Orphan'"
@@ -1237,7 +1237,7 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             Out[5]: "n.status in ['Orphan', 'Assign']"
 
             In [6]: where_expr('status', ['Orphan', 'Assign', None])
-            Out[6]: "n.status in ['Orphan', 'Assign'] OR NOT exists(n.status)"
+            Out[6]: "n.status in ['Orphan', 'Assign'] OR n.status IS NULL"
 
             In [7]: where_expr('status', ['Orph.*'], regex=True)
             Out[7]: "n.status =~ 'Orph.*'"
@@ -1255,13 +1255,13 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             Out[11]: 'n.bodyId in bodies'
 
             In [12]: where_expr('bodyId', [123, None, 456], valuevar='bodies')
-            Out[12]: 'n.bodyId in bodies OR NOT exists(n.bodyId)'
+            Out[12]: 'n.bodyId in bodies OR n.bodyId IS NULL'
 
             In [13]: where_expr('status', [IsNull])
             Out[13]: 'n.status IS NULL'
 
             In [14]: where_expr('status', [NotNull])
-            Out[14]: 'n.status NOT NULL'
+            Out[14]: 'n.status IS NOT NULL'
     """
     assert isinstance(values, collections.abc.Iterable), \
         f"Please pass a list or a variable name, not {values}"
@@ -1281,10 +1281,10 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
 
     if len(values) == 1:
         if values[0] is None or values[0] == IsNull:
-            return f"NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} IS NULL"
 
         if values[0] == NotNull:
-            return f"exists({matchvar}.{field})"
+            return f"{matchvar}.{field} IS NOT NULL"
 
         if regex:
             return f"{matchvar}.{field} =~ {repr(values[0])}"
@@ -1313,9 +1313,9 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
         if regex:
             assert isinstance(values[0], str), \
                 "Expected all regex values to be strings"
-            return f"{matchvar}.{field} =~ {repr(values[0])} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} =~ {repr(values[0])} OR {matchvar}.{field} IS NULL"
         else:
-            return f"{matchvar}.{field} = {repr(values[0])} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} = {repr(values[0])} OR {matchvar}.{field} IS NULL"
     else:
         if regex:
             # Combine the list of regexes into a single regex
@@ -1323,8 +1323,8 @@ def where_expr(field, values, regex=False, matchvar='n', valuevar=None):
             assert all(isinstance(v, str) for v in values), \
                 "Expected all regex values to be strings"
             r = '|'.join(f'({v})' for v in values)
-            return f"{matchvar}.{field} =~ {repr(r)} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} =~ {repr(r)} OR {matchvar}.{field} IS NULL"
         elif valuevar:
-            return f"{matchvar}.{field} in {valuevar} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} in {valuevar} OR {matchvar}.{field} IS NULL"
         else:
-            return f"{matchvar}.{field} in {repr(values)} OR NOT exists({matchvar}.{field})"
+            return f"{matchvar}.{field} in {repr(values)} OR {matchvar}.{field} IS NULL"
