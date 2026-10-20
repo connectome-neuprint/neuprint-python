@@ -1,10 +1,46 @@
-[project]
+[workspace]
 authors = ["FlyEM"]
 channels = ["conda-forge"]
 description = "Python client utilties for interacting with the neuPrint connectome analysis service"
 name = "neuprint-python"
 platforms = ["osx-64", "linux-64", "win-64", "osx-arm64"]
-version = "0.5"
+preview = ["pixi-build"]
+
+# The [package] section allows neuprint-python to be used as a pixi source dependency, e.g.
+#
+#   [dependencies]
+#   neuprint-python = { path = "/path/to/neuprint-python" }
+#
+# The run-dependencies are generated from dependencies.txt (which the conda recipe uses);
+# keep them in sync.
+[package]
+name = "neuprint-python"
+version = "0.6.4"
+
+[package.build]
+backend = { name = "pixi-build-python", version = "*" }
+
+[package.build.config]
+noarch = true
+# The default installer (uv) crashes on rattler-build's placeholder prefix; pip works.
+installer = "pip"
+
+[package.host-dependencies]
+python = ">=3.9"
+setuptools = "*"
+pip = "*"
+
+[package.run-dependencies]
+python = ">=3.9"
+requests = ">=2.22"
+pandas = "*"
+tqdm = "*"
+ujson = "*"
+asciitree = "*"
+scipy = "*"
+networkx = "*"
+packaging = "*"
+pyarrow = "*"
 
 [environments]
 test = ["test"]
