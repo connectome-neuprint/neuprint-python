@@ -1,6 +1,10 @@
 Changelog
 =========
 
+Unreleased
+------------------
+- Fixed ``NeuronCriteria`` queries against Neo4j 5 and later (including the 2026.x CalVer releases). The generated cypher used the ``exists(x.y)`` property-existence syntax, which was **removed** in Neo4j 5, so criteria such as ``cropped=False``, ``IsNull``/``NotNull``, and any value list containing ``None`` failed with an HTTP 400 syntax error against a migrated server. The generated cypher now uses ``IS NULL``/``IS NOT NULL``, which behaves identically on Neo4j 3.5, 4.4 and 2026.x, so results are unchanged on servers that have not been upgraded.
+
 0.6.4 / 2026-09-28
 ------------------
 - docs: Add notes suggesting bulk downloads for whole-connectome analyses (PR #112)
