@@ -1,0 +1,6 @@
+# Package metadata lives in setup.py; dependencies live in dependencies.txt (and pixi.toml).
+# This file exists so that pixi-build-python can build neuprint-python as a pixi source dependency.
+[build-system]
+requires = ["setuptools"]
+# __legacy__ puts the source dir on sys.path, so setup.py can import versioneer.
+build-backend = "setuptools.build_meta:__legacy__"
